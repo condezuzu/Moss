@@ -6,7 +6,7 @@
  * compartido. Apagado mientras Ascent 1.2.0 no esté en la App Store (lo decidiste el 28/10/2026): se prende con
  * `true` y una OTA.
  */
-export const CON_ASCENT = false;
+export const CON_ASCENT = true;
 
 /**
  * Los widgets que se suman con la próxima build (D43): Hoy, Anotar y Agua. Cada uno se declara en
