@@ -71,7 +71,9 @@ Hecho:
   tramos, el periodo desde las 19, los entrenamientos de Salud, los avisos como sugerencias (el café según el periodo),
   decir varias comidas, 11 cadenas nuevas, las figuras de la grasa, «Cuando llegues» con cinco opciones y Moss que lo
   aplica solo al llegar. Para decidir:
-  - Ascent: prenderla por aire (se vincula desde Moss con la cuenta de Ascent) con la sección vieja o la nueva de la galería.
+  - Ascent: PRENDIDA por aire el 18/11 en las dos builds (`visual-ota` 78da627, `mejoras-1.1` f348af5), con la sección de abajo de
+    Hábitos; la nueva, arriba de Progreso, sigue para aprobar. Falta la privacidad publicada (el sitio de la 1.0 no nombra a
+    Ascent; `docs/` trae también la suscripción) y revisar App Privacy en App Store Connect.
   - Con el aviso del café prendido, el máximo de 10 avisos deja afuera «Se acerca tu hora de acostarte»: ¿sube uno?
   - La calidad no baja con hasta 20 min despierto y un despertar: ¿endurecerla?
   - La base: «caña» en España, «café de olla», «verduras» (pisto), «fruta» y «yogur» en España eligen mal.
