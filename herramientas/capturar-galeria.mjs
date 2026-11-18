@@ -3298,6 +3298,36 @@ const pasos = {
     await espera(800);
     await pestana(0);
   },
+  // Al llegar al peso meta (18/11, para aprobar): Moss aplica solo lo que sigue. Progreso en cada etapa, en es y en:
+  // hacia la meta, el mantenimiento recién llegado, cada una de lo que sigue (y el piso del peso sano), y «¿Cómo
+  // sigues?» con «Lo decido después», eligiendo una y al empezar.
+  async llegar() {
+    const espera = (ms = 2600) => pagina.waitForTimeout(ms);
+    const ocultas = await pagina.addStyleTag({ content: '.tel [hidden]{display:none!important}' });
+    await pestana(2);
+    for (const idioma of ['es', 'en']) {
+      await pagina.evaluate((i) => window.__idioma(i), idioma);
+      const sufijo = idioma === 'es' ? '' : '-en';
+      for (const v of [null, 'mantenimiento', 'mantener', 'grasa', 'recomponer', 'musculo', 'piso', 'pregunta']) {
+        await progreso('llegada', v);
+        await progreso('subir');
+        await espera();
+        await foto(`llegar-${v ?? 'hacia-la-meta'}${sufijo}`);
+      }
+      await progreso('elegirAlLlegar', 'grasa');
+      await progreso('bajar', '.pg-llegada');
+      await espera(900);
+      await foto(`llegar-pregunta-elegida${sufijo}`);
+      await pagina.evaluate(() => document.querySelector('.pg-llegada-empezar').click());
+      await progreso('subir');
+      await espera(1200);
+      await foto(`llegar-pregunta-empezar${sufijo}`);
+    }
+    await progreso('llegada', null);
+    await pagina.evaluate(() => window.__idioma('es'));
+    await pestana(0);
+    await ocultas.evaluate((n) => n.remove());
+  },
   // Tanda 4 (18/11, para aprobar): las figuras de la grasa redibujadas (hombre y mujer, sin elegir y eligiendo,
   // en es y en) y «Cuando llegues, ¿qué sigue?» con cinco opciones: cada una en el cuestionario (con y sin pesas,
   // subiendo y sin déficit), en el resultado, en el plan de Progreso (la etapa que sigue, con su nombre y su

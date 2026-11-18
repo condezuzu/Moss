@@ -4,8 +4,8 @@ import {
   actividadEquivalente, ajusteDeRecomposicion, avisoDeRecomposicion, deportesDe, deportesDePerfil, diasConDosSesiones, eleccionDe, entrenaFuerza, entrenoConCambios, entrenoParaGuardar, FACTORES_DE_VIDA, FIGURAS, gastoEnReposo, gastoEstimado, grasaDeFigura,
   horarioDeLosAvisos, katchMcArdle, kcalDelDia, kcalDelEntreno, masaMagra, MET_DEL_DEPORTE, metaDelCuestionario, movimientoPorPasos, NIVELES_DE_PROTEINA, promedioDePasos,
   objetivoGuardado, objetivoUsado, partesRedondas, pctDelPlan, pesoMetaSugerido, preguntasDelEntreno, PROTEINA_POR_NIVEL, proteinaDelNivel, rangoDelPesoMeta,
-  loQueSigue, opcionesDeLoQueSigue, PIDEN_PESAS, respuestasDe, ritmoSugerido, sesionesDeUnDia, tipoDeSesion, usaGrasa, VIAJES,
-  type Deporte, type EntrenoDicho, type GrasaDicha, type ObjetivoDicho, type Respuestas, type RespuestasGuardadas, type SesionDicha,
+  claveDeEtapa, etapaDelPlan, llegadaDe, llegadaDeHoy, loQueSigue, loQueToca, opcionesDeLoQueSigue, PIDEN_PESAS, respuestasDe, ritmoSugerido, sesionesDeUnDia, tipoDeSesion, usaGrasa, VIAJES,
+  type Deporte, type EntradaDeLaLlegada, type EntrenoDicho, type Llegada, type GrasaDicha, type ObjetivoDicho, type Respuestas, type RespuestasGuardadas, type SesionDicha,
 } from './cuestionario';
 import type { Entreno } from './alrededorDelEntreno';
 import { KCAL_POR_KILO_Y_HORA } from './entrenamiento';
@@ -489,5 +489,90 @@ describe('cuando llegues, ¿qué sigue?', () => {
     expect(loQueSigue({ ...bajando, sinDeficit: true }, 'recomponer')).toBe('mantener');
     expect(loQueSigue({ ...bajando, pesoMeta: 59 }, 'grasa')).toBe('mantener');
     expect(PIDEN_PESAS).toEqual(['grasa', 'recomponer', 'musculo']);
+  });
+});
+
+describe('al llegar al peso meta', () => {
+  // Bajando de 82 a 76 kg con 178 cm: el peso sano mínimo es 58,7 kg.
+  const plan: EntradaDeLaLlegada = { hoy: '2026-11-18', guardada: null, objetivo: 'bajar', pesoMeta: 76, nivel: 77, pesoInicial: 82, despues: 'grasa', alturaCm: 178 };
+  const llegada = (x: Partial<Llegada> = {}): Llegada => ({ objetivo: 'bajar', pesoMeta: 76, fecha: '2026-11-18', despues: 'grasa', piso: null, aplicada: null, soltada: false, ...x });
+
+  it('llega a medio kilo de la meta o pasándola, con la tendencia sin atraso; el día queda fijo', () => {
+    expect(llegadaDeHoy(plan)).toBeNull();
+    expect(llegadaDeHoy({ ...plan, nivel: 76.5 })).toEqual(llegada());
+    expect(llegadaDeHoy({ ...plan, nivel: 75 })).toEqual(llegada());
+    expect(llegadaDeHoy({ ...plan, objetivo: 'subir', pesoMeta: 86, pesoInicial: 80, nivel: 85.6 })).toEqual(llegada({ objetivo: 'subir', pesoMeta: 86 }));
+    // Si el peso rebota, no vuelve atrás: vale la de ese día.
+    const guardada = llegada({ fecha: '2026-11-10' });
+    expect(llegadaDeHoy({ ...plan, guardada, nivel: 77.5 })).toBe(guardada);
+  });
+
+  it('no llega si la meta ya estaba pasada al empezar, sin peso meta, manteniendo ni sin peso', () => {
+    expect(llegadaDeHoy({ ...plan, nivel: 75, pesoInicial: 75.5 })).toBeNull();
+    expect(llegadaDeHoy({ ...plan, nivel: 75, pesoMeta: null })).toBeNull();
+    expect(llegadaDeHoy({ ...plan, nivel: 75, objetivo: 'mantener' })).toBeNull();
+    expect(llegadaDeHoy({ ...plan, nivel: null })).toBeNull();
+  });
+
+  it('lo que sigue es lo dicho, si se puede; sin decirlo, Moss pregunta', () => {
+    expect(llegadaDeHoy({ ...plan, nivel: 76, despues: null })?.despues).toBe('despues');
+    expect(llegadaDeHoy({ ...plan, nivel: 76, despues: 'recomponer', sinDeficit: true })?.despues).toBe('mantener');
+    expect(llegadaDeHoy({ ...plan, nivel: 60, pesoMeta: 60, despues: 'grasa' })?.despues).toBe('mantener');
+  });
+
+  it('soltada (cambió el plan a mano): con el mismo plan no vuelve a llegar; con otro, sí', () => {
+    const soltada = llegada({ fecha: '2026-11-01', soltada: true });
+    expect(llegadaDeHoy({ ...plan, guardada: soltada, nivel: 75 })).toBe(soltada);
+    expect(llegadaDeHoy({ ...plan, guardada: soltada, pesoMeta: 75.5, nivel: 75 })).toEqual(llegada({ pesoMeta: 75.5 }));
+    expect(etapaDelPlan(soltada, '2026-11-18')).toEqual({ cual: 'haciaLaMeta' });
+  });
+
+  it('las etapas: dos semanas de mantenimiento y lo que sigue, o la pregunta', () => {
+    const l = llegada({ fecha: '2026-11-01' });
+    expect(etapaDelPlan(null, '2026-11-18')).toEqual({ cual: 'haciaLaMeta' });
+    expect(etapaDelPlan(l, '2026-11-01')).toEqual({ cual: 'mantenimiento', hasta: '2026-11-15', luego: 'grasa' });
+    expect(etapaDelPlan(l, '2026-11-14')).toMatchObject({ cual: 'mantenimiento' });
+    expect(etapaDelPlan(l, '2026-11-15')).toEqual({ cual: 'sigue', que: 'grasa', piso: false });
+    expect(etapaDelPlan({ ...l, despues: 'despues' }, '2026-11-15')).toEqual({ cual: 'pregunta' });
+    expect(claveDeEtapa(etapaDelPlan(l, '2026-11-01'))).toBe('mantenimiento');
+    expect(claveDeEtapa(etapaDelPlan(l, '2026-11-20'))).toBe('grasa');
+    expect(claveDeEtapa({ cual: 'haciaLaMeta' })).toBeNull();
+  });
+
+  it('perdiendo grasa, al llegar al peso sano mínimo queda en mantener, y ese día también queda fijo', () => {
+    const l = llegada({ fecha: '2026-10-01', pesoMeta: 61 });
+    const minimo = pesoMinimoSano(178);
+    // En el mantenimiento todavía no cuenta.
+    expect(llegadaDeHoy({ ...plan, hoy: '2026-10-05', guardada: l, nivel: minimo })).toBe(l);
+    expect(llegadaDeHoy({ ...plan, guardada: l, nivel: minimo + 1 })).toBe(l);
+    const conPiso = llegadaDeHoy({ ...plan, guardada: l, nivel: minimo + 0.4 })!;
+    expect(conPiso.piso).toBe('2026-11-18');
+    expect(etapaDelPlan(conPiso, '2026-11-18')).toEqual({ cual: 'sigue', que: 'mantener', piso: true });
+    expect(llegadaDeHoy({ ...plan, hoy: '2026-11-25', guardada: conPiso, nivel: minimo + 2 })).toBe(conPiso);
+  });
+
+  it('lo que toca en cada etapa', () => {
+    const r = { proteina: 'recomendada' as const, experiencia: 'avanzado' as const, pesas: true };
+    const mantener = { objetivo: 'mantener', ritmo: null, recomponer: false, eleccion: { pct: null, proteinaPorKg: PROTEINA_POR_NIVEL.mantener.recomendada }, sinPesoMeta: false };
+    expect(loQueToca({ cual: 'haciaLaMeta' }, r)).toBeNull();
+    expect(loQueToca({ cual: 'mantenimiento', hasta: '2026-11-15', luego: 'musculo' }, r)).toEqual(mantener);
+    expect(loQueToca({ cual: 'pregunta' }, r)).toEqual(mantener);
+    expect(loQueToca({ cual: 'sigue', que: 'mantener', piso: false }, r)).toEqual(mantener);
+    expect(loQueToca({ cual: 'sigue', que: 'mantener', piso: true }, r)).toEqual(mantener);
+    // Perder grasa: el ritmo suave, 0,25 % por semana, con la proteína alta.
+    expect(loQueToca({ cual: 'sigue', que: 'grasa', piso: false }, r)).toEqual({ objetivo: 'bajar', ritmo: 'suave', recomponer: false, eleccion: { pct: -0.25, proteinaPorKg: 2.2 }, sinPesoMeta: true });
+    expect(loQueToca({ cual: 'sigue', que: 'recomponer', piso: false }, r)).toEqual({ ...mantener, recomponer: true, eleccion: { pct: null, proteinaPorKg: PROTEINA_POR_NIVEL.recomponer.recomendada } });
+    // Ganar músculo: el ritmo sugerido, más lento con años de pesas; sin pesas, el de fábrica.
+    expect(loQueToca({ cual: 'sigue', que: 'musculo', piso: false }, r)).toEqual({ objetivo: 'subir', ritmo: 'suave', recomponer: false, eleccion: { pct: 0.1, proteinaPorKg: PROTEINA_POR_NIVEL.subir.recomendada }, sinPesoMeta: true });
+    expect(loQueToca({ cual: 'sigue', que: 'musculo', piso: false }, { ...r, pesas: false })).toMatchObject({ ritmo: 'recomendado', eleccion: { pct: 0.25 } });
+    expect(loQueToca({ cual: 'pregunta' }, { pesas: false, proteina: 'alta' })?.eleccion.proteinaPorKg).toBe(PROTEINA_POR_NIVEL.mantener.alta);
+  });
+
+  it('lo guardado, si tiene forma', () => {
+    expect(llegadaDe(JSON.parse(JSON.stringify(llegada({ aplicada: 'grasa', piso: '2026-12-01' }))))).toEqual(llegada({ aplicada: 'grasa', piso: '2026-12-01' }));
+    expect(llegadaDe({ ...llegada(), objetivo: 'mantener' })).toBeNull();
+    expect(llegadaDe({ ...llegada(), fecha: 'ayer' })).toBeNull();
+    expect(llegadaDe({ ...llegada(), aplicada: 'otra' })?.aplicada).toBeNull();
+    expect(llegadaDe(null)).toBeNull();
   });
 });

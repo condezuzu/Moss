@@ -1769,6 +1769,33 @@
     "masDatos": {
       "titulo": "Más datos",
       "sub": "Semana a semana, medidas y gasto"
+    },
+    "llegada": {
+      "estados": {
+        "mantenimiento": "Mantenimiento",
+        "pregunta": "Lo decides"
+      },
+      "titulo": "Llegaste a {kg} kg",
+      "el": "El {fecha}",
+      "mantenimiento": "Hasta el {hasta}, Moss te pone en lo que gastas, para que tu peso se asiente.",
+      "agua": "Es normal que suba un poco estos días: es agua, no grasa.",
+      "titulos": {
+        "mantener": "Quedarte en {kg} kg",
+        "pregunta": "¿Cómo sigues?"
+      },
+      "llegaste": "Llegaste a {kg} kg el {fecha}.",
+      "piso": "Es el peso sano más bajo para tu altura: Moss deja de bajar y ajusta tus calorías para que te quedes ahí.",
+      "pregunta": "Terminó tu mantenimiento. Mientras eliges, Moss te deja en lo que gastas.",
+      "empezar": "Empezar",
+      "aMano": "Tus metas están a mano: Moss no las cambia.",
+      "control": {
+        "mantenimiento": "Ajusta para que comas lo que gastas.",
+        "pregunta": "Ajusta para que comas lo que gastas.",
+        "mantener": "Ajusta para que tu peso se quede ahí.",
+        "grasa": "Ajusta para que bajes despacio, {pct} % por semana.",
+        "recomponer": "Ajusta para que comas lo que gastas, con la proteína alta.",
+        "musculo": "Ajusta para que subas despacio, {pct} % por semana."
+      }
     }
   },
   "sueno": {

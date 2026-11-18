@@ -27,6 +27,8 @@ const SeccionProgreso = (() => {
       semanasDeDatos: null,
       // Lo que sigue a la meta (aprobado el 18/11), para las capturas; null, el del perfil.
       despues: null,
+      // Al llegar (18/11, para aprobar): la etapa de ejemplo (llegadaDe) y lo elegido en «¿Cómo sigues?»; null, hacia la meta.
+      llegada: null, elegidaAlLlegar: null,
     };
     // «Sin déficit» es de Perfil: si la galería lo pasa, bajar queda en mantener y el plan no dice que el control ajusta.
     const sinDeficit = () => !!(opciones.sinDeficit && opciones.sinDeficit());
@@ -94,7 +96,7 @@ const SeccionProgreso = (() => {
       // De arriba abajo, lo que se mira primero (lo pediste el 2/11/2026): el control en una línea, el
       // plan, el peso y la grasa; lo demás, plegado en «Más datos».
       cont.appendChild(controlCorto(d));
-      cont.appendChild(plan(d));
+      cont.appendChild(llegadaDe(d) ? llegada(d) : plan(d));
       cont.appendChild(peso(d));
       cont.appendChild(grasa(d));
       cont.appendChild(masDatos(d));
@@ -223,6 +225,128 @@ const SeccionProgreso = (() => {
       return n;
     }
 
+    // ------------------------------------------------------------ al llegar
+    // Lo decidiste el 18/11/2026: al llegar al peso meta, Moss aplica solo lo que sigue (Cuestionario.etapaDelPlan).
+    // En lugar del plan, lo que pasa ahora: que llegaste, qué hace Moss y cómo cambiarlo; con «Lo decido después»,
+    // al terminar el mantenimiento pregunta, con las mismas opciones del cuestionario. Para verlo con la persona de
+    // ejemplo, `s.llegada` es la etapa: 'mantenimiento', 'pregunta', 'piso' o lo que sigue.
+    function llegadaDe(d) {
+      if (!s.llegada) return null;
+      const mantenimiento = s.llegada === 'mantenimiento';
+      const despues = mantenimiento ? despuesDe(d.perfil) : s.llegada === 'pregunta' ? 'despues' : s.llegada === 'piso' ? 'grasa' : s.llegada;
+      return {
+        objetivo: 'bajar', pesoMeta: Math.round(nivelDe(d) * 2) / 2, fecha: Fechas.sumarDias(Datos.HOY, mantenimiento ? -5 : -20), despues,
+        piso: s.llegada === 'piso' ? Fechas.sumarDias(Datos.HOY, -3) : null, aplicada: null, soltada: false,
+      };
+    }
+    const etapaDe = (d) => Cuestionario.etapaDelPlan(llegadaDe(d), Datos.HOY);
+    const pesasDe = (d) => Cuestionario.entrenaFuerza(d.perfil.entreno);
+    // El ritmo de lo que sigue, en % del peso por semana: el que Moss puso al aplicarlo.
+    function pctDe(que, d) {
+      const toca = Cuestionario.loQueToca({ cual: 'sigue', que, piso: false }, { proteina: d.perfil.proteina, experiencia: d.perfil.experiencia, pesas: pesasDe(d) });
+      return numero(Math.abs(Metas.RITMOS[que === 'grasa' ? 'bajar' : 'subir'][toca.ritmo]), 2);
+    }
+    // Lo que hace Moss en lo que sigue: la línea aprobada de cada opción del cuestionario; sin pesas, lo que les falta.
+    function queHaceMoss(que, piso, d) {
+      if (piso) return tx('progreso.llegada.piso');
+      if (que !== 'mantener' && !pesasDe(d)) return tx('entrada.cuestionario.despues.sinPesas.' + que);
+      return tx('entrada.cuestionario.despues.que.' + que, { pct: que === 'grasa' || que === 'musculo' ? pctDe(que, d) : '' });
+    }
+    // La línea del control mientras dura lo que sigue: qué busca ahora.
+    function controlDeLaEtapa(d) {
+      const etapa = etapaDe(d);
+      if (etapa.cual === 'haciaLaMeta') return null;
+      const clave = etapa.cual === 'sigue' ? (etapa.piso ? 'mantener' : etapa.que) : etapa.cual;
+      return tx('progreso.llegada.control.' + clave, { pct: clave === 'grasa' || clave === 'musculo' ? pctDe(clave, d) : '' });
+    }
+    function llegada(d) {
+      const l = llegadaDe(d);
+      const etapa = etapaDe(d);
+      const kg = kgCorto(l.pesoMeta);
+      let chip, titulo, sub;
+      if (etapa.cual === 'mantenimiento') {
+        [chip, titulo, sub] = [tx('progreso.llegada.estados.mantenimiento'), tx('progreso.llegada.titulo', { kg }), tx('progreso.llegada.el', { fecha: u.fechaLarga(l.fecha) })];
+      } else {
+        chip = etapa.cual === 'pregunta' ? tx('progreso.llegada.estados.pregunta') : tx('progreso.plan.siguiente.' + etapa.que);
+        titulo = etapa.cual === 'pregunta' ? tx('progreso.llegada.titulos.pregunta')
+          : etapa.que === 'mantener' ? tx('progreso.llegada.titulos.mantener', { kg: etapa.piso ? kgCorto(Math.round(nivelDe(d) * 2) / 2) : kg })
+          : tx('entrada.cuestionario.despues.opciones.' + etapa.que)[0];
+        sub = tx('progreso.llegada.llegaste', { kg, fecha: u.fechaLarga(l.fecha) });
+      }
+      const c = carta('pg-plan pg-llegada', tx('progreso.plan.titulo'), el('em', 'in-estado ' + (etapa.cual === 'pregunta' ? 'despacio' : 'enCamino'), chip));
+      // Otra etapa es otra tarjeta: lo de adentro entra con un fundido.
+      const dentro = el('div', 'pg-llegada-dentro');
+      dentro.append(el('div', 'pg-plan-titulo', titulo), el('div', 'pg-plan-para', sub));
+      if (etapa.cual === 'mantenimiento') {
+        dentro.appendChild(pistaDeLaLlegada(d, l, etapa));
+        dentro.appendChild(el('p', 'pg-texto', tx('progreso.llegada.mantenimiento', { hasta: u.fechaLarga(etapa.hasta) }) + (l.objetivo === 'bajar' ? ' ' + tx('progreso.llegada.agua') : '')));
+        dentro.appendChild(el('p', 'pg-texto pg-plan-despues', tx('progreso.plan.luego.' + (etapa.luego === 'despues' ? 'eliges' : etapa.luego), { kg })));
+      }
+      if (etapa.cual === 'sigue') dentro.appendChild(el('p', 'pg-texto', queHaceMoss(etapa.que, etapa.piso, d)));
+      if (etapa.cual === 'pregunta') pregunta(d, l, dentro);
+      c.appendChild(dentro);
+      const cambiar = boton('cm-enlace pg-plan-cambiar' + (s.cambiarPlan ? ' abierto' : ''), `<span>${tx('progreso.plan.cambiar')}</span>${icono('adelante')}`, () => { s.cambiarPlan = !s.cambiarPlan; pintar(); });
+      cambiar.setAttribute('aria-expanded', String(s.cambiarPlan));
+      c.appendChild(cambiar);
+      if (s.cambiarPlan) c.appendChild(estrategia(d, true));
+      return c;
+    }
+    // «¿Cómo sigues?»: las opciones que se pueden, una elegida con lo que hace Moss, y «Empezar».
+    function pregunta(d, l, dentro) {
+      dentro.appendChild(el('p', 'pg-texto', tx('progreso.llegada.pregunta')));
+      const lista = el('div', 'aj-estilos pg-llegada-opciones');
+      lista.setAttribute('role', 'radiogroup');
+      Cuestionario.opcionesDeLoQueSigue({ objetivo: l.objetivo, pesoMeta: l.pesoMeta, alturaCm: d.perfil.alturaCm, sinDeficit: sinDeficit() }).filter((x) => x !== 'despues').forEach((x) => {
+        const [nombre, detalle] = tx('entrada.cuestionario.despues.opciones.' + x);
+        const b = boton('aj-estilo', '', () => { s.elegidaAlLlegar = x; pintar(); });
+        b.dataset.valor = x;
+        b.setAttribute('aria-pressed', String(s.elegidaAlLlegar === x));
+        b.append(el('b', null, nombre), el('span', null, detalle));
+        lista.appendChild(b);
+      });
+      dentro.appendChild(lista);
+      if (s.elegidaAlLlegar) {
+        const elegida = el('div', 'pg-llegada-elegida');
+        elegida.append(
+          el('p', 'pg-nota', queHaceMoss(s.elegidaAlLlegar, false, d)),
+          boton('pg-invita-boton pg-llegada-empezar', `<span>${tx('progreso.llegada.empezar')}</span>`, () => { s.llegada = s.elegidaAlLlegar; s.elegidaAlLlegar = null; pintar(); }),
+        );
+        dentro.appendChild(elegida);
+      }
+    }
+    // El mantenimiento en una línea: desde que llegaste (la meta, en oro) hasta que termina, con hoy encima, y al
+    // final lo que sigue, con su dibujo, como en el plan.
+    function pistaDeLaLlegada(d, l, etapa) {
+      const ancho = 70;
+      const total = Math.max(1, Fechas.diasEntre(l.fecha, etapa.hasta));
+      const enHoy = Math.min(ancho, Math.max(0, (Fechas.diasEntre(l.fecha, Datos.HOY) / total) * ancho));
+      const caja = el('div', 'pg-pista');
+      const linea = el('div', 'pg-pista-linea');
+      linea.style.right = (100 - ancho) + '%';
+      const mant = el('i', 'pg-pista-mant');
+      mant.style.left = '0';
+      mant.style.width = '100%';
+      const hecho = el('i', 'pg-pista-hecho pg-pista-hecho-mant');
+      linea.append(mant, hecho);
+      caja.appendChild(linea);
+      [{ clase: 'inicio meta', left: 0, etq: u.fechaCorta(l.fecha), kg: l.pesoMeta }, { clase: 'hoy', left: enHoy, etq: tx('progreso.hoy'), kg: d.pesoHoy }].forEach((x, i) => {
+        // Pegado al principio, hoy también se alinea al borde, como la llegada.
+        const pt = el('div', 'pg-pista-punto ' + x.clase + (x.left < 8 ? ' al-borde' : ''));
+        pt.style.left = x.left.toFixed(1) + '%';
+        pt.appendChild(el('i'));
+        // Pegados al principio, hoy y la llegada no entran los dos: queda el de hoy.
+        if (x.clase === 'hoy' || enHoy >= 17) pt.append(el('small', null, x.etq), el('b', null, numero(x.kg, 1)));
+        pt.style.animationDelay = `${0.08 * i}s`;
+        caja.appendChild(pt);
+      });
+      const m = el('div', 'pg-pista-mant-etq', tx('progreso.plan.mantener'));
+      m.style.left = (ancho / 2) + '%';
+      caja.appendChild(m);
+      caja.appendChild(siguiente(etapa.luego, ancho));
+      requestAnimationFrame(() => { hecho.style.width = (enHoy / ancho * 100).toFixed(1) + '%'; });
+      return caja;
+    }
+
     // ------------------------------------------------------------ el próximo control, en una línea
     // Arriba de todo (lo pediste el 2/11/2026): cuándo, cómo viene y lo que le falta, en corto.
     // Tocándolo se abre lo demás: qué pasa ese día y qué día de la semana se hace.
@@ -241,6 +365,9 @@ const SeccionProgreso = (() => {
       const textos = el('div', 'pg-cc-textos');
       const cuando = e.faltan === 0 ? tx('progreso.hoy') : e.faltan === 1 ? tx('progreso.manana') : tx('progreso.enDias', { n: e.faltan });
       textos.append(el('b', null, tx('progreso.control.titulo', { dia: tx('fecha.dias.' + Fechas.diaDeLaSemana(e.fecha)), cuando })), el('span', null, requisitos(e)));
+      // Al llegar, qué busca ahora el control.
+      const etapa = controlDeLaEtapa(d);
+      if (etapa) textos.appendChild(el('small', 'pg-cc-etapa', etapa));
       fila.innerHTML = icono('reloj');
       fila.append(textos, el('em', 'in-estado ' + (estado === 'alcanza' ? 'enCamino' : estado === 'enCurso' ? '' : 'despacio'), tx('progreso.' + estado)));
       fila.insertAdjacentHTML('beforeend', icono('abajo'));
@@ -725,6 +852,8 @@ const SeccionProgreso = (() => {
       cambiarPlan(si) { s.cambiarPlan = si; pintar(); },
       sinMedidas(si) { s.sinMedidas = si; pintar(); },
       despues(v) { s.despues = v; pintar(); },
+      llegada(v) { s.llegada = v; s.elegidaAlLlegar = null; pintar(); },
+      elegirAlLlegar(v) { s.elegidaAlLlegar = v; pintar(); },
       bajarA(selector) {
         const n = cont.querySelector(selector);
         if (n) cont.scrollTo({ top: Math.max(0, cont.scrollTop + n.getBoundingClientRect().top - cont.getBoundingClientRect().top - 70), behavior: 'auto' });

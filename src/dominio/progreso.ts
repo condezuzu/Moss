@@ -12,7 +12,7 @@ import { DEFICIT_MAXIMO, KCAL_POR_KG, KG_POR_SEMANA_MAXIMOS, MAYORIA_DE_EDAD, pi
 const DIAS_DEL_RITMO = 21;
 const DIAS_MINIMOS = 14;
 /** A medio kilo de la meta ya llegaste: la tendencia se mueve más que eso en una semana común. */
-const LLEGASTE_KG = 0.5;
+export const LLEGASTE_KG = 0.5;
 /** Con menos de la mitad del ritmo del plan, vas despacio; casi sin moverte, estás quieto. */
 const DESPACIO = 0.5;
 const QUIETO_KG_SEMANA = 0.05;
