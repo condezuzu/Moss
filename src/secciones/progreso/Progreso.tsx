@@ -11,6 +11,7 @@ import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type 
 import Animated, { FadeIn, LayoutAnimationConfig, ReduceMotion, useAnimatedRef, useAnimatedStyle, useReducedMotion, useScrollOffset, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { elAlmacen } from '@/almacen';
+import { deportesDePerfil, etapaDelPlan, type EtapaDelPlan } from '@/dominio/cuestionario';
 import { rangoDeGrasa, ultimasMedidas } from '@/dominio/cuerpo';
 import { CON_ASCENT } from '@/lib/banderas';
 import { diaDeLaSemana, diasEntre, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
@@ -36,12 +37,13 @@ import {
 } from '../tarjetas';
 import { tecladoDeNumeros } from '../teclado';
 import { ElGasto, LasMedidas, MasDatos, Semanas } from './MasDatos';
-import { calcularPlan, ElPlan, Flecha, LaEstrategia, MacrosEnLinea, SIN_ELEGIR, type EleccionDelPlazo } from './Plan';
+import { calcularPlan, controlDeLaEtapa, ElPlan, Flecha, LaEstrategia, LaLlegada, MacrosEnLinea, SIN_ELEGIR, type EleccionDelPlazo } from './Plan';
 import { conSignoFijo, unidades, type U } from './unidades';
 
 type Props = { ancho: number; arriba: number; abajo: number; alAbrirMas: (vista: VistaDelMas) => void };
 
 const PROGRESO = PESTANAS.indexOf('progreso');
+const HACIA_LA_META: EtapaDelPlan = { cual: 'haciaLaMeta' };
 
 export function PaginaDeProgreso({ ancho, arriba, abajo, alAbrirMas }: Props) {
   const [vista, setVista] = useState<'principal' | 'metas'>('principal');
@@ -164,6 +166,11 @@ function Principal({ ancho, alAbrirMas, alVerMetas, ascent }: { ancho: number; a
   const empezo = !p.deEjemplo ? e.metas[0]?.desde : undefined;
   const desde = empezo && p.tendencia.has(empezo) ? empezo : primera;
   const comidas = useMemo(() => (p.deEjemplo ? comidasDeEjemplo(e.hoy) : comidasParaElControl(e.registros.values())), [p.deEjemplo, e.hoy, e.registros]);
+  // Al llegar al peso meta, lo que Moss aplicó solo: en lugar del plan, la llegada (cuestionario.ts, etapaDelPlan).
+  const etapa = useMemo(() => (p.deEjemplo ? HACIA_LA_META : etapaDelPlan(e.llegada, e.hoy)), [p.deEjemplo, e.llegada, e.hoy]);
+  const estrategia = calculo && (
+    <LaEstrategia p={p} calculo={calculo} hoy={e.hoy} u={u} numeros={numeros} abierto={abierto} alternar={alternar} eleccion={eleccion} alElegir={elegir} alVerMetas={alVerMetas} />
+  );
   return (
     <>
       <View style={s.cabecera}>
@@ -173,10 +180,18 @@ function Principal({ ancho, alAbrirMas, alVerMetas, ascent }: { ancho: number; a
         {ascent}
       </View>
       {p.deEjemplo && <AvisoDeEjemplo texto={t('progreso.ejemplo')} />}
-      <ControlCorto p={p} abierto={abierto === 'control'} alTocar={() => alternar('control')} />
-      {calculo && (
+      <ControlCorto p={p} abierto={abierto === 'control'} alTocar={() => alternar('control')} etapa={controlDeLaEtapa(etapa, p)} />
+      {calculo && e.llegada && etapa.cual !== 'haciaLaMeta' ? (
+        <LaLlegada
+          p={p} llegada={e.llegada} etapa={etapa} hoy={e.hoy} u={u} aMano={e.metas[e.metas.length - 1]?.motivo === 'manual'}
+          pesas={!!e.entreno && deportesDePerfil(e.entreno).includes('fuerza')} experiencia={e.respuestas?.experiencia ?? null} alElegir={(x) => elAlmacen().elegirLoQueSigue(x)}
+          cambiarPlan={cambiarPlan} alCambiarPlan={() => setCambiarPlan((x) => !x)}
+        >
+          {estrategia}
+        </LaLlegada>
+      ) : calculo && (
         <ElPlan p={p} calculo={calculo} hoy={e.hoy} desde={desde} u={u} abierto={abierto} alternar={alternar} cambiarPlan={cambiarPlan} alCambiarPlan={() => setCambiarPlan((x) => !x)}>
-          <LaEstrategia p={p} calculo={calculo} hoy={e.hoy} u={u} numeros={numeros} abierto={abierto} alternar={alternar} eleccion={eleccion} alElegir={elegir} alVerMetas={alVerMetas} />
+          {estrategia}
         </ElPlan>
       )}
       <ElPeso p={p} hoy={e.hoy} u={u} ancho={interior} alRegistrar={() => alAbrirMas('peso')} />
@@ -193,7 +208,7 @@ function Principal({ ancho, alAbrirMas, alVerMetas, ascent }: { ancho: number; a
 // ------------------------------------------------------------------ el próximo control, en una línea
 // Arriba de todo (lo pediste el 2/11/2026): cuándo, cómo viene y lo que le falta, en corto. Tocándolo
 // se abre lo demás: qué pasa ese día y qué día de la semana se hace.
-function ControlCorto({ p, abierto, alTocar }: { p: Persona; abierto: boolean; alTocar: () => void }) {
+function ControlCorto({ p, abierto, alTocar, etapa }: { p: Persona; abierto: boolean; alTocar: () => void; etapa: string | null }) {
   const ec = p.estadoControl;
   if (!ec) return null;
   // Mientras quedan días antes del control, todavía puede llegar: está en curso, no le falta nada.
@@ -211,6 +226,12 @@ function ControlCorto({ p, abierto, alTocar }: { p: Persona; abierto: boolean; a
         <View style={s.controlTextos}>
           <Text style={s.controlTitulo}>{t('progreso.control.titulo', { dia: lista('fecha.dias')[diaDeLaSemana(ec.fecha)], cuando })}</Text>
           <Text style={s.controlRequisitos}>{`${comida} · ${pesadas}`}</Text>
+          {/* Al llegar, qué busca ahora el control. */}
+          {etapa && (
+            <Aparece key={etapa}>
+              <Text style={s.controlEtapa}>{etapa}</Text>
+            </Aparece>
+          )}
         </View>
         <Chip texto={t(`progreso.${estado}`)} tipo={estado === 'alcanza' ? 'bien' : estado === 'faltanDatos' ? 'atencion' : undefined} />
         <Flecha abierta={abierto} grados={180} tam={13} color="rgba(239, 230, 207, 0.4)" />
@@ -564,6 +585,7 @@ const s = StyleSheet.create({
   controlTitulo: { fontFamily: letras.textoMedio, fontSize: 14.5, lineHeight: 18, color: colores.pergamino },
   controlRequisitos: { fontFamily: letras.texto, fontSize: 12, lineHeight: 15, color: 'rgba(239, 230, 207, 0.55)', fontVariant: ['tabular-nums'] },
   controlDentro: { paddingBottom: 12 },
+  controlEtapa: { fontFamily: letras.texto, fontSize: 12, lineHeight: 15, color: colores.salvia },
   rangos: { alignSelf: 'flex-start', flexDirection: 'row', gap: 4, padding: 4, marginTop: 6, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.1)', backgroundColor: 'rgba(6, 10, 22, 0.55)' },
   rango: { paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999 },
   rangoElegido: { backgroundColor: 'rgba(239, 230, 207, 0.1)' },

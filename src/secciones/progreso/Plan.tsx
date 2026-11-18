@@ -3,13 +3,14 @@
 // margen, y «Cambiar el plan», que despliega ahí mismo el objetivo, el peso meta, el ritmo y el plazo
 // (D35) y las metas de hoy. Las cuentas son las del dominio: planPorEtapas, ritmoConRango y el plazo.
 
+import * as Haptics from 'expo-haptics';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View, type AccessibilityActionEvent, type ViewStyle } from 'react-native';
 import Animated, { Easing, FadeIn, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
 import { elAlmacen } from '@/almacen';
 import { KG_POR_LIBRA } from '@/dominio/cantidades';
-import type { Despues } from '@/dominio/cuestionario';
+import { loQueToca, opcionesDeLoQueSigue, type Despues, type EtapaDelPlan, type Experiencia, type Llegada } from '@/dominio/cuestionario';
 import { diasEntre, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { edadDe, objetivoPermitido, pesoMinimoSano, pisoDe, RITMOS, type Macros, type Objetivo, type Ritmo } from '@/dominio/metas';
 import {
@@ -251,6 +252,176 @@ function Siguiente({ que, desde }: { que: LoQueSigueDibujado; desde: number }) {
           </Animated.View>
         </>
       )}
+    </View>
+  );
+}
+
+// ------------------------------------------------------------------ al llegar
+// Lo decidiste el 18/11/2026: al llegar al peso meta, Moss aplica solo lo que sigue (cuestionario.ts, etapaDelPlan).
+// En lugar del plan, lo que pasa ahora: que llegaste, qué hace Moss y cómo cambiarlo. Con «Lo decido después», al
+// terminar el mantenimiento pregunta, con las mismas opciones del cuestionario.
+
+type PropsDeLaLlegada = {
+  p: Persona; llegada: Llegada; etapa: Exclude<EtapaDelPlan, { cual: 'haciaLaMeta' }>; hoy: ClaveDia; u: U;
+  aMano: boolean; pesas: boolean; experiencia: Experiencia | null; alElegir: (x: Exclude<Despues, 'despues'>) => void;
+  cambiarPlan: boolean; alCambiarPlan: () => void; children: ReactNode;
+};
+
+export function LaLlegada({ p, llegada, etapa, hoy, u, aMano, pesas, experiencia, alElegir, cambiarPlan, alCambiarPlan, children }: PropsDeLaLlegada) {
+  const kg = u.corto(llegada.pesoMeta);
+  const subiendo = llegada.objetivo === 'subir';
+  let chip: string;
+  let titulo: string;
+  let sub: string;
+  if (etapa.cual === 'mantenimiento') {
+    chip = t('progreso.llegada.estados.mantenimiento');
+    titulo = u.texto(t('progreso.llegada.titulo', { kg }));
+    sub = t('progreso.llegada.el', { fecha: fechaLarga(llegada.fecha) });
+  } else {
+    chip = etapa.cual === 'pregunta' ? t('progreso.llegada.estados.pregunta') : t(`progreso.plan.siguiente.${etapa.que}`);
+    titulo = etapa.cual === 'pregunta' ? t('progreso.llegada.titulos.pregunta')
+      : etapa.que === 'mantener' ? u.texto(t('progreso.llegada.titulos.mantener', { kg: etapa.piso ? u.corto(p.pesoHoy ?? llegada.pesoMeta) : kg }))
+      : lista(`entrada.cuestionario.despues.opciones.${etapa.que}`)[0];
+    sub = u.texto(t('progreso.llegada.llegaste', { kg, fecha: fechaLarga(llegada.fecha) }));
+  }
+  return (
+    <Carta titulo={t('progreso.plan.titulo')} derecha={<Chip texto={chip} tipo={etapa.cual === 'pregunta' ? 'atencion' : 'bien'} />}>
+      {/* Otra etapa es otra tarjeta: entra con un fundido. */}
+      <Aparece key={etapa.cual === 'sigue' ? etapa.que : etapa.cual} style={s.llegada}>
+        <Text style={s.titulo}>{titulo}</Text>
+        <Text style={s.para}>{sub}</Text>
+        {etapa.cual === 'mantenimiento' && (
+          <>
+            <PistaDeLaLlegada llegada={llegada} hasta={etapa.hasta} hoy={hoy} pesoHoy={p.pesoHoy ?? llegada.pesoMeta} luego={etapa.luego} u={u} />
+            <Parrafo>{`${t('progreso.llegada.mantenimiento', { hasta: fechaLarga(etapa.hasta) })}${llegada.objetivo === 'bajar' ? ` ${t('progreso.llegada.agua')}` : ''}`}</Parrafo>
+            <Text style={s.despues}>{u.texto(t(`progreso.plan.luego.${etapa.luego === 'despues' ? 'eliges' : etapa.luego}`, { kg }))}</Text>
+          </>
+        )}
+        {etapa.cual === 'sigue' && <Parrafo>{queHaceMoss(etapa, p.perfil.ritmo, pesas)}</Parrafo>}
+        {etapa.cual === 'pregunta' && <LaPregunta p={p} llegada={llegada} subiendo={subiendo} pesas={pesas} experiencia={experiencia} alElegir={alElegir} />}
+        {aMano && <Text style={s.ajusta}>{t('progreso.llegada.aMano')}</Text>}
+      </Aparece>
+      <View style={s.cambiar}>
+        <Pressable onPress={alCambiarPlan} style={({ pressed }) => [s.enlace, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityState={{ expanded: cambiarPlan }} hitSlop={8}>
+          <Text style={s.enlaceTexto}>{t('progreso.plan.cambiar')}</Text>
+          <Flecha abierta={cambiarPlan} tam={12} />
+        </Pressable>
+      </View>
+      {cambiarPlan && <Aparece style={s.estrategia}>{children}</Aparece>}
+    </Carta>
+  );
+}
+
+/** El ritmo de lo que sigue, en % del peso por semana: el del perfil, que es el que sigue el control. */
+const pctDe = (que: 'grasa' | 'musculo', ritmo: Ritmo) => numero(Math.abs(RITMOS[que === 'grasa' ? 'bajar' : 'subir'][ritmo]), 2);
+
+/** Lo que hace Moss en lo que sigue: la línea aprobada de cada opción del cuestionario; sin pesas, lo que les falta. */
+function queHaceMoss(etapa: { que: Exclude<Despues, 'despues'>; piso: boolean }, ritmo: Ritmo, pesas: boolean): string {
+  if (etapa.piso) return t('progreso.llegada.piso');
+  const { que } = etapa;
+  if (que !== 'mantener' && !pesas) return t(`entrada.cuestionario.despues.sinPesas.${que}`);
+  return t(`entrada.cuestionario.despues.que.${que}`, { pct: que === 'grasa' || que === 'musculo' ? pctDe(que, ritmo) : '' });
+}
+
+/** La línea del control mientras dura lo que sigue: qué busca ahora. */
+export function controlDeLaEtapa(etapa: EtapaDelPlan, p: Persona): string | null {
+  if (etapa.cual === 'haciaLaMeta') return null;
+  const clave = etapa.cual === 'sigue' ? (etapa.piso ? 'mantener' : etapa.que) : etapa.cual;
+  return t(`progreso.llegada.control.${clave}`, { pct: clave === 'grasa' || clave === 'musculo' ? pctDe(clave, p.perfil.ritmo) : '' });
+}
+
+/** «¿Cómo sigues?»: las opciones que se pueden, una elegida con lo que hace Moss, y «Empezar». */
+function LaPregunta({ p, llegada, subiendo, pesas, experiencia, alElegir }: { p: Persona; llegada: Llegada; subiendo: boolean; pesas: boolean; experiencia: Experiencia | null; alElegir: PropsDeLaLlegada['alElegir'] }) {
+  const [elegida, setElegida] = useState<Exclude<Despues, 'despues'> | null>(null);
+  // Lo que haría Moss con la elegida: con el ritmo que pondría al empezar, todavía no el del perfil.
+  const ritmo = elegida ? loQueToca({ cual: 'sigue', que: elegida, piso: false }, { experiencia, pesas })?.ritmo ?? p.perfil.ritmo : p.perfil.ritmo;
+  const opciones = opcionesDeLoQueSigue({ objetivo: llegada.objetivo, pesoMeta: llegada.pesoMeta, alturaCm: p.perfil.alturaCm, sinDeficit: p.perfil.sinDeficit })
+    .filter((x): x is Exclude<Despues, 'despues'> => x !== 'despues');
+  return (
+    <>
+      <Parrafo>{t('progreso.llegada.pregunta')}</Parrafo>
+      <View style={s.opciones} accessibilityRole="radiogroup">
+        {opciones.map((x, i) => {
+          const [nombre, detalle] = lista(`entrada.cuestionario.despues.opciones.${x}`);
+          const texto = subiendo && x === 'grasa' ? t('entrada.cuestionario.despues.opciones.grasaSubir') : subiendo && x === 'musculo' ? t('entrada.cuestionario.despues.opciones.musculoSubir') : detalle;
+          const si = x === elegida;
+          return (
+            <Pressable
+              key={x}
+              onPress={() => {
+                if (!si) Haptics.selectionAsync().catch(() => {});
+                setElegida(x);
+              }}
+              style={({ pressed }) => [s.opcion, i > 0 && s.opcionSeparada, pressed && !si && { opacity: 0.7 }]}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: si }}
+            >
+              <View style={[s.radio, si && s.radioElegido]}>{si && <View style={s.radioPunto} />}</View>
+              <View style={s.opcionTextos}>
+                <Text style={s.opcionNombre}>{nombre}</Text>
+                <Text style={s.opcionTexto}>{texto}</Text>
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+      {elegida && (
+        <Aparece key={elegida}>
+          <Text style={s.nota}>{queHaceMoss({ que: elegida, piso: false }, ritmo, pesas)}</Text>
+          <Pressable onPress={() => alElegir(elegida)} style={({ pressed }) => [s.empezar, pressed && { opacity: 0.75 }]} accessibilityRole="button">
+            <Text style={s.empezarTexto}>{t('progreso.llegada.empezar')}</Text>
+          </Pressable>
+        </Aparece>
+      )}
+    </>
+  );
+}
+
+/**
+ * El mantenimiento en una línea: desde que llegaste (la meta, en oro) hasta que termina, con hoy encima, y al final
+ * lo que sigue, con su dibujo, como en el plan.
+ */
+function PistaDeLaLlegada({ llegada, hasta, hoy, pesoHoy, luego, u }: { llegada: Llegada; hasta: ClaveDia; hoy: ClaveDia; pesoHoy: number; luego: Despues; u: U }) {
+  const reducido = useReducedMotion();
+  const ancho = ANCHO_DE_LA_LINEA;
+  const total = Math.max(1, diasEntre(llegada.fecha, hasta));
+  const enHoy = Math.min(ancho, Math.max(0, (diasEntre(llegada.fecha, hoy) / total) * ancho));
+  const hecho = useSharedValue(reducido ? enHoy / ancho : 0);
+  useEffect(() => {
+    hecho.set(reducido ? enHoy / ancho : withTiming(enHoy / ancho, { duration: 1200, easing: LLENA, reduceMotion: ReduceMotion.Never }));
+  }, [enHoy, ancho, reducido, hecho]);
+  const lleno = useAnimatedStyle(() => ({ width: `${hecho.get() * 100}%` }));
+  const puntos = [
+    { clave: 'meta', left: 0, fecha: fechaDiaMes(llegada.fecha), kg: llegada.pesoMeta },
+    { clave: 'hoy', left: enHoy, fecha: t('progreso.hoy'), kg: pesoHoy },
+  ];
+  return (
+    <View style={s.pista} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <View style={[s.linea, { right: `${100 - ancho}%` }]}>
+        <View style={[s.mant, { left: 0, width: '100%' }]}>
+          {TRAZOS.map((i) => <View key={i} style={s.trazo} />)}
+        </View>
+        <Animated.View style={[s.hecho, s.hechoMant, lleno]} />
+      </View>
+      {puntos.map((x, i) => (
+        <Animated.View key={x.clave} entering={FadeIn.duration(400).delay(80 * i).reduceMotion(ReduceMotion.Never)} style={[s.punto, { left: `${x.left}%` }]}>
+          {/* Pegado al principio, hoy también se alinea al borde, como la llegada. */}
+          <View style={[s.puntoDentro, (x.clave === 'meta' || x.left < 8) && s.puntoInicio]}>
+            <View style={[s.bolita, x.clave === 'meta' ? s.bolitaMeta : s.bolitaHoy]} />
+            {/* Pegados al principio, hoy y la llegada no entran los dos: queda el de hoy. */}
+            {(x.clave === 'hoy' || enHoy >= 17) && (
+              <>
+                <Text style={[s.puntoFecha, x.clave === 'hoy' && s.puntoHoy]} maxFontSizeMultiplier={1.2}>{x.fecha}</Text>
+                <Text style={[s.puntoKg, x.clave === 'hoy' ? s.puntoHoy : s.puntoMeta]} maxFontSizeMultiplier={1.2}>{u.peso(x.kg, 1)}</Text>
+              </>
+            )}
+          </View>
+        </Animated.View>
+      ))}
+      <View style={[s.mantEtq, { left: `${ancho / 2}%` }]}>
+        <Text style={s.mantTexto} maxFontSizeMultiplier={1.2}>{t('progreso.plan.mantener')}</Text>
+      </View>
+      <Siguiente key={luego} que={luego} desde={ancho} />
     </View>
   );
 }
@@ -589,4 +760,20 @@ const s = StyleSheet.create({
   paso: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
   pasoValor: { minWidth: 84, textAlign: 'center', fontFamily: letras.numeroMedio, fontSize: 18, color: colores.pergamino, fontVariant: ['tabular-nums'] },
   pasoFecha: { minWidth: 92 },
+  llegada: { gap: 6 },
+  hechoMant: { backgroundColor: 'rgba(166, 191, 148, 0.8)' },
+  opciones: { marginTop: 4, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.1)', backgroundColor: 'rgba(6, 10, 22, 0.55)' },
+  opcion: { flexDirection: 'row', gap: 14, paddingVertical: 13, paddingHorizontal: 16 },
+  opcionSeparada: { borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.08)' },
+  radio: { marginTop: 3, width: 14, height: 14, borderRadius: 7, borderWidth: 1.5, borderColor: 'rgba(239, 230, 207, 0.35)', alignItems: 'center', justifyContent: 'center' },
+  radioElegido: { borderColor: colores.oro },
+  radioPunto: { width: 6, height: 6, borderRadius: 3, backgroundColor: colores.oro },
+  opcionTextos: { flex: 1, gap: 3 },
+  opcionNombre: { fontFamily: letras.textoMedio, fontSize: 15, color: colores.pergamino },
+  opcionTexto: { fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17, color: 'rgba(239, 230, 207, 0.6)' },
+  empezar: {
+    alignSelf: 'flex-start', marginTop: 8, paddingVertical: 10, paddingHorizontal: 18, borderRadius: 999,
+    borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.45)', backgroundColor: 'rgba(232, 196, 106, 0.1)',
+  },
+  empezarTexto: { fontFamily: letras.textoMedio, fontSize: 14, color: colores.oroClaro },
 });

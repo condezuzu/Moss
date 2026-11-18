@@ -1769,6 +1769,33 @@
     "masDatos": {
       "titulo": "More data",
       "sub": "Week by week, measurements and expenditure"
+    },
+    "llegada": {
+      "estados": {
+        "mantenimiento": "Maintenance",
+        "pregunta": "You decide"
+      },
+      "titulo": "You reached {kg} kg",
+      "el": "On {fecha}",
+      "mantenimiento": "Until {hasta}, Moss sets you at what you burn, so your weight settles.",
+      "agua": "It's normal for it to go up a little these days: it's water, not fat.",
+      "titulos": {
+        "mantener": "Stay at {kg} kg",
+        "pregunta": "How do you want to continue?"
+      },
+      "llegaste": "You reached {kg} kg on {fecha}.",
+      "piso": "It's the lowest healthy weight for your height: Moss stops the loss and adjusts your calories so you stay there.",
+      "pregunta": "Your maintenance is over. While you choose, Moss keeps you at what you burn.",
+      "empezar": "Start",
+      "aMano": "Your targets are set by hand: Moss doesn't change them.",
+      "control": {
+        "mantenimiento": "Adjusts so you eat what you burn.",
+        "pregunta": "Adjusts so you eat what you burn.",
+        "mantener": "Adjusts so your weight stays there.",
+        "grasa": "Adjusts so you lose slowly, {pct}% a week.",
+        "recomponer": "Adjusts so you eat what you burn, with high protein.",
+        "musculo": "Adjusts so you gain slowly, {pct}% a week."
+      }
     }
   },
   "sueno": {

@@ -7,9 +7,9 @@
 import type { Entreno } from './alrededorDelEntreno';
 import type { Comida } from './comidas';
 import { MET_DE_LA_SESION, MET_EN_REPOSO } from './entrenamiento';
-import { SEMANA, type ClaveDia, type DiaSemana } from './fechas';
+import { SEMANA, sumarDias, type ClaveDia, type DiaSemana } from './fechas';
 import { ajusteDiario, estiloPermitido, gastoBasal, KCAL_POR_KG, macrosConProteina, MAYORIA_DE_EDAD, NIVELES, pesoMinimoSano, pisoDe, RANGOS_DEL_CUESTIONARIO, RITMOS, ritmoPermitido, type Actividad, type Eleccion, type Estilo, type Macros, type Objetivo, type Ritmo, type Sexo } from './metas';
-import { bordeDe } from './progreso';
+import { bordeDe, LLEGASTE_KG, SEMANAS_DE_MANTENIMIENTO } from './progreso';
 
 const aDiez = (n: number) => Math.round(n / 10) * 10;
 const limitar = (x: number, a: number, b: number) => Math.min(b, Math.max(a, x));
@@ -297,6 +297,116 @@ export function opcionesDeLoQueSigue(r: ParaLoQueSigue): Despues[] {
 
 /** Lo elegido, si se puede; si no (cambió algo antes), mantener. */
 export const loQueSigue = (r: ParaLoQueSigue, elegido: Despues): Despues => (opcionesDeLoQueSigue(r).includes(elegido) ? elegido : 'mantener');
+
+// ------------------------------------------------------------ al llegar al peso meta
+// Lo decidiste el 18/11/2026: al llegar, Moss lo aplica solo. «Llegó» es lo que dice el plan (planPorEtapas): el
+// peso de hoy sin el atraso de la tendencia a medio kilo de la meta o pasándola, y no si la meta ya estaba pasada al
+// empezar. Ese día queda fijo (si después el peso rebota medio kilo, no vuelve atrás) y desde ahí van unas semanas en
+// mantenimiento y lo que sigue; con «Lo decido después», Moss pregunta. Queda en el teléfono, como un ajuste.
+
+/** Lo que Moss ya puso en el perfil: cada etapa, una sola vez. «piso»: perdiendo grasa, llegó al peso sano mínimo. */
+export type ClaveDeEtapa = 'mantenimiento' | 'pregunta' | Exclude<Despues, 'despues'> | 'piso';
+
+export type Llegada = {
+  /** El plan al que se llegó: hacia dónde iba y su peso meta. */
+  objetivo: Exclude<Objetivo, 'mantener'>;
+  pesoMeta: number;
+  fecha: ClaveDia;
+  /** Lo que sigue: lo dicho en el cuestionario o, con «Lo decido después», lo que se eligió al terminar el mantenimiento. */
+  despues: Despues;
+  /** Perdiendo grasa, el día en que llegó al peso sano mínimo: desde ahí, mantener. */
+  piso: ClaveDia | null;
+  aplicada: ClaveDeEtapa | null;
+  /** Cambió el plan a mano después de llegar: Moss ya no cambia nada solo y, con ese mismo plan, no vuelve a llegar. */
+  soltada: boolean;
+};
+
+export type EtapaDelPlan =
+  | { cual: 'haciaLaMeta' }
+  | { cual: 'mantenimiento'; hasta: ClaveDia; luego: Despues }
+  | { cual: 'sigue'; que: Exclude<Despues, 'despues'>; piso: boolean }
+  | { cual: 'pregunta' };
+
+export const finDelMantenimiento = (l: Pick<Llegada, 'fecha'>) => sumarDias(l.fecha, SEMANAS_DE_MANTENIMIENTO * 7);
+
+/** En qué etapa está hoy: hacia la meta (o soltada), el mantenimiento, lo que sigue o, sin decidirlo, la pregunta. */
+export function etapaDelPlan(l: Llegada | null, hoy: ClaveDia): EtapaDelPlan {
+  if (!l || l.soltada || hoy < l.fecha) return { cual: 'haciaLaMeta' };
+  const hasta = finDelMantenimiento(l);
+  if (hoy < hasta) return { cual: 'mantenimiento', hasta, luego: l.despues };
+  if (l.despues === 'despues') return { cual: 'pregunta' };
+  if (l.despues === 'grasa' && l.piso) return { cual: 'sigue', que: 'mantener', piso: true };
+  return { cual: 'sigue', que: l.despues, piso: false };
+}
+
+export const claveDeEtapa = (x: EtapaDelPlan): ClaveDeEtapa | null =>
+  x.cual === 'haciaLaMeta' ? null : x.cual === 'sigue' ? (x.piso ? 'piso' : x.que) : x.cual;
+
+export type EntradaDeLaLlegada = {
+  hoy: ClaveDia;
+  guardada: Llegada | null;
+  /** El plan de hoy: el objetivo que se usa (objetivoPermitido) y su peso meta. */
+  objetivo: Objetivo;
+  pesoMeta?: number | null;
+  /** El peso de hoy sin el atraso de la tendencia, y el de la tendencia cuando se fijó el objetivo (como planPorEtapas). */
+  nivel: number | null;
+  pesoInicial?: number | null;
+  /** Lo dicho en el cuestionario; sin decirlo, Moss pregunta. */
+  despues: Despues | null;
+  alturaCm: number;
+  sinDeficit?: boolean;
+};
+
+/** La llegada que vale hoy: la guardada, la de hoy si llegó, o ninguna. */
+export function llegadaDeHoy(e: EntradaDeLaLlegada): Llegada | null {
+  const g = e.guardada;
+  if (g && !g.soltada) {
+    const bajando = g.despues === 'grasa' && !g.piso && e.hoy >= finDelMantenimiento(g);
+    return bajando && e.nivel !== null && e.nivel <= pesoMinimoSano(e.alturaCm) + LLEGASTE_KG ? { ...g, piso: e.hoy } : g;
+  }
+  if (e.objetivo === 'mantener' || !e.pesoMeta || e.nivel === null) return g;
+  if (g && g.objetivo === e.objetivo && g.pesoMeta === e.pesoMeta) return g;
+  const direccion = e.objetivo === 'bajar' ? -1 : 1;
+  const llego = (e.pesoMeta - e.nivel) * direccion <= LLEGASTE_KG && !(e.pesoInicial && (e.pesoMeta - e.pesoInicial) * direccion <= 0);
+  if (!llego) return g;
+  const despues = loQueSigue({ objetivo: e.objetivo, pesoMeta: e.pesoMeta, alturaCm: e.alturaCm, sinDeficit: e.sinDeficit }, e.despues ?? 'despues');
+  return { objetivo: e.objetivo, pesoMeta: e.pesoMeta, fecha: e.hoy, despues, piso: null, aplicada: null, soltada: false };
+}
+
+/**
+ * Lo que toca en cada etapa, lo que prometen las opciones de «Cuando llegues»: en el mantenimiento, en «mantener»,
+ * al llegar al piso y mientras pregunta, comer lo que gastas; perder grasa, bajar al ritmo suave (0,25 % por semana)
+ * con la proteína alta; recomponer, lo que gastas con la proteína de la recomposición; ganar músculo, subir al ritmo
+ * sugerido. La proteína va por kilo de hoy: la grasa dicha al empezar ya no es la de ahora. Bajando o subiendo, sin
+ * peso meta: no hay a dónde llegar. Hacia la meta, nada.
+ */
+export type LoQueToca = { objetivo: Objetivo; ritmo: Ritmo | null; recomponer: boolean; eleccion: Eleccion; sinPesoMeta: boolean };
+
+export function loQueToca(etapa: EtapaDelPlan, r: { proteina?: NivelDeProteina | null; experiencia?: Experiencia | null; pesas: boolean }): LoQueToca | null {
+  if (etapa.cual === 'haciaLaMeta') return null;
+  const nivel = r.proteina ?? 'recomendada';
+  const que = etapa.cual === 'sigue' && !etapa.piso ? etapa.que : 'mantener';
+  if (que === 'grasa') return { objetivo: 'bajar', ritmo: 'suave', recomponer: false, eleccion: { pct: RITMOS.bajar.suave, proteinaPorKg: PROTEINA_POR_NIVEL.bajar.alta }, sinPesoMeta: true };
+  if (que === 'musculo') {
+    const ritmo = ritmoSugerido('subir', r.pesas ? r.experiencia : null);
+    return { objetivo: 'subir', ritmo, recomponer: false, eleccion: { pct: RITMOS.subir[ritmo], proteinaPorKg: PROTEINA_POR_NIVEL.subir[nivel] }, sinPesoMeta: true };
+  }
+  const recomponer = que === 'recomponer';
+  return { objetivo: 'mantener', ritmo: null, recomponer, eleccion: { pct: null, proteinaPorKg: PROTEINA_POR_NIVEL[recomponer ? 'recomponer' : 'mantener'][nivel] }, sinPesoMeta: false };
+}
+
+const CLAVES_DE_ETAPA: readonly ClaveDeEtapa[] = ['mantenimiento', 'pregunta', 'mantener', 'grasa', 'recomponer', 'musculo', 'piso'];
+const esDia = (x: unknown): x is ClaveDia => typeof x === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x);
+
+/** Lo guardado, si tiene forma. */
+export function llegadaDe(x: unknown): Llegada | null {
+  if (!x || typeof x !== 'object') return null;
+  const o = x as Record<string, unknown>;
+  const objetivo = unoDe(['bajar', 'subir'] as const, o.objetivo);
+  const despues = unoDe(DESPUES, o.despues);
+  if (!objetivo || !despues || typeof o.pesoMeta !== 'number' || !Number.isFinite(o.pesoMeta) || !esDia(o.fecha)) return null;
+  return { objetivo, pesoMeta: o.pesoMeta, fecha: o.fecha, despues, piso: esDia(o.piso) ? o.piso : null, aplicada: unoDe(CLAVES_DE_ETAPA, o.aplicada), soltada: o.soltada === true };
+}
 
 // ------------------------------------------------------------ la proteína
 export type NivelDeProteina = 'baja' | 'recomendada' | 'alta';

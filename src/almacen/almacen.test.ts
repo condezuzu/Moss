@@ -3,7 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import type { Constelacion } from '../datos/catalogo';
 import datos from '../datos/constelaciones.json';
 import { progresoPorConstelacion } from '../dominio/dias';
-import { diaDeLaSemana } from '../dominio/fechas';
+import { diaDeLaSemana, sumarDias } from '../dominio/fechas';
 import type { Habito } from '../dominio/habitos';
 import { metaPara, metasIniciales, type Cuestionario, type MetaGuardada } from '../dominio/metas';
 import { aguaDelDia, borrado, delDia, itemDeAlimento, itemRapido, totalDelDia, vigentes, type Registro, type Valores } from '../dominio/registros';
@@ -1313,5 +1313,124 @@ describe('el cuestionario nuevo y los cuidados', () => {
     almacen.ponerPlazo({ pct: 0.7, fecha: null });
     expect(almacen.estado().plazo).toEqual({ pct: 0.7, fecha: null });
     expect(almacen.estado().metas[almacen.estado().metas.length - 1]).toMatchObject({ motivo: 'manual', kcal: aMano?.kcal });
+  });
+});
+
+describe('al llegar al peso meta, Moss aplica lo que sigue', () => {
+  // Bajando de 70 a 66 kg, con pesas y «perder grasa» para después.
+  const respuestas: Cuestionario = { edad: 31, sexo: 'f', alturaCm: 165, pesoKg: 70, actividad: 'algo', objetivo: 'bajar', ritmo: 'recomendado' };
+  const nuevo = (despues: CuestionarioNuevo['respuestas']['despues']): CuestionarioNuevo => ({
+    respuestas: {
+      movimiento: 'sentado', grasa: null, experiencia: 'principiante', despues, proteina: 'recomendada', recomponer: false, fecha: null,
+      eleccion: { proteinaPorKg: 2, pct: null }, horarios: { desayuno: 450, almuerzo: 780, merienda: null, cena: 1260 }, sueno: null, salud: false,
+    },
+    cuidados: { marcados: [], datos: {} },
+    entreno: entrenoParaGuardar({ tipos: ['fuerza'], sesiones: [{ tipo: 'fuerza', dias: [1, 3, 5], hora: 1080, minutos: 60 }], viaje: 15 }),
+    meta: { gasto: 2100, metas: { kcal: 1720, proteina: 140, carbohidratos: 170, grasas: 55 } },
+    perfil: { pesoMeta: 66 },
+  });
+  const dia = (n: number) => sumarDias('2026-09-01', n);
+
+  /** Desde el 1/9, un día por vez, pesándose cada mañana: 100 g menos por día hasta `hasta` y después, quieto. */
+  async function bajando(despues: CuestionarioNuevo['respuestas']['despues'], alResponder?: (a: ReturnType<typeof crearAlmacen>) => void) {
+    const t = await armar();
+    const pesoDe = (n: number) => Math.round((70 - 0.1 * Math.min(n, 40)) * 10) / 10;
+    const vivir = (n: number, kg = pesoDe(n)) => {
+      t.ir(`${dia(n)}T15:00:00Z`);
+      t.almacen.revisarDia();
+      t.almacen.anotarPeso(kg, 'manual');
+    };
+    vivir(0);
+    t.almacen.responderCuestionario(respuestas, 'manual', nuevo(despues));
+    alResponder?.(t.almacen);
+    let n = 0;
+    while (!t.almacen.estado().llegada && n < 80) vivir(++n);
+    return { ...t, vivir, n };
+  }
+  const ultima = (a: ReturnType<typeof crearAlmacen>) => a.estado().metas[a.estado().metas.length - 1];
+
+  it('al llegar: dos semanas comiendo lo que gastas, una sola vez, y el día queda fijo aunque el peso rebote', async () => {
+    const { almacen, vivir, n, repositorio } = await bajando('grasa');
+    const llegada = almacen.estado().llegada!;
+    expect(llegada).toMatchObject({ fecha: dia(n), despues: 'grasa', aplicada: 'mantenimiento', soltada: false });
+    expect(almacen.estado().perfil).toMatchObject({ objetivo: 'mantener', pesoMeta: 66 });
+    expect(almacen.estado().respuestas?.eleccion).toEqual({ pct: null, proteinaPorKg: 1.6 });
+    const meta = ultima(almacen);
+    const pesoKg = almacen.estado().pesos[almacen.estado().pesos.length - 1].kg;
+    expect(meta).toMatchObject({ ...metaPara(meta.gasto, { edad: 31, sexo: 'f', pesoKg, objetivo: 'mantener', ritmo: 'recomendado' }, 'equilibrada', { pct: null, proteinaPorKg: 1.6 }), desde: dia(n), motivo: 'objetivo' });
+    const cuantas = almacen.estado().metas.length;
+    // Rebota medio kilo: sigue en el mantenimiento desde ese día, sin metas nuevas por la etapa.
+    vivir(n + 1, 66.6);
+    vivir(n + 2, 66.7);
+    expect(almacen.estado().llegada).toMatchObject({ fecha: dia(n), aplicada: 'mantenimiento' });
+    expect(almacen.estado().metas.slice(cuantas).every((m) => m.motivo !== 'objetivo')).toBe(true);
+    // Queda en el teléfono (otra sesión, con su reloj, la sigue desde ese día) y no sube a la cuenta.
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().llegada).toMatchObject({ fecha: dia(n), despues: 'grasa' });
+    expect(JSON.stringify(await repositorio.pendientes())).not.toContain('mantenimiento');
+  });
+
+  it('terminado el mantenimiento, perder grasa: 0,25 % por semana con la proteína alta, sin peso meta', async () => {
+    const { almacen, vivir, n } = await bajando('grasa');
+    for (let k = n + 1; k < n + 14; k++) vivir(k);
+    expect(almacen.estado().perfil?.objetivo).toBe('mantener');
+    vivir(n + 14);
+    expect(almacen.estado().llegada?.aplicada).toBe('grasa');
+    expect(almacen.estado().perfil).toMatchObject({ objetivo: 'bajar', ritmo: 'suave' });
+    expect(almacen.estado().perfil?.pesoMeta).toBeUndefined();
+    expect(almacen.estado().respuestas?.eleccion).toEqual({ pct: -0.25, proteinaPorKg: 2.2 });
+    const meta = ultima(almacen);
+    const pesoKg = almacen.estado().pesos[almacen.estado().pesos.length - 1].kg;
+    expect(meta).toMatchObject({ ...metaPara(meta.gasto, { edad: 31, sexo: 'f', pesoKg, objetivo: 'bajar', ritmo: 'suave' }, 'equilibrada', { pct: -0.25, proteinaPorKg: 2.2 }), desde: dia(n + 14), motivo: 'objetivo' });
+    // Una sola vez: los días siguientes, la etapa no pone otra meta.
+    const cuantas = almacen.estado().metas.length;
+    vivir(n + 15);
+    expect(almacen.estado().metas.slice(cuantas).every((m) => m.motivo !== 'objetivo')).toBe(true);
+  });
+
+  it('cambiarlo a mano después: Moss ya no cambia nada solo', async () => {
+    const { almacen, vivir, n } = await bajando('grasa');
+    almacen.ponerEstrategia({ objetivo: 'subir', pesoMeta: 70 });
+    expect(almacen.estado().llegada?.soltada).toBe(true);
+    for (let k = n + 1; k <= n + 16; k++) vivir(k);
+    expect(almacen.estado().perfil).toMatchObject({ objetivo: 'subir', pesoMeta: 70 });
+    expect(almacen.estado().llegada).toMatchObject({ fecha: dia(n), aplicada: 'mantenimiento', soltada: true });
+  });
+
+  it('lo decido después: al terminar el mantenimiento pregunta y, al elegir, lo aplica desde ese día', async () => {
+    const { almacen, vivir, n } = await bajando('despues');
+    for (let k = n + 1; k <= n + 14; k++) vivir(k);
+    expect(almacen.estado().llegada?.aplicada).toBe('pregunta');
+    expect(almacen.estado().perfil?.objetivo).toBe('mantener');
+    almacen.elegirLoQueSigue('musculo');
+    // Con menos de un año de pesas, el ritmo sugerido para subir.
+    expect(almacen.estado().llegada).toMatchObject({ despues: 'musculo', aplicada: 'musculo' });
+    expect(almacen.estado().perfil).toMatchObject({ objetivo: 'subir', ritmo: 'recomendado' });
+    expect(almacen.estado().respuestas?.eleccion).toEqual({ pct: 0.25, proteinaPorKg: 1.8 });
+    expect(ultima(almacen)).toMatchObject({ desde: dia(n + 14), motivo: 'objetivo' });
+  });
+
+  it('con las metas a mano, cambia el plan pero no la meta', async () => {
+    let aMano: MetaGuardada | null = null;
+    const { almacen, vivir, n } = await bajando('grasa', (a) => { aMano = a.ponerMetasAMano({ proteina: 130, carbohidratos: 180, grasas: 60 }); });
+    vivir(n + 1);
+    expect(almacen.estado().perfil?.objetivo).toBe('mantener');
+    expect(almacen.estado().metas.slice(1).every((m) => m.motivo === 'manual' && m.kcal === aMano!.kcal)).toBe(true);
+  });
+
+  it('con cuidados marcados, la meta la pone el control con su regla', async () => {
+    const t = await armar();
+    t.ir(`${dia(0)}T15:00:00Z`);
+    t.almacen.revisarDia();
+    t.almacen.anotarPeso(70, 'manual');
+    t.almacen.responderCuestionario(respuestas, 'manual', { ...nuevo('grasa'), cuidados: { marcados: ['celiaquia'], datos: {} } });
+    for (let n = 1; n <= 45; n++) {
+      t.ir(`${dia(n)}T15:00:00Z`);
+      t.almacen.revisarDia();
+      t.almacen.anotarPeso(Math.round((70 - 0.1 * n) * 10) / 10, 'manual');
+    }
+    expect(t.almacen.estado().llegada?.aplicada).toBe('mantenimiento');
+    expect(t.almacen.estado().perfil?.objetivo).toBe('mantener');
+    expect(t.almacen.estado().metas.some((m) => m.motivo === 'objetivo')).toBe(false);
   });
 });
