@@ -24,7 +24,8 @@ SDK y la memoria no alcanza.
   que se abre crece desde lo que tocaste. Microanimaciones en casi todo.
 - **Moss es Moss**: no se presenta como «tu cuenta de Moss y Ascent», y la entrada,
   la ficha y lo de cada día no la necesitan ni la nombran. Con `CON_ASCENT` apagada,
-  Ascent no se nombra en ningún lado. Prendida, solo en lo que lleva a vincular y en
+  Ascent se nombra solo como «Pronto» (lo pediste el 17/11/2026): la entrada de arriba a la
+  derecha de Progreso, con su globo, y la fila de Perfil › Conexiones (`ascent/Pronto.tsx`). Prendida, solo en lo que lleva a vincular y en
   lo que anda con las dos: su sección, su señal (en la app, en Hábitos; en la propuesta
   para aprobar, en Progreso), la invitación de Inicio (solo con Ascent en ese iPhone),
   la fila y el final de Perfil, la recuperación en Sueño y, vinculada, la etiqueta de tu energía

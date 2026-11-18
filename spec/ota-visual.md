@@ -46,3 +46,42 @@ Primero, **el día que sigue tu despertar** (spec/avisos.md: lo pediste el 16/11
 El cuestionario nuevo y «Tus respuestas», Cuidados (D44), Perfil (la tarjeta, los créditos, las hojas y «En qué
 se basa Moss»), la foto de la comida, los consejos según el deporte y los avisos al estilo RISE. Afuera: Ascent
 (apagada), la pantalla de pago y los widgets nuevos (piden la build 1.1).
+
+## Tanda 3 (17/11, a la noche): todo lo que faltaba y no pide build
+
+Lo pediste porque en tu iPhone la app se veía «vieja» y «toda oscura» frente a la galería, y después: «todo,
+absolutamente todo lo que falta, meterlo en la app ahora». Publicada por aire a las dos builds (`visual-ota` 3fe40d4,
+huella fc0d415b; `mejoras-1.1` bc263a3, huella 13eb29e0) y la galería 51.
+
+**Por qué se veía vieja:** expo-updates baja la actualización al abrir y la muestra recién en el próximo arranque
+desde cero, y iOS deja a Moss abierta de fondo durante días. Ahora `src/lib/actualizaciones.ts` la busca al abrir y
+al volver (cada 10 minutos como mucho) y la aplica al ir al fondo, si no hay una hoja abierta, o enseguida si Moss
+recién abrió. Sin probar en un iPhone.
+
+**Entró:**
+- Tu energía: el botón dice solo el título («Energía suficiente», sin «Por la comida»); el globo tiene Sueño (Bien,
+  Regular o Mal) y Comida (hoy y estos días juntos); «Más en Sueño» baja a la tarjeta, que lo explica todo.
+- Sueño: la deuda primero y la mañana debajo; la deuda noche por noche en «Más» (`nochesDeLaDeuda`); la aurora fija
+  detrás de la tira; la línea del deporte (el partido de noche, dormir más).
+- Ascent «Pronto» con la bandera apagada: Progreso (arriba a la derecha, con su globo) y Perfil › Conexiones.
+- Progreso: el ritmo o la fecha se guardan en el teléfono (ajuste `plazo`) y mueven la meta; «Cuando llegues» se lee;
+  los decimales fijos de la galería.
+- Perfil: Entrenamiento según el deporte (deportes, partido, carrera, viaje, categoría de peso), el país de los
+  alimentos, la línea de datos de otra cuenta, las noches de Aparatos; `canOpenURL` solo donde la build declara el
+  esquema. El cuestionario sugiere «¿Cuánto te mueves?» con los pasos de Salud.
+- Avisos y Cuidados: lo que apaga Cuidados se aplica a «Para hoy», lo que falta, la línea del entreno y el agua; los
+  avisos de comer con las sesiones de cada día; «Mañana juegas» y la carrera con sus interruptores; el despertador en
+  el widget de la noche.
+- Inicio, el «+», Comida y Hábitos igualados a la galería (alturas, lunas, puntos de los macros, degradados, la
+  píldora Día · Semana · Mes, «Tu universo»); todas las hojas con el fondo de la galería y el título centrado.
+
+**Afuera:**
+- Pide build: pesarse antes y después (un peso por día), más carga con poco sueño (la carga de Salud), el widget
+  del agua sin meta, y lo de spec/detalles.md y el inventario (teclado, acciones rápidas, más Salud, carrete, Siri).
+- Pide decisión — separar «avisarme a esa hora» de «mis horas de comer»: (1) ¿la hora del cuestionario va antes que
+  la mediana de lo anotado, y el horario de avisos deja de contar? (spec/entreno.md 5.11 dice lo contrario); (2) ¿el
+  aviso suena a «mi hora de comer» o conserva su hora propia?; (3) «No suelo» una comida, ¿sale del horario?; (4) quien
+  no contestó el cuestionario nuevo, ¿sigue con su horario de avisos?; (5) ¿se cambian en «Tus respuestas» o en una
+  pantalla nueva?
+- Sin revisar contra la galería: la entrada, el cuestionario, Cuidados, «En qué se basa Moss», la guía y Editar perfil.
+- Sin hacer (solo JS, para otra tanda): la lista completa de frases del día, el flum de la entrada y lo de fluidez.

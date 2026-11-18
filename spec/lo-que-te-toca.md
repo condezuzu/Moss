@@ -56,6 +56,17 @@ Hecho:
   y anillos, y el máximo de avisos que sube solo con los extras. Solo en el iPhone se puede probar: los botones del
   aviso, que el aviso de la noche abra la nota con Moss cerrada y que la lista llegue sin abrir Moss.
 - Para comprobar el sueño: pasame de Rise la hora de dormirte y despertarte de 3 o 4 noches y tu necesidad, y lo comparo.
+  Desde la tanda 3, Sueño › Deuda › «Más» muestra la deuda noche por noche: con eso se compara directo.
+- La tanda 3 (17/11, a la noche; lo pediste porque veías la app «vieja»): todo lo que faltaba y no pide build, por aire a
+  las dos builds (`visual-ota` 3fe40d4, `mejoras-1.1` bc263a3). Las actualizaciones ahora se buscan al abrir y al volver
+  (`src/lib/actualizaciones.ts`); la primera vez hay que cerrar y abrir Moss dos veces. Qué entró, qué no y por qué:
+  spec/ota-visual.md, «Tanda 3». Para decidir:
+  - Elegir un ritmo o una fecha en Progreso cambia la meta desde hoy (con topes). ¿Así, o solo guardarlo?
+  - Las lunitas de la semana en Comida van con el aro grueso de la galería (parece un accidente de su CSS).
+  - «Copiar el día» sigue en Comida (la galería lo hace desde mantener apretado).
+  - Los márgenes de toda la app (20 a los lados y el título 16 pt más abajo que la galería) y el peso sin decimal fijo
+    fuera de Progreso («75 kg» y no «75,0 kg»).
+  - Separar «avisarme a esa hora» de «mis horas de comer»: cinco preguntas en spec/ota-visual.md.
 
 Falta (vos):
 1. Business: la cuenta del banco y los formularios de impuestos (W-8BEN; lo de Uruguay con tu contador), hasta que
