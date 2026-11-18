@@ -8,7 +8,7 @@ import type { Habito } from '../dominio/habitos';
 import { metaPara, metasIniciales, type Cuestionario, type MetaGuardada } from '../dominio/metas';
 import { aguaDelDia, borrado, delDia, itemDeAlimento, itemRapido, totalDelDia, vigentes, type Registro, type Valores } from '../dominio/registros';
 import { entrenoParaGuardar } from '../dominio/cuestionario';
-import { crearAlmacen, metaVigente, reglasDeCuidados, soloLosDeEjemplo, type CuestionarioNuevo } from './almacen';
+import { crearAlmacen, horasDeComerDe, metaVigente, reglasDeCuidados, soloLosDeEjemplo, type CuestionarioNuevo } from './almacen';
 import type { Datos } from './mezclar';
 import { repositorioEnMemoria, sinComida, type Repositorio } from './repositorio';
 
@@ -132,11 +132,40 @@ describe('local primero', () => {
 
   it('los del día que sigue tu despertar y el horario apagado (vacío) también se recuerdan', async () => {
     const { almacen, repositorio } = await armar();
-    almacen.ponerAvisos({ deuda: { encendido: false }, melatonina: { encendido: true }, revoluciones: { encendido: false }, descarga: { encendido: true }, gafas: { encendido: false }, horario: {} });
+    almacen.ponerAvisos({ deuda: { encendido: false }, melatonina: { encendido: true }, revoluciones: { encendido: false }, descarga: { encendido: true }, gafas: { encendido: false }, horario: [] });
     await almacen.esperar();
     expect((await armar(repositorio)).almacen.estado().avisos).toEqual({
-      deuda: { encendido: false }, melatonina: { encendido: true }, revoluciones: { encendido: false }, descarga: { encendido: true }, gafas: { encendido: false }, horario: {},
+      deuda: { encendido: false }, melatonina: { encendido: true }, revoluciones: { encendido: false }, descarga: { encendido: true }, gafas: { encendido: false }, horario: [],
     });
+  });
+
+  it('el horario de los avisos de antes pasa a tus horas de comer puestas a mano, sin perder nada, una sola vez', async () => {
+    const repositorio = repositorioEnMemoria();
+    await repositorio.guardarAjuste('avisos', JSON.stringify({ dormir: { encendido: true }, horario: { desayuno: 7 * 60 + 15, cena: 22 * 60 } }));
+    const { almacen } = await armar(repositorio);
+    expect(almacen.estado().horasDeComer).toEqual({ desayuno: 7 * 60 + 15, cena: 22 * 60 });
+    expect(almacen.estado().avisos).toEqual({ dormir: { encendido: true }, horario: ['desayuno', 'cena'] });
+    // Esas horas mandan: son las que valen para todo, fijas.
+    expect([horasDeComerDe(almacen.estado())('desayuno'), horasDeComerDe(almacen.estado())('almuerzo').de]).toEqual([{ minutos: 7 * 60 + 15, de: 'aMano' }, 'tipica']);
+    await almacen.esperar();
+    // Quedó guardado con la forma nueva: al volver a abrir, lo mismo.
+    const otra = (await armar(repositorio)).almacen.estado();
+    expect([otra.horasDeComer, otra.avisos]).toEqual([{ desayuno: 7 * 60 + 15, cena: 22 * 60 }, { dormir: { encendido: true }, horario: ['desayuno', 'cena'] }]);
+    // Cambiarlas después no vuelve a traer las de antes.
+    const tercera = await armar(repositorio);
+    tercera.almacen.ponerHorasDeComer({ almuerzo: 12 * 60 + 30 });
+    await tercera.almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().horasDeComer).toEqual({ almuerzo: 12 * 60 + 30 });
+  });
+
+  it('las horas de comer que cambiaste a mano se recuerdan, y el horario apagado de antes queda apagado', async () => {
+    const repositorio = repositorioEnMemoria();
+    await repositorio.guardarAjuste('avisos', JSON.stringify({ horario: {} }));
+    const { almacen } = await armar(repositorio);
+    expect([almacen.estado().avisos, almacen.estado().horasDeComer]).toEqual([{ horario: [] }, {}]);
+    almacen.ponerHorasDeComer({ almuerzo: 12 * 60 + 30 });
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().horasDeComer).toEqual({ almuerzo: 12 * 60 + 30 });
   });
 
   it('el despertar de cada día: queda lo más temprano, con la hora en que se supo la primera vez, y dos semanas', async () => {
@@ -490,14 +519,33 @@ describe('lo que se come', () => {
     almacen.cambiarEnCanasta(0, banana(2));
     await almacen.esperar();
     const otra = (await armar(repositorio)).almacen;
-    expect(otra.estado().canasta.map((i) => i.nombre)).toEqual(['Banana', 'Alfajor']);
+    expect(otra.canasta().map((i) => i.nombre)).toEqual(['Banana', 'Alfajor']);
     otra.quitarDeCanasta(1);
     const nuevos = otra.agregarCanasta({ comida: 'cena' });
     expect(nuevos.map((r) => [r.nombre, r.comida])).toEqual([['Banana', 'cena']]);
     expect(nuevos[0].valores.kcal).toBeCloseTo(210.04, 6);
-    expect(otra.estado().canasta).toEqual([]);
+    expect(otra.canasta()).toEqual([]);
     // Con la canasta vacía, agregar no hace nada.
     expect(otra.agregarCanasta({ comida: 'cena' })).toEqual([]);
+  });
+
+  it('la canasta avisa solo a los suyos: sumar algo no cambia el estado ni redibuja lo que lo usa', async () => {
+    const { almacen } = await armar();
+    const antes = almacen.estado();
+    let delEstado = 0;
+    let deLaCanasta = 0;
+    almacen.suscribir(() => delEstado++);
+    almacen.suscribirCanasta(() => deLaCanasta++);
+    almacen.ponerEnCanasta(banana());
+    almacen.cambiarEnCanasta(0, banana(2));
+    almacen.quitarDeCanasta(0);
+    expect([delEstado, deLaCanasta]).toEqual([0, 3]);
+    expect(almacen.estado()).toBe(antes);
+    // Agregar sí cambia el estado: lo anotado es un registro nuevo.
+    almacen.ponerEnCanasta(alfajor());
+    almacen.agregarCanasta({ comida: 'cena' });
+    expect(delEstado).toBeGreaterThan(0);
+    expect(almacen.canasta()).toEqual([]);
   });
 
   it('borrar deja la marca, que también sube; deshacer la saca', async () => {
@@ -679,10 +727,10 @@ describe('lo que se come', () => {
       expect(hora(cena.id)).toBe('00:00');
     });
 
-    it('sin plan de esa comida, corre desde la hora del horario o la de siempre, no desde la típica', async () => {
+    it('sin plan de esa comida, corre desde tu hora de comer, no desde la típica', async () => {
       const { almacen, ir, plan: [cena], hora } = await conPlan(['cena']);
-      // Desayuna siempre a las 9:30: hoy, a las 9:33, no corre nada.
-      for (const dia of ['2026-10-18', '2026-10-19', '2026-10-20']) almacen.registrar([banana()], { comida: 'desayuno', dia, momento: `${dia}T12:30:00.000Z` });
+      // Desayuna siempre a las 9:30 (cinco días: tu hora ya se acomodó): hoy, a las 9:33, no corre nada.
+      for (const dia of ['2026-10-16', '2026-10-17', '2026-10-18', '2026-10-19', '2026-10-20']) almacen.registrar([banana()], { comida: 'desayuno', dia, momento: `${dia}T12:30:00.000Z` });
       ir('2026-10-21T12:33:00Z');
       almacen.registrar([banana()], { comida: 'desayuno' });
       expect(hora(cena.id)).toBe('00:00');

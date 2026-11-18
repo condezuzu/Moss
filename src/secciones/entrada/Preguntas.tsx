@@ -50,14 +50,26 @@ const SOMBRA = { textShadowColor: 'rgba(3, 5, 12, 0.95)', textShadowRadius: 14, 
 
 // ------------------------------------------------------------------ las piezas de cada pantalla
 export const Titulo = ({ children, centrado, tope, denso }: { children: ReactNode; centrado?: boolean; tope?: boolean; denso?: boolean }) => (
-  <Text style={[s.titulo, denso && s.tituloDenso, centrado && s.centrado]} accessibilityRole="header" maxFontSizeMultiplier={tope ? TOPE : undefined}>{children}</Text>
+  <Text style={[s.titulo, denso && s.tituloDenso, centrado && s.centrado]} accessibilityRole="header" maxFontSizeMultiplier={tope ? TOPE : undefined} lineBreakStrategyIOS="push-out">{children}</Text>
 );
 export const Texto = ({ children, centrado, tope, denso }: { children: ReactNode; centrado?: boolean; tope?: boolean; denso?: boolean }) => (
-  <Text style={[s.texto, denso && s.textoDenso, centrado && s.centrado]} maxFontSizeMultiplier={tope ? TOPE : undefined}>{children}</Text>
+  <Text style={[s.texto, denso && s.textoDenso, centrado && s.centrado]} maxFontSizeMultiplier={tope ? TOPE : undefined} lineBreakStrategyIOS="push-out">{children}</Text>
 );
 export const Chico = ({ children, izquierda }: { children: ReactNode; izquierda?: boolean }) => (
   <Animated.Text layout={ACOMODA} style={[s.chico, izquierda && s.izquierda]}>{children}</Animated.Text>
 );
+/** Debajo del deslizador, como en la galería: diez marcas y los extremos. */
+function Regla({ min, max }: { min: string; max: string }) {
+  return (
+    <View style={s.regla} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <View style={s.marcas}>
+        {Array.from({ length: 10 }, (_, k) => <View key={k} style={[s.marca, { left: `${k * 10}%` }]} />)}
+      </View>
+      <Text style={s.reglaTexto}>{min}</Text>
+      <Text style={s.reglaTexto}>{max}</Text>
+    </View>
+  );
+}
 export const Pie = ({ children }: { children: ReactNode }) => <View style={s.pie}>{children}</View>;
 export const Espacio = () => <View style={{ flex: 1, minHeight: 24 }} />;
 /** Lo de cada pregunta, arriba del botón: si no entra, se desliza y el botón queda abajo. */
@@ -243,6 +255,7 @@ function Numero({ titulo, texto, valor, min, max, paso, decimales, unidad, deSal
         </View>
         <ChipDeSalud encendido={deSalud} />
         <Deslizador valor={valor} min={min} max={max} paso={paso} alCambiar={alCambiar} etiqueta={titulo} textoDe={textoDe} pasoDeAccesibilidad={1} />
+        <Regla min={mostrar ? mostrar(min) : numero(min, 0)} max={mostrar ? mostrar(max) : numero(max, 0)} />
       </Desliza>
       <Seguir alSeguir={alSeguir} />
     </>
@@ -528,7 +541,7 @@ function LaGrasa({ r, poner, alSeguir }: PropsDePregunta) {
         </View>
         <Plegable abierto={r.grasaModo === 'no'}><Chico izquierda>{t('entrada.cuestionario.grasa.sinGrasa')}</Chico></Plegable>
         <Plegable abierto={r.grasaModo === 'dicha'}>
-          <View style={[s.numero, { marginTop: 14 }]}>
+          <View style={[s.numero, s.numeroSolo, { marginTop: 14 }]}>
             <Text style={[s.numeroValor, { fontSize: 56, lineHeight: 62 }]} maxFontSizeMultiplier={TOPE}>{numero(r.grasaPct, 1)}</Text>
             <Text style={s.numeroUnidad}>%</Text>
           </View>
@@ -816,15 +829,12 @@ function LaMeta({ r, poner, hoy, alSeguir }: PropsDePregunta) {
     <>
       <Desliza>
         <Titulo denso>{t('entrada.cuestionario.meta.titulo')}</Titulo>
-        <View style={[s.numero, { marginTop: 14 }]}>
+        <View style={[s.numero, s.numeroSolo, { marginTop: 14 }]}>
           <Text style={[s.numeroValor, { fontSize: 56, lineHeight: 62 }]} maxFontSizeMultiplier={TOPE}>{numero(pesoMeta, 1)}</Text>
           <Text style={s.numeroUnidad}>kg</Text>
         </View>
         <Deslizador style={{ marginTop: 14 }} valor={pesoMeta} min={min} max={max} paso={0.5} pasoDeAccesibilidad={0.5} alCambiar={(v) => poner((x) => ({ ...x, pesoMeta: v }))} etiqueta={t('entrada.cuestionario.meta.titulo')} textoDe={(v) => `${kg(v)} kg`} />
-        <View style={s.regla}>
-          <Text style={s.reglaTexto}>{kg(min)}</Text>
-          <Text style={s.reglaTexto}>{kg(max)}</Text>
-        </View>
+        <Regla min={kg(min)} max={kg(max)} />
         {dir === 'bajar' && <Chico izquierda>{t('entrada.cuestionario.meta.minimo', { kg: kg(min) })}</Chico>}
         <Etiqueta>{t('entrada.cuestionario.meta.ritmo')}</Etiqueta>
         <View style={{ gap: 6 }}>
@@ -961,7 +971,7 @@ function Comer({ r, poner, hoy, alSeguir }: PropsDePregunta) {
         <Titulo denso>{t('entrada.cuestionario.comer.titulo')}</Titulo>
         <Etiqueta>{t('entrada.cuestionario.comer.reparto')}</Etiqueta>
         {[ESTILOS.slice(0, 2), ESTILOS.slice(2)].map((par, j) => (
-          <View key={j} style={[s.fila, { gap: 8, marginTop: j ? 8 : 0 }]}>
+          <View key={j} style={[s.fila, { gap: 8, marginTop: j ? 8 : 0, alignItems: 'stretch' }]}>
             {par.map((e, k) => {
               const m = macrosConProteina(kcal, r.pesoKg, proteina, e);
               const partes = [m.proteina * 4, m.carbohidratos * 4, m.grasas * 9];
@@ -1201,6 +1211,7 @@ const s = StyleSheet.create({
   menor: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
   numero: { marginTop: 34, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14 },
   numeroCentro: { flexShrink: 1, flexDirection: 'row', alignItems: 'baseline', gap: 8, minWidth: 170, justifyContent: 'center' },
+  numeroSolo: { alignItems: 'baseline', gap: 8 },
   numeroValor: { flexShrink: 1, fontFamily: letras.numeroLiviano, fontSize: 68, lineHeight: 74, letterSpacing: -1.2, color: colores.cifra, fontVariant: ['tabular-nums'] },
   numeroUnidad: { fontFamily: letras.texto, fontSize: 16, color: 'rgba(239, 230, 207, 0.6)' },
   fino: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
@@ -1244,7 +1255,9 @@ const s = StyleSheet.create({
   pregunta: { marginTop: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
   preguntaTexto: { flex: 1, fontFamily: letras.texto, fontSize: 14, lineHeight: 18, color: colores.pergamino },
   horaDelPartido: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
-  regla: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 4 },
+  regla: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2, paddingTop: 12 },
+  marcas: { position: 'absolute', left: 0, right: 0, top: 0, height: 7 },
+  marca: { position: 'absolute', top: 0, width: 1, height: 7, backgroundColor: 'rgba(239, 230, 207, 0.22)' },
   reglaTexto: { fontFamily: letras.numero, fontSize: 11, color: 'rgba(239, 230, 207, 0.38)', fontVariant: ['tabular-nums'] },
   ritmo: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)', backgroundColor: 'rgba(6, 10, 22, 0.55)' },
   ritmoElegido: { borderColor: 'rgba(232, 196, 106, 0.75)', backgroundColor: 'rgba(232, 196, 106, 0.1)', shadowColor: colores.oro, shadowOpacity: 0.18, shadowRadius: 11, shadowOffset: { width: 0, height: 0 } },
@@ -1287,7 +1300,7 @@ const s = StyleSheet.create({
   macros: { marginTop: 22, alignSelf: 'center', width: '100%', maxWidth: 300, gap: 8 },
   macro: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   macroPunto: { width: 8, height: 8, borderRadius: 4, shadowOpacity: 0.8, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } },
-  macroNombre: { flex: 1, fontFamily: letras.texto, fontSize: 14, color: 'rgba(239, 230, 207, 0.8)' },
-  macroGramos: { fontFamily: letras.numeroMedio, fontSize: 14, color: colores.cifra, fontVariant: ['tabular-nums'] },
+  macroNombre: { flex: 1, fontFamily: letras.texto, fontSize: 14, lineHeight: 15, color: 'rgba(239, 230, 207, 0.8)' },
+  macroGramos: { fontFamily: letras.numeroMedio, fontSize: 14, lineHeight: 15, color: colores.cifra, fontVariant: ['tabular-nums'] },
   partes: { marginTop: 4, textAlign: 'center', fontFamily: letras.texto, fontSize: 11.5, lineHeight: 16, color: 'rgba(239, 230, 207, 0.5)' },
 });

@@ -87,9 +87,9 @@ void main() {
 }`;
 
   // El viaje entre secciones («flum»): el cuadro entero se dibuja a una textura y acá se estira
-  // hacia un punto de fuga, con estelas, como si la cámara saliera disparada muy lejos. Con la
+  // hacia un punto de fuga, con estelas (las cuentas, en viaje.glsl, son las mismas de la app). Con la
   // estela en cero queda solo el acercamiento (el fondo de Ajustes, por ejemplo).
-  const FS_VIAJE = ENCABEZADO + `
+  const fsViaje = (viaje) => ENCABEZADO + `
 uniform sampler2D uCuadro;
 uniform vec2 uLienzo;
 uniform vec2 uCentro;
@@ -98,29 +98,24 @@ uniform float uEstela;
 uniform float uBrillo;
 uniform float uVelo;
 out vec4 color;
+${viaje}
 void main() {
   vec2 d = gl_FragCoord.xy - uCentro;
   vec3 c;
   if (uEstela < 0.001) {
-    c = texture(uCuadro, (uCentro + d / uZoom) / uLienzo).rgb;
+    c = texture(uCuadro, muestraDelViaje(d, uCentro, uZoom, 0.0, 0.0) / uLienzo).rgb;
   } else {
     vec3 suma = vec3(0.0);
     float peso = 0.0;
     for (int i = 0; i < 24; i++) {
       float t = float(i) / 23.0;
-      float w = 1.0 - 0.75 * t;
-      suma += texture(uCuadro, (uCentro + d / (uZoom * (1.0 + uEstela * t))) / uLienzo).rgb * w;
+      float w = pesoDelViaje(t);
+      suma += texture(uCuadro, muestraDelViaje(d, uCentro, uZoom, uEstela, t) / uLienzo).rgb * w;
       peso += w;
     }
-    // Al estirarse, una estrella reparte su luz en la estela: se compensa para que no se apague.
-    c = suma / peso * (1.0 + 1.3 * uEstela);
+    c = suma / peso;
   }
-  c *= uBrillo;
-  // Las esquinas se oscurecen con la velocidad: el ojo va al punto de fuga.
-  vec2 q = gl_FragCoord.xy / uLienzo - 0.5;
-  c *= 1.0 - min(0.6, uEstela * 1.1) * dot(q, q) * 2.0;
-  c = mix(c, vec3(0.010, 0.016, 0.036), uVelo);
-  color = vec4(c, 1.0);
+  color = vec4(terminarElViaje(c, gl_FragCoord.xy / uLienzo - 0.5, uEstela, uBrillo, uVelo), 1.0);
 }`;
 
   // Sprites instanciados: resplandores, estrellas, anillos, arcos y destellos en una sola pasada.
@@ -359,7 +354,7 @@ void main() {
       sprites: programa(gl, VS_SPRITES, FS_SPRITES),
       lineas: programa(gl, VS_LINEAS, FS_LINEAS),
       musgo: programa(gl, VS_MUSGO, fsMusgo(fuentes.comun)),
-      viaje: programa(gl, VS_PANTALLA, FS_VIAJE),
+      viaje: programa(gl, VS_PANTALLA, fsViaje(fuentes.viaje)),
     };
 
     const vaoPantalla = gl.createVertexArray();

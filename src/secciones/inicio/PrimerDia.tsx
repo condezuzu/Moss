@@ -13,7 +13,7 @@ import { BORDES, plazoConRitmo } from '@/dominio/progreso';
 import { t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Boton, COLOR_DE_MACRO, MACROS } from '../comida/comunes';
-import { fechaDiaMes, metaDelDia, numero, sistemaDe, useEstado } from '../comida/datos';
+import { cifraDePeso, fechaDiaMes, metaDelDia, numero, sistemaDe, useEstado } from '../comida/datos';
 import { abrirRegistro } from '../comida/registro';
 import { usePersona } from '../ganchos';
 import { MiniCielo } from '../graficos/Graficos';
@@ -91,7 +91,7 @@ function TuCamino({ ancho, alIr }: { ancho: number; alIr: Ir }) {
   const desde = p.pesoHoy ?? e.pesos[e.pesos.length - 1]?.kg ?? null;
   const metaKg = e.perfil?.pesoMeta ?? null;
   if (!e.perfil || desde === null) return null;
-  const kg = (x: number, dec: number) => numero(pesoCorporalEn(x, sistema).valor, dec);
+  const kg = (x: number) => cifraDePeso(x, sistema).cifra;
   const unidad = pesoCorporalEn(1, sistema).unidad;
   const conMeta = metaKg !== null && e.perfil.objetivo !== 'mantener';
   const plazo = conMeta
@@ -104,7 +104,7 @@ function TuCamino({ ancho, alIr }: { ancho: number; alIr: Ir }) {
     <View style={bloques.bloque}>
       <Cabeza titulo={t('inicio.primerDia.camino')} />
       <Text style={bloques.cifra}>
-        {conMeta ? `${kg(desde, 1)} → ${kg(metaKg, metaKg % 1 ? 1 : 0)} ${unidad}` : `${kg(desde, 1)} ${unidad}`}
+        {conMeta ? `${kg(desde)} → ${kg(metaKg)} ${unidad}` : `${kg(desde)} ${unidad}`}
       </Text>
       {plazo && (
         <>

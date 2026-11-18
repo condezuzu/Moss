@@ -219,7 +219,7 @@ export function Interfaz(p: Props) {
       </Animated.View>
 
       <Animated.View
-        style={[estilos.cabecera, { top: insets.top + 14 }, estiloCabecera]}
+        style={[estilos.cabecera, { top: insets.top - 2 }, estiloCabecera]}
         pointerEvents="none"
         accessible
         accessibilityRole="header"

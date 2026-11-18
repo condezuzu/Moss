@@ -16,7 +16,9 @@ import {
   Group,
   ImageShader,
   MipmapMode,
+  Paint,
   Path,
+  RuntimeShader,
   Shader,
   Skia,
   useTexture,
@@ -38,7 +40,7 @@ import { riquezaDe } from '@/dominio/luz';
 import { pinturaQueAgranda } from './agrandar';
 import { bajarLaAutomatica } from './calidad';
 import { useCalidad, useCieloDeHoy, useEncendidos } from './dia';
-import { efectos } from './efectos';
+import { efectoDelViaje, efectos } from './efectos';
 import {
   avancesNuevos,
   avivar,
@@ -69,6 +71,8 @@ import { CALIDADES, HORIZONTE, PARALAJE, VIA_LACTEA, ZONA_UNIVERSO, type Calidad
 import type { Brote } from './musgo';
 import { armarPlano, armarPlanoDelMusgo, type Plano } from './plano';
 import { useTextos } from './textosDelCielo';
+import { MITAD_DEL_VIAJE, parametrosDelViaje } from './viaje';
+import { avanceDelViaje, useViajando } from './viajar';
 import { anunciar } from '@/secciones/anuncio';
 import { alTocarDeNuevo } from '@/secciones/arriba';
 import { HABITOS } from '@/secciones/Barra';
@@ -124,6 +128,10 @@ const RIQUEZA_INICIAL = 0.6;
 const CLAVE_DEL_GLOBITO = 'moss:tocoUnaEstrella';
 /** La hoja abierta del todo, con margen para lo que le falta al resorte en sus últimos cuadros. */
 const TAPADO_DEL_TODO = 0.999;
+/** Las muestras de cada píxel en el viaje de la entrada a la app: menos donde el teléfono llega justo. */
+const MUESTRAS_DEL_VIAJE: Record<Calidad, number> = { alta: 24, media: 16, baja: 10 };
+/** El punto de fuga del viaje, como en la galería: centrado y un poco arriba de la mitad. */
+const FUGA_Y = 0.44;
 
 export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alEditarHabito, alIrAComida }: PropsDelCielo) {
   const soloCielo = !!entrada;
@@ -396,16 +404,19 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
     const corrida = paginaX ? paginaX.value : 0;
     const ascent = subida ? subida.progreso.value : 0;
     const hoja = tapado ? tapado.value : 0;
+    // El viaje de la entrada a la app sigue hasta el final aunque Inicio ya esté encima.
+    const viaje = avanceDelViaje.value;
+    const enViaje = viaje < 1;
     // Detrás de las otras secciones el cielo se ve velado y quieto: no se calcula ni se vuelve a
     // dibujar, así cada cuadro queda para la interfaz. Se mueve en Hábitos, mientras se llega o se
     // va de ahí, con Ascent y en la entrada. Con una hoja abierta del todo encima, lo mismo.
     const antes = escena.value;
-    if (!soloCielo && ascent === 0 && antes.velado === 0 && antes.aparicion >= 1 && Math.abs(corrida) >= ancho && Math.abs(antes.paginaX) >= ancho) return quedarQuieto();
+    if (!soloCielo && !enViaje && ascent === 0 && antes.velado === 0 && antes.aparicion >= 1 && Math.abs(corrida) >= ancho && Math.abs(antes.paginaX) >= ancho) return quedarQuieto();
     if (!soloCielo && hoja >= TAPADO_DEL_TODO && antes.aparicion >= 1) return quedarQuieto();
     const subiendo = (ascent > 0 || antes.velado > 0) && Math.abs(antes.cam.y - CAMARA_DE_ASCENT * ascent) > 1e-4;
     const llevada = camaraDeLaEntrada ? camaraDeLaEntrada.value !== antes.cam.objetivo : false;
     const camara = antes.cam.arrastrando || antes.cam.v !== 0 || antes.cam.y !== antes.cam.objetivo;
-    const interaccion = subiendo || llevada || camara || Math.abs(corrida - antes.paginaX) >= 0.5;
+    const interaccion = enViaje || subiendo || llevada || camara || Math.abs(corrida - antes.paginaX) >= 0.5;
     const enMarcha = hayMovimiento(antes);
     if (!interaccion && !enMarcha && antes.t >= antes.vivoHasta) return quedarQuieto();
     // Sin nada que siga al dedo (el titilar, la aurora, un toque en baja), a 30 cuadros: la mitad del trabajo.
@@ -422,6 +433,11 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
       'worklet';
       e.paginaX = corrida;
       if (camaraDeLaEntrada) e.cam.objetivo = camaraDeLaEntrada.value;
+      // De la mitad del viaje en adelante, la cámara ya está en hoy: el salto lo tapan las estelas.
+      if (enViaje && viaje >= MITAD_DEL_VIAJE) {
+        e.cam.y = e.cam.objetivo;
+        e.cam.v = 0;
+      }
       // Ascent sube sobre el mismo cielo: la cámara sube con el dedo y lo de hoy se apaga en la
       // primera mitad del gesto. Cerrada, la cámara vuelve a ser del cielo.
       if (ascent > 0 || e.velado > 0) {
@@ -569,6 +585,13 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
     () => (subida ? subida.progreso.value : 0) + (camaraDeLaEntrada ? camaraDeLaEntrada.value * 7 : 0) + (fondo.value ? 0.5 : 0),
     (ahora, antes) => {
       if (antes !== null && ahora !== antes) despertar(VIVO_AL_TOCAR);
+    },
+  );
+  // El viaje de la entrada a la app que arranca.
+  useAnimatedReaction(
+    () => avanceDelViaje.value < 1,
+    (ahora, antes) => {
+      if (ahora && !antes) despertar(VIVO_AL_TOCAR);
     },
   );
   // La hoja que lo tapaba del todo empieza a irse: vuelve a correr.
@@ -790,6 +813,24 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
   // shader sigue en puntos de la pantalla y uDpr sigue siendo el de la pantalla.
   const escalaCielo = ajustes.escalaCielo;
   const capaQueAgranda = useMemo(() => (escalaCielo < 1 ? pinturaQueAgranda(1 / escalaCielo) : null), [escalaCielo]);
+  // El viaje («flum», viaje.ts): todo el cielo va en una capa que un filtro estira hacia el punto de fuga.
+  // En el teléfono, con la calidad alta, la capa va en píxeles (nítida); si no, en puntos: es la novena parte
+  // del trabajo y, con las estelas, no se nota. En la web, React Native Skia no trae ese filtro: solo se acerca.
+  const viajando = useViajando();
+  const flum = viajando && !movimientoReducido;
+  const enLaWeb = Platform.OS === 'web';
+  const pxDelViaje = flum && !enLaWeb && calidad === 'alta' ? dpr : 1;
+  const efectoViaje = useMemo(() => (!enLaWeb && (soloCielo || flum) ? efectoDelViaje(MUESTRAS_DEL_VIAJE[calidad]) : null), [enLaWeb, soloCielo, flum, calidad]);
+  const uniformesDelViaje = useDerivedValue(() => {
+    const p = parametrosDelViaje(avanceDelViaje.value);
+    return { uLienzo: [ancho * pxDelViaje, alto * pxDelViaje], uCentro: [(ancho / 2) * pxDelViaje, alto * FUGA_Y * pxDelViaje], uZoom: p.zoom, uEstela: p.estela, uBrillo: p.brillo, uVelo: p.velo };
+  });
+  const acercamientoDelViaje = useDerivedValue(() => {
+    const z = flum && enLaWeb ? parametrosDelViaje(avanceDelViaje.value).zoom : 1;
+    return [{ translateX: ancho / 2 }, { translateY: alto * FUGA_Y }, { scale: z }, { translateX: -ancho / 2 }, { translateY: -alto * FUGA_Y }];
+  });
+  const capaDelViaje = flum && efectoViaje ? <Paint><RuntimeShader source={efectoViaje} uniforms={uniformesDelViaje} /></Paint> : undefined;
+
   const cieloDelCuadro = (
     <Fill>
       <Shader source={ef.cielo} uniforms={uniformesCielo}>
@@ -856,39 +897,43 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
       <GestureDetector gesture={gestos}>
         <View style={StyleSheet.absoluteFill} collapsable={false} pointerEvents={soloCielo ? 'none' : 'auto'}>
           <Canvas style={estilos.lleno}>
-            {fondoListo && (capaQueAgranda ? (
-              <Group layer={capaQueAgranda}>
-                <Group transform={[{ scale: escalaCielo }]}>{cieloDelCuadro}</Group>
-              </Group>
-            ) : cieloDelCuadro)}
-            <Group transform={camaraCielo} opacity={opacidadDeHoy}>
-              <Path path={plano.universo.pendientes} style="stroke" strokeWidth={0.7} color={PERGAMINO} opacity={0.15} blendMode="plus">
-                <DashPathEffect intervals={[2.5, 3.5]} />
-              </Path>
-              <Path path={plano.universo.hechas} style="stroke" strokeWidth={1.1} color={ORO} opacity={0.7} blendMode="plus" />
-              <Path path={plano.universo.hoy} style="stroke" strokeWidth={1.1} color={ORO} opacity={alfaUniversoHoy} blendMode="plus" />
-              <Path path={plano.fantasmas} style="stroke" strokeWidth={0.8} color={PERGAMINO} opacity={opacidadFantasmas} blendMode="plus">
-                <DashPathEffect intervals={[2.7, 4.3]} />
-              </Path>
-              <Brillo camino={caminoLineas} ancho={1.7} color={ORO} opacidad={0.95} />
-              <Path path={caminoArcos} style="stroke" strokeWidth={1.5} strokeCap="round" color={MUSGO_LUZ} opacity={0.95} blendMode="plus" />
-            </Group>
-            <Group opacity={opacidadDeHoy}>
-              <Atlas image={hoja} sprites={rectsCielo} transforms={formasCielo} colors={coloresCielo} colorBlendMode="modulate" blendMode="plus" />
-            </Group>
-            {musgo.lomas.map((l, k) => (
-              <Group key={k} transform={camarasLomas[k]}>
-                <Path path={l.cuerpo}>
-                  <Shader source={ef.musgo} uniforms={{ uLienzo: [ancho, alto], uEscala: alto, uCuerpo: l.color, uBase: l.base }} />
-                </Path>
-                <Group clip={l.cuerpo}>
-                  <Path path={l.borde} style="stroke" strokeWidth={3.2} color={aRgb(l.colorBorde)} opacity={lucesLomas[k]}>
-                    <BlurMask blur={2.2} style="normal" />
+            <Group transform={[{ scale: 1 / pxDelViaje }]}>
+              <Group layer={capaDelViaje} transform={enLaWeb ? acercamientoDelViaje : [{ scale: pxDelViaje }]}>
+                {fondoListo && (capaQueAgranda ? (
+                  <Group layer={capaQueAgranda}>
+                    <Group transform={[{ scale: escalaCielo }]}>{cieloDelCuadro}</Group>
+                  </Group>
+                ) : cieloDelCuadro)}
+                <Group transform={camaraCielo} opacity={opacidadDeHoy}>
+                  <Path path={plano.universo.pendientes} style="stroke" strokeWidth={0.7} color={PERGAMINO} opacity={0.15} blendMode="plus">
+                    <DashPathEffect intervals={[2.5, 3.5]} />
                   </Path>
+                  <Path path={plano.universo.hechas} style="stroke" strokeWidth={1.1} color={ORO} opacity={0.7} blendMode="plus" />
+                  <Path path={plano.universo.hoy} style="stroke" strokeWidth={1.1} color={ORO} opacity={alfaUniversoHoy} blendMode="plus" />
+                  <Path path={plano.fantasmas} style="stroke" strokeWidth={0.8} color={PERGAMINO} opacity={opacidadFantasmas} blendMode="plus">
+                    <DashPathEffect intervals={[2.7, 4.3]} />
+                  </Path>
+                  <Brillo camino={caminoLineas} ancho={1.7} color={ORO} opacidad={0.95} />
+                  <Path path={caminoArcos} style="stroke" strokeWidth={1.5} strokeCap="round" color={MUSGO_LUZ} opacity={0.95} blendMode="plus" />
                 </Group>
+                <Group opacity={opacidadDeHoy}>
+                  <Atlas image={hoja} sprites={rectsCielo} transforms={formasCielo} colors={coloresCielo} colorBlendMode="modulate" blendMode="plus" />
+                </Group>
+                {musgo.lomas.map((l, k) => (
+                  <Group key={k} transform={camarasLomas[k]}>
+                    <Path path={l.cuerpo}>
+                      <Shader source={ef.musgo} uniforms={{ uLienzo: [ancho, alto], uEscala: alto, uCuerpo: l.color, uBase: l.base }} />
+                    </Path>
+                    <Group clip={l.cuerpo}>
+                      <Path path={l.borde} style="stroke" strokeWidth={3.2} color={aRgb(l.colorBorde)} opacity={lucesLomas[k]}>
+                        <BlurMask blur={2.2} style="normal" />
+                      </Path>
+                    </Group>
+                  </Group>
+                ))}
+                <Atlas image={hoja} sprites={rectsFrente} transforms={formasFrente} colors={coloresFrente} colorBlendMode="modulate" blendMode="plus" />
               </Group>
-            ))}
-            <Atlas image={hoja} sprites={rectsFrente} transforms={formasFrente} colors={coloresFrente} colorBlendMode="modulate" blendMode="plus" />
+            </Group>
           </Canvas>
         </View>
       </GestureDetector>

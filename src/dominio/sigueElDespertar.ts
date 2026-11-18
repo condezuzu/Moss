@@ -57,11 +57,12 @@ export const MAS = ['descarga', 'gafas', 'cafe', 'entrenarTarde', 'ultimaComida'
 export const MAXIMO_QUE_SIGUE_EL_DESPERTAR = 10;
 /**
  * El máximo de quien nunca lo eligió: el de fábrica, que sube solo con lo que se prende aparte, como en la galería
- * 50: dos por anotar lo que tienes en la cabeza (el de la noche y «Lo que hay que hacer hoy») y uno por las gafas.
- * Sin eso, prenderlos dejaba afuera justo el aviso de anotar, y bajar el ritmo. El que se eligió a mano no se toca.
+ * 50: dos por anotar lo que tienes en la cabeza (el de la noche y «Lo que hay que hacer hoy»), uno por las gafas y
+ * uno por el café (18/11). Sin eso, prenderlos dejaba afuera justo el aviso de anotar, y bajar el ritmo («Se acerca tu
+ * hora de acostarte»). El que se eligió a mano no se toca.
  */
-export const maximoDeFabrica = (a: Pick<Avisos, 'descarga' | 'gafas'>): number =>
-  MAXIMO_QUE_SIGUE_EL_DESPERTAR + (a.descarga?.encendido ? 2 : 0) + (a.gafas?.encendido ? 1 : 0);
+export const maximoDeFabrica = (a: Pick<Avisos, 'descarga' | 'gafas' | 'cafe'>): number =>
+  MAXIMO_QUE_SIGUE_EL_DESPERTAR + (a.descarga?.encendido ? 2 : 0) + (a.gafas?.encendido ? 1 : 0) + (a.cafe?.encendido ? 1 : 0);
 /** Bajar el ritmo (`revoluciones`, en lo guardado), una hora antes de acostarte (Rise: de 1 a 2 h; es una convención). */
 export const REVOLUCIONES = 60;
 /** Las gafas, 2 h antes de acostarte, como en el ensayo de Shechter 2018. */
@@ -74,7 +75,6 @@ export const DESCARGA = 5;
  */
 export const MANANA_QUE_SE_PASO = 120;
 
-const aCuarto = (x: number) => Math.round(x / 15) * 15;
 const aDiez = (x: number) => Math.round(x / 10) * 10;
 
 export type DeSigueElDespertar = Pick<DelDia, 'dia' | 'ajustes' | 'sueno' | 'horaDeComida' | 'anotadas' | 'eventos' | 'diaDelControl'> & {
@@ -92,20 +92,23 @@ export type DeSigueElDespertar = Pick<DelDia, 'dia' | 'ajustes' | 'sueno' | 'hor
 
 /**
  * Lo prendido de fábrica, para quien no eligió: la deuda, la melatonina, las revoluciones, las luces, la hora de
- * dormir, el horario con el desayuno, el almuerzo y la cena a sus horas de siempre, y el máximo de diez, que sube
- * con anotar lo que tienes en la cabeza y con las gafas (maximoDeFabrica). Pesarse sigue como lo elegiste; lo demás,
- * apagado.
+ * dormir, el horario con el desayuno, el almuerzo y la cena a tus horas de comer, y el máximo de diez, que sube
+ * con anotar lo que tienes en la cabeza, con las gafas y con el café (maximoDeFabrica). Pesarse sigue como lo
+ * elegiste; lo demás, apagado. Una comida que en tu día dice «No suelo» (`noSuele`) no avisa a su hora.
  */
-export function deFabrica(a: Avisos, horaDeComida: (c: Comida) => number): Avisos {
+export function deFabrica(a: Avisos, noSuele: (c: Comida) => boolean = () => false): Avisos {
   const prendido = { encendido: true };
   return {
     ...a,
     dormir: a.dormir ?? prendido, deuda: a.deuda ?? prendido, melatonina: a.melatonina ?? prendido,
     revoluciones: a.revoluciones ?? prendido, luces: a.luces ?? prendido,
-    horario: a.horario ?? Object.fromEntries((['desayuno', 'almuerzo', 'cena'] as const).map((c) => [c, aCuarto(horaDeComida(c))])),
+    horario: (a.horario ?? HORARIO_DE_FABRICA).filter((c) => !noSuele(c)),
     maximoPorDia: a.maximoPorDia ?? maximoDeFabrica(a),
   };
 }
+
+/** Las comidas que avisan a su hora de fábrica. */
+export const HORARIO_DE_FABRICA: readonly Comida[] = ['desayuno', 'almuerzo', 'cena'];
 
 /** Lo de la mañana, el reparto del desayuno y lo de la noche, como avisos para avisosDelDia (en `conviene`). */
 export function avisosDelDespertar(op: DeSigueElDespertar): Aviso[] {
@@ -133,8 +136,8 @@ export function avisosDelDespertar(op: DeSigueElDespertar): Aviso[] {
       lista.push({ id: 'pesarse', tipo: 'pesarse', minutos, ...(control ? { control: true } : {}) });
       libre = minutos + SEPARACION;
     }
-    if (ajustes.horario?.desayuno !== undefined) {
-      const minutos = Math.max(libre, ajustes.horario.desayuno);
+    if (ajustes.horario?.includes('desayuno')) {
+      const minutos = Math.max(libre, op.horaDeComida('desayuno'));
       lista.push({
         id: 'desayuno', tipo: 'desayuno', comida: 'desayuno', minutos, despertar: { que: 'desayuno' },
         // Ya pregunta por el desayuno: el de su hora y el de «falta anotar», que contaban desde la hora de siempre
@@ -157,10 +160,10 @@ export function avisosDelDespertar(op: DeSigueElDespertar): Aviso[] {
   const comio = (c: ConHora) => anotadas[c] !== undefined || !!op.anotadas?.has(c);
   const sinDesayuno = op.desayuno === 'directo' || (!comio('desayuno') && CON_HORA.some((c) => c !== 'desayuno' && comio(c)));
   if (sinDesayuno && ajustes.horario) {
-    const base: Partial<Record<Comida, number>> = { ...Object.fromEntries(CON_HORA.map((c) => [c, op.horaDeComida(c)])), ...ajustes.horario };
+    const base: Partial<Record<Comida, number>> = Object.fromEntries(CON_HORA.map((c) => [c, op.horaDeComida(c)]));
     const corridas = horasCorridas(base, anotadas, true);
     const ultima = Math.max(-1, ...CON_HORA.map((c, i) => (comio(c) ? i : -1)));
-    const van = CON_HORA.filter((c, i): c is SinDesayuno => c !== 'desayuno' && i > ultima && ajustes.horario?.[c] !== undefined);
+    const van = CON_HORA.filter((c, i): c is SinDesayuno => c !== 'desayuno' && i > ultima && !!ajustes.horario?.includes(c));
     const peso = (c: ConHora) => REPARTO[4][c] ?? 0;
     const total = van.reduce((s, c) => s + peso(c), 0);
     const queda = op.meta && !op.sinNumeros ? Math.max(0, op.meta.kcal - (op.comido?.kcal ?? 0)) : 0;

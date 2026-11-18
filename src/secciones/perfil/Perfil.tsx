@@ -17,23 +17,23 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { actualizarSalud, datosDeOtraCuenta, elAlmacen, oirLaSesion } from '@/almacen';
-import { reglasDeCuidados, type Estado } from '@/almacen/almacen';
+import { horasDeComerDe, noSueleDe, reglasDeCuidados, type Estado } from '@/almacen/almacen';
 import { CON_ASCENT } from '@/lib/banderas';
 import { abrirPagina, CORREO } from '@/lib/sitio';
 import type { Calidad } from '@/cielo/mundo';
-import { CM_POR_PULGADA, KG_POR_LIBRA } from '@/dominio/cantidades';
+import { CM_POR_PULGADA } from '@/dominio/cantidades';
 import type { Entreno } from '@/dominio/alrededorDelEntreno';
 import { DEPORTES, deportesDePerfil, entrenoConCambios, preguntasDelEntreno, type CambiosDelEntreno, type Deporte } from '@/dominio/cuestionario';
 import type { Comida } from '@/dominio/comidas';
 import { CORTE_DE_FABRICA, CORTES, diaDeLaSemana, sumarDias, type DiaSemana } from '@/dominio/fechas';
 import { edadDe, RANGOS_DEL_CUESTIONARIO, type Actividad, type Perfil as DatosDelPerfil, type Sexo } from '@/dominio/metas';
 import { LARGO_DEL_NOMBRE } from '@/dominio/nombre';
-import { algunAviso, avisosDe, conLoQueFalta, horaDeReloj, horasDeComida, pedirPermisoDeAvisosConMotivo, suenoDelDia } from '@/recordatorios/programar';
+import { algunAviso, avisosDe, conLoQueFalta, horaDeReloj, pedirPermisoDeAvisosConMotivo, suenoDelDia } from '@/recordatorios/programar';
 import { duerme, horasDeSueno, MAXIMO_POR_DIA } from '@/dominio/avisos';
 import { apagaLoQueConviene } from '@/dominio/cuidados';
 import { delDeporte, QUE_CONVIENE, VIAJE_DE_FABRICA, VIAJES, type QueConviene } from '@/dominio/loQueConviene';
 import { CARRERA_LARGA } from '@/dominio/segunElDeporte';
-import { MAXIMO_QUE_SIGUE_EL_DESPERTAR } from '@/dominio/sigueElDespertar';
+import { HORARIO_DE_FABRICA, MAXIMO_QUE_SIGUE_EL_DESPERTAR } from '@/dominio/sigueElDespertar';
 import { necesidad, necesidadesPara } from '@/dominio/sueno';
 import { MARGENES, margenParaDormirte } from '@/dominio/sinReloj';
 import { haySalud, pedirPermisos, saludPedida } from '@/salud/salud';
@@ -43,10 +43,10 @@ import { anunciar } from '../anuncio';
 import { alTocarDeNuevo, useEsLaActual } from '../arriba';
 import { PESTANAS } from '../Barra';
 import { Boton, Icono, Pastilla } from '../comida/comunes';
-import { duracion, fechaDiaMes, numero, region, sistemaDe, useEstado } from '../comida/datos';
+import { cifraDePeso, duracion, fechaDiaMes, numero, region, sistemaDe, useEstado } from '../comida/datos';
 import { avisar } from '../comida/registro';
 import { Opcion } from '../entrada/piezas';
-import { FranjaBajoLaHora } from '../franja';
+import { DEBAJO_DE_LA_HORA, FranjaBajoLaHora, LADOS } from '../franja';
 import { HojaModal } from '../HojaModal';
 import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
 import { BotonDePaso } from '../paso';
@@ -266,7 +266,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo, alIr }: { ancho: number; 
         : { valor: t('perfil.ninguno') }),
   };
   // Lo importante de un vistazo: la edad y la altura abren Editar perfil; el peso de hoy (la tendencia), Progreso.
-  const kg = persona.pesoHoy;
+  const peso = persona.pesoHoy === null ? null : cifraDePeso(persona.pesoHoy, sistema);
   const [edadValor, edadUnidad] = partir(p ? t('perfil.anios', { n: edadDe(p, e.hoy) }) : '—');
   const minis = [
     { clave: 'edad', etiqueta: t('perfil.edad'), valor: edadValor, unidad: edadUnidad, alTocar: () => setHoja('editar') },
@@ -275,7 +275,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo, alIr }: { ancho: number; 
       : { clave: 'altura', etiqueta: t('perfil.altura'), valor: p ? numero(p.alturaCm) : '—', unidad: 'cm', alTocar: () => setHoja('editar') },
     {
       clave: 'peso', etiqueta: t('perfil.mini.peso'), alTocar: () => alIr?.(PROGRESO),
-      ...(kg === null ? { valor: '—' } : sistema === 'imperial' ? { valor: numero(kg / KG_POR_LIBRA), unidad: 'lb' } : { valor: numero(kg, 1), unidad: 'kg' }),
+      ...(peso ? { valor: peso.cifra, unidad: peso.unidad } : { valor: '—' }),
     },
   ];
 
@@ -358,7 +358,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo, alIr }: { ancho: number; 
     <View style={{ width: ancho }}>
       <ScrollView
         ref={scroll}
-        contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }}
+        contentContainerStyle={{ paddingTop: arriba + DEBAJO_DE_LA_HORA, paddingHorizontal: LADOS, paddingBottom: abajo + 40 }}
         showsVerticalScrollIndicator={false}
         scrollsToTop={esLaActual}
         scrollEventThrottle={16}
@@ -789,11 +789,6 @@ const COMIDAS_QUE_AVISAN: readonly Comida[] = ['desayuno', 'almuerzo', 'merienda
 const MINUTOS_ANTES_DE_DORMIR = [15, 30, 45, 60] as const;
 // Con anotar lo que tienes en la cabeza son dos más (el de la noche y «Lo que hay que hacer hoy»): por eso llega a 12.
 const MAXIMOS_POR_DIA: readonly number[] = [2, 3, 4, 6, 8, MAXIMO_QUE_SIGUE_EL_DESPERTAR, 12];
-/** El horario de comidas se mueve de a un cuarto de hora, entre las 5:00 y las 23:45. */
-const CUARTO = 15;
-const PRIMERA_HORA = 5 * 60;
-const ULTIMA_HORA = 23 * 60 + 45;
-const aCuarto = (m: number) => Math.round(m / CUARTO) * CUARTO;
 
 /** Los interruptores sueltos de Perfil › Avisos: los de la noche que sigue tu despertar y lo que conviene. */
 type Suelto = 'deuda' | 'melatonina' | 'luces' | 'revoluciones' | 'descarga' | 'gafas' | 'cafe' | 'entrenarTarde' | 'ultimaComida' | 'antesDeEntrenar' | 'despuesDeEntrenar' | 'partido' | 'carrera';
@@ -846,6 +841,8 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
   const comidas = e.recordatorios;
   const a = avisosDe(e);
   const [sinPermiso, setSinPermiso] = useState(false);
+  // Tus horas de comer se cambian en Tus respuestas, en «¿Cómo es tu día?»: se abre encima y se vuelve acá.
+  const [tuDia, setTuDia] = useState(false);
   // La llave que se prende queda prendida mientras se pide el permiso (antes volvía sola a apagado, también
   // con el diálogo de iOS arriba); si se niega, se apaga. Si se había negado antes (iOS ya no pregunta), se
   // dice cómo darlo desde Ajustes; recién negado en el diálogo, no hace falta repetirlo.
@@ -890,18 +887,19 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
   const maximo = a.maximoPorDia ?? MAXIMO_POR_DIA;
   const subioSolo = e.avisos.maximoPorDia === undefined && maximo > MAXIMO_QUE_SIGUE_EL_DESPERTAR;
   const maximos = MAXIMOS_POR_DIA.includes(maximo) ? MAXIMOS_POR_DIA : [...MAXIMOS_POR_DIA, maximo].sort((x, y) => x - y);
-  // El horario arranca con las comidas de siempre, a la hora en que se suelen anotar. Apagado queda vacío, no sin
-  // elegir: así no vuelve el de fábrica.
-  const horario = a.horario ?? {};
-  const conHorario = Object.keys(horario).length > 0;
-  const horaDe = horasDeComida(e);
+  // El horario: qué comidas avisan, cada una a tu hora de comer (una sola lista, horasDeComerDe), que acá se ve y en
+  // Tus respuestas se cambia. Apagado queda vacío, no sin elegir: así no vuelve el de fábrica. Lo que en tu día dice
+  // «No suelo» no avisa.
+  const horario = a.horario ?? [];
+  const conHorario = horario.length > 0;
+  const horaDe = horasDeComerDe(e);
+  const noSuele = noSueleDe(e);
   const encenderHorario = (si: boolean) => {
-    if (!si) elAlmacen().ponerAvisos({ horario: {} });
-    else conPermiso('horario', () => elAlmacen().ponerAvisos({ horario: { desayuno: aCuarto(horaDe('desayuno')), almuerzo: aCuarto(horaDe('almuerzo')), cena: aCuarto(horaDe('cena')) } }));
+    if (!si) elAlmacen().ponerAvisos({ horario: [] });
+    else conPermiso('horario', () => elAlmacen().ponerAvisos({ horario: [...HORARIO_DE_FABRICA] }));
   };
-  const ponerHora = (c: Comida, minutos: number | null) => {
-    const { [c]: _sacada, ...resto } = horario;
-    const nuevo = minutos === null ? resto : { ...resto, [c]: Math.min(ULTIMA_HORA, Math.max(PRIMERA_HORA, minutos)) };
+  const alternarHorario = (c: Comida) => {
+    const nuevo = horario.includes(c) ? horario.filter((x) => x !== c) : COMIDAS_QUE_AVISAN.filter((x) => x === c || horario.includes(x));
     elAlmacen().ponerAvisos({ horario: nuevo });
   };
   const pesarse = a.pesarse;
@@ -939,32 +937,31 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
       >
         <View style={st.horario}>
           {COMIDAS_QUE_AVISAN.map((c) => {
-            const minutos = horario[c];
             const nombre = t(`comida.comidas.${c}`);
+            const no = noSuele(c);
+            const hora = horaDe(c);
             return (
               <Animated.View key={c} layout={ACOMODA} style={st.horarioFila}>
-                <Pastilla texto={nombre} elegida={minutos !== undefined} alTocar={() => ponerHora(c, minutos !== undefined ? null : aCuarto(horaDe(c)))} />
-                {minutos !== undefined && (
-                  <Aparece>
-                    <Pasos
-                      valor={horaDeReloj(minutos)}
-                      menos={t('perfil.pasos.temprano', { que: nombre })}
-                      mas={t('perfil.pasos.tarde', { que: nombre })}
-                      alBajar={() => {
-                        if (minutos <= PRIMERA_HORA) return false;
-                        ponerHora(c, minutos - CUARTO);
-                      }}
-                      alSubir={() => {
-                        if (minutos >= ULTIMA_HORA) return false;
-                        ponerHora(c, minutos + CUARTO);
-                      }}
-                    />
-                  </Aparece>
-                )}
+                <Pastilla texto={nombre} elegida={!no && horario.includes(c)} alTocar={() => (no ? setTuDia(true) : alternarHorario(c))} estilo={no && st.horarioNo} />
+                <View style={st.horarioHora}>
+                  {no ? (
+                    <Text style={st.horarioDe}>{t('perfil.avisos.noSueles')}</Text>
+                  ) : (
+                    <>
+                      {hora.de === 'aMano' && <Animated.Text entering={ENTRA_FUNDIDO} style={st.horarioDe}>{t('perfil.avisos.horaAMano')}</Animated.Text>}
+                      <Text style={st.horarioValor}>{horaDeReloj(hora.minutos)}</Text>
+                    </>
+                  )}
+                </View>
               </Animated.View>
             );
           })}
         </View>
+        <Text style={st.avisoNota}>{t('perfil.avisos.horasTexto')}</Text>
+        <Pressable onPress={() => setTuDia(true)} accessibilityRole="button" style={({ pressed }) => [st.horasCambiar, pressed && st.apretado]}>
+          <Text style={st.horasCambiarTexto}>{t('perfil.avisos.horasCambiar')}</Text>
+          <Icono nombre="chevron.right" tam={11} color={colores.oro} peso="semibold" />
+        </Pressable>
       </TarjetaDeAviso>
       <TarjetaDeAviso icono="moon.stars" color="violeta" titulo={t('perfil.avisos.melatonina')} texto={t('perfil.avisos.melatoninaTexto')} {...suelto('melatonina')} />
       <TarjetaDeAviso icono="lightbulb" color="gris" titulo={t('perfil.avisos.luces')} texto={t('perfil.avisos.lucesTexto')} {...suelto('luces')} />
@@ -1036,6 +1033,7 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
       </Animated.View>
       {subioSolo && <Aparece><Text style={[st.informacion, st.maximoSolo]}>{t('perfil.avisos.maximoSolo', { n: maximo })}</Text></Aparece>}
       <Animated.Text layout={ACOMODA} style={[st.informacion, st.maximoTexto]}>{t('perfil.avisos.maximoTextoConviene')}</Animated.Text>
+      <TusRespuestas visible={tuDia} desde="dia" alCerrar={() => setTuDia(false)} />
     </HojaModal>
   );
 }
@@ -1304,6 +1302,14 @@ const st = StyleSheet.create({
   comidas: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   horario: { gap: 8, marginBottom: 6 },
   horarioFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, minHeight: 46 },
+  // Tus horas de comer, a la derecha de cada comida: solo se leen; «a mano», la que cambiaste.
+  horarioHora: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
+  horarioValor: { fontFamily: letras.numeroMedio, fontSize: 17, color: colores.pergamino, fontVariant: ['tabular-nums'] },
+  horarioDe: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)' },
+  horarioNo: { opacity: 0.5 },
+  horasCambiar: { marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingVertical: 6 },
+  horasCambiarTexto: { fontFamily: letras.texto, fontSize: 14, color: colores.oro },
+  apretado: { opacity: 0.6 },
   pasos: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)' },
   paso: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
   pasoValor: { minWidth: 96, textAlign: 'center', fontFamily: letras.numeroMedio, fontSize: 17, color: colores.pergamino, fontVariant: ['tabular-nums'] },

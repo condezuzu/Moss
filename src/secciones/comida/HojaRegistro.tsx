@@ -10,7 +10,7 @@
 
 import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputInstance } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut, FadeOutDown, LayoutAnimationConfig, ReduceMotion, useAnimatedStyle, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -154,7 +154,7 @@ function sinLoQueYaEsta(items: readonly Item[], canasta: readonly Item[]): Item[
 /** Saca de la comida que se arma lo de `puestos` que siga ahí, y lo olvida. */
 function sacarDeLaCanasta(a: ReturnType<typeof elAlmacen>, puestos: Set<Item>) {
   if (!puestos.size) return;
-  const canasta = a.estado().canasta;
+  const canasta = a.canasta();
   for (let k = canasta.length - 1; k >= 0; k--) if (puestos.has(canasta[k])) a.quitarDeCanasta(k);
   puestos.clear();
 }
@@ -198,6 +198,8 @@ export function HojaRegistro() {
 function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
   const e = useEstado();
   const a = elAlmacen();
+  // La canasta, con sus propios oyentes: lo demás que usa el estado no se redibuja al sumar algo.
+  const canasta = useSyncExternalStore(a.suscribirCanasta, a.canasta);
   const insets = useSafeAreaInsets();
   const { alto: teclado, animado: tecladoAnimado } = useTeclado();
   const sistema = sistemaDe(e);
@@ -360,7 +362,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
   }, [abierta, a]);
   /** Lo quitado vuelve a su lugar. El almacén solo suma al final y cambia de a uno: se corre lo de después. */
   const devolverALaCanasta = (i: number, item: Item) => {
-    const antes = a.estado().canasta;
+    const antes = a.canasta();
     // Ya volvió por otro lado (el atajo de ayer o el de siempre lo suman otra vez): no va dos veces.
     if (antes.includes(item)) return;
     const lugar = Math.min(i, antes.length);
@@ -370,10 +372,10 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
     a.cambiarEnCanasta(lugar, item);
   };
   const quitarDeLaCanasta = (i: number) => {
-    const item = a.estado().canasta[i];
+    const item = a.canasta()[i];
     if (!item) return;
     a.quitarDeCanasta(i);
-    if (a.estado().canasta.length === 0) setPanel(null);
+    if (a.canasta().length === 0) setPanel(null);
     avisarAca(t('comida.quitado', { alimento: item.nombre }), () => devolverALaCanasta(i, item));
   };
 
@@ -453,7 +455,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
   const restar = (x: Macros, y: Macros): Macros => ({ kcal: x.kcal - y.kcal, proteina: x.proteina - y.proteina, carbohidratos: x.carbohidratos - y.carbohidratos, grasas: x.grasas - y.grasas });
   const restante = (kcal: number, sin = 0) => {
     if (!meta) return null;
-    const antes = totalDe(e.registros, dia, e.hoy).kcal + sumarValores(e.canasta.map((i) => i.valores)).kcal - sin;
+    const antes = totalDe(e.registros, dia, e.hoy).kcal + sumarValores(canasta.map((i) => i.valores)).kcal - sin;
     return meta.kcal - antes - kcal;
   };
   // Cómo deja el día: lo que ya había (con lo que se arma, sin lo que se cambia) y la meta.
@@ -467,11 +469,11 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
       const delDia = totalDe(e.registros, r.dia, e.hoy);
       return { antes: enElTotal(r) ? restar(delDia, r.valores) : delDia, meta: metaDelDia(e, r.dia) ?? meta };
     }
-    const conLoQueSeArma = sumarValores([totalDe(e.registros, dia, e.hoy), ...e.canasta.map((i) => i.valores)]);
-    return { antes: modo.tipo === 'canasta' && e.canasta[modo.indice] ? restar(conLoQueSeArma, e.canasta[modo.indice].valores) : conLoQueSeArma, meta };
+    const conLoQueSeArma = sumarValores([totalDe(e.registros, dia, e.hoy), ...canasta.map((i) => i.valores)]);
+    return { antes: modo.tipo === 'canasta' && canasta[modo.indice] ? restar(conLoQueSeArma, canasta[modo.indice].valores) : conLoQueSeArma, meta };
   };
   const restanteDe = (modo: ModoDeVentana) => (kcal: number) => {
-    if (modo.tipo === 'canasta') return restante(kcal, e.canasta[modo.indice]?.valores.kcal ?? 0);
+    if (modo.tipo === 'canasta') return restante(kcal, canasta[modo.indice]?.valores.kcal ?? 0);
     if (modo.tipo === 'registro') {
       const r = e.registros.get(modo.id);
       // Lo de otro día se cuenta contra ese día, sin lo que se arma ahora.
@@ -556,7 +558,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
       }
     } else if (modo.tipo === 'canasta') {
       // Corregido, sigue siendo lo mismo: con su lugar en la lista y, si vino de ayer, saliendo si no se agrega.
-      const antes = a.estado().canasta[modo.indice];
+      const antes = a.canasta()[modo.indice];
       if (antes) {
         heredarClave(antes, item);
         if (copia.current.delete(antes)) copia.current.add(item);
@@ -656,7 +658,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
     [e.registros, ayer, comida],
   );
   // Un atajo no vuelve a sumar lo que ya está en la comida que se arma: sin nada nuevo que sumar, se va.
-  const deAyerQueFalta = useMemo(() => sinLoQueYaEsta(deAyer, e.canasta), [deAyer, e.canasta]);
+  const deAyerQueFalta = useMemo(() => sinLoQueYaEsta(deAyer, canasta), [deAyer, canasta]);
   // Lo último anotado de cada alimento, en una sola pasada: lo usan las filas del buscador (letra por letra) y los favoritos.
   // Con lo mismo que cuenta ultimaCantidad: sin lo planificado ni la carga rápida.
   const ultimos = useMemo(() => {
@@ -693,7 +695,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
   // Tu comida de siempre, entera de un toque: la misma combinación dos veces en dos semanas. Armando otra
   // cosa, se suma solo lo que todavía no está.
   const siempre = useMemo(() => deSiempre(e.registros.values(), comida, dia), [e.registros, comida, dia]);
-  const siempreQueFalta = useMemo(() => (siempre ? sinLoQueYaEsta(siempre, e.canasta) : []), [siempre, e.canasta]);
+  const siempreQueFalta = useMemo(() => (siempre ? sinLoQueYaEsta(siempre, canasta) : []), [siempre, canasta]);
   const secciones = useMemo(() => {
     const vistos = new Set<string>();
     // Solo lo que se muestra cuenta como visto: un favorito entre los recientes que no entraron sigue apareciendo.
@@ -750,7 +752,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
   // Corregir una carga rápida: su panel abre con lo que tenía, y se puede quitar.
   const registroEditado = pedido.editar ? e.registros.get(pedido.editar) : undefined;
   const rapidaEditada = registroEditado?.fuente === 'rapida' ? registroEditado : undefined;
-  const enCanasta = e.canasta.length > 0 && !soloEditar && !eligiendo;
+  const enCanasta = canasta.length > 0 && !soloEditar && !eligiendo;
   const conBandeja = enCanasta && !panel;
   // Debajo de la lista queda siempre el borde de abajo del teléfono o, con el teclado, el teclado: sube con
   // él, con su misma curva. Lo que llega hasta el borde (la bandeja, el pie de un panel) baja por detrás de
@@ -947,7 +949,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
                 <Pressable
                   onPress={() => {
                     // Armando otra cosa, se suma a lo que se arma (sin repetir lo que ya está); si no, se anota directo, con deshacer.
-                    if (e.canasta.length) {
+                    if (canasta.length) {
                       sumarVarias(siempreQueFalta, t(`comida.deSiempre.${comida}`));
                       return;
                     }
@@ -1056,7 +1058,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
                       // Otra comida u otro día cambian el título con su fundido.
                       <Animated.Text key={`${comida}-${dia}`} entering={FadeIn.duration(180).reduceMotion(ReduceMotion.Never)} style={estilos.bandejaTitulo} numberOfLines={1}>{tuComidaDe(comida, dia, e.hoy)}</Animated.Text>
                     )}
-                    <Text style={estilos.bandejaDetalle}>{resumenDeCanasta(e.canasta, numeros)}</Text>
+                    <Text style={estilos.bandejaDetalle}>{resumenDeCanasta(canasta, numeros)}</Text>
                   </View>
                   <Pressable
                     onPress={() => {
@@ -1074,17 +1076,17 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
             )}
           </LayoutAnimationConfig>
 
-          {panel === 'revision' && e.canasta.length > 0 && (
+          {panel === 'revision' && canasta.length > 0 && (
             <PanelRevision
               comida={comida}
               dia={dia}
               hoy={e.hoy}
-              canasta={e.canasta}
+              canasta={canasta}
               sistema={sistema}
-              restante={(kcal) => restante(kcal - sumarValores(e.canasta.map((i) => i.valores)).kcal)}
+              restante={(kcal) => restante(kcal - sumarValores(canasta.map((i) => i.valores)).kcal)}
               abajo={insets.bottom}
               alEditar={(i) => {
-                const item = e.canasta[i];
+                const item = canasta[i];
                 const propio = item.fuente === 'propio' && item.ref ? e.propios.get(item.ref) : undefined;
                 const receta = item.fuente === 'receta' && item.ref ? e.recetas.get(item.ref) : undefined;
                 const base = propio ? alimentoDePropio(propio) : receta ? alimentoDeReceta(receta) : null;
@@ -1106,7 +1108,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
               abajo={insets.bottom}
               alAtras={() => setPanel('revision')}
               alGuardar={(nombre) => {
-                a.guardarReceta({ tipo: 'comida', nombre, items: e.canasta, porciones: 1, pesoFinal: null });
+                a.guardarReceta({ tipo: 'comida', nombre, items: canasta, porciones: 1, pesoFinal: null });
                 avisarAca(t('comida.guardarComo.guardada', { nombre }));
                 setPanel('revision');
               }}

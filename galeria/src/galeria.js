@@ -576,13 +576,15 @@
     persona, vinculada: () => vinculada, abrirAscent: () => abrirAscent(), sinReloj: () => soloIphone, nochesSinReloj: () => Datos.PROPIAS_SIN_RELOJ.length,
     // Las noches de Sueño, para la hora de acostarte de Avisos (tu periodo de melatonina).
     noches: () => sueno.noches(),
-    // Tus respuestas (5/11): el cuestionario con lo contestado; al guardar, la meta nueva y de vuelta a Perfil.
-    revisarCuestionario: () => {
+    // Tus respuestas (5/11): el cuestionario con lo contestado; al guardar, la meta nueva y de vuelta a Perfil. Desde
+    // Perfil › Avisos (18/11), en «¿Cómo es tu día?» (`desde` = 'dia'), donde se cambian tus horas de comer.
+    revisarCuestionario: (desde) => {
       cerrarHojas();
       // Con lo que contestó la persona de la galería (en la app, lo guardado en el perfil).
       const P = Datos.PERFIL;
       window.__cuestionario('responder', { sexo: P.sexo, edad: Number(Datos.HOY.slice(0, 4)) - P.nacimiento, altura: P.alturaCm, peso: 75, objetivo: P.objetivo, pesoMeta: P.pesoMeta, estilo: P.estilo, movimiento: P.movimiento });
       entrada.revisar({ kcalAntes: comida.meta.kcal, alGuardar: (m) => { comida.ponerMeta(m); pestanas.ir(5, true); perfilSec.pintar(); } });
+      if (typeof desde === 'string') entrada.irA(desde);
     },
     suscripcion: () => suscripcion.valorDeFila(), abrirSuscripcion: () => suscripcion.abrirHoja(),
     accesoDeSuscripcion: () => suscripcion.acceso,

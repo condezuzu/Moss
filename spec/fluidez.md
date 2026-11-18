@@ -48,19 +48,31 @@ Hecho, con tipos, lint, los tests (1403) y la app en la web (el cielo en baja, l
    cuadros no cuentan para medir la calidad.
 10. **La calidad automática se guarda**, atada al modelo del iPhone y por 30 días; si se mide con la que elegiste en
     Perfil, no baja la automática.
+12. **El cuadro de Comida** (18/11) ya no recorta con esquinas ni sigue al dedo con el alto: lo redondeado es solo el
+    fondo, y lo que se desliza se recorta en un rectángulo 6 puntos adentro, donde no llegan las esquinas. El alto es
+    el de la página que se ve (las otras dos van fuera del flujo) y, al cambiar, el cuadro, su recorte y lo de abajo
+    se acomodan con `layout` (`Comida.tsx`). Sin probar en un iPhone.
+13. **La cifra que cuenta, solo en la sección que se ve** (18/11): `Secciones` le dice a cada página si es la que se
+    ve (`SeccionVisible`, en `animados.tsx`), y la de al lado pasa a lo nuevo sin contar. Anotar desde Inicio cuenta
+    en Inicio y Comida salta; desde Comida, al revés (medido en la web). En la entrada cuenta como siempre.
+14. **La canasta en un almacén propio** (18/11): lo que se arma en la hoja de registro va aparte del estado, con sus
+    propios oyentes (`canasta()` y `suscribirCanasta` en `almacen.ts`); sumar, cambiar o quitar algo redibuja solo la
+    hoja de registro, no Inicio, Comida ni lo demás que usa el estado. Agregarla sí cambia el estado (son registros).
+    Con su test.
 
 Lo que falta:
 
 - **El espacio del teclado** en la hoja de registro y en la ventana sigue animando el alto: hay que probarlo con un
-  teclado de verdad.
-- **La cifra que cuenta**, sin animar en la sección que no se ve (hace falta que `Secciones` les diga cuál se ve).
-- **La canasta en un almacén propio** (`almacen.ts`, `HojaRegistro.tsx` y sus tests): hoy cada cosa que se suma
-  redibuja todo lo que usa el estado.
+  teclado de verdad. No se tocó (18/11): sin un teclado de verdad no se puede ver si queda igual.
 8. **El musgo se redibuja entero en cada cuadro**, con sus bordes desenfocados: hornear cada loma en una textura.
-11. **La textura del fondo se rehace en cada arranque**, con el shader más caro: guardarla en disco.
-12. **El cuadro de Comida** sigue recortando con esquinas y su alto sigue animado: sin eso, la semana y el mes asoman
-    al deslizar por fuera de lo redondeado (y el alto empuja lo de abajo).
-- Un escalón «mínima», con lo de 8.
+   Se puede con lo que tiene la build 6 (`useTexture`, como el fondo), pero no se hizo (18/11): el cuerpo de cada loma
+   es un ruido barato y lo caro es el borde desenfocado, que tiene que seguir con la luz de la aurora; horneado, el
+   paralaje corre la imagen medio píxel y la textura fina del musgo se suaviza o titila. Sin un iPhone viejo para
+   medir, no se sabe si gana algo: medir primero en la build `telefono`.
+11. **La textura del fondo se rehace en cada arranque**, con el shader más caro: guardarla en disco. Se podría con
+   `expo-file-system`, que ya está, pero no se hizo (18/11): leer y descomprimir un PNG de ese tamaño en el procesador
+   de un A12 puede tardar más que dibujarlo en la placa de video, y después hay que subirlo otra vez. Medir primero.
+- Un escalón «mínima», con lo de 8 (espera a 8).
 
 En un iPhone viejo con la build `telefono` (no la `dev`): el cielo en baja (que llene la pantalla; los rayos de las
 estrellas más brillantes pueden titilar un poco al arrastrar), las hojas al abrir, cerrar y arrastrar (las esquinas

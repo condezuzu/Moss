@@ -9,7 +9,7 @@ import * as Notifications from 'expo-notifications';
 import { useEffect, useEffectEvent } from 'react';
 import { Platform } from 'react-native';
 
-import { reglasDeCuidados, type Estado } from '@/almacen/almacen';
+import { horasDeComerDe, noSueleDe, reglasDeCuidados, type Estado } from '@/almacen/almacen';
 import { comidasHabituales, sesionesDelDia } from '@/dominio/alrededorDelEntreno';
 import {
   avisosDeLaSemana, cuandoSuena, esDeEntrenar, horasDeSueno, horaDeReloj, textoDelAviso, tituloDelAviso, type Aviso, type Avisos, type Evento, type Notificacion, type Sueno as SuenoDeAvisos,
@@ -23,7 +23,7 @@ import { periodoDeMelatonina } from '@/dominio/melatonina';
 import { edadDe } from '@/dominio/metas';
 import { pendientesPara } from '@/dominio/pendientes';
 import { avisosDelDespertar, deFabrica, RESPUESTAS_DEL_DESAYUNO, type DeSigueElDespertar, type RespuestaDelDesayuno } from '@/dominio/sigueElDespertar';
-import { DIAS, horasDeSiempre } from '@/dominio/recordatorios';
+import { DIAS } from '@/dominio/recordatorios';
 import { aguaDelDia, recientes, totalDelDia, vigentes } from '@/dominio/registros';
 import { AGUA_META_ML, bajoAlFinal, horaDeLaTarde, loQueFaltaHoy, QUE_FALTA, type FaltaConHora } from '@/dominio/loQueFalta';
 import { habitualDe, margenParaDormirte } from '@/dominio/sinReloj';
@@ -81,6 +81,8 @@ export const LO_QUE_MUEVE_LOS_AVISOS = [
   'despertares', 'desayunos', 'cuidados',
   // Lo que anotaste para mañana, y lo que ya tachaste: «Lo que hay que hacer hoy» dice lo que falta.
   'pendientes',
+  // Tus horas de comer: las de tu día (y su «No suelo») y las que cambiaste a mano.
+  'respuestas', 'horasDeComer',
 ] as const;
 
 type Para = Pick<Estado, (typeof LO_QUE_MUEVE_LOS_AVISOS)[number]>;
@@ -128,9 +130,12 @@ function cuidadosDe(e: Pick<Estado, 'cuidados' | 'perfil' | 'pesos' | 'hoy'>): R
   return reglas?.cuidados.length ? reglas : null;
 }
 
-/** Lo de fábrica y, mientras no lo hayas elegido, lo que un cuidado prende: con reflujo, la última comida grande. */
-function conLoDeFabrica(avisos: Avisos, horaDeComida: (c: Comida) => number, cuidados: Reglas | null): Avisos {
-  const a = deFabrica(avisos, horaDeComida);
+/**
+ * Lo de fábrica y, mientras no lo hayas elegido, lo que un cuidado prende: con reflujo, la última comida grande. Lo que
+ * en tu día dice «No suelo» no avisa a su hora.
+ */
+function conLoDeFabrica(avisos: Avisos, noSuele: (c: Comida) => boolean, cuidados: Reglas | null): Avisos {
+  const a = deFabrica(avisos, noSuele);
   return cuidados?.prender.includes('ultimaComida') && !a.ultimaComida ? { ...a, ultimaComida: { encendido: true } } : a;
 }
 
@@ -138,8 +143,8 @@ function conLoDeFabrica(avisos: Avisos, horaDeComida: (c: Comida) => number, cui
  * Los avisos como suenan: lo elegido y, en lo que no se tocó, lo de fábrica del día que sigue tu despertar (la deuda,
  * el horario, la melatonina, las revoluciones, las luces, la hora de dormir y el máximo de diez). Perfil muestra esto.
  */
-export function avisosDe(e: Pick<Estado, 'avisos' | 'hoy' | 'registros' | 'cuidados' | 'perfil' | 'pesos'>): Avisos {
-  return conLoDeFabrica(e.avisos, horasDeComida(e), cuidadosDe(e));
+export function avisosDe(e: Pick<Estado, 'avisos' | 'respuestas' | 'cuidados' | 'perfil' | 'pesos' | 'hoy'>): Avisos {
+  return conLoDeFabrica(e.avisos, noSueleDe(e), cuidadosDe(e));
 }
 
 /** La cafeína de una toma, si se anotó al menos tres de los últimos 14 días: la mediana, en mg. */
@@ -150,9 +155,10 @@ export function cafeinaPorToma(e: Pick<Estado, 'registros' | 'hoy'>): number | n
   return mg[Math.floor(mg.length / 2)];
 }
 
-/** La hora de siempre de cada comida: la mediana de cuándo se anotó en tres semanas, o la típica (la misma con que se anota lo de otra comida). */
-export function horasDeComida(e: Pick<Estado, 'hoy' | 'registros'>): (c: Comida) => number {
-  return horasDeSiempre(e.registros.values(), e.hoy);
+/** Tus horas de comer, una sola lista (horasDeComer, en recordatorios.ts): la que pusiste a mano, la de lo que anotas o la de tu día. */
+export function horasDeComida(e: Pick<Estado, 'hoy' | 'registros' | 'respuestas' | 'horasDeComer'>): (c: Comida) => number {
+  const hora = horasDeComerDe(e);
+  return (c) => hora(c).minutos;
 }
 
 /** Lo que el plan dejó para esa comida de ese día, en pocas palabras: «pollo a la plancha, arroz». */
@@ -183,7 +189,7 @@ const SUELTOS = [...QUE_CONVIENE, 'deuda', 'melatonina', 'revoluciones', 'descar
 
 /** Si hay algún aviso prendido: las comidas sin anotar, dormir, el horario, pesarse, un hábito o uno suelto. Perfil dice lo mismo. */
 export const algunAviso = (e: Pick<Estado, 'avisos' | 'recordatorios'>) =>
-  !!e.recordatorios?.length || !!e.avisos.dormir?.encendido || !!e.avisos.habitos?.length || !!Object.keys(e.avisos.horario ?? {}).length || !!e.avisos.pesarse?.encendido
+  !!e.recordatorios?.length || !!e.avisos.dormir?.encendido || !!e.avisos.habitos?.length || !!e.avisos.horario?.length || !!e.avisos.pesarse?.encendido
   || SUELTOS.some((q) => !!e.avisos[q]?.encendido);
 
 /** Lo que Moss avisaría hoy de lo que falta, con lo anotado hasta ahora. Lo planificado cuenta: si la cena lo resuelve, nada. */
@@ -301,7 +307,7 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
     ...Object.fromEntries(QUE_CONVIENE.filter((q) => apagaLoQueConviene(q, cuidados)).map((q) => [q, { encendido: false }])),
     ...(cuidados.apagar.includes('pesarse') ? { pesarse: { encendido: false } } : {}),
   } : {};
-  const ajustes: Avisos = { ...conLoDeFabrica(e.avisos, horaDeComida, cuidados), ...apagados, comidas: e.recordatorios ?? [] };
+  const ajustes: Avisos = { ...conLoDeFabrica(e.avisos, noSueleDe(e), cuidados), ...apagados, comidas: e.recordatorios ?? [] };
   const finDePrueba = avisoDePrueba(suscripcionActual(), Date.now());
   // Cancelada, nada después de que vence: sin acceso no suena, aunque Moss no se abra para borrarlo.
   const hasta = avisosHasta(suscripcionActual(), accesoActual());

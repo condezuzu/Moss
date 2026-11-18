@@ -6,7 +6,7 @@
 import type { Calidad } from '@/cielo/mundo';
 import type { Constelacion } from '@/datos/catalogo';
 import type { Sistema } from '@/dominio/cantidades';
-import { COMIDAS, CON_HORA, HORA_TIPICA, horasCorridas, type Comida } from '@/dominio/comidas';
+import { COMIDAS, CON_HORA, horasCorridas, type Comida } from '@/dominio/comidas';
 import { asignar, mismosPeriodos, periodoDe, type Periodo } from '@/dominio/constelaciones';
 import { medidaValida, SITIOS, type Centimetros, type Medidas } from '@/dominio/cuerpo';
 import { controlSemanal, tendencia, ultimoDiaDeControl, type Peso } from '@/dominio/control';
@@ -26,7 +26,7 @@ import { limpiarNombre, type Nombre } from '@/dominio/nombre';
 import { diaDeLosPendientes, limpiarPendiente, pendientesDe, pendientesLlenos, pendientesVigentes, type Pendiente } from '@/dominio/pendientes';
 import { nivelDeHoy, pctParaLaMeta, plazoElegidoDe, ritmoConRango, type PlazoElegido } from '@/dominio/progreso';
 import { adaptarRegistros, PREFERENCIAS_DE_FABRICA, sugerenciasQueSobran, type ComidaPlaneada, type Preferencias } from '@/dominio/plan';
-import { horasDeSiempre } from '@/dominio/recordatorios';
+import { horasDeComer, noSueleComer, type DeDondeSale } from '@/dominio/recordatorios';
 import {
   borrado, claveDeFavorito, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, restaurado,
   type AlimentoPropio, type Fuente, type Item, type Receta, type Registro, type TomaDeAgua,
@@ -44,6 +44,8 @@ export type Despertar = { despertar: number; sabido: number };
 
 /** Los avisos que se eligen; los de comida van aparte, en `recordatorios`. */
 export type AjustesDeAvisos = Omit<Avisos, 'comidas'>;
+/** Tus horas de comer puestas a mano, en minutos desde la medianoche. */
+export type HorasAMano = Partial<Record<(typeof CON_HORA)[number], number>>;
 
 /**
  * Lo que se come, por colección y por clave: de los registros y el agua, los de los últimos
@@ -68,8 +70,6 @@ export type Estado = MapasDeComida & {
   /** Las metas de comida desde cada fecha, de la más vieja a la más nueva. */
   metas: MetaGuardada[];
   pesos: Peso[];
-  /** La comida que se arma en la hoja de registro: queda en el teléfono hasta agregarla, aunque se cierre la hoja. */
-  canasta: Item[];
   /** Métrico o imperial, si se eligió en Perfil; sin elegir, el del país del teléfono. Queda en el teléfono. */
   sistema: Sistema | null;
   /** Los bloques de Inicio: en qué orden y cuáles se ven. Sin elegir, los de fábrica. Queda en el teléfono. */
@@ -78,6 +78,8 @@ export type Estado = MapasDeComida & {
   recordatorios: Comida[] | null;
   /** La hora de dormir, el aviso de cada hábito y cuántos por día (src/dominio/avisos.ts). Queda en el teléfono. */
   avisos: AjustesDeAvisos;
+  /** Tus horas de comer que cambiaste a mano (horasDeComer, en recordatorios.ts): quedan fijas. Queda en el teléfono. */
+  horasDeComer: HorasAMano;
   /** La calidad de las animaciones, si se eligió en Perfil; sin elegir, la automática. Queda en el teléfono. */
   calidad: Calidad | null;
   /**
@@ -181,6 +183,7 @@ const SISTEMA = 'sistema';
 const INICIO = 'inicio';
 const RECORDATORIOS = 'recordatorios';
 const AVISOS = 'avisos';
+const HORAS_DE_COMER = 'horasDeComer';
 const CALIDAD = 'calidad';
 const CALIDADES: readonly Calidad[] = ['alta', 'media', 'baja'];
 const USO = 'uso';
@@ -260,11 +263,10 @@ function leerAvisos(texto: string | undefined): AjustesDeAvisos {
     if (dormir && typeof dormir.encendido === 'boolean') avisos.dormir = { encendido: dormir.encendido, ...(Number.isFinite(dormir.antes) ? { antes: dormir.antes } : {}) };
     if (Array.isArray(x.habitos)) avisos.habitos = (x.habitos as AvisoDeHabito[]).filter((a) => a && typeof a.habito === 'string' && a.cuando && typeof a.cuando.tipo === 'string' && Array.isArray(a.dias));
     if (typeof x.maximoPorDia === 'number' && x.maximoPorDia >= 0) avisos.maximoPorDia = x.maximoPorDia;
-    if (x.horario && typeof x.horario === 'object') {
-      const horario = Object.fromEntries(Object.entries(x.horario as Record<string, unknown>).filter(([c, m]) => c in HORA_TIPICA && typeof m === 'number' && m >= 0 && m < 1440));
-      // Vacío también: es el horario apagado, que así no vuelve al de fábrica (deFabrica, en sigueElDespertar.ts).
-      avisos.horario = horario as AjustesDeAvisos['horario'];
-    }
+    // Vacío también: es el horario apagado, que así no vuelve al de fábrica (deFabrica, en sigueElDespertar.ts). El de
+    // antes del 18/11 guardaba la hora de cada comida: quedan las comidas, y las horas pasan a horasDelHorarioViejo.
+    if (Array.isArray(x.horario)) avisos.horario = CON_HORA.filter((c) => (x.horario as unknown[]).includes(c));
+    else if (x.horario && typeof x.horario === 'object') avisos.horario = CON_HORA.filter((c) => c in (x.horario as object));
     const pesarse = x.pesarse as AjustesDeAvisos['pesarse'];
     if (pesarse && typeof pesarse.encendido === 'boolean') avisos.pesarse = { encendido: pesarse.encendido, ...(pesarse.todos ? { todos: true } : {}) };
     // Los interruptores sueltos: lo que falta y los de lo que conviene hacer. Sin leerlos, apagarlos no duraba.
@@ -277,6 +279,42 @@ function leerAvisos(texto: string | undefined): AjustesDeAvisos {
     return {};
   }
 }
+
+/** Unas horas de comer, si tienen forma: de cada comida con hora, los minutos del día que valen. */
+function horasDe(x: unknown): HorasAMano {
+  if (!x || typeof x !== 'object' || Array.isArray(x)) return {};
+  const o = x as Record<string, unknown>;
+  return Object.fromEntries(CON_HORA.flatMap((c) => (typeof o[c] === 'number' && Number.isFinite(o[c]) && o[c] >= 0 && o[c] < 1440 ? [[c, o[c]]] : [])));
+}
+
+/**
+ * Tus horas de comer puestas a mano. Hasta el 18/11 eran las del horario de los avisos (lo cambiabas en Perfil › Avisos,
+ * con su hora): quien no tiene todavía las suyas guardadas conserva esas, como puestas a mano.
+ */
+export function horasDeComerGuardadas(horas: string | undefined, avisos: string | undefined): { horas: HorasAMano; migradas: boolean } {
+  if (horas !== undefined && horas !== '') {
+    try {
+      return { horas: horasDe(JSON.parse(horas)), migradas: false };
+    } catch {
+      return { horas: {}, migradas: false };
+    }
+  }
+  try {
+    const viejo = avisos ? (JSON.parse(avisos) as { horario?: unknown } | null)?.horario : undefined;
+    const delHorario = horasDe(viejo);
+    return { horas: delHorario, migradas: Object.keys(delHorario).length > 0 };
+  } catch {
+    return { horas: {}, migradas: false };
+  }
+}
+
+/** Tus horas de comer, una sola lista (horasDeComer, en recordatorios.ts): la que pusiste a mano, la de lo que anotas o la de tu día. */
+export function horasDeComerDe(e: Pick<Estado, 'hoy' | 'registros' | 'respuestas' | 'horasDeComer'>): (c: Comida) => { minutos: number; de: DeDondeSale } {
+  return horasDeComer({ registros: e.registros.values(), hoy: e.hoy, aMano: e.horasDeComer, cuestionario: e.respuestas?.horarios });
+}
+
+/** Si esa comida, en tu día, dice «No suelo»: no avisa a su hora. */
+export const noSueleDe = (e: Pick<Estado, 'respuestas'>) => (c: Comida) => noSueleComer(e.respuestas?.horarios, c);
 
 function leerAlias(texto: string | undefined): Record<string, number> {
   try {
@@ -416,11 +454,19 @@ export function crearAlmacen(op: Opciones) {
   let repositorio: Repositorio | undefined;
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: diaLogico(ahora(), CORTE_DE_FABRICA, zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
-    perfil: null, nombre: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
-    recordatorios: null, avisos: {}, calidad: null, uso: [], despertares: {}, desayunos: {}, fuenteDelSueno: null, numeros: true, kcal: 'luna', entreno: null, respuestas: null, cuidados: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, suenoRehecho: false, necesidad: null, pendientes: [], plazo: null, llegada: null, paisDeAlimentos: null, semilla: '',
+    perfil: null, nombre: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), sistema: null, inicio: null,
+    recordatorios: null, avisos: {}, horasDeComer: {}, calidad: null, uso: [], despertares: {}, desayunos: {}, fuenteDelSueno: null, numeros: true, kcal: 'luna', entreno: null, respuestas: null, cuidados: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, suenoRehecho: false, necesidad: null, pendientes: [], plazo: null, llegada: null, paisDeAlimentos: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
+  // La comida que se arma en la hoja de registro: queda en el teléfono hasta agregarla, aunque se cierre
+  // la hoja. Va aparte del estado, con sus oyentes: sumar algo no redibuja todo lo que usa el estado.
+  let canasta: Item[] = [];
+  const oyentesDeLaCanasta = new Set<() => void>();
+  const cambiarLaCanasta = (nueva: Item[]) => {
+    canasta = nueva;
+    oyentesDeLaCanasta.forEach((o) => o());
+  };
   let cola: Promise<unknown> = Promise.resolve();
   let iniciando: Promise<void> | undefined;
   /** La meta que puso el control en esta sesión: si llegan pesos de Salud después, se rehace. */
@@ -522,8 +568,16 @@ export function crearAlmacen(op: Opciones) {
       metas: g.metas,
       perfil: g.perfil,
     });
+    const avisos = leerAvisos(g.ajustes[AVISOS]);
+    const horas = horasDeComerGuardadas(g.ajustes[HORAS_DE_COMER], g.ajustes[AVISOS]);
+    if (horas.migradas) {
+      // Una sola vez: las horas del horario de antes quedan como tuyas, y el horario, con las comidas que avisan.
+      guardar((r) => r.guardarAjuste(HORAS_DE_COMER, JSON.stringify(horas.horas)));
+      guardar((r) => r.guardarAjuste(AVISOS, JSON.stringify(avisos)));
+    }
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), despertares: porDia(g.ajustes[DESPERTARES], esDespertar), desayunos: porDia(g.ajustes[DESAYUNOS], esRespuesta), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', kcal: ESTILOS_DE_KCAL.find((k) => k === g.ajustes[KCAL]) ?? 'luna', entreno: leerEntreno(g.ajustes[ENTRENO]), respuestas: respuestasDe(leerAvance(g.ajustes[RESPUESTAS])), cuidados: cuidadosDe(leerAvance(g.ajustes[CUIDADOS])), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), suenoRehecho: g.ajustes[SUENO_REHECHO] === 'si', necesidad: necesidadDe(g.ajustes[NECESIDAD]), pendientes: pendientesVigentes(pendientesDe(leerAvance(g.ajustes[PENDIENTES])), hoy), plazo: plazoElegidoDe(leerAvance(g.ajustes[PLAZO])), llegada: llegadaDe(leerAvance(g.ajustes[LLEGADA])), paisDeAlimentos: /^[A-Z]{2}$/.test(g.ajustes[PAIS] ?? '') ? g.ajustes[PAIS] : null, listo: true }, true);
+    cambiarLaCanasta(leerCanasta(g.ajustes[CANASTA]));
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos, horasDeComer: horas.horas, calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), despertares: porDia(g.ajustes[DESPERTARES], esDespertar), desayunos: porDia(g.ajustes[DESAYUNOS], esRespuesta), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', kcal: ESTILOS_DE_KCAL.find((k) => k === g.ajustes[KCAL]) ?? 'luna', entreno: leerEntreno(g.ajustes[ENTRENO]), respuestas: respuestasDe(leerAvance(g.ajustes[RESPUESTAS])), cuidados: cuidadosDe(leerAvance(g.ajustes[CUIDADOS])), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), suenoRehecho: g.ajustes[SUENO_REHECHO] === 'si', necesidad: necesidadDe(g.ajustes[NECESIDAD]), pendientes: pendientesVigentes(pendientesDe(leerAvance(g.ajustes[PENDIENTES])), hoy), plazo: plazoElegidoDe(leerAvance(g.ajustes[PLAZO])), llegada: llegadaDe(leerAvance(g.ajustes[LLEGADA])), paisDeAlimentos: /^[A-Z]{2}$/.test(g.ajustes[PAIS] ?? '') ? g.ajustes[PAIS] : null, listo: true }, true);
     revisarControl();
     revisarEtapa();
   }
@@ -936,8 +990,8 @@ export function crearAlmacen(op: Opciones) {
     const hasta = orden.findIndex((c, j) => j > i && comidas[c] !== undefined);
     const planificados = deEseDia.filter((r) => r.planificado);
     const delPlan = planificados.filter((r) => r.comida === comida).map((r) => minutosEnElDia(new Date(r.momento), dia));
-    const deSiempre = horasDeSiempre(estado.registros.values(), estado.hoy);
-    const referencia = delPlan.length ? Math.min(...delPlan) : horasCorridas(Object.fromEntries(orden.map((c) => [c, estado.avisos.horario?.[c] ?? deSiempre(c)])), comidas)[comida]!;
+    const horaDe = horasDeComerDe(estado);
+    const referencia = delPlan.length ? Math.min(...delPlan) : horasCorridas(Object.fromEntries(orden.map((c) => [c, horaDe(c).minutos])), comidas)[comida]!;
     const corrimiento = minutosEnElDia(cuando, dia) - referencia;
     // Un rato no cambia nada: el plan queda como estaba.
     if (Math.abs(corrimiento) < 5) return [];
@@ -954,9 +1008,15 @@ export function crearAlmacen(op: Opciones) {
     cambiar({ avisos }, false);
   }
 
-  function ponerCanasta(canasta: Item[]) {
-    guardar((r) => r.guardarAjuste(CANASTA, JSON.stringify(canasta)));
-    cambiar({ canasta }, false);
+  /** Tus horas de comer puestas a mano (Perfil › Tus respuestas): reemplazan a las que había. */
+  function ponerHorasDeComer(horasDeComer: HorasAMano) {
+    guardar((r) => r.guardarAjuste(HORAS_DE_COMER, JSON.stringify(horasDeComer)));
+    cambiar({ horasDeComer }, false);
+  }
+
+  function ponerCanasta(nueva: Item[]) {
+    guardar((r) => r.guardarAjuste(CANASTA, JSON.stringify(nueva)));
+    cambiarLaCanasta(nueva);
   }
 
   /** Los pendientes, sin los de hace más de una semana. */
@@ -971,6 +1031,12 @@ export function crearAlmacen(op: Opciones) {
     suscribir(oyente: () => void) {
       oyentes.add(oyente);
       return () => oyentes.delete(oyente);
+    },
+    /** Lo que se arma en la hoja de registro, con sus propios oyentes (ver `canasta` arriba). */
+    canasta: () => canasta,
+    suscribirCanasta(oyente: () => void) {
+      oyentesDeLaCanasta.add(oyente);
+      return () => oyentesDeLaCanasta.delete(oyente);
     },
     /** Se puede llamar varias veces: arranca una sola. Si falló, la próxima vez lo vuelve a intentar. */
     iniciar() {
@@ -993,6 +1059,7 @@ export function crearAlmacen(op: Opciones) {
       await iniciando;
       await enCola((r) => r.borrarTodo());
       controlDeHoy = null;
+      cambiarLaCanasta([]);
       cambiar({ ...vacio(), listo: false }, true);
       iniciando = arrancar();
       return iniciando;
@@ -1339,6 +1406,7 @@ export function crearAlmacen(op: Opciones) {
     },
     /** Las comidas que avisan; null los apaga. */
     ponerAvisos,
+    ponerHorasDeComer,
     /** Por dónde va la entrada: si se cierra la app, se retoma ahí. */
     ponerAvanceDeEntrada(avance: unknown) {
       guardar((r) => r.guardarAjuste(AVANCE, JSON.stringify(avance)));
@@ -1485,12 +1553,12 @@ export function crearAlmacen(op: Opciones) {
     marcarPendiente(id: string, hecho: boolean) {
       if (estado.pendientes.some((p) => p.id === id && p.hecho !== hecho)) ponerPendientes(estado.pendientes.map((p) => (p.id === id ? { ...p, hecho } : p)));
     },
-    ponerEnCanasta: (item: Item) => ponerCanasta([...estado.canasta, item]),
-    cambiarEnCanasta: (i: number, item: Item) => ponerCanasta(estado.canasta.map((x, k) => (k === i ? item : x))),
-    quitarDeCanasta: (i: number) => ponerCanasta(estado.canasta.filter((_, k) => k !== i)),
+    ponerEnCanasta: (item: Item) => ponerCanasta([...canasta, item]),
+    cambiarEnCanasta: (i: number, item: Item) => ponerCanasta(canasta.map((x, k) => (k === i ? item : x))),
+    quitarDeCanasta: (i: number) => ponerCanasta(canasta.filter((_, k) => k !== i)),
     /** «Agregar»: lo de la canasta pasa de una vez a registros, y la canasta queda vacía. */
     agregarCanasta(donde: { comida: Comida; dia?: ClaveDia; momento?: string }): Registro[] {
-      const nuevos = registrar(estado.canasta, donde);
+      const nuevos = registrar(canasta, donde);
       if (nuevos.length) ponerCanasta([]);
       return nuevos;
     },

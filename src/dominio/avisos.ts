@@ -64,10 +64,10 @@ export type Avisos = {
   /** Las comidas que avisan si a su hora de siempre no se anotaron (recordatorios.ts). */
   comidas?: Comida[];
   /**
-   * El horario de comidas, para comer ordenado: cada comida elegida avisa a su hora, en minutos
-   * desde la medianoche, si todavía no se anotó. Con horario, lo de «sin anotar» cuenta desde esta hora.
+   * El horario de comidas, para comer ordenado: cada comida elegida avisa a tu hora de comer (horaDeComida: una sola
+   * lista, horasDeComer en recordatorios.ts), si todavía no se anotó. Vacío, apagado.
    */
-  horario?: Partial<Record<Comida, number>>;
+  horario?: Comida[];
   /** Pesarse a la mañana, al rato de despertarse: el día del control o, con `todos`, cada día. */
   pesarse?: { encendido: boolean; todos?: boolean };
   /** Cuántas veces puede sonar por día, como mucho (6 de fábrica). */
@@ -395,7 +395,7 @@ export type DelDia = {
   habitos: readonly Habito[];
   /** Sin sueño no hay el de dormir, y los de un hábito con la hora de despertarse o de dormirse usan las de fábrica. */
   sueno: Sueno | null;
-  /** La hora de siempre de cada comida, en minutos desde la medianoche (horaHabitual, en recordatorios.ts). */
+  /** Tu hora de comer cada comida, en minutos desde la medianoche (horasDeComer, en recordatorios.ts). */
   horaDeComida: (c: Comida) => number;
   /**
    * A qué hora empieza el día (D32), en minutos desde la medianoche. El aviso de un hábito a una hora de
@@ -471,19 +471,20 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
   }
   // Hoy, lo que falta corre con la última comida que anotaste (lo pediste el 29/10/2026): desayunar
   // hora y media tarde corre el aviso del almuerzo y el de la cena lo mismo. Corre con cualquiera de las
-  // cuatro, elegida o no, contra su hora del horario o la de siempre, que es la misma a la que va lo que se
-  // anota tarde (como en loQueConviene.ts). Lo que ya sonó no se mueve, y nada sale del horario.
+  // cuatro, elegida o no, contra tu hora de comer, que es la misma a la que va lo que se anota tarde (como en
+  // loQueConviene.ts). Lo que ya sonó no se mueve, y nada sale del horario.
   // El día que sigue tu despertar: el desayuno, a la hora que sea, deja las demás a su hora de siempre (un despertar
   // tarde no corre el almuerzo); si no desayunas, la primera que anotes las corre.
   const anotadasHoy = Object.fromEntries(Object.entries(op.eventos ?? {}).filter(([k]) => k !== 'entrenamiento' && !(sigue && k === 'desayuno'))) as Partial<Record<Comida, number>>;
-  const base: Partial<Record<Comida, number>> = { ...Object.fromEntries(CON_HORA.map((c) => [c, op.horaDeComida(c)])), ...ajustes.horario };
+  const base: Partial<Record<Comida, number>> = Object.fromEntries(CON_HORA.map((c) => [c, op.horaDeComida(c)]));
   const corridas = horasCorridas(base, anotadasHoy, true);
-  const horario = (Object.keys(ajustes.horario ?? {}) as Comida[]).map((c) => [c, corridas[c]] as [Comida, number]).filter(([, m]) => Number.isFinite(m));
+  const conHorario = (c: Comida) => !!ajustes.horario?.includes(c);
+  const horario = (ajustes.horario ?? []).map((c) => [c, corridas[c]] as [Comida, number]).filter(([, m]) => Number.isFinite(m));
   const deLaManana = (c: Comida) => esperaElDespertar && c === 'desayuno';
   for (const [comida, minutos] of horario) if (!deLaManana(comida)) fijos.push({ id: `horario:${comida}`, tipo: 'horario', comida, minutos });
   for (const comida of ajustes.comidas ?? []) {
     if (deLaManana(comida)) continue;
-    const enHorario = ajustes.horario?.[comida] !== undefined ? corridas[comida] : undefined;
+    const enHorario = conHorario(comida) ? corridas[comida] : undefined;
     const minutos = Math.min(ULTIMO_DE_COMIDA, (corridas[comida] ?? op.horaDeComida(comida)) + DESPUES_MIN);
     // Con una comida tarde en el horario, el de «sin anotar» sonaría con el de su hora o antes: alcanza con ese.
     if (enHorario !== undefined && minutos - enHorario <= SEPARACION) continue;
@@ -495,7 +496,7 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
       // Al rato de despertarte y antes de desayunar (lo pediste el 29/10/2026): si desayunás enseguida,
       // un cuarto de hora antes del desayuno de siempre, pero nunca antes de despertarte.
       const alDespertar = horas.despertar !== null ? horas.despertar + PESARSE_DESPUES : PESARSE_SIN_SUENO;
-      const desayuno = (ajustes.horario?.desayuno ?? op.horaDeComida('desayuno')) - ANTES_DEL_DESAYUNO;
+      const desayuno = op.horaDeComida('desayuno') - ANTES_DEL_DESAYUNO;
       const minutos = Math.max(horas.despertar ?? 0, Math.min(alDespertar, desayuno));
       fijos.push({ id: 'pesarse', tipo: 'pesarse', minutos, ...(control ? { control: true } : {}) });
     }

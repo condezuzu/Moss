@@ -8,8 +8,8 @@
 // de guion.ts): en la frase y las diapositivas espera abajo y tocarla es seguir, así que no se saltean; con
 // la suscripción, «Saltar» lleva a lo que cuesta, que no se saltea. Desde la segunda pregunta, «Atrás»
 // vuelve a la anterior con lo contestado. Cada pantalla tiene su lugar en el cielo: la cámara sube a medida
-// que se avanza. Al final la estrella se va, la cámara baja hasta hoy, se guarda todo (el perfil, el peso de
-// hoy, la meta y, en el teléfono, lo nuevo y los cuidados) y aparece Inicio.
+// que se avanza. Al final la estrella se va y un «flum» (src/cielo/viaje.ts) lleva hasta hoy: en la mitad se
+// guarda todo (el perfil, el peso de hoy, la meta y, en el teléfono, lo nuevo y los cuidados) y aparece Inicio.
 
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Haptics from 'expo-haptics';
@@ -22,6 +22,8 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { actualizarSalud, elAlmacen } from '@/almacen';
+import { DURACION_DEL_VIAJE, loQueSeVa, MITAD_DEL_VIAJE } from '@/cielo/viaje';
+import { avanceDelViaje, viajar } from '@/cielo/viajar';
 import { buscarConstelacion } from '@/datos/catalogo';
 import { EDAD_MINIMA } from '@/dominio/metas';
 import { DIA_DEL_AVISO, DIAS_DE_PRUEBA } from '@/dominio/premium';
@@ -39,7 +41,7 @@ import { COLOR_DE_MACRO, Icono } from '../comida/comunes';
 import { duracion, horaDelDia, numero } from '../comida/datos';
 import { Luna } from '../comida/Luna';
 import { ejemplo } from '../ejemplo';
-import { Hipnograma } from '../graficos/Graficos';
+import { Columnas, Hipnograma } from '../graficos/Graficos';
 import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
 import { entrarConApple, hayApple, type ErrorDeCuenta } from './cuenta';
 import { Guia } from './Guia';
@@ -336,15 +338,20 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
     }
   }, []);
 
-  // El final: la cámara baja hasta hoy, la entrada se apaga y se guarda todo; con el perfil
-  // guardado, Secciones deja la entrada y aparece Inicio.
+  // El final: el «flum» lleva hasta hoy y en la mitad, con la entrada ya apagada, la cámara queda en hoy y se
+  // guarda todo; con el perfil guardado, Secciones deja la entrada y aparece Inicio. Con Reducir movimiento,
+  // sin viaje: la entrada se apaga y la cámara baja.
   const salir = (guardar: () => void) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-    camara.set(0);
-    return setTimeout(() => {
+    const cambiar = () => {
+      camara.set(0);
       guardar();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    }, reducido ? 200 : 1100);
+    };
+    if (!reducido) return viajar(cambiar);
+    camara.set(0);
+    const espera = setTimeout(cambiar, 200);
+    return () => clearTimeout(espera);
   };
   const terminar = () => {
     if (saliendo || !r.sexo) {
@@ -357,7 +364,8 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
     const { c, nuevo } = paraGuardar(r, hoy, noches);
     salir(() => {
       elAlmacen().responderCuestionario(c, deSalud.has('pesoKg') ? 'salud' : 'manual', nuevo);
-      alTerminar?.();
+      // Los primeros hábitos suben cuando el viaje ya llegó, como en la galería: antes tapaban a Inicio llegando.
+      if (alTerminar) setTimeout(alTerminar, reducido ? 0 : DURACION_DEL_VIAJE * (1 - MITAD_DEL_VIAJE));
     });
   };
   const empezar = () => {
@@ -367,17 +375,20 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   };
   useEffect(() => {
     if (!conLaCuenta || terminando) return;
-    const espera = salir(() => elAlmacen().terminarEntrada());
-    return () => clearTimeout(espera);
+    return salir(() => elAlmacen().terminarEntrada());
     // Solo importa cuándo llega el perfil: salir es otra función en cada dibujo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conLaCuenta]);
 
-  // Con Reducir movimiento, la entrada se apaga igual (de fábrica, withTiming lo saltearía) pero sin agrandarse.
-  const estiloSalida = useAnimatedStyle(() => ({
-    opacity: withTiming(saliendo ? 0 : 1, { duration: 700, reduceMotion: ReduceMotion.Never }),
-    transform: [{ scale: reducido ? 1 : withTiming(saliendo ? 1.06 : 1, { duration: 900 }) }],
-  }));
+  // Al salir, la entrada crece y se apaga hacia la cámara con la primera mitad del viaje. Antes de que arranque
+  // el avance está quieto en 1, y la entrada se desmonta en la mitad: hasta entonces, 1 es «todavía no».
+  // Con Reducir movimiento se apaga igual (de fábrica, withTiming lo saltearía) pero sin agrandarse.
+  const estiloSalida = useAnimatedStyle(() => {
+    if (reducido) return { opacity: withTiming(saliendo ? 0 : 1, { duration: 700, reduceMotion: ReduceMotion.Never }), transform: [{ scale: 1 }] };
+    const u = avanceDelViaje.get();
+    const v = loQueSeVa(saliendo && u < 1 ? u : 0);
+    return { opacity: v.opacidad, transform: [{ scale: v.escala }] };
+  });
 
   const pregunta = esPregunta(paso.id) ? paso.id : null;
   // Salud dijo menos de 16: Moss no sigue (Menor), y tampoco se vuelve a la pregunta de antes.
@@ -638,7 +649,6 @@ function LaNoche({ a, cruza, reducido }: { a: Anclas; cruza: [number, number]; r
     if (!reducido) ancho.set(withDelay(llega, withTiming(interior, { duration: tarda, easing: Easing.linear })));
   }, [ancho, interior, llega, tarda, reducido]);
   const estiloDelGrafico = useAnimatedStyle(() => ({ width: ancho.get() }));
-  const maximo = 8 * 60 * 1.2;
   const datos: [string, string][] = [
     [t('entrada.intro.sueno.teDormiste'), horaDelDia(n.dormirse + 18 * 60)],
     [t('entrada.intro.sueno.teDespertaste'), horaDelDia(n.despertar + 18 * 60)],
@@ -665,9 +675,8 @@ function LaNoche({ a, cruza, reducido }: { a: Anclas; cruza: [number, number]; r
       </Animated.View>
       <Animated.View entering={fundido(llega + tarda, 500)} style={[lados, s.nochesCaja, { top: a.H * INTRO.noche + 214 }]}>
         <Text style={s.nocheRotulo} maxFontSizeMultiplier={TOPE}>{t('entrada.intro.sueno.semanas')}</Text>
-        <View style={s.noches}>
-          {noches.map((x, k) => <View key={k} style={[s.nocheBarra, x ? { height: Math.max(3, (x.dormido / maximo) * 46) } : s.nocheVacia, x && x.dormido >= 8 * 60 * 0.9 && s.nocheBien]} />)}
-        </View>
+        {/* Las columnas de la galería, contra las 8 h (la línea punteada). */}
+        <Columnas valores={noches.map((x) => (x ? x.dormido : null))} meta={8 * 60} ancho={a.W - 2 * a.barra.x0} alto={60} />
       </Animated.View>
     </View>
   );
@@ -969,10 +978,6 @@ const s = StyleSheet.create({
   nocheDatoTitulo: { fontFamily: letras.texto, fontSize: 11.5, color: 'rgba(239, 230, 207, 0.6)' },
   nocheDatoValor: { fontFamily: letras.numero, fontSize: 15, color: colores.pergamino, fontVariant: ['tabular-nums'] },
   nochesCaja: { position: 'absolute', gap: 8 },
-  noches: { flexDirection: 'row', alignItems: 'flex-end', gap: 5, height: 46 },
-  nocheBarra: { flex: 1, borderRadius: 2, backgroundColor: 'rgba(239, 230, 207, 0.32)' },
-  nocheVacia: { height: 2, backgroundColor: 'rgba(239, 230, 207, 0.14)' },
-  nocheBien: { backgroundColor: 'rgba(166, 191, 148, 0.6)' },
   camino: { position: 'absolute', flexDirection: 'row', gap: 6 },
   caminoHilo: { position: 'absolute', top: 5, height: 1, backgroundColor: 'rgba(239, 230, 207, 0.2)' },
   caminoLleno: { height: 1, backgroundColor: colores.oro },

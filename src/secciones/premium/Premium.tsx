@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { ActionSheetIOS, ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type AlertButton, type ViewStyle } from 'react-native';
-import Animated, { FadeIn, FadeOut, ReduceMotion, SlideInDown, SlideOutDown, useAnimatedStyle, useReducedMotion, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeOut, ReduceMotion, SlideInDown, SlideOutDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { elAlmacen } from '@/almacen';
@@ -21,7 +21,8 @@ import { abrirPagina } from '@/lib/sitio';
 import { pedirPermisoDeAvisos, programarAvisos } from '@/recordatorios/programar';
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
-import { duracion, fechaLarga } from '../comida/datos';
+import { COLOR_DE_MACRO, MACROS } from '../comida/comunes';
+import { duracion, fechaLarga, numero, useNumeros } from '../comida/datos';
 import { Luna } from '../comida/Luna';
 import { Hipnograma } from '../graficos/Graficos';
 import { anunciar } from '../anuncio';
@@ -129,8 +130,16 @@ export function usePreciosDeLaEntrada() {
  */
 export function EjemploDeJuntos({ ancho, medidas, baja }: { ancho: number; medidas?: { relleno: number; noche: number; hilo: number; margen: number }; baja?: [number, number] }) {
   const reducido = useReducedMotion();
+  const numeros = useNumeros();
   const conEstrella = !!baja && !reducido;
   const relleno = medidas?.relleno ?? 14;
+  const llega = conEstrella ? baja[0] + baja[1] - 150 : 0;
+  const entra = conEstrella ? FadeIn.delay(llega).duration(600) : undefined;
+  // Las barras de los macros se llenan al aparecer, como en Inicio.
+  const lleno = useSharedValue(reducido ? 1 : 0);
+  useEffect(() => {
+    if (!reducido) lleno.set(withDelay(llega + 200, withTiming(1, { duration: 1100, easing: Easing.bezier(0.2, 0.7, 0.2, 1) })));
+  }, [lleno, llega, reducido]);
   return (
     <View style={[st.juntos, { paddingHorizontal: relleno, paddingVertical: medidas?.relleno ?? 12 }]}>
       <View style={[st.juntosFila, medidas && { height: medidas.noche }]}>
@@ -141,13 +150,44 @@ export function EjemploDeJuntos({ ancho, medidas, baja }: { ancho: number; medid
         <Hipnograma desde={NOCHE_CORTA.desde} hasta={NOCHE_CORTA.hasta} tramos={NOCHE_CORTA.tramos} ancho={Math.max(80, ancho - 2 * relleno - 110)} alto={medidas?.noche ?? 40} />
       </View>
       <Animated.View entering={conEstrella ? FadeIn.delay(baja[0]).duration(baja[1]) : undefined} style={[st.juntosUnion, medidas && { height: medidas.hilo, marginVertical: medidas.margen }]} />
-      <Animated.View entering={conEstrella ? FadeIn.delay(baja[0] + baja[1] - 150).duration(600) : undefined} style={st.juntosFila}>
-        <View style={st.juntosLuna}><Luna tam={48} fraccion={0.16} ms={0} /></View>
+      {/* Hoy: lo comido con sus macros y lo que la noche le dice al día, como en la galería. */}
+      <Animated.View entering={entra} style={st.juntosFila}>
+        <View style={st.juntosLuna}><Luna tam={48} fraccion={DIA_DEL_EJEMPLO.kcal / DIA_DEL_EJEMPLO.meta} ms={0} /></View>
         <View style={st.juntosColumna}>
           <Text style={st.juntosRotulo}>{t('suscripcion.ejemplo.hoy')}</Text>
-          <Text style={st.juntosTexto}>{t('suscripcion.ejemplo.hambre', { h: duracion(NOCHE_CORTA.dormido) })}</Text>
+          {numeros && (
+            <Text style={st.juntosCifra}>
+              {`${numero(DIA_DEL_EJEMPLO.kcal)} kcal`}
+              <Text style={st.juntosDeMeta}>{`  ${t('suscripcion.ejemplo.deMeta', { meta: numero(DIA_DEL_EJEMPLO.meta) })}`}</Text>
+            </Text>
+          )}
         </View>
       </Animated.View>
+      <Animated.View entering={entra} style={st.juntosMacros}>
+        {MACROS.map((m) => (
+          <View key={m} style={st.juntosMacro}>
+            <View style={st.juntosMacroNombre}>
+              <View style={[st.juntosMacroPunto, { backgroundColor: COLOR_DE_MACRO[m] }]} />
+              <Text style={st.juntosMacroTexto} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{t(`comida.${m}`)}</Text>
+            </View>
+            <BarraDeMacro color={COLOR_DE_MACRO[m]} k={Math.min(1, DIA_DEL_EJEMPLO.macros[m][0] / DIA_DEL_EJEMPLO.macros[m][1])} lleno={lleno} />
+            {numeros && <Text style={st.juntosMacroGramos} numberOfLines={1}>{t('comida.gramosDe', { n: numero(DIA_DEL_EJEMPLO.macros[m][0]), meta: numero(DIA_DEL_EJEMPLO.macros[m][1]) })}</Text>}
+          </View>
+        ))}
+      </Animated.View>
+      <Animated.Text entering={entra} style={st.juntosDice}>{t('suscripcion.ejemplo.hambre', { h: duracion(NOCHE_CORTA.dormido) })}</Animated.Text>
+    </View>
+  );
+}
+
+/** El día del ejemplo: lo comido hasta ahora y la meta, en kcal y en gramos de cada macro. */
+const DIA_DEL_EJEMPLO = { kcal: 1250, meta: 2300, macros: { proteina: [66, 140], carbohidratos: [155, 260], grasas: [40, 70] } } as const;
+
+function BarraDeMacro({ color, k, lleno }: { color: string; k: number; lleno: { get: () => number } }) {
+  const estilo = useAnimatedStyle(() => ({ width: `${k * lleno.get() * 100}%` }));
+  return (
+    <View style={st.juntosBarra}>
+      <Animated.View style={[st.juntosBarraLlena, { backgroundColor: color }, estilo]} />
     </View>
   );
 }
@@ -543,9 +583,18 @@ const st = StyleSheet.create({
   juntosColumna: { flexShrink: 1 },
   juntosRotulo: { fontFamily: letras.texto, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.55)' },
   juntosCifra: { marginTop: 2, fontFamily: letras.numeroMedio, fontSize: 18, color: colores.cifra, fontVariant: ['tabular-nums'] },
-  juntosTexto: { marginTop: 3, fontFamily: letras.texto, fontSize: 14, lineHeight: 19, color: colores.pergamino },
   juntosUnion: { width: 1, height: 14, marginVertical: 4, marginLeft: 23, backgroundColor: 'rgba(232, 196, 106, 0.55)' },
   juntosLuna: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  juntosDeMeta: { fontFamily: letras.texto, fontSize: 12, color: 'rgba(239, 230, 207, 0.55)' },
+  juntosMacros: { flexDirection: 'row', gap: 12, marginTop: 10 },
+  juntosMacro: { flex: 1, minWidth: 0, gap: 4 },
+  juntosMacroNombre: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  juntosMacroPunto: { width: 5, height: 5, borderRadius: 2.5 },
+  juntosMacroTexto: { flexShrink: 1, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.62)' },
+  juntosBarra: { height: 3, marginTop: 1, borderRadius: 3, backgroundColor: 'rgba(239, 230, 207, 0.08)', overflow: 'hidden' },
+  juntosBarraLlena: { height: '100%', borderRadius: 3, opacity: 0.75 },
+  juntosMacroGramos: { fontFamily: letras.texto, fontSize: 11, color: 'rgba(239, 230, 207, 0.5)', fontVariant: ['tabular-nums'] },
+  juntosDice: { marginTop: 10, paddingTop: 9, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(239, 230, 207, 0.12)', fontFamily: letras.texto, fontSize: 13.5, lineHeight: 18, color: colores.pergamino },
   todo: { gap: 6 },
   todoTitulo: { marginBottom: 2, fontFamily: letras.texto, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: colores.oroClaro },
   todoFila: { flexDirection: 'row', gap: 10 },

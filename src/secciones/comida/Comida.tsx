@@ -28,7 +28,8 @@ import { confirmar, delDia, sumarValores, totalDelDia, type Registro, type Valor
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { alTocarDeNuevo, useEsLaActual } from '../arriba';
-import { FranjaBajoLaHora } from '../franja';
+import { DEBAJO_DE_LA_HORA, FranjaBajoLaHora } from '../franja';
+import { justo } from '../inicio/comunes';
 import { entre, viaje } from '../movimiento';
 import { margenDeToque } from '../paso';
 import { ACOMODA, Aparece } from '../tarjetas';
@@ -73,6 +74,8 @@ const HILO = 'linear-gradient(180deg, rgba(232, 196, 106, 0) 0%, rgba(232, 196, 
 const PULSO_MS = 1300;
 /** Mantener apretado: a los 350 ms abre el menú; mientras, se hunde apenas. */
 const MANTENER = 350;
+/** Cuánto adentro del borde del cuadro se recorta lo que se desliza: ahí lo redondeado (radio 20) ya no tapa nada. */
+const CUADRO_ADENTRO = 6;
 const HUNDE = 0.018;
 
 // Inicio › Calorías lleva a hoy y a «Día»: Comida escucha mientras está armada (si no, ya abre en hoy).
@@ -189,29 +192,35 @@ export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba
       <ScrollView
         ref={scroll}
         style={estilos.lleno}
-        contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 48 }}
+        contentContainerStyle={{ paddingTop: arriba + DEBAJO_DE_LA_HORA, paddingHorizontal: 20, paddingBottom: abajo + 48 }}
         showsVerticalScrollIndicator={false}
         scrollsToTop={esLaActual}
         scrollEventThrottle={16}
       >
-        <Text style={estilos.fecha}>{fechaCorta(dia)}</Text>
-        <Text style={estilos.titulo}>{tituloDelDia(dia, e.hoy)}</Text>
+        {/* Con los altos de línea de la galería, como Inicio. */}
+        <View style={estilos.cabecera}>
+          <Text style={estilos.fecha}>{fechaCorta(dia)}</Text>
+          <Text style={estilos.titulo}>{tituloDelDia(dia, e.hoy)}</Text>
+        </View>
         <TiraDeLaSemana e={e} dia={dia} alElegir={verDia} />
         <Cuadro ancho={anchoCuadro} vista={vista} alCambiar={verVista}>
           <PaginaDelDia e={e} dia={dia} />
           <PaginaDeLaSemana e={e} dia={dia} alElegir={verDia} />
           <PaginaDelMes e={e} dia={dia} ancho={anchoCuadro} alElegir={verDia} />
         </Cuadro>
-        <View style={estilos.puntos}>
-          {VISTAS.map((v) => <OpcionDeVista key={v} texto={t(`comida.vistas.${v}`)} elegida={v === vista} alTocar={() => verVista(v)} />)}
-        </View>
-        <TiraDeFotos dia={dia} />
-        <Text style={estilos.seccion}>{t('comida.tuDia')}</Text>
-        {dia > e.hoy && <Text style={estilos.nota}>{t('comida.planificadoTexto')}</Text>}
-        {!metaDelDia(e, dia) && <Text style={estilos.nota}>{t('comida.sinMeta')}</Text>}
-        <ArmarElDia e={e} dia={dia} />
-        <LineaDelDia e={e} dia={dia} alMenu={setMenu} />
-        <AccionesDelDia e={e} dia={dia} />
+        {/* Cuando el cuadro cambia de alto, lo de abajo se acomoda con él. */}
+        <Animated.View layout={ACOMODA}>
+          <View style={estilos.puntos}>
+            {VISTAS.map((v) => <OpcionDeVista key={v} texto={t(`comida.vistas.${v}`)} elegida={v === vista} alTocar={() => verVista(v)} />)}
+          </View>
+          <TiraDeFotos dia={dia} />
+          <Text style={estilos.seccion}>{t('comida.tuDia')}</Text>
+          {dia > e.hoy && <Text style={estilos.nota}>{t('comida.planificadoTexto')}</Text>}
+          {!metaDelDia(e, dia) && <Text style={estilos.nota}>{t('comida.sinMeta')}</Text>}
+          <ArmarElDia e={e} dia={dia} />
+          <LineaDelDia e={e} dia={dia} alMenu={setMenu} />
+          <AccionesDelDia e={e} dia={dia} />
+        </Animated.View>
       </ScrollView>
       <FranjaBajoLaHora scrollY={scrollY} arriba={arriba} />
       <MenuFlotante pedido={menu} alCerrar={() => setMenu(null)} />
@@ -271,7 +280,7 @@ function TiraDeLaSemana({ e, dia, alElegir }: { e: Estado; dia: ClaveDia; alEleg
         </Pressable>
       ))}
       <View style={[estilos.tiraLunas, arribaDeLunas !== null && { top: arribaDeLunas }]} pointerEvents="none">
-        <Lunitas lunas={lunasDe(e, dias)} ancho={ancho} tam={24} estilo={e.kcal} elegida={dias.indexOf(dia)} />
+        <Lunitas lunas={lunasDe(e, dias)} ancho={ancho} tam={24} estilo={e.kcal} />
       </View>
     </View>
   );
@@ -280,15 +289,16 @@ function TiraDeLaSemana({ e, dia, alElegir }: { e: Estado; dia: ClaveDia; alEleg
 // ------------------------------------------------------------------ el cuadro que se desliza
 /**
  * Con el dedo de costado se pasa del día a la semana y al mes; en los bordes cede un cuarto, como
- * las pestañas. El alto sigue a la página que se ve. El gesto que empieza en el cuadro es del cuadro.
+ * las pestañas. El gesto que empieza en el cuadro es del cuadro.
+ * Para un iPhone viejo (spec/fluidez.md, 12): las esquinas redondeadas son solo el fondo, y lo que se desliza se
+ * recorta en un rectángulo metido CUADRO_ADENTRO adentro, donde no llega lo redondeado; el alto es el de la página
+ * que se ve (las otras dos van fuera del flujo) y, al cambiar, se acomoda con `layout`, sin seguir al dedo.
  */
 function Cuadro({ ancho, vista, alCambiar, children }: { ancho: number; vista: Vista; alCambiar: (v: Vista) => void; children: React.ReactNode[] }) {
   const pos = useSharedValue(VISTAS.indexOf(vista));
   const desde = useSharedValue(0);
-  const altos = useSharedValue<number[]>([0, 0, 0]);
-  // Las tres medidas llegan juntas: leer el valor compartido, cambiar una y escribirlo perdía las
-  // otras en el iPhone (la lectura vuelve vieja), y el cuadro quedaba sin alto al volver de «Mes».
-  const medidas = useRef([0, 0, 0]);
+  // El ancho de lo que se desliza: el del cuadro menos lo que lo separa de las esquinas.
+  const paso = ancho - 2 * CUADRO_ADENTRO;
   // La vista cambia también desde los puntos de abajo o al tocar un día: el cuadro va solo.
   useEffect(() => {
     pos.set(viaje(VISTAS.indexOf(vista)));
@@ -303,7 +313,7 @@ function Cuadro({ ancho, vista, alCambiar, children }: { ancho: number; vista: V
     },
     onUpdate: (ev) => {
       'worklet';
-      let p = desde.get() - ev.translationX / ancho;
+      let p = desde.get() - ev.translationX / paso;
       if (p < 0) p *= 0.25;
       if (p > 2) p = 2 + (p - 2) * 0.25;
       pos.set(p);
@@ -311,42 +321,33 @@ function Cuadro({ ancho, vista, alCambiar, children }: { ancho: number; vista: V
     onDeactivate: (ev) => {
       'worklet';
       const i = desde.get();
-      const pasa = Math.abs(ev.translationX) > ancho * 0.2 || Math.abs(ev.velocityX) > 350;
+      const pasa = Math.abs(ev.translationX) > paso * 0.2 || Math.abs(ev.velocityX) > 350;
       const destino = entre(pasa ? i + (ev.translationX < 0 ? 1 : -1) : i, 0, 2);
       pos.set(viaje(destino));
       scheduleOnRN(cambiar, destino);
     },
   });
-  const estiloTira = useAnimatedStyle(() => ({ transform: [{ translateX: -pos.get() * ancho }] }));
-  const estiloAlto = useAnimatedStyle(() => {
-    const a = altos.get();
-    // Hasta tener las tres medidas, el alto natural (devolver {} después de un alto dejaría el último).
-    if (!a[0] || !a[1] || !a[2]) return {};
-    const p = entre(pos.get(), 0, 2);
-    const i = Math.floor(p);
-    const f = p - i;
-    return { height: a[i] * (1 - f) + a[Math.min(2, i + 1)] * f };
-  });
+  const estiloTira = useAnimatedStyle(() => ({ transform: [{ translateX: -pos.get() * paso }] }));
   const actual = VISTAS.indexOf(vista);
   return (
     <GestureDetector gesture={pan}>
-      <Animated.View style={[estilos.cuadro, estiloAlto]}>
-        <Animated.View style={[estilos.cuadroTira, { width: ancho * 3 }, estiloTira]}>
-          {children.map((pagina, i) => (
-            <View
-              key={i}
-              style={[estilos.pagina, { width: ancho }]}
-              // Las otras dos quedan armadas al costado, fuera del cuadro: VoiceOver no las recorre.
-              accessibilityElementsHidden={i !== actual}
-              importantForAccessibility={i === actual ? 'auto' : 'no-hide-descendants'}
-              onLayout={(ev) => {
-                medidas.current[i] = ev.nativeEvent.layout.height;
-                altos.set([...medidas.current]);
-              }}
-            >
-              {pagina}
-            </View>
-          ))}
+      <Animated.View layout={ACOMODA} style={estilos.cuadro}>
+        {/* El recorte crece con el fondo: lo de la página más alta no se ve fuera de él mientras se acomoda. */}
+        <Animated.View layout={ACOMODA} style={estilos.cuadroRecorte}>
+          <Animated.View style={[estilos.cuadroTira, { width: paso * 3 }, estiloTira]}>
+            {children.map((pagina, i) => (
+              <View
+                key={i}
+                // La que se ve da el alto; las otras dos, al costado, se ven solo al deslizar.
+                style={[estilos.pagina, { width: paso }, i === actual ? { marginLeft: i * paso } : [estilos.paginaAlCostado, { left: i * paso }]]}
+                // Las otras dos quedan armadas al costado, fuera del cuadro: VoiceOver no las recorre.
+                accessibilityElementsHidden={i !== actual}
+                importantForAccessibility={i === actual ? 'auto' : 'no-hide-descendants'}
+              >
+                {pagina}
+              </View>
+            ))}
+          </Animated.View>
         </Animated.View>
       </Animated.View>
     </GestureDetector>
@@ -961,20 +962,14 @@ function TarjetaVacia({ comida, dia, hoy, e, linea }: { comida: Comida; dia: Cla
   );
 }
 
-/** Debajo de la línea: confirmar lo planificado cuando llega el día (o después, si quedó sin confirmar), y copiar el día a hoy o a mañana. */
+/**
+ * Debajo de la línea: confirmar lo planificado cuando llega el día (o después, si quedó sin confirmar). Copiar va
+ * en el menú de mantener apretado, como en la galería: no hay «Copiar el día».
+ */
 function AccionesDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
-  const [copiando, setCopiando] = useState(false);
   const registros = registrosDe(e, dia);
   // Lo que armó el plan se anota de a una comida, con «Comí esto»: confirmar todo junto anotaría también la cena que falta.
   const planificados = dia <= e.hoy ? registros.filter((r) => r.planificado && !r.plan).length : 0;
-  const destinos = [e.hoy, sumarDias(e.hoy, 1)].filter((d) => d !== dia);
-  if (!registros.length) return null;
-  const copiar = (hacia: ClaveDia) => {
-    const copia = elAlmacen().copiar({ dia }, { dia: hacia });
-    setCopiando(false);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    avisar(plural('comida.copiado', copia.length, { dia: tituloDelDia(hacia, e.hoy).toLowerCase() }), () => copia.forEach((r) => elAlmacen().borrarRegistro(r.id)));
-  };
   const confirmarTodo = () => {
     // Los que confirma confirmarPlanificados, que devuelve cuántos: lo planificado a mano del día, sin lo del plan.
     const ids = confirmar(elAlmacen().estado().registros.values(), dia, '').filter((r) => !r.plan).map((r) => r.id);
@@ -982,25 +977,10 @@ function AccionesDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     avisar(plural('comida.confirmados', n), n ? () => elAlmacen().volverAPlanificar(ids) : undefined);
   };
-  // Nada cambia de golpe: «Copiar el día» y «Copiar a…» se funden uno en otro, y lo de alrededor se acomoda.
+  if (!planificados) return null;
   return (
     <Aparece style={estilos.accionesDelDia}>
-      {planificados > 0 && (
-        <Aparece>
-          <Boton texto={t('comida.confirmar')} icono="checkmark" tipo="principal" alTocar={confirmarTodo} />
-        </Aparece>
-      )}
-      {copiando ? (
-        <Aparece key="destinos" style={estilos.acciones}>
-          <Text style={estilos.copiarA}>{t('comida.copiarA')}</Text>
-          {destinos.map((d) => <Boton key={d} texto={tituloDelDia(d, e.hoy)} tipo="secundario" alTocar={() => copiar(d)} />)}
-          <Boton texto={t('comun.cancelar')} tipo="contorno" alTocar={() => setCopiando(false)} />
-        </Aparece>
-      ) : (
-        <Aparece key="copiar">
-          <Boton texto={t('comida.copiarDia')} icono="doc.on.doc" tipo="contorno" alTocar={() => setCopiando(true)} />
-        </Aparece>
-      )}
+      <Boton texto={t('comida.confirmar')} icono="checkmark" tipo="principal" alTocar={confirmarTodo} />
     </Aparece>
   );
 }
@@ -1010,8 +990,9 @@ const FILA = { flexDirection: 'row', alignItems: 'baseline', gap: 10, paddingVer
 
 const estilos = StyleSheet.create({
   lleno: { flex: 1 },
-  fecha: { fontFamily: letras.texto, fontSize: 11, letterSpacing: 2.2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.58)' },
-  titulo: { marginTop: 6, fontFamily: letras.numeroMedio, fontSize: 28, letterSpacing: -0.3, color: colores.pergamino },
+  cabecera: { gap: 8 },
+  fecha: { fontFamily: letras.texto, fontSize: 11, letterSpacing: 2.2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.58)', ...justo('texto', 11, 13.2) },
+  titulo: { fontFamily: letras.numeroMedio, fontSize: 28, letterSpacing: -0.3, color: colores.pergamino, ...justo('numero', 28) },
   hoy: { color: colores.oroClaro },
   apretado: { opacity: 0.6 },
   tira: { marginTop: 16, flexDirection: 'row', gap: 4 },
@@ -1021,9 +1002,12 @@ const estilos = StyleSheet.create({
   tiraLugar: { height: 24, marginVertical: 6 },
   tiraNumero: { fontFamily: letras.numeroMedio, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.78)', fontVariant: ['tabular-nums'] },
   tiraLunas: { position: 'absolute', left: 0, right: 0, top: 8 + 12 + 6 },
-  cuadro: { marginTop: 14, overflow: 'hidden', borderRadius: 20, backgroundColor: 'rgba(8, 12, 26, 0.66)', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.09)' },
+  cuadro: { marginTop: 14, borderRadius: 20, backgroundColor: 'rgba(8, 12, 26, 0.66)', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.09)' },
+  cuadroRecorte: { margin: CUADRO_ADENTRO - 1, overflow: 'hidden' },
   cuadroTira: { flexDirection: 'row', alignItems: 'flex-start' },
-  pagina: { paddingTop: 12, paddingHorizontal: 16, paddingBottom: 16 },
+  // Lo de adentro queda donde estaba: 12 arriba y 16 a los lados y abajo desde el borde del cuadro.
+  pagina: { paddingTop: 12 - CUADRO_ADENTRO, paddingHorizontal: 16 - CUADRO_ADENTRO, paddingBottom: 16 - CUADRO_ADENTRO },
+  paginaAlCostado: { position: 'absolute', top: 0 },
   // Día, Semana y Mes: un selector de verdad, con lo elegido marcado (la galería del 5/11).
   puntos: { alignSelf: 'center', flexDirection: 'row', gap: 2, marginTop: 10, padding: 3, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.12)', backgroundColor: 'rgba(8, 12, 26, 0.55)' },
   punto: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999 },
@@ -1112,5 +1096,4 @@ const estilos = StyleSheet.create({
   miniLetra: { marginRight: -1, fontFamily: letras.textoMedio, color: 'rgba(239, 230, 207, 0.8)' },
   acciones: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   accionesDelDia: { marginTop: 22, marginLeft: 60, gap: 10, alignItems: 'flex-start' },
-  copiarA: { fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.7)' },
 });

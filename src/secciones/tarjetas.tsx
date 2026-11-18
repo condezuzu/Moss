@@ -209,9 +209,10 @@ export function Camino({ hecho, etiquetas }: { hecho: number; etiquetas: readonl
 }
 
 export const e = StyleSheet.create({
-  cabecera: { marginBottom: 4 },
-  fecha: { fontFamily: letras.texto, fontSize: 11, letterSpacing: 2.2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.58)' },
-  tituloPagina: { marginTop: 6, fontFamily: letras.numeroMedio, fontSize: 28, letterSpacing: -0.3, color: colores.pergamino },
+  // Con los altos de línea de la galería (13,2 y 28), como `justo` de inicio/comunes: Jost mide 1,445 y Outfit 1,26.
+  cabecera: { marginBottom: 4, gap: 8 },
+  fecha: { fontFamily: letras.texto, fontSize: 11, letterSpacing: 2.2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.58)', marginVertical: (13.2 - 11 * 1.445) / 2 },
+  tituloPagina: { fontFamily: letras.numeroMedio, fontSize: 28, letterSpacing: -0.3, color: colores.pergamino, marginVertical: (28 - 28 * 1.26) / 2 },
   ejemplo: { marginTop: 12, flexDirection: 'row', gap: 10, alignItems: 'flex-start', paddingVertical: 11, paddingHorizontal: 13, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.28)', backgroundColor: 'rgba(232, 196, 106, 0.07)' },
   ejemploTexto: { flex: 1, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17.5, color: 'rgba(246, 227, 166, 0.88)' },
   carta: { marginTop: 12, borderRadius: 20, paddingTop: 14, paddingHorizontal: 16, paddingBottom: 15, backgroundColor: 'rgba(8, 12, 26, 0.72)', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.09)', gap: 6 },

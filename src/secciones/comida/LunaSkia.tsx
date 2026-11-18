@@ -103,13 +103,8 @@ export type PropsDeLunitas = {
   tam: number;
   /** Cómo se ven las calorías (Todo lo de hoy): la luna, o la mini de cada estilo (galeria/src/kcal.js). */
   estilo?: EstiloDeKcal;
-  /** El día elegido: su aro va entero, como su número. */
-  elegida?: number;
 };
 
-// El aro de cada luna chica: en la galería, del color del texto de su día.
-const ARO = 'rgba(239, 230, 207, 0.72)';
-const ARO_ELEGIDO = '#efe6cf';
 const PUNTEADO = [2, 2.2];
 const MEDIO_ARCO = 'M -9.5 4 A 9.5 9.5 0 0 1 9.5 4';
 const VUELTA = 'M 0 -9 A 9 9 0 1 1 0 9 A 9 9 0 1 1 0 -9';
@@ -148,7 +143,7 @@ function Mini({ l, estilo }: { l: Lunita; estilo: Exclude<EstiloDeKcal, 'luna'> 
 }
 
 /** Una fila de lunas chicas en un solo lienzo (la semana, o una fila del mes): más liviano que una por día. */
-export function LunitasSkia({ lunas, ancho, tam, estilo = 'luna', elegida }: PropsDeLunitas) {
+export function LunitasSkia({ lunas, ancho, tam, estilo = 'luna' }: PropsDeLunitas) {
   const caminos = useMemo(
     () => lunas.map((l) => (l.estado === 'comido' || l.estado === 'plan' ? Skia.Path.MakeFromSVGString(fase(Math.max(0.04, Math.min(1, l.fraccion)), 9.5)) : null)),
     [lunas],
@@ -162,20 +157,12 @@ export function LunitasSkia({ lunas, ancho, tam, estilo = 'luna', elegida }: Pro
         if (l.estado === 'fuera') return null;
         const camino = caminos[i];
         const punteado = l.estado === 'plan' || l.estado === 'futuro';
-        const aro = i === elegida ? ARO_ELEGIDO : ARO;
         return (
           <Group key={i} transform={[{ translateX: columna * (i + 0.5) }, { translateY: tam / 2 }, { scale: s }]}>
             {estilo !== 'luna' ? <Mini l={l} estilo={estilo} /> : (
               <>
-                {/* Como en la galería: la noche y la luz llevan el aro del color de su día, y encima va el borde fino. */}
                 {l.estado !== 'futuro' && <Circle cx={0} cy={0} r={9.5} color="#141c36" />}
-                <Circle cx={0} cy={0} r={9.5} style="stroke" strokeWidth={1.7} color={aro} />
-                {camino && (
-                  <Group opacity={l.estado === 'plan' ? 0.35 : 1}>
-                    <Path path={camino} color="#ecdcb2" />
-                    <Path path={camino} style="stroke" strokeWidth={1.7} strokeJoin="round" color={aro} />
-                  </Group>
-                )}
+                {camino && <Path path={camino} color="#ecdcb2" opacity={l.estado === 'plan' ? 0.35 : 1} />}
                 <Circle cx={0} cy={0} r={9.5} style="stroke" strokeWidth={0.9} color={l.estado === 'vacio' ? 'rgba(236, 230, 214, 0.16)' : 'rgba(246, 227, 166, 0.3)'}>
                   {punteado && <DashPathEffect intervals={PUNTEADO} />}
                 </Circle>

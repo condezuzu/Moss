@@ -8,13 +8,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { elAlmacen } from '@/almacen';
 import { ESTILOS_DE_KCAL } from '@/almacen/almacen';
-import { pesoCorporalEn } from '@/dominio/cantidades';
 import { edadDe, estadoDeMacro, RITMOS } from '@/dominio/metas';
 import { faltaParaEstimar } from '@/dominio/progreso';
 import { idioma, lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Icono, MACROS } from '../comida/comunes';
-import { duracion, fechaDiaMes, metaDelDia, numero, sistemaDe, totalDe, useEstado } from '../comida/datos';
+import { cifraDePeso, duracion, fechaDiaMes, metaDelDia, numero, sistemaDe, textoDePeso, totalDe, useEstado } from '../comida/datos';
 import { usePersona, useSueno } from '../ganchos';
 import { HojaModal } from '../HojaModal';
 import { Muestra } from '../kcal/Kcal';
@@ -63,8 +62,7 @@ function Contenido({ alVerComida }: { alVerComida: () => void }) {
   const perfil = e.perfil;
   const sabe: [string, string, string][] = [];
   if (perfil) {
-    const peso = p.pesoHoy !== null ? pesoCorporalEn(p.pesoHoy, sistema) : null;
-    if (!p.deEjemplo && peso) sabe.push([t('inicio.todo.peso'), `${numero(peso.valor, 1)} ${peso.unidad}`, t('inicio.todo.origen.pesadas')]);
+    if (!p.deEjemplo && p.pesoHoy !== null) sabe.push([t('inicio.todo.peso'), textoDePeso(p.pesoHoy, sistema), t('inicio.todo.origen.pesadas')]);
     sabe.push([t('perfil.altura'), `${numero(perfil.alturaCm)} cm`, t('inicio.todo.origen.dijiste')]);
     sabe.push([t('perfil.edad'), numero(edadDe(perfil, e.hoy)), t('inicio.todo.origen.dijiste')]);
     sabe.push([t('perfil.sexo'), t(perfil.sexo === 'f' ? 'entrada.cuestionario.femenino' : 'entrada.cuestionario.masculino'), t('inicio.todo.origen.dijiste')]);
@@ -72,9 +70,9 @@ function Contenido({ alVerComida }: { alVerComida: () => void }) {
     if (perfil.objetivo === 'mantener' || !perfil.pesoMeta) {
       sabe.push([t('progreso.objetivo'), t(`progreso.objetivos.${perfil.objetivo}`), t('inicio.todo.origen.elegiste')]);
     } else {
-      const m = pesoCorporalEn(perfil.pesoMeta, sistema);
+      const m = cifraDePeso(perfil.pesoMeta, sistema);
       sabe.push([
-        t('progreso.objetivo'), t(`progreso.objetivoA.${perfil.objetivo}`, { kg: numero(m.valor, m.valor % 1 ? 1 : 0), unidad: m.unidad }),
+        t('progreso.objetivo'), t(`progreso.objetivoA.${perfil.objetivo}`, { kg: m.cifra, unidad: m.unidad }),
         t('inicio.todo.origen.ritmo', { pct: numero(Math.abs(RITMOS[perfil.objetivo][perfil.ritmo]), 2) }),
       ]);
     }

@@ -10,6 +10,10 @@ export const DEL_FONDO = '3, 5, 12';
 /** El de Sueño, su noche azul. */
 export const DE_LA_NOCHE = '5, 9, 22';
 
+/** Dónde empieza cada sección, como en la galería (`.in-scroll`): 2 puntos debajo de la hora y 18 a los lados (Comida, 20). */
+export const DEBAJO_DE_LA_HORA = 2;
+export const LADOS = 18;
+
 export function FranjaBajoLaHora({ scrollY, arriba, rgb = DEL_FONDO }: { scrollY: SharedValue<number>; arriba: number; rgb?: string }) {
   const alto = arriba + 14;
   // Casi opaca hasta 26 puntos antes del final, y de ahí a transparente: como en la galería.

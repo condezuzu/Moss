@@ -2810,7 +2810,11 @@
       "gafas": "Gafas para la luz azul",
       "gafasTexto": "Dos horas antes de acostarte, si las tienes. La evidencia todavía es poca.",
       "dormirSinPeriodo": "Tu hora de acostarte esta noche: {hora}. Así dormirías {horas} y te despertarías a las {despertar}, con {latencia} min de margen para dormirte. Te avisa un rato antes.",
-      "maximoSolo": "Subió solo a {n} por los avisos que encendiste. Si eliges otro, queda el tuyo."
+      "maximoSolo": "Subió solo a {n} por los avisos que encendiste. Si eliges otro, queda el tuyo.",
+      "horasTexto": "Son tus horas de comer: al principio, las de tu día; después se acomodan solas a lo que anotas. La que cambias a mano queda fija.",
+      "horasCambiar": "Cambiar tus horas de comer",
+      "horaAMano": "a mano",
+      "noSueles": "No sueles"
     },
     "cambiarCuenta": "Cambiar de cuenta",
     "cambiarCuentaTexto": "Se cierra esta sesión y entras con otra cuenta. Lo de este teléfono se borra; tus datos quedan en tu cuenta.",
@@ -4700,5 +4704,171 @@
     "perfilSub": "Moss ajusta tu dieta a lo que marcas",
     "alergias": "Las alergias van en Lo que no comes, en el plan.",
     "subirNo": "En el embarazo, Moss ya suma lo que hace falta."
+  },
+  "frasesDelDia": {
+    "epicteto1": {
+      "texto": "Nada grande nace de golpe, ni siquiera un racimo de uvas o un higo.",
+      "autor": "Epicteto · Disertaciones I.15"
+    },
+    "moss1": {
+      "texto": "Poco, pero todos los días.",
+      "autor": "Moss"
+    },
+    "seneca1": {
+      "texto": "No es que tengamos poco tiempo: es que perdemos mucho.",
+      "autor": "Séneca · Sobre la brevedad de la vida 1"
+    },
+    "aurelio1": {
+      "texto": "Al amanecer, si te cuesta levantarte, piensa: me levanto para hacer el trabajo de una persona.",
+      "autor": "Marco Aurelio · Meditaciones V.1"
+    },
+    "moss2": {
+      "texto": "Un mal día no borra una buena semana.",
+      "autor": "Moss"
+    },
+    "aristoteles1": {
+      "texto": "Nos hacemos justos haciendo cosas justas, y valientes haciendo cosas valientes.",
+      "autor": "Aristóteles · Ética a Nicómaco II.1"
+    },
+    "epicteto2": {
+      "texto": "Todo hábito crece con sus actos: el de caminar, caminando; el de correr, corriendo.",
+      "autor": "Epicteto · Disertaciones II.18"
+    },
+    "moss3": {
+      "texto": "No hace falta un día perfecto: hace falta volver mañana.",
+      "autor": "Moss"
+    },
+    "seneca2": {
+      "texto": "Mientras se aplaza, la vida pasa.",
+      "autor": "Séneca · Cartas a Lucilio 1"
+    },
+    "aurelio2": {
+      "texto": "No discutas más cómo debe ser una buena persona. Sé una.",
+      "autor": "Marco Aurelio · Meditaciones X.16"
+    },
+    "moss4": {
+      "texto": "Dormir bien también es entrenar.",
+      "autor": "Moss"
+    },
+    "laotse1": {
+      "texto": "El viaje de mil leguas empieza bajo tus pies.",
+      "autor": "Lao Tse · Tao Te Ching 64"
+    },
+    "epicteto3": {
+      "texto": "Primero dite qué quieres ser; después haz lo que hay que hacer.",
+      "autor": "Epicteto · Disertaciones III.23"
+    },
+    "moss5": {
+      "texto": "Lo que se anota se puede cambiar.",
+      "autor": "Moss"
+    },
+    "seneca3": {
+      "texto": "Quien está en todas partes no está en ninguna.",
+      "autor": "Séneca · Cartas a Lucilio 2"
+    },
+    "aurelio3": {
+      "texto": "No vivas como si tuvieras diez mil años por delante.",
+      "autor": "Marco Aurelio · Meditaciones IV.17"
+    },
+    "moss6": {
+      "texto": "La constancia le gana a la intensidad.",
+      "autor": "Moss"
+    },
+    "durant1": {
+      "texto": "Somos lo que hacemos una y otra vez. La excelencia no es un acto, sino un hábito.",
+      "autor": "Will Durant · sobre Aristóteles"
+    },
+    "epicteto4": {
+      "texto": "Unas cosas dependen de nosotros y otras no.",
+      "autor": "Epicteto · Enquiridión 1"
+    },
+    "moss7": {
+      "texto": "El cielo se enciende estrella por estrella.",
+      "autor": "Moss"
+    },
+    "seneca4": {
+      "texto": "Sufrimos más en la imaginación que en la realidad.",
+      "autor": "Séneca · Cartas a Lucilio 13"
+    },
+    "aurelio4": {
+      "texto": "El alma se tiñe del color de sus pensamientos.",
+      "autor": "Marco Aurelio · Meditaciones V.16"
+    },
+    "moss8": {
+      "texto": "Tu cuerpo escucha lo que haces más que lo que prometes.",
+      "autor": "Moss"
+    },
+    "shakespeare1": {
+      "texto": "El sueño, que desenreda la madeja de las preocupaciones.",
+      "autor": "Shakespeare · Macbeth"
+    },
+    "epicteto5": {
+      "texto": "¿Hasta cuándo vas a esperar para exigirte lo mejor?",
+      "autor": "Epicteto · Enquiridión 51"
+    },
+    "moss9": {
+      "texto": "Hoy cuenta, aunque sea poco.",
+      "autor": "Moss"
+    },
+    "seneca5": {
+      "texto": "Para quien no sabe a qué puerto va, ningún viento es favorable.",
+      "autor": "Séneca · Cartas a Lucilio 71"
+    },
+    "aurelio5": {
+      "texto": "Lo que estorba el camino se vuelve el camino.",
+      "autor": "Marco Aurelio · Meditaciones V.20"
+    },
+    "moss10": {
+      "texto": "Comer bien no es comer perfecto.",
+      "autor": "Moss"
+    },
+    "james1": {
+      "texto": "Lo importante es hacer del sistema nervioso un aliado y no un enemigo.",
+      "autor": "William James · Principios de psicología"
+    },
+    "epicteto6": {
+      "texto": "Si quieres leer bien, lee; si quieres escribir, escribe.",
+      "autor": "Epicteto · Disertaciones II.18"
+    },
+    "moss11": {
+      "texto": "Lo que repites se vuelve fácil.",
+      "autor": "Moss"
+    },
+    "seneca6": {
+      "texto": "Aférrate a cada hora.",
+      "autor": "Séneca · Cartas a Lucilio 1"
+    },
+    "aurelio6": {
+      "texto": "Si no está bien, no lo hagas; si no es verdad, no lo digas.",
+      "autor": "Marco Aurelio · Meditaciones XII.17"
+    },
+    "moss12": {
+      "texto": "Descansar también es parte del plan.",
+      "autor": "Moss"
+    },
+    "franklin1": {
+      "texto": "Acostarse y levantarse temprano hace a una persona sana, rica y sabia.",
+      "autor": "Benjamin Franklin · Almanaque del pobre Richard"
+    },
+    "moss13": {
+      "texto": "La próxima comida siempre es un nuevo comienzo.",
+      "autor": "Moss"
+    },
+    "moss14": {
+      "texto": "El musgo crece despacio y no se detiene.",
+      "autor": "Moss"
+    },
+    "hormozi1": {
+      "texto": "Haz tanto volumen que fallar no tenga sentido.",
+      "autor": "Alex Hormozi"
+    },
+    "moss15": {
+      "texto": "Una buena noche empieza mucho antes de acostarte.",
+      "autor": "Moss"
+    },
+    "moss16": {
+      "texto": "Tu meta marca la dirección; el número de hoy es solo un paso.",
+      "autor": "Moss"
+    }
   }
 }

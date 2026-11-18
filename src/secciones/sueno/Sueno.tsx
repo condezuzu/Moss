@@ -28,7 +28,7 @@ import { anunciar } from '../anuncio';
 import { alTocarDeNuevo, useEsLaActual } from '../arriba';
 import { PESTANAS } from '../Barra';
 import { duracion, fechaCorta, fechaDiaMes, numero, useEstado } from '../comida/datos';
-import { DE_LA_NOCHE, FranjaBajoLaHora } from '../franja';
+import { DE_LA_NOCHE, DEBAJO_DE_LA_HORA, FranjaBajoLaHora, LADOS } from '../franja';
 import { useSueno } from '../ganchos';
 import type { Sueno } from '../persona';
 import { ACOMODA, Aparece, Cabecera } from '../tarjetas';
@@ -221,7 +221,7 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
   const noche = conNoches ? (s.noches.find((n) => n.clave === clave) ?? null) : null;
   const deHoy = reales.find((n) => n.clave === e.hoy) ?? null;
   const delDetalle = noche ?? deMuestra;
-  const interior = ancho - 40 - 34;
+  const interior = ancho - 2 * LADOS - 34;
   const primera = reales.length ? reales.reduce((a, n) => (n.clave < a ? n.clave : a), reales[0].clave) : null;
   // Antes de los 18 el umbral de poco sueño es otro, y el texto también.
   const edad = e.perfil ? edadDe(e.perfil, e.hoy) : undefined;
@@ -281,7 +281,7 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
     <View style={{ width: ancho }}>
       <ScrollView
         ref={scroll}
-        contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }}
+        contentContainerStyle={{ paddingTop: arriba + DEBAJO_DE_LA_HORA, paddingHorizontal: LADOS, paddingBottom: abajo + 40 }}
         showsVerticalScrollIndicator={false}
         scrollsToTop={esLaActual}
         scrollEventThrottle={16}

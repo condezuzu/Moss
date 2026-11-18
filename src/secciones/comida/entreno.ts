@@ -41,8 +41,8 @@ export function contextoDeHoy(e: Estado, ahora: Date): Contexto | null {
   const sesiones = conLasDeSalud(sesionesDelDia(e.entreno, e.hoy), entrenosDelDia(e.salud?.entrenamientos, e.hoy), e.hoy);
   const meta = metaDelDia(e, e.hoy);
   if (!sesiones.length || !e.perfil || !meta) return null;
-  const deSiempre = horasDeComida(e);
-  const horaDeComida = Object.fromEntries(PRINCIPALES.map((c) => [c, e.avisos.horario?.[c] ?? deSiempre(c)])) as Record<Principal, number>;
+  const tuyas = horasDeComida(e);
+  const horaDeComida = Object.fromEntries(PRINCIPALES.map((c) => [c, tuyas(c)])) as Record<Principal, number>;
   const anotado: Contexto['anotado'] = {};
   for (const r of vigentes(e.registros.values()).filter((x) => x.dia === e.hoy && !x.planificado)) {
     const antes = anotado[r.comida];

@@ -37,6 +37,8 @@ const SUENO: Sueno = { habitual: () => ({ dormirse: n('23:30'), despertar: n('7:
 const HORA_DE_COMIDA: Record<Comida, number> = { desayuno: h('8:00'), almuerzo: h('13:00'), merienda: h('17:30'), cena: h('21:00'), snack: h('16:00') };
 const delDia = (ajustes: Avisos, extra: Partial<DelDia> = {}) =>
   avisosDelDia({ dia: VIERNES, ajustes, habitos: HABITOS, sueno: SUENO, horaDeComida: (c) => HORA_DE_COMIDA[c], ...extra });
+/** Tus horas de comer: estas y, las demás, las de HORA_DE_COMIDA. */
+const horas = (estas: Partial<Record<Comida, number>>) => ({ horaDeComida: (c: Comida) => estas[c] ?? HORA_DE_COMIDA[c] });
 /** A qué hora suena cada cosa. */
 const resumen = (lista: Notificacion[]) => lista.map((x): [number, string[]] => [x.minutos, [x.aviso.id]]);
 const hecho = (habito: string, dia = VIERNES) => new Map([[claveDeMarca(habito, dia), { hecho: true }]]);
@@ -382,24 +384,25 @@ describe('los avisos de un día', () => {
 });
 
 describe('el horario de comidas y pesarse', () => {
-  it('cada comida del horario avisa a su hora, si todavía no se anotó', () => {
-    const ajustes: Avisos = { horario: { desayuno: h('7:45'), almuerzo: h('12:30') } };
-    expect(resumen(delDia(ajustes))).toEqual([[h('7:45'), ['horario:desayuno']], [h('12:30'), ['horario:almuerzo']]]);
-    expect(resumen(delDia(ajustes, { anotadas: new Set<Comida>(['desayuno']) }))).toEqual([[h('12:30'), ['horario:almuerzo']]]);
+  it('cada comida del horario avisa a tu hora de comer, si todavía no se anotó', () => {
+    const ajustes: Avisos = { horario: ['desayuno', 'almuerzo'] };
+    const tuyas = horas({ desayuno: h('7:45'), almuerzo: h('12:30') });
+    expect(resumen(delDia(ajustes, tuyas))).toEqual([[h('7:45'), ['horario:desayuno']], [h('12:30'), ['horario:almuerzo']]]);
+    expect(resumen(delDia(ajustes, { ...tuyas, anotadas: new Set<Comida>(['desayuno']) }))).toEqual([[h('12:30'), ['horario:almuerzo']]]);
   });
 
-  it('con una cena tarde en el horario, el de «sin anotar» no suena antes ni junto con el de su hora', () => {
-    expect(resumen(delDia({ horario: { cena: h('23:45') }, comidas: ['cena'] }))).toEqual([[h('23:45'), ['horario:cena']]]);
-    expect(resumen(delDia({ horario: { cena: h('23:15') }, comidas: ['cena'] }))).toEqual([[h('23:15'), ['horario:cena']]]);
+  it('con una cena tarde, el de «sin anotar» no suena antes ni junto con el de su hora', () => {
+    expect(resumen(delDia({ horario: ['cena'], comidas: ['cena'] }, horas({ cena: h('23:45') })))).toEqual([[h('23:45'), ['horario:cena']]]);
+    expect(resumen(delDia({ horario: ['cena'], comidas: ['cena'] }, horas({ cena: h('23:15') })))).toEqual([[h('23:15'), ['horario:cena']]]);
   });
 
-  it('con horario, lo de «sin anotar» cuenta desde la hora elegida y no desde la de siempre', () => {
-    const lista = delDia({ horario: { almuerzo: h('12:00') }, comidas: ['almuerzo'] });
+  it('lo de «sin anotar» cuenta desde tu hora de comer', () => {
+    const lista = delDia({ horario: ['almuerzo'], comidas: ['almuerzo'] }, horas({ almuerzo: h('12:00') }));
     expect(resumen(lista)).toEqual([[h('12:00'), ['horario:almuerzo']], [h('12:00') + DESPUES_MIN, ['comida:almuerzo']]]);
   });
 
   it('el horario vale como un hábito en el máximo: las comidas sin anotar salen primero', () => {
-    const ajustes: Avisos = { horario: { desayuno: h('8:00'), almuerzo: h('13:00') }, comidas: ['cena'], maximoPorDia: 2 };
+    const ajustes: Avisos = { horario: ['desayuno', 'almuerzo'], comidas: ['cena'], maximoPorDia: 2 };
     expect(resumen(delDia(ajustes)).map(([, ids]) => ids)).toEqual([['horario:desayuno'], ['horario:almuerzo']]);
   });
 
@@ -418,7 +421,7 @@ describe('el horario de comidas y pesarse', () => {
   });
 
   it('hoy, el horario y lo de «sin anotar» corren con la última comida que anotaste', () => {
-    const horario = { desayuno: h('8:00'), almuerzo: h('13:00'), cena: h('21:00') };
+    const horario: Comida[] = ['desayuno', 'almuerzo', 'cena'];
     // Desayunaste a las 9:30: hora y media tarde.
     const hoy = delDia({ horario, comidas: ['cena'] }, { eventos: { desayuno: h('9:30') }, anotadas: new Set<Comida>(['desayuno']) });
     const cuando = (id: string) => hoy.find((n) => n.aviso.id === id)?.minutos;
@@ -432,17 +435,17 @@ describe('el horario de comidas y pesarse', () => {
   it('corren con cualquier comida que anotaste, aunque no avise', () => {
     const desayuno = { eventos: { desayuno: h('9:30') }, anotadas: new Set<Comida>(['desayuno']), ahora: h('9:35') };
     expect(resumen(delDia({ comidas: ['almuerzo', 'cena'] }, desayuno))).toEqual([[h('15:15'), ['comida:almuerzo']], [h('23:15'), ['comida:cena']]]);
-    expect(resumen(delDia({ horario: { almuerzo: h('13:00'), cena: h('21:00') } }, desayuno))).toEqual([[h('14:30'), ['horario:almuerzo']], [h('22:30'), ['horario:cena']]]);
+    expect(resumen(delDia({ horario: ['almuerzo', 'cena'] }, desayuno))).toEqual([[h('14:30'), ['horario:almuerzo']], [h('22:30'), ['horario:cena']]]);
   });
 
-  it('lo de «sin anotar» corre contra la misma hora que el horario: anotar a la hora del horario no corre nada', () => {
-    // El desayuno de siempre es a las 9:30, pero el del horario a las 8: anotado tarde, va a las 8.
-    const op = { horaDeComida: (c: Comida) => (c === 'desayuno' ? h('9:30') : HORA_DE_COMIDA[c]), eventos: { desayuno: h('8:00') }, anotadas: new Set<Comida>(['desayuno']), ahora: h('10:00') };
-    expect(resumen(delDia({ horario: { desayuno: h('8:00') }, comidas: ['almuerzo'] }, op))).toEqual([[h('13:45'), ['comida:almuerzo']]]);
+  it('lo de «sin anotar» corre contra tu hora de comer: anotar a esa hora no corre nada', () => {
+    // Tu desayuno es a las 9:30: anotado a las 9:30, el almuerzo queda a su hora.
+    const op = { ...horas({ desayuno: h('9:30') }), eventos: { desayuno: h('9:30') }, anotadas: new Set<Comida>(['desayuno']), ahora: h('10:00') };
+    expect(resumen(delDia({ horario: ['desayuno'], comidas: ['almuerzo'] }, op))).toEqual([[h('13:45'), ['comida:almuerzo']]]);
   });
 
   it('lo que ya sonó no vuelve a sonar corrido, y nada pasa de las 23:45 ni del máximo', () => {
-    const horario = { desayuno: h('8:00'), almuerzo: h('13:00'), cena: h('21:00') };
+    const horario: Comida[] = ['desayuno', 'almuerzo', 'cena'];
     const ajustes: Avisos = { horario, comidas: ['desayuno', 'almuerzo', 'cena'], maximoPorDia: 2 };
     // A las 7, con dos como máximo, suenan las horas del desayuno y del almuerzo.
     expect(resumen(delDia(ajustes, { ahora: h('7:00') }))).toEqual([[h('8:00'), ['horario:desayuno']], [h('13:00'), ['horario:almuerzo']]]);
@@ -455,8 +458,7 @@ describe('el horario de comidas y pesarse', () => {
     expect(sinMaximo.find((n) => n.aviso.id === 'horario:cena')?.minutos).toBe(h('23:45'));
     expect(Math.max(...sinMaximo.map((n) => n.minutos))).toBeLessThanOrEqual(h('23:45'));
     // La merienda sonó a las 17 y a las 17:10 anota el almuerzo olvidado: la merienda no vuelve a las 21:10.
-    const cuatro = { desayuno: h('8:00'), almuerzo: h('13:00'), merienda: h('17:00'), cena: h('21:00') };
-    const tarde = delDia({ horario: cuatro }, { ahora: h('17:10'), eventos: { desayuno: h('8:00'), almuerzo: h('17:10') }, anotadas: new Set<Comida>(['desayuno', 'almuerzo']) });
+    const tarde = delDia({ horario: ['desayuno', 'almuerzo', 'merienda', 'cena'] }, { ...horas({ merienda: h('17:00') }), ahora: h('17:10'), eventos: { desayuno: h('8:00'), almuerzo: h('17:10') }, anotadas: new Set<Comida>(['desayuno', 'almuerzo']) });
     expect(tarde.map((n) => n.aviso.id)).toEqual(['horario:cena']);
   });
 
@@ -464,8 +466,8 @@ describe('el horario de comidas y pesarse', () => {
     const temprano = (desayuno: string) => ({ horaDeComida: (c: Comida) => (c === 'desayuno' ? h(desayuno) : HORA_DE_COMIDA[c]) });
     expect(resumen(delDia({ pesarse: { encendido: true, todos: true } }, temprano('7:50')))).toEqual([[h('7:35'), ['pesarse']]]);
     expect(resumen(delDia({ pesarse: { encendido: true, todos: true } }, temprano('7:35')))).toEqual([[h('7:30'), ['pesarse']]]);
-    // Con horario de comidas, el desayuno del horario.
-    expect(resumen(delDia({ pesarse: { encendido: true, todos: true }, horario: { desayuno: h('7:40') } })).find(([, ids]) => (ids as string[]).includes('pesarse'))?.[0]).toBe(h('7:30'));
+    // Con horario de comidas, igual: tu hora de desayunar.
+    expect(resumen(delDia({ pesarse: { encendido: true, todos: true }, horario: ['desayuno'] }, horas({ desayuno: h('7:40') }))).find(([, ids]) => (ids as string[]).includes('pesarse'))?.[0]).toBe(h('7:30'));
     expect(delDia({ pesarse: { encendido: true, todos: true } }, { anotadas: new Set<Comida>(['desayuno']) })).toEqual([]);
   });
 });
@@ -534,7 +536,7 @@ describe('los avisos de la semana', () => {
 describe('lo que ya pasó no avisa (lo pediste el 2/11/2026)', () => {
   const entrenar: Habito = { ...habito('entrenar'), nombre: 'Entrenar', icono: 'dumbbell' };
   const conEntrenar = [...HABITOS, entrenar];
-  const ajustes: Avisos = { horario: { merienda: h('17:30') }, habitos: [aLas('entrenar', '17:35')] };
+  const ajustes: Avisos = { horario: ['merienda'], habitos: [aLas('entrenar', '17:35')] };
 
   it('«Hora de la merienda · Entrenar» ya no sale: cada cosa por su lado', () => {
     const lista = delDia(ajustes, { habitos: conEntrenar });
@@ -568,7 +570,7 @@ describe('lo que ya pasó no avisa (lo pediste el 2/11/2026)', () => {
   });
 
   it('anotada una comida, la de antes ya pasó: con la cena anotada no hay merienda', () => {
-    const horario = { almuerzo: h('13:00'), merienda: h('17:30'), cena: h('21:00') };
+    const horario: Comida[] = ['almuerzo', 'merienda', 'cena'];
     expect(resumen(delDia({ horario }, { anotadas: new Set<Comida>(['cena']) }))).toEqual([]);
     expect(resumen(delDia({ horario }, { anotadas: new Set<Comida>(['almuerzo']) })).map(([, ids]) => ids[0])).toEqual(['horario:merienda', 'horario:cena']);
     // Lo de «sin anotar», igual. El snack no es ni antes ni después.

@@ -16,7 +16,7 @@ const SeccionInicio = (() => {
 
   function crear(tel, opciones) {
     const u = Util.crear(opciones);
-    const { tx, numero, conSigno, el, boton, icono } = u;
+    const { tx, numero, peso: pesoCorto, conSigno, el, boton, icono } = u;
     // `primerDia`: recién instalada, sin nada anotado (la maqueta del 29/10/2026).
     const s = { orden: [...BLOQUES], visibles: new Set(DE_FABRICA), primerDia: false };
     try {
@@ -141,7 +141,7 @@ const SeccionInicio = (() => {
       const metaKg = d.perfil.pesoMeta;
       if (p.fecha) fila.append(el('b', null, u.fechaCorta(p.fecha)), el('span', null, tx('inicio.llegarias', { kg: numero(metaKg, metaKg % 1 ? 1 : 0), unidad: 'kg' })));
       else if (p.estado === 'llegaste') fila.append(el('b', null, `${numero(metaKg, metaKg % 1 ? 1 : 0)} kg`), el('span', null, tx('inicio.yaLlegaste')));
-      else fila.append(el('b', null, p.peso == null ? '—' : `${numero(p.peso, 1)} kg`), el('span', null, tx('inicio.tendencia')));
+      else fila.append(el('b', null, p.peso == null ? '—' : `${pesoCorto(p.peso)} kg`), el('span', null, tx('inicio.tendencia')));
       c.appendChild(fila);
       if (p.hecho != null) c.appendChild(barraDelCamino(d.pesoInicial, p.peso, metaKg, p.hecho));
       return c;
@@ -158,7 +158,7 @@ const SeccionInicio = (() => {
       llenar(relleno, 'camino', pct);
       llenar(marca, 'camino', pct, 'left');
       const etiquetas = el('div', 'in-camino-etq');
-      etiquetas.append(el('span', null, numero(desde, 1)), el('span', 'ahora', numero(ahora, 1)), el('span', null, numero(hasta, hasta % 1 ? 1 : 0)));
+      etiquetas.append(el('span', null, pesoCorto(desde)), el('span', 'ahora', pesoCorto(ahora)), el('span', null, numero(hasta, hasta % 1 ? 1 : 0)));
       b.append(pista, etiquetas);
       return b;
     }
@@ -170,7 +170,7 @@ const SeccionInicio = (() => {
       const fila = el('div', 'in-fila');
       const izq = el('div', 'in-dato');
       const cifra = el('div', 'in-dato-cifra');
-      cifra.append(el('b', null, d.pesoHoy == null ? '—' : numero(d.pesoHoy, 1)), el('small', null, ' kg'));
+      cifra.append(el('b', null, d.pesoHoy == null ? '—' : pesoCorto(d.pesoHoy)), el('small', null, ' kg'));
       izq.append(cifra, el('span', null, d.cambio7 == null ? tx('inicio.tendencia') : tx('inicio.enSieteDias', { n: conSigno(d.cambio7, 1), unidad: 'kg' })));
       fila.append(izq, Graficos.linea(d.serie30, { clase: 'in-chispa', ancho: 150, alto: 44 }));
       const fila2 = el('div', 'in-fila');
@@ -903,7 +903,7 @@ const SeccionInicio = (() => {
         sabe.appendChild(li);
       };
       const edad = Number(Datos.HOY.slice(0, 4)) - p.nacimiento;
-      dato(tx('inicio.todo.peso'), `${numero(d.pesoHoy, 1)} kg`, tx('inicio.todo.origen.pesadas'));
+      dato(tx('inicio.todo.peso'), `${pesoCorto(d.pesoHoy)} kg`, tx('inicio.todo.origen.pesadas'));
       dato(tx('perfil.altura'), `${numero(p.alturaCm)} cm`, tx('inicio.todo.origen.dijiste'));
       dato(tx('perfil.edad'), numero(edad), tx('inicio.todo.origen.dijiste'));
       dato(tx('perfil.sexo'), tx(p.sexo === 'f' ? 'entrada.cuestionario.femenino' : 'entrada.cuestionario.masculino'), tx('inicio.todo.origen.dijiste'));
@@ -975,7 +975,7 @@ const SeccionInicio = (() => {
       const plazo = Progreso.plazoConRitmo({ hoy: Datos.HOY, pesoKg: desde, pesoMeta: p.pesoMeta, sexo: p.sexo, edad: Number(Datos.HOY.slice(0, 4)) - p.nacimiento, gasto: d.gasto, entrenaFuerza: true },
         Progreso.BORDES[p.objetivo === 'subir' ? 'subir' : 'bajar'][0]);
       const fila = el('div', 'in-obj-fila');
-      fila.append(el('b', null, `${numero(desde, 1)} → ${numero(p.pesoMeta, p.pesoMeta % 1 ? 1 : 0)} kg`));
+      fila.append(el('b', null, `${pesoCorto(desde)} → ${numero(p.pesoMeta, p.pesoMeta % 1 ? 1 : 0)} kg`));
       c.appendChild(fila);
       if (plazo) {
         const total = Fechas.diasEntre(Datos.HOY, plazo.fecha);

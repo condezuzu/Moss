@@ -224,7 +224,8 @@ export function Elegible({ titulo, detalle, elegida, alTocar, forma = 'fila', ic
             <Icono nombre={icono} tam={16} color={elegida ? colores.oroClaro : 'rgba(239, 230, 207, 0.55)'} />
           </View>
         )}
-        <View style={forma === 'chip' ? undefined : [st.textos, denso && { gap: 2 }]}>
+        {/* En cuadro, lo de adentro va al medio: las dos tarjetas de una fila tienen el alto de la más alta. */}
+        <View style={forma === 'chip' ? undefined : forma === 'cuadro' ? st.textosCuadro : [st.textos, denso && { gap: 2 }]}>
           <Text
             style={[st.opcionTitulo, forma === 'chip' && st.chipTitulo, centrada && st.segmentoTitulo, alto && { fontSize: 16 }, forma === 'cuadro' && { fontSize: 14.5 }, chico && { fontSize: 12.5 }, denso && { fontSize: 15 }]}
             numberOfLines={centrada ? 1 : undefined}
@@ -343,6 +344,7 @@ const st = StyleSheet.create({
   etiqueta: { marginBottom: 9, fontFamily: letras.texto, fontSize: 10.5, letterSpacing: 1.9, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.5)' },
   conIcono: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
   textos: { flex: 1, gap: 3 },
+  textosCuadro: { gap: 3 },
   denso: { gap: 11, paddingVertical: 10 },
   iconoDenso: { width: 30, height: 30, borderRadius: 15 },
   detalleDenso: { fontSize: 12.5, lineHeight: 16.5 },

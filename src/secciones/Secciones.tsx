@@ -8,7 +8,7 @@ import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Keyboard, Linking, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { FadeIn, FadeOut, interpolate, ReduceMotion, useAnimatedStyle, useDerivedValue, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeOut, interpolate, Keyframe, ReduceMotion, useAnimatedStyle, useDerivedValue, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -21,6 +21,7 @@ import { colores } from '@/tema';
 import { useAlTocarUnAviso } from '@/recordatorios/programar';
 import { ponerSeccionActual, tocarDeNuevo } from './arriba';
 import { Ascent } from './Ascent';
+import { SeccionVisible } from './animados';
 import { alAbrirAscent } from './ascent/abrir';
 import { ALTO_BARRA, Barra, HABITOS, PESTANAS, VELO } from './Barra';
 import { PaginaDeComida } from './comida/Comida';
@@ -78,6 +79,14 @@ function useEnlaces(listas: boolean, alEnlace: (e: Enlace) => void) {
   }, [listas]);
 }
 
+
+const LLEGAN = FadeIn.duration(320).reduceMotion(ReduceMotion.Never);
+const LLEGA_DEL_VIAJE = new Keyframe({
+  0: { opacity: 0, transform: [{ scale: 0.88 }] },
+  100: { opacity: 1, transform: [{ scale: 1 }], easing: Easing.out(Easing.cubic) },
+})
+  .duration(550)
+  .reduceMotion(ReduceMotion.Never);
 export default function Secciones() {
   const { width: ancho, height: alto } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -143,6 +152,13 @@ export default function Secciones() {
   }, [conSecciones, sinSecciones]);
   // Al volver a la entrada (cerrar sesión, cambiar de cuenta o borrar los datos), al terminarla se
   // abre otra vez en Inicio, sin hojas abiertas.
+  // Al terminar la entrada, Inicio llega del viaje del cielo (el flum): de chico a su tamaño, como en la galería.
+  const [faseAntes, setFaseAntes] = useState(fase);
+  const [delViaje, setDelViaje] = useState(false);
+  if (fase !== faseAntes) {
+    setFaseAntes(fase);
+    setDelViaje(faseAntes === 'entrada' && fase === 'secciones');
+  }
   const [conSeccionesAntes, setConSeccionesAntes] = useState(conSecciones);
   if (conSecciones !== conSeccionesAntes) {
     setConSeccionesAntes(conSecciones);
@@ -403,7 +419,7 @@ export default function Secciones() {
               />
             </View>
             {conSecciones && (
-              <Animated.View entering={FadeIn.duration(320).reduceMotion(ReduceMotion.Never)} exiting={FadeOut.duration(240).reduceMotion(ReduceMotion.Never)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
+              <Animated.View entering={delViaje && !reducido ? LLEGA_DEL_VIAJE : LLEGAN} exiting={FadeOut.duration(240).reduceMotion(ReduceMotion.Never)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
                 <Animated.View style={[StyleSheet.absoluteFill, estilos.velo, estiloVelo]} pointerEvents="none" />
                 {/* La noche de Sueño sigue al dedo, como el velo: la página se desliza y el fondo no. */}
                 <FondoDeSueno posicion={posicion} />
@@ -417,21 +433,23 @@ export default function Secciones() {
                       accessibilityElementsHidden={i !== actual}
                       importantForAccessibility={i === actual ? 'auto' : 'no-hide-descendants'}
                     >
-                      {i === HABITOS ? (
-                        <BotonesDeHabitos ancho={ancho} arriba={insets.top} subida={subida} alNuevo={() => setEditando(null)} alMes={() => setVerMes(true)} />
-                      ) : !armada(i) ? (
-                        <View style={{ width: ancho }} pointerEvents="none" />
-                      ) : n === 'comida' ? (
-                        <PaginaDeComida ancho={ancho} arriba={insets.top} abajo={abajo} />
-                      ) : n === 'inicio' ? (
-                        <PaginaDeInicio ancho={ancho} arriba={insets.top} abajo={abajo} alIr={ir} />
-                      ) : n === 'progreso' ? (
-                        <PaginaDeProgreso ancho={ancho} arriba={insets.top} abajo={abajo} alAbrirMas={abrirHoja} />
-                      ) : n === 'sueno' ? (
-                        <PaginaDeSueno ancho={ancho} arriba={insets.top} abajo={abajo} />
-                      ) : (
-                        <PaginaDePerfil ancho={ancho} arriba={insets.top} abajo={abajo} alIr={ir} />
-                      )}
+                      <SeccionVisible.Provider value={i === actual}>
+                        {i === HABITOS ? (
+                          <BotonesDeHabitos ancho={ancho} arriba={insets.top} subida={subida} alNuevo={() => setEditando(null)} alMes={() => setVerMes(true)} />
+                        ) : !armada(i) ? (
+                          <View style={{ width: ancho }} pointerEvents="none" />
+                        ) : n === 'comida' ? (
+                          <PaginaDeComida ancho={ancho} arriba={insets.top} abajo={abajo} />
+                        ) : n === 'inicio' ? (
+                          <PaginaDeInicio ancho={ancho} arriba={insets.top} abajo={abajo} alIr={ir} />
+                        ) : n === 'progreso' ? (
+                          <PaginaDeProgreso ancho={ancho} arriba={insets.top} abajo={abajo} alAbrirMas={abrirHoja} />
+                        ) : n === 'sueno' ? (
+                          <PaginaDeSueno ancho={ancho} arriba={insets.top} abajo={abajo} />
+                        ) : (
+                          <PaginaDePerfil ancho={ancho} arriba={insets.top} abajo={abajo} alIr={ir} />
+                        )}
+                      </SeccionVisible.Provider>
                     </View>
                   ))}
                 </Animated.View>
@@ -443,7 +461,7 @@ export default function Secciones() {
           {/* Los primeros hábitos, solo si siguen los de ejemplo: los de una cuenta que ya tenía los suyos quedan. */}
           {enEntrada && <Entrada camara={camaraDeLaEntrada} alTerminar={() => setSugeridos(soloLosDeEjemplo(elAlmacen().estado()))} />}
           {conSecciones && (
-            <Animated.View entering={FadeIn.duration(320).reduceMotion(ReduceMotion.Never)} exiting={FadeOut.duration(240).reduceMotion(ReduceMotion.Never)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
+            <Animated.View entering={delViaje && !reducido ? LLEGA_DEL_VIAJE : LLEGAN} exiting={FadeOut.duration(240).reduceMotion(ReduceMotion.Never)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
               <View
                 style={StyleSheet.absoluteFill}
                 pointerEvents="box-none"
@@ -477,7 +495,7 @@ function BotonesDeHabitos({ ancho, arriba, subida, alNuevo, alMes }: { ancho: nu
   const estilo = useAnimatedStyle(() => ({ opacity: Math.max(0, 1 - subida.get() * 2) }));
   return (
     <View style={{ width: ancho }} pointerEvents="box-none">
-      <Animated.View style={[estilos.botonesDeHabitos, { top: arriba + 76 }, estilo]}>
+      <Animated.View style={[estilos.botonesDeHabitos, { top: arriba + 62 }, estilo]}>
         <Pressable onPress={alMes} style={estilos.botonDeHabitos} accessibilityRole="button" accessibilityLabel={t('habitos.mes.abrir')} hitSlop={6}>
           <Icono nombre="calendar" tam={15} color="rgba(239, 230, 207, 0.75)" />
         </Pressable>

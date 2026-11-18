@@ -67,6 +67,8 @@ const Util = (() => {
     const local = () => (idioma() === 'es' ? 'es-UY' : 'en-US');
     const numero = (n, dec) => n.toLocaleString(local(), { minimumFractionDigits: dec || 0, maximumFractionDigits: dec || 0 });
     // Con signo de verdad (−), como se escribe un cambio.
+    // El peso fuera de Progreso: sin decimal si es entero (75 kg), con uno si no (75,4 kg), como la app.
+    const peso = (kg) => numero(kg, Math.round(kg * 10) % 10 ? 1 : 0);
     const conSigno = (n, dec) => (n < 0 ? '−' : n > 0 ? '+' : '') + numero(Math.abs(n), dec);
     const el = (etiqueta, clase, texto) => {
       const n = document.createElement(etiqueta);
@@ -93,7 +95,7 @@ const Util = (() => {
       if (!h) return tx('fecha.minutos', { m });
       return m ? tx('fecha.horasMinutos', { h, m: String(m).padStart(2, '0') }) : tx('fecha.horas', { h });
     };
-    return { tx, plural, numero, conSigno, el, boton, icono, partes, fechaLarga, fechaCorta, horaMin, duracion, idioma };
+    return { tx, plural, numero, peso, conSigno, el, boton, icono, partes, fechaLarga, fechaCorta, horaMin, duracion, idioma };
   }
 
   // Una hoja que sube desde abajo sobre todo lo demás, con su fondo: se cierra tocando afuera o

@@ -78,13 +78,13 @@ const registro = (comida: Registro['comida'], hora: number, proteina: number, kc
 
 /** Todo lo que viene prendido de fábrica, apagado a mano: sin esto, suena lo del día que sigue tu despertar. */
 const APAGADO = {
-  dormir: { encendido: false }, horario: {}, deuda: { encendido: false }, melatonina: { encendido: false }, revoluciones: { encendido: false }, luces: { encendido: false },
+  dormir: { encendido: false }, horario: [], deuda: { encendido: false }, melatonina: { encendido: false }, revoluciones: { encendido: false }, luces: { encendido: false },
 };
 
 const estado = (extra: Partial<Estado> = {}) => ({
   hoy: HOY, corte: 240, latencia: null, registros: new Map(), recordatorios: [], habitos: [entrenar], marcas: new Map(), perfil: null, salud: null, noches: new Map(),
   metas: [META], pesos: [], entreno: null, agua: new Map(), numeros: true, despertares: {}, desayunos: {}, cuidados: null, pendientes: [],
-  avisos: { horario: { merienda: 17 * 60 + 30 }, habitos: [{ habito: 'entrenar', cuando: { tipo: 'hora', minutos: 17 * 60 + 35 }, dias: [] }] },
+  avisos: { horario: ['merienda'], habitos: [{ habito: 'entrenar', cuando: { tipo: 'hora', minutos: 17 * 60 + 35 }, dias: [] }] },
   ...extra,
 }) as unknown as Estado;
 
@@ -147,8 +147,19 @@ describe('los avisos que se programan', () => {
     const horario = (c: 'almuerzo' | 'cena') => t(`recordatorios.horario.${c}`);
     expect(deHoy().map(([, texto]) => texto)).toEqual(expect.arrayContaining([horario('almuerzo'), horario('cena')]));
     // Lo que elegiste se respeta: con el horario apagado (vacío), no vuelve.
-    await programarAvisos(estado({ avisos: { horario: {} }, registros: new Map([registro('desayuno', 8, 20, 400)]) }));
+    await programarAvisos(estado({ avisos: { horario: [] }, registros: new Map([registro('desayuno', 8, 20, 400)]) }));
     expect(deHoy().map(([, texto]) => texto)).not.toContain(horario('almuerzo'));
+  });
+
+  it('cada comida suena a tu hora de comer: la que pusiste a mano o la de tu día; la que «No sueles», no suena', async () => {
+    const respuestas = { horarios: { desayuno: 7 * 60 + 30, almuerzo: 13 * 60 + 30, merienda: null, cena: 21 * 60 + 30 } };
+    const horario = (c: 'almuerzo' | 'merienda' | 'cena') => t(`recordatorios.horario.${c}`);
+    await programarAvisos(estado({ avisos: { horario: ['almuerzo', 'merienda', 'cena'] }, respuestas, horasDeComer: { cena: 20 * 60 } } as unknown as Partial<Estado>));
+    expect(deHoy().filter(([, texto]) => [horario('almuerzo'), horario('merienda'), horario('cena')].includes(String(texto))))
+      .toEqual([[13 * 60 + 30, horario('almuerzo')], [20 * 60, horario('cena')]]);
+    // Y lo que muestra Perfil › Avisos: la merienda no está entre las que avisan.
+    expect(avisosDe(estado({ avisos: {}, respuestas } as unknown as Partial<Estado>)).horario).toEqual(['desayuno', 'almuerzo', 'cena']);
+    expect(avisosDe(estado({ avisos: { horario: ['merienda', 'cena'] }, respuestas } as unknown as Partial<Estado>)).horario).toEqual(['cena']);
   });
 
   it('con «sin déficit», nunca', async () => {
@@ -491,10 +502,10 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
   it('sin elegir el máximo, prender anotar lo sube solo a 12 y entran todos; el que elegiste a mano queda', async () => {
     jest.setSystemTime(a(7, 40));
     // Con pesarte y la merienda son doce: con diez se quedaban afuera el de anotar y bajar el ritmo.
-    const horario = { desayuno: 8 * 60, almuerzo: 13 * 60, merienda: 17 * 60, cena: 20 * 60 };
+    const horasDeComer = { desayuno: 8 * 60, almuerzo: 13 * 60, merienda: 17 * 60, cena: 20 * 60 };
     const con = (maximoPorDia?: number) => conNoches({
-      despertares: { [HOY]: { despertar: 7 * 60 + 30, sabido: 7 * 60 + 40 } },
-      avisos: { pesarse: { encendido: true, todos: true }, horario, descarga: { encendido: true }, ...(maximoPorDia ? { maximoPorDia } : {}) },
+      despertares: { [HOY]: { despertar: 7 * 60 + 30, sabido: 7 * 60 + 40 } }, horasDeComer,
+      avisos: { pesarse: { encendido: true, todos: true }, horario: ['desayuno', 'almuerzo', 'merienda', 'cena'], descarga: { encendido: true }, ...(maximoPorDia ? { maximoPorDia } : {}) },
       pendientes: [{ id: '1', texto: 'Pagar la luz', hecho: false, para: HOY }],
     } as unknown as Partial<Estado>);
     // Lo que muestra Perfil › Avisos: el máximo que vale.

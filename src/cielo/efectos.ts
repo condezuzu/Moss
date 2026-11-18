@@ -3,8 +3,9 @@ import { Skia, type SkRuntimeEffect } from '@shopify/react-native-skia';
 import aurora from './shaders/aurora.glsl';
 import comun from './shaders/comun.glsl';
 import fondo from './shaders/fondo.glsl';
+import viaje from './shaders/viaje.glsl';
 import vivo from './shaders/vivo.glsl';
-import { fuenteCielo, fuenteFondo, fuenteHoja, fuenteMusgo } from './sksl';
+import { fuenteCielo, fuenteFondo, fuenteHoja, fuenteMusgo, fuenteViaje } from './sksl';
 
 type Efectos = { fondo: SkRuntimeEffect; cielo: SkRuntimeEffect; musgo: SkRuntimeEffect; hoja: SkRuntimeEffect };
 
@@ -26,4 +27,16 @@ export function efectos(): Efectos {
     hoja: compilar('hoja', fuenteHoja()),
   };
   return compilados;
+}
+
+const delViaje = new Map<number, SkRuntimeEffect>();
+
+/** El filtro del viaje de la entrada a la app, con tantas muestras por píxel (una vez por cantidad). */
+export function efectoDelViaje(muestras: number): SkRuntimeEffect {
+  let efecto = delViaje.get(muestras);
+  if (!efecto) {
+    efecto = compilar('viaje', fuenteViaje({ viaje }, muestras));
+    delViaje.set(muestras, efecto);
+  }
+  return efecto;
 }

@@ -661,11 +661,11 @@ que **sales**, no desde que empiezas:
 - **El viaje:** «Tardo en llegar al gimnasio», en Perfil › Entrenamiento: en
   casa, 15, 30, 45 o 60 minutos; 15 de fábrica (`Entreno.viaje`, en
   `alrededorDelEntreno.ts`). Salir es la hora de entrenar menos eso.
-- **Las horas de comer:** las que ya tiene Moss, en este orden: la del horario
-  de comidas (Perfil › Avisos), la mediana de cuándo la anotaste en tres semanas
-  (`horaHabitual`, en `recordatorios.ts`) y la típica (`HORA_TIPICA`: 8:00, 13:00,
-  17:30 y 21:00). Hoy, corridas por la última que anotaste (`horasCorridas`, como
-  el horario), y al cuarto de hora. No hizo falta nada nuevo.
+- **Las horas de comer:** desde el 18/11, una sola lista para todo (`horasDeComer`, en
+  `recordatorios.ts`): la que cambiaste a mano en Perfil › Tus respuestas, fija; si no, la
+  mediana de lo anotado, con al menos 5 días con esa comida en dos semanas; si no, la de tu
+  día en el cuestionario, y si no, la típica (`HORA_TIPICA`). Hoy, corridas por la última que
+  anotaste (`horasCorridas`), y al cuarto de hora.
 - **La previa:** la comida que cae entre 1 y 4 h antes de salir (A1 y A2, desde la
   salida); la más cercana. Si ninguna cae, algo liviano 60 a 90 minutos antes de
   salir (a los 75), con lo de la previa liviana; si una comida caía justo antes de

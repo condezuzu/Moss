@@ -107,6 +107,14 @@ const SeccionPerfil = (() => {
 .pf-hoja .pf-aviso .pf-nota { margin: 9px 0 0; }
 .pf-hoja .pf-aviso-chips { margin: 11px 0 0; }
 .pf-hoja .pf-horario { margin: 10px 0 0; }
+/* Tus horas de comer (18/11): se leen a la derecha de cada comida y se cambian en Tus respuestas. */
+.pf-hoja .pf-horario-hora { display: flex; align-items: baseline; gap: 8px; }
+.pf-hoja .pf-horario-hora b { font: 500 17px/1 var(--numeros); font-variant-numeric: lining-nums tabular-nums; color: var(--tinta); }
+.pf-hoja .pf-horario-hora small { font: 400 12.5px/1.2 var(--texto); color: rgba(239, 230, 207, 0.55); animation: cm-entra 0.3s ease both; }
+.pf-hoja .pf-horario-fila .fi-porcion.pf-no-suele { opacity: 0.5; }
+.pf-hoja .pf-horas-cambiar { appearance: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin: 10px 0 0; padding: 6px 0; border: 0; background: none; color: #e8c46a; font: 400 14px/1.2 var(--texto); }
+.pf-hoja .pf-horas-cambiar svg { width: 12px; height: 12px; }
+.pf-hoja .pf-horas-cambiar:active { opacity: 0.6; }
 .pf-hoja .pf-grupo { margin: 18px 4px 8px; }
 .pf-hoja .pf-avisos > .pf-nota { margin: 8px 4px; }
 .pf-hoja .fi-porcion { padding: 8px 11px; }
@@ -244,7 +252,7 @@ const SeccionPerfil = (() => {
     estilo.textContent = CSS;
     document.head.appendChild(estilo);
     const u = Util.crear(opciones);
-    const { tx, numero, el, boton, icono } = u;
+    const { tx, numero, peso, el, boton, icono } = u;
     const ic = (n) => (ICONOS[n] ? `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONOS[n]}</svg>` : icono(n));
     const cuadro = (n, color) => { const c = el('i', 'pf-cuadro c-' + color); c.innerHTML = ic(n); return c; };
     // Ascent en la maqueta: apagada es como la 1.0 (CON_ASCENT en src/lib/banderas.ts).
@@ -256,7 +264,7 @@ const SeccionPerfil = (() => {
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const cont = zona.querySelector('.pf-scroll');
     const hoja = Util.hoja(tel, 'pf-hoja', () => opciones.alCambiar());
-    const s = { conectadas: new Set(), abierta: null, fuente: 'auto', sinDeficit: false, numeros: true, buscar: false, sistema: 'metrico', calidad: null, corte: Fechas.CORTE_DE_FABRICA, creditos: false, sinSalud: false, opciones: null, avisos: { dormir: true, antes: 30, comidas: [], maximo: null, horario: { desayuno: 8 * 60, almuerzo: 13 * 60, cena: 21 * 60 }, pesarse: false, todos: false, latencia: null, necesidad: null, deuda: true, melatonina: true, revoluciones: true, luces: true } };
+    const s = { conectadas: new Set(), abierta: null, fuente: 'auto', sinDeficit: false, numeros: true, buscar: false, sistema: 'metrico', calidad: null, corte: Fechas.CORTE_DE_FABRICA, creditos: false, sinSalud: false, opciones: null, avisos: { dormir: true, antes: 30, comidas: [], maximo: null, horario: ['desayuno', 'almuerzo', 'cena'], horasAMano: { cena: 21 * 60 }, pesarse: false, todos: false, latencia: null, necesidad: null, deuda: true, melatonina: true, revoluciones: true, luces: true } };
 
     /** La precisión, en puntos: de 1 (estimada con el teléfono) a 4 (con etapas y lo de la noche). */
     const puntos = (nivel) => {
@@ -453,29 +461,39 @@ const SeccionPerfil = (() => {
       bloque('sueno', 'azul', tx('perfil.avisos.deuda'), tx('perfil.avisos.deudaTexto'), !!a.deuda, (v) => { a.deuda = v; });
       bloque('balanza', 'salvia', tx('perfil.avisos.pesarse'), tx('perfil.avisos.pesarseTexto'), a.pesarse, (v) => { a.pesarse = v; },
         chips([false, true], (todos) => tx(todos ? 'perfil.avisos.pesarseTodos' : 'perfil.avisos.pesarseControl'), (todos) => a.todos === todos, (todos) => { a.todos = todos; }));
-      // El horario de comidas: cada comida elegida, con su hora de a un cuarto de hora (como Perfil.tsx).
-      const HORAS = { desayuno: 8 * 60, almuerzo: 13 * 60, merienda: 17 * 60 + 30, cena: 21 * 60 };
+      // El horario de comidas (18/11): qué comidas avisan, cada una a tu hora de comer, una sola lista
+      // (Recordatorios.horasDeComer: la que cambiaste a mano, la de lo que anotas o la de tu día). Acá se ve; se cambia
+      // en Tus respuestas, en «¿Cómo es tu día?». Lo que en tu día dice «No suelo» no avisa. Como Perfil.tsx.
       const reloj = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+      const tuDia = Datos.PERFIL.horarios;
+      const horaDe = Recordatorios.horasDeComer({ registros: [], hoy: Datos.HOY, aMano: a.horasAMano, cuestionario: tuDia });
+      const cambiarHoras = () => { if (opciones.revisarCuestionario) opciones.revisarCuestionario('dia'); };
       const filas = el('div', 'pf-horario');
-      ['desayuno', 'almuerzo', 'merienda', 'cena'].forEach((c) => {
+      const COMEN = ['desayuno', 'almuerzo', 'merienda', 'cena'];
+      COMEN.forEach((c) => {
         const fila = el('div', 'pf-horario-fila');
-        const elegida = a.horario[c] !== undefined;
-        const chip = boton('fi-porcion', `<span>${tx('comida.comidas.' + c)}</span>`, () => {
-          if (elegida) delete a.horario[c]; else a.horario[c] = HORAS[c];
+        const no = Recordatorios.noSueleComer(tuDia, c);
+        const elegida = !no && a.horario.includes(c);
+        const chip = boton('fi-porcion' + (no ? ' pf-no-suele' : ''), `<span>${tx('comida.comidas.' + c)}</span>`, () => {
+          if (no) { cambiarHoras(); return; }
+          a.horario = elegida ? a.horario.filter((x) => x !== c) : COMEN.filter((x) => x === c || a.horario.includes(x));
           pintarAvisos(); pintar();
         });
         chip.setAttribute('aria-pressed', String(elegida));
-        fila.appendChild(chip);
-        if (elegida) {
-          const mover = (dm) => { a.horario[c] = Math.min(23 * 60 + 45, Math.max(5 * 60, a.horario[c] + dm)); pintarAvisos(); };
-          const pasos = el('div', 'fi-stepper pf-horario-pasos');
-          pasos.append(boton('fi-paso', icono('menos'), () => mover(-15), '−15'), el('b', 'fi-valor', reloj(a.horario[c])), boton('fi-paso', icono('mas'), () => mover(15), '+15'));
-          fila.appendChild(pasos);
+        const hora = horaDe(c);
+        const derecha = el('span', 'pf-horario-hora');
+        if (no) derecha.appendChild(el('small', null, tx('perfil.avisos.noSueles')));
+        else {
+          if (hora.de === 'aMano') derecha.appendChild(el('small', null, tx('perfil.avisos.horaAMano')));
+          derecha.appendChild(el('b', null, reloj(hora.minutos)));
         }
+        fila.append(chip, derecha);
         filas.appendChild(fila);
       });
-      bloque('comida', 'oro', tx('perfil.avisos.horario'), `${tx('perfil.avisos.horarioTexto')} ${tx('perfil.avisos.horarioTextoDia')}`, Object.keys(a.horario).length > 0,
-        (v) => { a.horario = v ? { desayuno: HORAS.desayuno, almuerzo: HORAS.almuerzo, cena: HORAS.cena } : {}; }, filas);
+      filas.appendChild(el('p', 'pf-nota', tx('perfil.avisos.horasTexto')));
+      filas.appendChild(boton('pf-horas-cambiar', `<span>${tx('perfil.avisos.horasCambiar')}</span>${icono('adelante')}`, cambiarHoras));
+      bloque('comida', 'oro', tx('perfil.avisos.horario'), `${tx('perfil.avisos.horarioTexto')} ${tx('perfil.avisos.horarioTextoDia')}`, a.horario.some((c) => !Recordatorios.noSueleComer(tuDia, c)),
+        (v) => { a.horario = v ? [...SigueElDespertar.HORARIO_DE_FABRICA] : []; }, filas);
       // Lo de la noche, reescrito el 17/11 (aprobado con la galería 50 y ya en la app, con sus palabras en src/textos):
       // tu periodo de melatonina, bajar las luces, bajar el ritmo y acostarte, a la hora que te deja dormido cuando
       // empieza tu periodo (Melatonina). Las claves son las de lo guardado: `melatonina`, `revoluciones` y `dormir`.
@@ -529,9 +547,9 @@ const SeccionPerfil = (() => {
       bloque('rayo', 'violeta', tx('perfil.avisos.falta'), tx('perfil.avisos.faltaTexto'), a.falta !== false, (v) => { a.falta = v; });
       cuerpo.appendChild(el('h4', 'pf-grupo', tx('perfil.avisos.maximo')));
       // El que elegiste o, sin elegir (null), el de fábrica, que sube solo con anotar lo pendiente (dos más: el de la
-      // noche y «Lo que hay que hacer hoy») y con las gafas (SigueElDespertar.maximoDeFabrica), como en la app. Si
-      // quedó en 11 o 13, va entre los de siempre; y una línea dice que subió solo.
-      const maximo = a.maximo ?? SigueElDespertar.maximoDeFabrica({ descarga: { encendido: !!a.descarga }, gafas: { encendido: !!a.gafas } });
+      // noche y «Lo que hay que hacer hoy»), con las gafas y con el café (SigueElDespertar.maximoDeFabrica), como en la
+      // app. Si quedó en 11, 13 o 14, va entre los de siempre; y una línea dice que subió solo.
+      const maximo = a.maximo ?? SigueElDespertar.maximoDeFabrica({ descarga: { encendido: !!a.descarga }, gafas: { encendido: !!a.gafas }, cafe: { encendido: !!a.cafe } });
       const maximos = [2, 3, 4, 6, 8, 10, 12];
       cuerpo.appendChild(chips(maximos.includes(maximo) ? maximos : [...maximos, maximo].sort((x, y) => x - y), String, (n) => maximo === n, (n) => { a.maximo = n; }));
       if (a.maximo == null && maximo > SigueElDespertar.MAXIMO_QUE_SIGUE_EL_DESPERTAR) cuerpo.appendChild(el('p', 'pf-nota', tx('perfil.avisos.maximoSolo', { n: maximo })));
@@ -1408,7 +1426,7 @@ const SeccionPerfil = (() => {
       const irAMetas = () => opciones.irAMetas && opciones.irAMetas();
       const kg = opciones.persona().pesoHoy;
       if (s.sistema === 'imperial') mini(tx('perfil.mini.peso'), numero(kg * 2.20462), 'lb', irAMetas);
-      else mini(tx('perfil.mini.peso'), numero(kg, 1), 'kg', irAMetas);
+      else mini(tx('perfil.mini.peso'), peso(kg), 'kg', irAMetas);
       tarjeta.appendChild(minis);
       return tarjeta;
     }
@@ -1569,7 +1587,7 @@ const SeccionPerfil = (() => {
         { clave: 'pais', ico: 'comida', color: 'salvia', titulo: tx('perfil.pais.titulo'), valor: s.pais ? tx('perfil.pais.nombres.' + s.pais) : tx('perfil.pais.delTelefono'), alTocar: () => abrirOpciones('pais') },
         { ico: 'amanecer', color: 'oro', titulo: tx('perfil.corte'), valor: nombreDelCorte(s.corte), alTocar: () => abrirOpciones('corte') },
         { ico: 'estrella', color: 'violeta', titulo: tx('perfil.calidad'), valor: tx('perfil.calidades.' + (s.calidad || 'automatica')), alTocar: () => abrirOpciones('calidad') },
-        { ico: 'campana', color: 'rosa', titulo: tx('perfil.recordatorios'), valor: tx(s.avisos.dormir || s.avisos.comidas.length || Object.keys(s.avisos.horario).length || s.avisos.pesarse
+        { ico: 'campana', color: 'rosa', titulo: tx('perfil.recordatorios'), valor: tx(s.avisos.dormir || s.avisos.comidas.length || s.avisos.horario.length || s.avisos.pesarse
           || ['antesDeEntrenar', 'despuesDeEntrenar', 'cafe', 'ultimaComida', 'entrenarTarde', 'luces', 'recuperacion'].some((k) => s.avisos[k]) ? 'perfil.encendidos' : 'perfil.apagados'), alTocar: abrirAvisos },
         // Ocultar los números: sin calorías ni gramos, solo las figuras y las barras. Con su valor, como en la app, y
         // no con una llave: el texto de abajo dice cómo es ocultarlos, y una llave prendida al lado se leería al revés.
