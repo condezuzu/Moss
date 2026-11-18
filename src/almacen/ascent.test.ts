@@ -139,17 +139,39 @@ describe('lo de Ascent en el teléfono', () => {
     expect(a.estado()).toMatchObject({ conCuenta: false, vinculo: { vinculada: false }, sesiones: [] });
   });
 
-  it('lo dormido y los avisos de marca se juntan solo con el vínculo', async () => {
+  it('lo dormido se junta solo con el vínculo; cómo te sientes vale ese día y queda guardado', async () => {
     const s = servidor();
-    const a = crear(s.remoto);
+    const guardado = { texto: null as string | null };
+    const a = crear(s.remoto, guardado);
     await a.ponerSesion('u-1');
     a.anotarNoches([{ clave: '2026-10-25', dormido: 420 }]);
     expect(a.estado().noches).toEqual({});
     await a.vincular('bueno');
     a.anotarNoches([{ clave: '2026-10-25', dormido: 420.4 }, { clave: '2024-01-01', dormido: 400 }]);
-    a.anotarAviso('Sentadilla', HOY);
-    a.anotarAviso('Sentadilla', HOY);
+    a.ponerComoTeSientes(7);
     expect(a.estado().noches).toEqual({ '2026-10-25': 420 });
-    expect(a.estado().avisos).toEqual([{ ejercicio: 'Sentadilla', fecha: HOY }]);
+    expect(a.estado().siente).toEqual({ fecha: HOY, n: 7 });
+    const otra = crear(s.remoto, guardado);
+    await otra.ponerSesion('u-1');
+    expect(otra.estado().siente).toEqual({ fecha: HOY, n: 7 });
+    otra.ponerComoTeSientes(null);
+    expect(otra.estado().siente).toBeNull();
+  });
+
+  it('lo de hace más de 18 semanas queda sin las series pero con los ejercicios; lo guardado por la build 6 se vuelve a pedir entero', async () => {
+    const s = servidor(true);
+    const vieja = { ...sesion('2026-05-04'), ejercicios: [{ nombre: 'Sentadilla', musculos: ['piernas'], series: [{ kilos: 90, reps: 5 }] }] };
+    s.remoto.sesionesDeAscent = async (desde) => (s.pedidos.push(desde), [vieja, sesion(HOY)]);
+    const guardado = { texto: null as string | null };
+    await crear(s.remoto, guardado).ponerSesion('u-1');
+    const g = JSON.parse(guardado.texto!);
+    expect(g.sesiones[0].ejercicios).toEqual([{ nombre: 'Sentadilla', musculos: ['piernas'], series: [] }]);
+    expect(g.sesiones[1].ejercicios[0].series).toHaveLength(1);
+    guardado.texto = JSON.stringify({ ...g, conSeries: undefined, avisos: [{ ejercicio: 'Sentadilla', fecha: HOY }] });
+    s.pedidos.length = 0;
+    const otra = crear(s.remoto, guardado);
+    await otra.ponerSesion('u-1');
+    expect(s.pedidos).toEqual(['2026-01-01']);
+    expect('avisos' in otra.estado()).toBe(false);
   });
 });

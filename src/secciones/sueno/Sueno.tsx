@@ -311,7 +311,6 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
             </CartaDeSueno>
           </Aparece>
         )}
-        {CON_ASCENT && clave === e.hoy && <RecuperacionEnSueno />}
         {/* Elegir otra noche no cambia todo de golpe: lo de esa noche entra con un fundido. */}
         {conNoches && (
           <Aparece key={`noche-${clave}`}>
@@ -348,6 +347,8 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
             <TarjetaDeEnergia datos={energia} ancho={interior} resaltar={resaltar} />
           </Animated.View>
         )}
+        {/* Sin tu energía, y con Ascent vinculada, cómo llegas a entrenar: el titular de hoy de su sección. */}
+        {CON_ASCENT && !conEnergia && clave === e.hoy && conNoches && <RecuperacionEnSueno />}
         {/* Los días, para elegir otra noche: más abajo (5/11, a la noche). */}
         <Tira s={s} reales={reales} conNoches={conNoches} hoy={e.hoy} elegida={clave} primera={primera} alElegir={(c) => setElegida(c === e.hoy ? null : c)} />
         <Aparece key={`detalle-${clave}`}>

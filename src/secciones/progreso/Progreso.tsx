@@ -4,11 +4,19 @@
 // peso con su tendencia y la grasa corporal (o la invitación a medirla). Semana a semana, las medidas
 // y el gasto con el balance quedan plegados en «Más datos». «Metas de hoy» abre las metas: quién las
 // pone, cómo se reparten los macros y repartir la semana. Sin datos propios, la persona de ejemplo.
+// Arriba está Ascent (spec/ascent.md, «Ascent en Progreso»), como si Progreso siguiera para arriba: la entrada
+// de arriba a la derecha la abre, y arriba de todo del scroll, arrastrar para abajo la baja siguiendo al dedo,
+// con Progreso pegado abajo. Arriba de todo asoma su borde.
 
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type ViewStyle } from 'react-native';
-import Animated, { FadeIn, LayoutAnimationConfig, ReduceMotion, useAnimatedRef, useAnimatedStyle, useReducedMotion, useScrollOffset, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { GestureDetector, ScrollView as ScrollConGestos, usePanGesture } from 'react-native-gesture-handler';
+import Animated, {
+  Easing, FadeIn, LayoutAnimationConfig, ReduceMotion, scrollTo, useAnimatedReaction, useAnimatedRef, useAnimatedStyle, useDerivedValue, useReducedMotion, useScrollOffset, useSharedValue,
+  withDelay, withSequence, withTiming, type SharedValue,
+} from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { elAlmacen } from '@/almacen';
 import { deportesDePerfil, etapaDelPlan, type EtapaDelPlan } from '@/dominio/cuestionario';
@@ -22,6 +30,8 @@ import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { anunciar } from '../anuncio';
 import { alTocarDeNuevo, useEsLaActual } from '../arriba';
+import { EntradaDeAscent, useUnaVez, YA_SE_ABRIO } from '../ascent/Entrada';
+import { BordeQueAsoma } from '../ascent/Polvo';
 import { EntradaPronto, GloboPronto } from '../ascent/Pronto';
 import { PESTANAS } from '../Barra';
 import { COLOR_DE_MACRO, Icono, MACROS, type Macro } from '../comida/comunes';
@@ -30,7 +40,7 @@ import { DEBAJO_DE_LA_HORA, FranjaBajoLaHora, LADOS } from '../franja';
 import { usePersona } from '../ganchos';
 import { Linea } from '../graficos/Graficos';
 import type { VistaDelMas } from '../HojaMas';
-import { ENTRA_FUNDIDO, ENTRA_PANEL, SALE_FUNDIDO, SALE_PANEL } from '../movimiento';
+import { entre, ENTRA_FUNDIDO, ENTRA_PANEL, SALE_FUNDIDO, SALE_PANEL, subirOBajar, UMBRAL, VELOCIDAD_MINIMA } from '../movimiento';
 import { comidasDeEjemplo, type Persona } from '../persona';
 import {
   Aparece, AvisoDeEjemplo, BotonChico, Cabecera, Carta, Chip, Cifra, ComoSeCalcula, Dias, Eje, EtiquetaDeGrupo, Nota, Parrafo, SEMANA, Segmento,
@@ -40,15 +50,23 @@ import { ElGasto, LasMedidas, MasDatos, Semanas } from './MasDatos';
 import { calcularPlan, controlDeLaEtapa, ElPlan, Flecha, LaEstrategia, LaLlegada, MacrosEnLinea, SIN_ELEGIR, type EleccionDelPlazo } from './Plan';
 import { conSignoFijo, unidades, type U } from './unidades';
 
-type Props = { ancho: number; arriba: number; abajo: number; alAbrirMas: (vista: VistaDelMas) => void };
+/** Ascent, arriba (con CON_ASCENT): cuánto bajó (0 cerrada, 1 abierta), abrirla y lo que se decidió al soltar el dedo. */
+export type AscentArriba = { subida: SharedValue<number>; abierta: boolean; alAbrir: () => void; alSoltar: (abierta: boolean) => void };
+type Props = { ancho: number; arriba: number; abajo: number; alAbrirMas: (vista: VistaDelMas) => void; ascent?: AscentArriba };
+
+/** El borde que asoma arriba: cuánto baja con el dedo, y el tirón de la primera vez (Progreso y el borde). */
+const TECHO_BAJA = 150;
+const ASOMA = { progreso: 24, techo: 20 };
+const YA_ASOMO = 'moss:asomoAscent';
 
 const PROGRESO = PESTANAS.indexOf('progreso');
 const HACIA_LA_META: EtapaDelPlan = { cual: 'haciaLaMeta' };
 
-export function PaginaDeProgreso({ ancho, arriba, abajo, alAbrirMas }: Props) {
+export function PaginaDeProgreso({ ancho, arriba, abajo, alAbrirMas, ascent }: Props) {
   const [vista, setVista] = useState<'principal' | 'metas'>('principal');
   const reducido = useReducedMotion();
   const esLaActual = useEsLaActual(PROGRESO);
+  const { height: alto } = useWindowDimensions();
   const scroll = useAnimatedRef<ScrollView>();
   const scrollY = useScrollOffset(scroll);
   // Tocar otra vez la pestaña: desde las metas vuelve a Progreso; en Progreso, sube arriba de todo.
@@ -64,6 +82,78 @@ export function PaginaDeProgreso({ ancho, arriba, abajo, alAbrirMas }: Props) {
   }, [vista, enMetas]);
   const estiloPrincipal = useAnimatedStyle(() => ({ opacity: 1 - enMetas.get() }));
   const conMetas = vista === 'metas';
+
+  // ---- Ascent, arriba
+  const sinAscent = useSharedValue(0);
+  const subida = ascent?.subida ?? sinAscent;
+  // Arriba de todo del scroll, arrastrar para abajo baja Ascent siguiendo al dedo (más abajo es el scroll y de
+  // costado, las pestañas). Mientras, el scroll queda quieto arriba, y arriba de todo no rebota: el dedo es de Ascent.
+  const arrastrando = useSharedValue(false);
+  const [arribaDeTodo, setArribaDeTodo] = useState(true);
+  useAnimatedReaction(
+    () => scrollY.get() <= 1,
+    (ahora, antes) => {
+      if (ahora !== antes) scheduleOnRN(setArribaDeTodo, ahora);
+    },
+  );
+  const conAscent = !!ascent;
+  const puedeBajarla = useDerivedValue(() => conAscent && enMetas.get() === 0 && (arrastrando.get() || scrollY.get() <= 1));
+  const alSoltar = ascent?.alSoltar;
+  const bajarAscent = usePanGesture({
+    enabled: puedeBajarla,
+    activeOffsetY: 8,
+    failOffsetY: -8,
+    failOffsetX: [-14, 14],
+    onActivate: () => {
+      'worklet';
+      arrastrando.set(true);
+    },
+    onUpdate: (ev) => {
+      'worklet';
+      subida.set(entre(Math.max(0, ev.translationY - 8) / alto, 0, 1));
+    },
+    onDeactivate: (ev) => {
+      'worklet';
+      arrastrando.set(false);
+      const p = subida.get();
+      const abrir = !ev.canceled && (p >= UMBRAL || ev.velocityY >= VELOCIDAD_MINIMA);
+      subida.set(subirOBajar(p, abrir ? 1 : 0));
+      if (alSoltar) scheduleOnRN(alSoltar, abrir);
+    },
+  });
+  useAnimatedReaction(
+    () => scrollY.get(),
+    (y) => {
+      if (arrastrando.get() && y !== 0) scrollTo(scroll, 0, 0, false);
+    },
+  );
+  // La primera vez que se llega a Progreso, como si alguien tirara apenas: Progreso baja un poco y vuelve, y el
+  // borde asoma un poco más. Una sola vez; con Reducir movimiento, nada.
+  const asomo = useSharedValue(0);
+  const [yaAsomo, asomar] = useUnaVez(YA_ASOMO);
+  useEffect(() => {
+    if (!conAscent || !esLaActual || yaAsomo !== false) return;
+    asomar();
+    if (reducido) return;
+    const tramo = (hasta: number, ms: number) => withTiming(hasta, { duration: ms, easing: Easing.inOut(Easing.ease) });
+    asomo.set(withDelay(700, withSequence(tramo(1, 450), tramo(0, 450), tramo(0.35, 300), tramo(0, 300))));
+  }, [conAscent, esLaActual, yaAsomo, asomar, reducido, asomo]);
+  // «Desliza hacia abajo» hasta que se abre una vez; al volver a Progreso, se pliega a la vista.
+  const [yaSeAbrio, abrio] = useUnaVez(YA_SE_ABRIO);
+  const abierta = !!ascent?.abierta;
+  const [pista, setPista] = useState(true);
+  useEffect(() => {
+    if (abierta && yaSeAbrio === false) abrio();
+    if (yaSeAbrio && !abierta) {
+      const plegar = setTimeout(() => setPista(false), reducido ? 0 : 450);
+      return () => clearTimeout(plegar);
+    }
+  }, [abierta, yaSeAbrio, abrio, reducido]);
+  // Progreso baja pegado a Ascent, como si siguiera para arriba.
+  const estiloPagina = useAnimatedStyle(() => ({ transform: [{ translateY: subida.get() * alto + asomo.get() * ASOMA.progreso }] }));
+  // El borde se apaga al bajar el scroll, en las metas y mientras Ascent llega.
+  const estiloTecho = useAnimatedStyle(() => ({ opacity: entre(1 - scrollY.get() / 60, 0, 1) * entre(1 - subida.get() * 2.4, 0, 1) * (1 - enMetas.get()) }));
+  const bajaDelTecho = useDerivedValue(() => subida.get() * TECHO_BAJA + asomo.get() * ASOMA.techo);
   const relleno = { paddingTop: arriba + DEBAJO_DE_LA_HORA, paddingHorizontal: LADOS, paddingBottom: abajo + 40 };
   // El globo de «Ascent · Pronto»: dónde va (debajo de la entrada) y si se está cerrando.
   const pagina = useRef<ComponentRef<typeof View>>(null);
@@ -83,22 +173,43 @@ export function PaginaDeProgreso({ ancho, arriba, abajo, alAbrirMas }: Props) {
     if (!esLaActual) setGlobo(null);
   }
   // Con Ascent apagada, solo se nombra así: la entrada que dice «Pronto» (y su fila en Perfil).
-  const ascent = CON_ASCENT ? null : (
+  const laEntrada = (
     <View ref={entrada} collapsable={false} style={s.ascent}>
-      <EntradaPronto abierto={!!globo && !globo.cerrando} alTocar={abrirGlobo} />
+      {CON_ASCENT && ascent ? (
+        <EntradaDeAscent alAbrir={ascent.alAbrir} conPista={yaSeAbrio === false || pista} />
+      ) : (
+        <EntradaPronto abierto={!!globo && !globo.cerrando} alTocar={abrirGlobo} />
+      )}
     </View>
   );
   return (
-    <View style={{ width: ancho }} ref={pagina}>
+    <Animated.View style={[{ width: ancho }, estiloPagina]} ref={pagina}>
       <Animated.View
         style={[s.vista, estiloPrincipal]}
         pointerEvents={conMetas ? 'none' : 'auto'}
         accessibilityElementsHidden={conMetas}
         importantForAccessibility={conMetas ? 'no-hide-descendants' : 'auto'}
       >
-        <ScrollView ref={scroll} contentContainerStyle={relleno} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets scrollsToTop={esLaActual && !conMetas} scrollEventThrottle={16} onScrollBeginDrag={cerrarGlobo}>
-          <Principal ancho={ancho} alAbrirMas={alAbrirMas} alVerMetas={() => setVista('metas')} ascent={ascent} />
-        </ScrollView>
+        <GestureDetector gesture={bajarAscent}>
+          <View collapsable={false} style={s.vista}>
+            <ScrollConGestos
+              ref={scroll}
+              simultaneousWith={bajarAscent}
+              bounces={!conAscent || !arribaDeTodo}
+              contentContainerStyle={relleno}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              automaticallyAdjustKeyboardInsets
+              scrollsToTop={esLaActual && !conMetas}
+              scrollEventThrottle={16}
+              onScrollBeginDrag={cerrarGlobo}
+            >
+              <Principal ancho={ancho} alAbrirMas={alAbrirMas} alVerMetas={() => setVista('metas')} ascent={laEntrada} />
+            </ScrollConGestos>
+          </View>
+        </GestureDetector>
+        {conAscent && <BordeQueAsoma baja={bajaDelTecho} estilo={estiloTecho} />}
         {/* Cada scroll con su franja: esta se funde con Progreso y la de las metas entra con su panel. */}
         <FranjaBajoLaHora scrollY={scrollY} arriba={arriba} />
       </Animated.View>
@@ -111,7 +222,7 @@ export function PaginaDeProgreso({ ancho, arriba, abajo, alAbrirMas }: Props) {
       {globo && !conMetas && (
         <GloboPronto arriba={globo.arriba} derecha={globo.derecha} anchoDePagina={ancho} cerrando={globo.cerrando} alCerrar={cerrarGlobo} alCerrado={quitarGlobo} />
       )}
-    </View>
+    </Animated.View>
   );
 }
 

@@ -1,6 +1,7 @@
 // Tu energía de ahora con lo del almacén (spec/entreno.md 5.13): arma lo que piden energiaDeEstosDias y
 // energiaDeAhora (src/dominio/energia.ts) con el sueño, lo anotado estos días y hoy, y la hora. Sin Ascent
-// es la de tu día: sin la sesión ni los músculos. La usan Sueño (la tarjeta) e Inicio (el botón).
+// es la de tu día: sin la sesión ni los músculos. Con Ascent vinculada, la capa del gimnasio: el titular de hoy
+// de su sección (los músculos) y su sesión. La usan Sueño (la tarjeta) e Inicio (el botón).
 
 import type { Estado } from '@/almacen/almacen';
 import { comidasHabituales } from '@/dominio/alrededorDelEntreno';
@@ -16,12 +17,18 @@ import { estadoDeLaNoche, nochesCortasSeguidas } from '@/dominio/rendimiento';
 import { deudaDeSueno, juicioDeLaDeuda, redondearDeuda, ultimasNoches } from '@/dominio/sueno';
 import { horasDeComida, suenoParaAvisos } from '@/recordatorios/programar';
 import { cuentaComoEntrenar, entrenosDelDia } from '@/salud/convertir';
+import type { TitularParaAfuera } from '../ascent/titularDeHoy';
 import { metaDelDia } from '../comida/datos';
 import type { Sueno } from '../persona';
 
 export type ComidaDelDia = { comida: Comida; hora: number; anotada: boolean };
+/** Cómo se dicen los músculos: cargados o listos, o, sin sesión por delante, si ya entrenaste o descansas. */
+export type ComoMusculos = 'cargados' | 'listos' | 'entrenaste' | 'descanso';
 
 export type DatosDeEnergia = {
+  /** Con Ascent vinculada, el titular de hoy de su sección; sin vincular, null. */
+  ascent: TitularParaAfuera | null;
+  comoMusculos: ComoMusculos | null;
   /** La energía de ahora; sin el sueño ni la comida de estos días, null («Tu energía» con cómo verla). */
   dia: EnergiaDeAhora | null;
   /** Ahora, despertarte y la cama de esta noche, en minutos desde la medianoche del día de Moss. */
@@ -62,7 +69,7 @@ function kcalDelDia(e: Estado, dia: ClaveDia, pesoKg: number): number {
 }
 
 /** Tu energía de ahora; sin cuestionario, null (no hay con qué). */
-export function energiaDeHoy(e: Estado, s: Sueno, ahora: Date): DatosDeEnergia | null {
+export function energiaDeHoy(e: Estado, s: Sueno, ahora: Date, ascent: TitularParaAfuera | null = null): DatosDeEnergia | null {
   if (!e.perfil) return null;
   const hoy = e.hoy;
   const pesoKg = e.pesos[e.pesos.length - 1]?.kg ?? null;
@@ -94,7 +101,7 @@ export function energiaDeHoy(e: Estado, s: Sueno, ahora: Date): DatosDeEnergia |
   });
   const deEstosDias = pesoKg
     ? energiaDeEstosDias({
-        hoy, sexo: e.perfil.sexo, objetivo: e.perfil.objetivo, pesoKg, alturaCm: e.perfil.alturaCm, dias,
+        hoy, sexo: e.perfil.sexo, objetivo: e.perfil.objetivo, pesoKg, alturaCm: e.perfil.alturaCm, dias, entrenaHoy: !!ascent,
         comidasDeSiempre: comidasHabituales(e.registros.values(), hoy),
       })
     : null;
@@ -115,12 +122,20 @@ export function energiaDeHoy(e: Estado, s: Sueno, ahora: Date): DatosDeEnergia |
   // después. `entrenaHoy` sigue en no: sus frases son de antes de entrenar («todo a favor para entrenar»).
   const ultimoDeHoy = entrenosDelDia(e.salud?.entrenamientos, hoy).at(-1);
   // Hasta que terminó, con las pausas: de ahí cuentan las 2 h de después.
-  const sesion = ultimoDeHoy ? { inicio: minutosEnElDia(new Date(ultimoDeHoy.desde), hoy), minutos: Math.round((ultimoDeHoy.hasta - ultimoDeHoy.desde) / 60_000) } : null;
+  const deSalud = ultimoDeHoy ? { inicio: minutosEnElDia(new Date(ultimoDeHoy.desde), hoy), minutos: Math.round((ultimoDeHoy.hasta - ultimoDeHoy.desde) / 60_000) } : null;
+  // Con Ascent, su sesión de hoy (la que se espera o la hecha) y los músculos, como en la galería: lo que no está
+  // cargado cuenta como listo, también si ya entrenaste o hoy descansas.
+  const sesion = ascent?.sesion ? { inicio: ascent.sesion.inicio, minutos: ascent.sesion.minutos } : deSalud;
+  const musculos = ascent ? (ascent.que === 'cargado' ? 'cargados' : 'listos') : null;
+  const comoMusculos: ComoMusculos | null = !ascent ? null
+    : ascent.que === 'cargado' ? 'cargados' : ascent.que === 'hecha' ? 'entrenaste' : ascent.que === 'descanso' || ascent.que === 'sinHorario' ? 'descanso' : 'listos';
   const dia = energiaDeAhora({
-    deEstosDias, sueno, musculos: null, entrenaHoy: false, ahora: ahoraMin, despertar, cama, sesion,
+    deEstosDias, sueno, musculos, entrenaHoy: !!ascent, ahora: ahoraMin, despertar, cama, sesion,
     hoy: meta > 0 ? { meta, comido: deHoy.reduce((t, r) => t + r.valores.kcal, 0), comidas, ultima } : null,
   });
   return {
+    ascent,
+    comoMusculos,
     dia,
     ahora: ahoraMin,
     despertar,
