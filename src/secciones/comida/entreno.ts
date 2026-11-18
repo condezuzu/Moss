@@ -1,10 +1,11 @@
 // Qué comer antes y después de entrenar, con lo de hoy: arma el contexto para la regla
 // (src/dominio/alrededorDelEntreno.ts) y dice cada línea en palabras, sin culpa.
 
-import type { Estado } from '@/almacen/almacen';
+import { reglasDeCuidados, type Estado } from '@/almacen/almacen';
 import { comidasHabituales, lineaDeNocheCorta, lineasDelDia, sesionesDelDia, type Contexto, type Linea, type Principal } from '@/dominio/alrededorDelEntreno';
 import { horasDeSueno } from '@/dominio/avisos';
 import type { Comida } from '@/dominio/comidas';
+import { apagaLinea } from '@/dominio/cuidados';
 import { minutosEnElDia, sumarDias } from '@/dominio/fechas';
 import { edadDe } from '@/dominio/metas';
 import { totalDelDia, vigentes } from '@/dominio/registros';
@@ -66,13 +67,18 @@ function dormidoAnoche(e: Estado): number | null {
 /** Las líneas de hoy, por comida; apagadas en Perfil, ninguna. */
 export function lineasDeHoy(e: Estado, ahora = new Date()): Map<Comida, Linea> {
   if (!e.verEntreno) return new Map();
+  // Con cuidados de salud marcados, en lugar de «sin déficit», cada línea según lo que apagan (cuidados.ts).
+  const reglas = reglasDeCuidados(e);
+  const cuidados = reglas?.cuidados.length ? reglas : null;
+  const sinDeficit = !cuidados && !!e.perfil?.sinDeficit;
+  const va = (l: Linea) => !cuidados || !apagaLinea(l.clase, cuidados);
   const c = contextoDeHoy(e, ahora);
-  const lineas = new Map<Comida, Linea>((c ? lineasDelDia(c) : []).map((l) => [l.comida, l]));
+  const lineas = new Map<Comida, Linea>((c ? lineasDelDia({ ...c, sinDeficit }) : []).filter(va).map((l) => [l.comida, l]));
   // La noche corta va con la suscripción: es el ejemplo de su pantalla (D40).
   if (hayCompras() && e.perfil) {
     const anotadas = new Set(vigentes(e.registros.values()).filter((x) => x.dia === e.hoy && !x.planificado).map((x) => x.comida));
-    const corta = lineaDeNocheCorta({ dormido: dormidoAnoche(e), anotadas, sinDeficit: !!e.perfil.sinDeficit });
-    if (corta && !lineas.has(corta.comida)) lineas.set(corta.comida, corta);
+    const corta = lineaDeNocheCorta({ dormido: dormidoAnoche(e), anotadas, sinDeficit });
+    if (corta && va(corta) && !lineas.has(corta.comida)) lineas.set(corta.comida, corta);
   }
   return lineas;
 }

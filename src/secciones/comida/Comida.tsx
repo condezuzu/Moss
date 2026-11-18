@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, type ViewInstance } from 'react-native';
 import { GestureDetector, useLongPressGesture, usePanGesture } from 'react-native-gesture-handler';
 import Animated, {
-  Easing, FadeIn, FadeOut, ReduceMotion, useAnimatedRef, useAnimatedStyle, useReducedMotion, useScrollOffset, useSharedValue, withTiming,
+  Easing, FadeIn, FadeOut, interpolateColor, ReduceMotion, useAnimatedRef, useAnimatedStyle, useReducedMotion, useScrollOffset, useSharedValue, withRepeat, withTiming,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -33,7 +33,9 @@ import { entre, viaje } from '../movimiento';
 import { margenDeToque } from '../paso';
 import { ACOMODA, Aparece } from '../tarjetas';
 import { Relleno, useCuenta } from '../animados';
-import { Boton, COLOR_DE_MACRO, Etiqueta, Icono, MACROS, Punto, type Macro } from './comunes';
+import { Anillo, Arco, Luna, Macros as AnillosDeMacros } from '../kcal/Figuras';
+import { Barra } from '../kcal/Kcal';
+import { Boton, COLOR_DE_MACRO, degradado, Etiqueta, Icono, MACROS, Punto, PuntoDeMacro, type Macro } from './comunes';
 import { alTocarLaPagina, cerrarLaFilaAbierta, FilaQueSeDesliza } from './FilaQueSeDesliza';
 import { useFotos } from './fotos';
 import { HojaDeFoto, MiniaturaDeFoto, TiraDeFotos } from './FotosDelDia';
@@ -42,7 +44,7 @@ import {
   cantidadDeTexto, comidasDelDia, fechaCorta, gramosDeMacro, hora, HORA_TIPICA, horasDeComer, letraDelDia, metaDelDia, numero, sistemaDe, tituloDelDia, totalDe, useNumeros,
   useEstado, type ComidaDelDia,
 } from './datos';
-import { Luna, Lunitas, type Lunita } from './Luna';
+import { Lunitas, type Lunita } from './Luna';
 import { AccionesDelPlan, ArmarElDia, PlanDeLaSemana } from './Plan';
 import { lineasDeHoy } from './entreno';
 import { LineaDeEntreno } from './LineaDeEntreno';
@@ -57,14 +59,18 @@ const ENTRA = FadeIn.duration(300).reduceMotion(ReduceMotion.Never);
 const ENTRA_ALIMENTO = FadeIn.duration(280).reduceMotion(ReduceMotion.Never);
 const ENTRA_ACCIONES = FadeIn.duration(260).reduceMotion(ReduceMotion.Never);
 const SALE = FadeOut.duration(180).reduceMotion(ReduceMotion.Never);
-/** El alto de los textos de Día, Semana y Mes, y el de cada alimento de la línea: los toques llegan a 44. */
-const ALTO_PUNTO = 27;
+/** El alto de cada opción de Día, Semana y Mes, y el de cada alimento de la línea: los toques llegan a 44. */
+const ALTO_PUNTO = 26;
 const ALTO_ALIMENTO = 26;
 /** Con el texto grande, las cifras grandes crecen hasta acá: más, no entran en su lugar (al lado de la luna, en el cuadro). */
 const CIFRA_GRANDE = 1.3;
 /** Lo levantado al mantenerlo apretado, sobre el velo: opaco (así iOS calcula su sombra con la forma). */
 const FONDO_DE_FILA = '#0d1328';
 const FONDO_DE_TARJETA = '#090e1e';
+const LETRA_DE_MACRO = { proteina: 'p', carbohidratos: 'c', grasas: 'g' } as const;
+/** El hilo de la línea del día se apaga en las puntas, y el pulso de «ahora» va y vuelve en 2,6 s (la galería). */
+const HILO = 'linear-gradient(180deg, rgba(232, 196, 106, 0) 0%, rgba(232, 196, 106, 0.42) 8%, rgba(232, 196, 106, 0.42) 92%, rgba(232, 196, 106, 0) 100%)';
+const PULSO_MS = 1300;
 /** Mantener apretado: a los 350 ms abre el menú; mientras, se hunde apenas. */
 const MANTENER = 350;
 const HUNDE = 0.018;
@@ -197,19 +203,7 @@ export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba
           <PaginaDelMes e={e} dia={dia} ancho={anchoCuadro} alElegir={verDia} />
         </Cuadro>
         <View style={estilos.puntos}>
-          {VISTAS.map((v) => (
-            <Pressable
-              key={v}
-              onPress={() => verVista(v)}
-              style={({ pressed }) => [estilos.punto, pressed && v !== vista && estilos.apretado]}
-              hitSlop={{ ...margenDeToque(ALTO_PUNTO), left: 2, right: 2 }}
-              accessibilityRole="button"
-              accessibilityState={{ selected: v === vista }}
-            >
-              <View style={[estilos.puntoMarca, v === vista && estilos.puntoMarcaElegido]} />
-              <Text style={[estilos.puntoTexto, v === vista && estilos.puntoTextoElegido]}>{t(`comida.vistas.${v}`)}</Text>
-            </Pressable>
-          ))}
+          {VISTAS.map((v) => <OpcionDeVista key={v} texto={t(`comida.vistas.${v}`)} elegida={v === vista} alTocar={() => verVista(v)} />)}
         </View>
         <TiraDeFotos dia={dia} />
         <Text style={estilos.seccion}>{t('comida.tuDia')}</Text>
@@ -223,6 +217,31 @@ export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba
       <MenuFlotante pedido={menu} alCerrar={() => setMenu(null)} />
       <HojaDeFoto />
     </View>
+  );
+}
+
+/** Una opción del selector de Día, Semana y Mes (la galería del 5/11): lo elegido se marca con un fundido. */
+function OpcionDeVista({ texto, elegida, alTocar }: { texto: string; elegida: boolean; alTocar: () => void }) {
+  const marca = useSharedValue(elegida ? 1 : 0);
+  useEffect(() => {
+    marca.set(withTiming(elegida ? 1 : 0, { duration: 250, reduceMotion: ReduceMotion.Never }));
+  }, [elegida, marca]);
+  const estiloFondo = useAnimatedStyle(() => ({ opacity: marca.get() }));
+  const estiloTexto = useAnimatedStyle(() => ({ color: interpolateColor(marca.get(), [0, 1], ['rgba(239, 230, 207, 0.55)', 'rgba(239, 230, 207, 1)']) }));
+  return (
+    <Pressable
+      onPress={() => {
+        if (!elegida) Haptics.selectionAsync().catch(() => {});
+        alTocar();
+      }}
+      style={({ pressed }) => [estilos.punto, pressed && !elegida && estilos.apretado]}
+      hitSlop={{ ...margenDeToque(ALTO_PUNTO), left: 1, right: 1 }}
+      accessibilityRole="button"
+      accessibilityState={{ selected: elegida }}
+    >
+      <Animated.View style={[StyleSheet.absoluteFill, estilos.puntoElegido, estiloFondo]} />
+      <Animated.Text style={[estilos.puntoTexto, estiloTexto]} maxFontSizeMultiplier={1.4}>{texto}</Animated.Text>
+    </Pressable>
   );
 }
 
@@ -252,7 +271,7 @@ function TiraDeLaSemana({ e, dia, alElegir }: { e: Estado; dia: ClaveDia; alEleg
         </Pressable>
       ))}
       <View style={[estilos.tiraLunas, arribaDeLunas !== null && { top: arribaDeLunas }]} pointerEvents="none">
-        <Lunitas lunas={lunasDe(e, dias)} ancho={ancho} tam={24} />
+        <Lunitas lunas={lunasDe(e, dias)} ancho={ancho} tam={24} estilo={e.kcal} elegida={dias.indexOf(dia)} />
       </View>
     </View>
   );
@@ -334,11 +353,14 @@ function Cuadro({ ancho, vista, alCambiar, children }: { ancho: number; vista: V
   );
 }
 
-/** Las barras de proteína, carbohidratos y grasas contra su meta. En un día, cada punto brilla al cumplir y tiembla si se pasa por mucho. */
-export function BarrasDeMacros({ comido, meta, conEstado }: { comido: Pick<Valores, Macro>; meta: Macros | null; conEstado: boolean }) {
+/**
+ * Las barras de proteína, carbohidratos y grasas contra su meta. En un día, cada punto brilla al cumplir y tiembla si
+ * se pasa por mucho. `promedio`: las de la semana y el mes, más juntas y con los nombres más apretados (la galería).
+ */
+export function BarrasDeMacros({ comido, meta, conEstado, promedio }: { comido: Pick<Valores, Macro>; meta: Macros | null; conEstado: boolean; promedio?: boolean }) {
   const numeros = useNumeros();
   return (
-    <View style={estilos.macros}>
+    <View style={[estilos.macros, promedio && estilos.macrosDePromedio]}>
       {MACROS.map((m) => {
         const objetivo = meta?.[m] ?? 0;
         const estado = conEstado && meta ? estadoDeMacro(comido[m], objetivo) : 'falta';
@@ -346,10 +368,8 @@ export function BarrasDeMacros({ comido, meta, conEstado }: { comido: Pick<Valor
         return (
           <View key={m} style={estilos.macro}>
             <View style={estilos.macroNombre}>
-              <View style={{ opacity: estado === 'falta' ? 0.55 : 1 }}>
-                <Punto macro={m} />
-              </View>
-              <Text style={estilos.macroNombreTexto} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t(`comida.${m}`)}</Text>
+              <PuntoDeMacro macro={m} estado={estado} />
+              <Text style={[estilos.macroNombreTexto, promedio && estilos.macroNombreDePromedio]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t(`comida.${m}`)}</Text>
             </View>
             {numeros && (
               <Text style={estilos.macroCifra} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
@@ -375,12 +395,36 @@ function PaginaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
   let linea = '';
   if (dia === e.hoy && meta && e.numeros) linea = t(queda >= 0 ? 'comida.quedanKcal' : 'comida.deMasKcal', { n: numero(Math.abs(Math.round(queda))) });
   else if (dia > e.hoy) linea = t('comida.planificado');
+  // La figura de las calorías, en el estilo elegido en «Todo lo de hoy» (galeria/src/kcal.js, `chica`).
+  const estilo = e.kcal;
+  const fraccion = meta ? comido.kcal / meta.kcal : 0;
+  const deCadaComida = estilo === 'barra' ? comidasDelDia(e.registros, dia, e.hoy).filter((c) => dia > e.hoy || !c.planificada).map((c) => c.total.kcal) : [];
   return (
     <View>
-      <View style={estilos.resumen}>
-        <View style={estilos.resumenLuna}>
-          <Luna tam={64} fraccion={meta ? comido.kcal / meta.kcal : 0} />
-        </View>
+      <View style={[estilos.resumen, estilo === 'barra' && estilos.resumenSinFigura]}>
+        {estilo !== 'barra' && (
+          <Animated.View key={estilo} entering={ENTRA} style={estilo === 'luna' ? estilos.resumenLuna : estilo === 'macros' ? undefined : estilos.resumenFigura}>
+            {estilo === 'luna' && <Luna tam={64} fraccion={fraccion} />}
+            {estilo === 'macros' && (
+              <AnillosDeMacros
+                tam={60}
+                grueso={10}
+                fracciones={{ proteina: meta ? comido.proteina / meta.proteina : 0, carbohidratos: meta ? comido.carbohidratos / meta.carbohidratos : 0, grasas: meta ? comido.grasas / meta.grasas : 0 }}
+              />
+            )}
+            {estilo === 'arco' && <Arco ancho={66} grueso={8} fraccion={fraccion} estrella={false} />}
+            {estilo === 'anillo' && (
+              <View>
+                <Anillo tam={58} grueso={7} fraccion={fraccion} />
+                {e.numeros && (
+                  <View style={[StyleSheet.absoluteFill, estilos.resumenPorcentajeLugar]} pointerEvents="none">
+                    <Text style={estilos.resumenPorcentaje} maxFontSizeMultiplier={1}>{t('comida.porcentaje', { n: numero(Math.round(Math.max(0, fraccion) * 100)) })}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </Animated.View>
+        )}
         <View style={estilos.resumenTextos}>
           {e.numeros && (
             <Text style={estilos.resumenCifra} maxFontSizeMultiplier={CIFRA_GRANDE} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
@@ -391,6 +435,11 @@ function PaginaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
           {linea ? <Text style={[estilos.resumenLinea, dia === e.hoy && queda < 0 && estilos.deMas]}>{linea}</Text> : null}
         </View>
       </View>
+      {estilo === 'barra' && (
+        <Animated.View entering={ENTRA} style={estilos.resumenBarra}>
+          <Barra fraccion={fraccion} comidas={deCadaComida} alto={6} />
+        </Animated.View>
+      )}
       <BarrasDeMacros comido={comido} meta={meta} conEstado={dia <= e.hoy} />
     </View>
   );
@@ -436,7 +485,7 @@ function CabezaDePromedio({ titulo, fechas, promedio, dias, metaSinDias }: { tit
             </Text>
           )}
           <Text style={estilos.promedioNota}>{[meta && numeros ? t('comida.metaDe', { n: numero(meta.kcal) }) : null, t('comida.diasRegistrados', { n: promedio.n, total: dias })].filter(Boolean).join(' · ')}</Text>
-          <BarrasDeMacros comido={promedio} meta={meta} conEstado={false} />
+          <BarrasDeMacros comido={promedio} meta={meta} conEstado={false} promedio />
         </>
       ) : (
         <Text style={estilos.promedioNota}>{t('comida.sinRegistros')}</Text>
@@ -532,7 +581,7 @@ function PaginaDelMes({ e, dia, ancho, alElegir }: { e: Estado; dia: ClaveDia; a
               })}
             </View>
             <View style={estilos.calendarioLunas} pointerEvents="none">
-              <Lunitas lunas={lunasDe(e, semana, [primero, ultimo])} ancho={anchoGrilla} tam={26} />
+              <Lunitas lunas={lunasDe(e, semana, [primero, ultimo])} ancho={anchoGrilla} tam={26} estilo={e.kcal} />
             </View>
           </View>
         ))}
@@ -589,7 +638,9 @@ function LineaDelDia({ e, dia, alMenu }: { e: Estado; dia: ClaveDia; alMenu: (p:
           return (
             <Animated.View key="ahora" layout={ACOMODA} style={[estilos.entradaAhora, { marginTop: separacion }]}>
               <Text style={[estilos.hora, estilos.horaAhora]}>{hora(Math.round(x.minutos))}</Text>
-              <View style={[estilos.nodo, estilos.nodoAhora]} />
+              <View style={[estilos.nodo, estilos.nodoAhora]}>
+                <PulsoDeAhora />
+              </View>
               <Text style={estilos.ahoraTexto}>{t('comida.ahora')}</Text>
             </Animated.View>
           );
@@ -609,6 +660,21 @@ function LineaDelDia({ e, dia, alMenu }: { e: Estado; dia: ClaveDia; alMenu: (p:
       })}
     </View>
   );
+}
+
+/**
+ * El pulso de «ahora»: un aro que crece y se apaga, solo con transform y opacity (la sombra no se rehace en cada
+ * cuadro). Late mientras Comida es la sección que se ve; con Reducir movimiento, queda quieto.
+ */
+function PulsoDeAhora() {
+  const reducido = useReducedMotion();
+  const seVe = useEsLaActual(SECCION);
+  const pulso = useSharedValue(0);
+  useEffect(() => {
+    pulso.set(seVe && !reducido ? withRepeat(withTiming(1, { duration: PULSO_MS, easing: Easing.inOut(Easing.quad) }), -1, true) : withTiming(0, { duration: 200 }));
+  }, [pulso, reducido, seVe]);
+  const estilo = useAnimatedStyle(() => ({ opacity: pulso.get(), transform: [{ scale: 1 + 0.12 * pulso.get() }] }));
+  return <Animated.View style={[estilos.pulso, estilo]} pointerEvents="none" />;
 }
 
 type Sistema = ReturnType<typeof sistemaDe>;
@@ -710,7 +776,7 @@ function Tarjeta({ c, dia, sistema, e, linea, alMenu }: { c: ComidaDelDia; dia: 
             ) : !c.planificada && (
               <Animated.View entering={ENTRA} style={estilos.botonFotoLugar}>
                 <Pressable onPress={sacar} style={({ pressed }) => [estilos.botonFoto, pressed && estilos.apretado]} accessibilityRole="button" accessibilityLabel={t('comida.foto')} hitSlop={8}>
-                  <Icono nombre="camera" tam={14} color="rgba(239, 230, 207, 0.6)" />
+                  <Icono nombre="camera" tam={17} color="rgba(239, 230, 207, 0.5)" />
                 </Pressable>
               </Animated.View>
             )}
@@ -751,6 +817,8 @@ function PieDeTarjeta({ total, numeros, children }: { total: Valores; numeros: b
         // VoiceOver leía «32 g, 50 g, 20 g» sin decir de qué: cada uno, con su macro.
         <View key={m} style={estilos.mini} accessible={numeros} accessibilityLabel={numeros ? t('comida.lector.macro', { macro: t(`comida.${m}`), n: gramosDeMacro(total[m]) }) : undefined}>
           <Punto macro={m} tam={5} />
+          {/* Cada macro con su color y su letra (la galería del 5/11): el punto solo no decía cuál era. */}
+          {numeros && <Text style={[estilos.miniTexto, estilos.miniLetra]}>{t(`comida.letra.${LETRA_DE_MACRO[m]}`)}</Text>}
           {numeros && <Text style={estilos.miniTexto}>{`${gramosDeMacro(total[m])} g`}</Text>}
         </View>
       ))}
@@ -797,7 +865,7 @@ function CopiaDeTarjeta({ c, total, mezclada, sistema, numeros, linea, foto }: {
         <PieDeTarjeta total={total} numeros={numeros}>
           {foto ? <MiniaturaDeFoto f={foto} quieta /> : !c.planificada && (
             <View style={[estilos.botonFoto, estilos.botonFotoLugar]}>
-              <Icono nombre="camera" tam={14} color="rgba(239, 230, 207, 0.6)" />
+              <Icono nombre="camera" tam={17} color="rgba(239, 230, 207, 0.5)" />
             </View>
           )}
         </PieDeTarjeta>
@@ -956,23 +1024,29 @@ const estilos = StyleSheet.create({
   cuadro: { marginTop: 14, overflow: 'hidden', borderRadius: 20, backgroundColor: 'rgba(8, 12, 26, 0.66)', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.09)' },
   cuadroTira: { flexDirection: 'row', alignItems: 'flex-start' },
   pagina: { paddingTop: 12, paddingHorizontal: 16, paddingBottom: 16 },
-  puntos: { flexDirection: 'row', justifyContent: 'center', gap: 4, marginTop: 8 },
-  punto: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 9 },
-  puntoMarca: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: 'rgba(239, 230, 207, 0.42)' },
-  puntoMarcaElegido: { backgroundColor: colores.oroClaro, shadowColor: colores.oroClaro, shadowOpacity: 0.7, shadowRadius: 3, shadowOffset: { width: 0, height: 0 } },
-  puntoTexto: { fontFamily: letras.texto, fontSize: 11.5, letterSpacing: 0.4, color: 'rgba(239, 230, 207, 0.42)' },
-  puntoTextoElegido: { color: colores.pergamino },
+  // Día, Semana y Mes: un selector de verdad, con lo elegido marcado (la galería del 5/11).
+  puntos: { alignSelf: 'center', flexDirection: 'row', gap: 2, marginTop: 10, padding: 3, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.12)', backgroundColor: 'rgba(8, 12, 26, 0.55)' },
+  punto: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999 },
+  puntoElegido: { borderRadius: 999, backgroundColor: 'rgba(239, 230, 207, 0.1)' },
+  puntoTexto: { fontFamily: letras.texto, fontSize: 12, lineHeight: 14, letterSpacing: 0.24 },
   resumen: { flexDirection: 'row', alignItems: 'center', gap: 12, marginLeft: -8 },
+  resumenSinFigura: { marginLeft: 0 },
   resumenLuna: { margin: -4 },
+  resumenFigura: { marginHorizontal: 4 },
+  resumenPorcentajeLugar: { alignItems: 'center', justifyContent: 'center' },
+  resumenPorcentaje: { fontFamily: letras.numeroLiviano, fontSize: 12, letterSpacing: -0.2, color: 'rgba(239, 230, 207, 0.62)', fontVariant: ['tabular-nums'] },
+  resumenBarra: { marginTop: 12 },
   resumenTextos: { gap: 6, flexShrink: 1 },
   resumenCifra: { fontFamily: letras.numero, fontSize: 30, letterSpacing: -0.4, color: colores.cifra, fontVariant: ['tabular-nums'] },
   resumenDe: { fontFamily: letras.texto, fontSize: 13, letterSpacing: 0, color: 'rgba(239, 230, 207, 0.55)' },
   resumenLinea: { fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.78)', fontVariant: ['tabular-nums'] },
   deMas: { color: colores.oroClaro },
   macros: { marginTop: 16, flexDirection: 'row', gap: 14 },
+  macrosDePromedio: { gap: 12 },
   macro: { flex: 1, gap: 7, minWidth: 0 },
   macroNombre: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   macroNombreTexto: { flexShrink: 1, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.62)' },
+  macroNombreDePromedio: { letterSpacing: 0.57 },
   macroCifra: { fontFamily: letras.numeroMedio, fontSize: 14, color: colores.pergamino, fontVariant: ['tabular-nums'] },
   barra: { height: 4, borderRadius: 4, backgroundColor: 'rgba(239, 230, 207, 0.08)', overflow: 'hidden' },
   barraLlena: { height: '100%', borderRadius: 4 },
@@ -999,13 +1073,14 @@ const estilos = StyleSheet.create({
   seccion: { marginTop: 32, marginBottom: 14, fontFamily: letras.numeroMedio, fontSize: 19, color: colores.pergamino },
   nota: { marginTop: -6, marginBottom: 14, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17.5, color: 'rgba(239, 230, 207, 0.55)' },
   linea: { paddingLeft: 60 },
-  lineaRaya: { position: 'absolute', left: 48, top: 6, bottom: 6, width: 1, backgroundColor: 'rgba(232, 196, 106, 0.42)' },
+  lineaRaya: { position: 'absolute', left: 48, top: 6, bottom: 6, width: 1, ...degradado(HILO) },
   hora: { position: 'absolute', left: -60, width: 40, top: 9, textAlign: 'right', fontFamily: letras.texto, fontSize: 11, color: 'rgba(239, 230, 207, 0.55)', fontVariant: ['tabular-nums'] },
   horaAhora: { top: 0, color: colores.oroClaro },
   nodo: { position: 'absolute', left: -16.5, top: 10.5, width: 9, height: 9, borderRadius: 4.5, backgroundColor: colores.oro, shadowColor: colores.oro, shadowOpacity: 0.85, shadowRadius: 5, shadowOffset: { width: 0, height: 0 } },
   nodoVacio: { backgroundColor: '#070b18', borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.7)', shadowOpacity: 0 },
   nodoPlan: { backgroundColor: 'rgba(232, 196, 106, 0.35)', shadowOpacity: 0 },
-  nodoAhora: { top: 1.5, backgroundColor: colores.oroClaro, shadowColor: colores.oroClaro },
+  nodoAhora: { top: 1.5, backgroundColor: colores.oroClaro, shadowOpacity: 0, boxShadow: '0 0 0 4px rgba(246, 227, 166, 0.1), 0 0 10px rgba(246, 227, 166, 0.5)' },
+  pulso: { position: 'absolute', top: -5, left: -5, right: -5, bottom: -5, borderRadius: 9.5, boxShadow: '0 0 0 2px rgba(246, 227, 166, 0.06), 0 0 12px rgba(246, 227, 166, 0.55)' },
   entradaAhora: { height: 12 },
   ahoraTexto: { position: 'absolute', left: 2, top: 1, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 2, textTransform: 'uppercase', color: colores.oroClaro },
   tarjeta: { borderRadius: 16, paddingTop: 11, paddingHorizontal: 14, paddingBottom: 10, backgroundColor: 'rgba(6, 10, 22, 0.66)', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.1)' },
@@ -1034,6 +1109,7 @@ const estilos = StyleSheet.create({
   botonFotoLugar: { marginLeft: 'auto' },
   mini: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   miniTexto: { fontFamily: letras.texto, fontSize: 11.5, color: 'rgba(239, 230, 207, 0.62)', fontVariant: ['tabular-nums'] },
+  miniLetra: { marginRight: -1, fontFamily: letras.textoMedio, color: 'rgba(239, 230, 207, 0.8)' },
   acciones: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   accionesDelDia: { marginTop: 22, marginLeft: 60, gap: 10, alignItems: 'flex-start' },
   copiarA: { fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.7)' },

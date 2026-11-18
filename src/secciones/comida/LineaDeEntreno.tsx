@@ -21,7 +21,7 @@ export function LineaDeEntreno({ linea }: { linea: Linea }) {
   return (
     <Aparece>
       <Pressable onPress={() => setPorQue(true)} style={({ pressed }) => [st.linea, pressed && st.apretada]} accessibilityRole="button" accessibilityHint={t('entreno.porQue.titulo')}>
-        <Icono nombre={linea.clase === 'nocheCorta' ? 'moon.zzz' : 'dumbbell'} tam={13} color={colores.oroClaro} />
+        <Icono nombre={linea.clase === 'nocheCorta' ? 'moon.zzz' : 'dumbbell'} tam={14} color={colores.salvia} />
         <Text style={st.texto}>{textoDeLinea(linea, numeros)}</Text>
       </Pressable>
       {porQue && (
@@ -44,9 +44,10 @@ export function LineaDeEntreno({ linea }: { linea: Linea }) {
 
 const st = StyleSheet.create({
   linea: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 8, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 12,
-    backgroundColor: 'rgba(232, 196, 106, 0.07)', borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.16)',
+    flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 8, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 11,
+    // Una línea tranquila, en el verde apagado de la interfaz (la galería, `.cm-entreno`): nunca un aviso.
+    backgroundColor: 'rgba(166, 191, 148, 0.06)', borderWidth: 1, borderColor: 'rgba(166, 191, 148, 0.2)',
   },
   apretada: { opacity: 0.7 },
-  texto: { flex: 1, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17, color: 'rgba(239, 230, 207, 0.85)' },
+  texto: { flex: 1, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17, color: 'rgba(239, 230, 207, 0.78)' },
 });

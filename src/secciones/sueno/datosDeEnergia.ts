@@ -13,7 +13,7 @@ import { diaDeLaSemana, minutosEnElDia, sumarDias, type ClaveDia } from '@/domin
 import { comidasDelPlan, REPARTO } from '@/dominio/plan';
 import { vigentes } from '@/dominio/registros';
 import { estadoDeLaNoche, nochesCortasSeguidas } from '@/dominio/rendimiento';
-import { deudaDeSueno, juicioDeLaDeuda, ultimasNoches } from '@/dominio/sueno';
+import { deudaDeSueno, juicioDeLaDeuda, redondearDeuda, ultimasNoches } from '@/dominio/sueno';
 import { horasDeComida, suenoParaAvisos } from '@/recordatorios/programar';
 import { metaDelDia } from '../comida/datos';
 import type { Sueno } from '../persona';
@@ -31,8 +31,10 @@ export type DatosDeEnergia = {
   comidas: ComidaDelDia[];
   /** Esta noche, como la dicen los avisos: la hora de ir a la cama y la de despertarte. */
   noche: { hora: string; despertar: string; cama: string } | null;
-  /** Lo dormido anoche, para «De dónde sale». */
+  /** Lo dormido anoche, lo que necesitas y la deuda como se dice (a la media hora), para explicar el sueño. */
   dormido: number | null;
+  necesidad: number;
+  deuda: number | null;
 };
 
 /**
@@ -110,5 +112,7 @@ export function energiaDeHoy(e: Estado, s: Sueno, ahora: Date): DatosDeEnergia |
       ? { hora: horaDeReloj(horas.acostarse), despertar: horaDeReloj(horas.despertarManana), cama: horaDeReloj(horas.acostarse) }
       : null,
     dormido: anoche ? anoche.dormido : null,
+    necesidad: s.necesidad,
+    deuda: sueno && d ? redondearDeuda(d.minutos) : null,
   };
 }

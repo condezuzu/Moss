@@ -32,7 +32,7 @@ import { alTocarDeNuevo, useEsLaActual } from '../arriba';
 import { InvitacionDeAscent } from '../ascent/Invitacion';
 import { PESTANAS, type Pestana } from '../Barra';
 import { comidaEnHoy } from '../comida/Comida';
-import { COLOR_DE_MACRO, Icono, MACROS, Punto } from '../comida/comunes';
+import { COLOR_DE_MACRO, Icono, MACROS, PuntoDeMacro } from '../comida/comunes';
 import { comidasDelDia, conSigno, duracion, fechaCorta, fechaDiaMes, horaDelDia, metaDelDia, numero, sistemaDe, totalDe, useEstado } from '../comida/datos';
 import { avisar } from '../comida/registro';
 import { FranjaBajoLaHora } from '../franja';
@@ -44,9 +44,11 @@ import { Relleno, useCuenta, Vaso } from '../animados';
 import { Balance, Hipnograma, Linea, MiniCielo } from '../graficos/Graficos';
 import { Luna } from '../kcal/Figuras';
 import { FiguraGrande } from '../kcal/Kcal';
+import { degradado } from '../sueno/comunes';
 import { irAEnergia, useEnergia } from '../sueno/Energia';
 import { MANTENER_MS, quitarUltimoVaso } from './agua';
-import { bloques, Cabeza } from './comunes';
+import { bloques, Cabeza, Cuenta, justo } from './comunes';
+import { metaDeAguaDe } from './consejos';
 import { ControlCerca } from './Control';
 import { BotonDeEnergia, GloboDeEnergia } from './Energia';
 import { Mantener } from './Mantener';
@@ -62,7 +64,6 @@ const DE_FABRICA: Bloque[] = ['calorias', 'objetivo', 'peso', 'cielo', 'consejos
 const SECCION = { objetivo: 'progreso', peso: 'progreso', cielo: 'habitos', sueno: 'sueno' } as const satisfies Record<Exclude<Bloque, 'agua' | 'calorias' | 'consejos'>, Pestana>;
 const INICIO = PESTANAS.indexOf('inicio');
 const VASO_ML = 250;
-const VASOS_META = 8;
 // Los bloques entran y salen al sumarlos o sacarlos: un fundido no es movimiento, también con Reducir movimiento.
 const ENTRA_BLOQUE = FadeIn.duration(320).reduceMotion(ReduceMotion.Never);
 const SALE_BLOQUE = FadeOut.duration(200).reduceMotion(ReduceMotion.Never);
@@ -229,8 +230,19 @@ function Lleva({ a, alIr, etiqueta, cielo, children }: { a: Pestana; alIr: Ir; e
 const frases = (...partes: (string | false | null | undefined)[]) => partes.filter(Boolean).join('. ');
 
 const Chip = ({ texto, tipo }: { texto: string; tipo?: 'bien' | 'atencion' | 'tenue' }) => (
-  <Text style={[estilos.chip, tipo === 'bien' && estilos.chipBien, tipo === 'atencion' && estilos.chipAtencion]}>{texto}</Text>
+  <View style={[estilos.chip, tipo === 'bien' && estilos.chipBien, tipo === 'atencion' && estilos.chipAtencion]}>
+    <Text style={[estilos.chipTexto, tipo === 'bien' && estilos.chipTextoBien, tipo === 'atencion' && estilos.chipTextoAtencion]}>{texto}</Text>
+  </View>
 );
+
+/** Lo que la figura de las calorías se mete en el margen de la tarjeta, como en la galería (.in-luna, .kc-grande). */
+const MARGEN_DE_LA_FIGURA = {
+  luna: { marginTop: -6, marginRight: -4, marginBottom: -6, marginLeft: -10 },
+  anillo: { marginTop: -2, marginRight: 2, marginBottom: -2, marginLeft: -2 },
+  macros: { marginTop: -2, marginRight: 2, marginBottom: -2, marginLeft: -2 },
+  arco: null,
+  barra: null,
+} as const;
 
 // ------------------------------------------------------------------ calorías y macros: lo que queda
 type Comido = ReturnType<typeof totalDe>;
@@ -260,7 +272,7 @@ function Calorias({ alTocar, ancho }: { alTocar: () => void; ancho: number }) {
     return (
       <Abre alTocar={alTocar} etiqueta={frases(titulo, numeros && t('inicio.lector.llevas', { n: numero(Math.round(comido.kcal)) }), t('comida.sinMeta'))}>
         <View style={estilos.calArriba}>
-          <Luna tam={124} fraccion={0} />
+          <View style={MARGEN_DE_LA_FIGURA.luna}><Luna tam={124} fraccion={0} /></View>
           <View style={estilos.calCifra}>
             <Text style={estilos.calEtiqueta}>{titulo}</Text>
             {numeros && <Text style={estilos.calNumero} {...CIFRA_GRANDE}>{numero(Math.round(comido.kcal))}</Text>}
@@ -309,8 +321,8 @@ function CaloriasConMeta({ numeros, comido, meta, ancho }: { numeros: boolean; c
   return (
     <>
       {/* La luna, un anillo o los macros, al lado de la cifra; el arco, alrededor; la barra, abajo. */}
-      <Animated.View key={estilo} entering={ENTRA_BLOQUE} layout={ACOMODA} style={[estilos.calArriba, estilo === 'luna' && estilos.calConLuna, estilo === 'arco' && estilos.calConArco, estilo === 'barra' && estilos.calConBarra]}>
-        {estilo !== 'barra' && figura}
+      <Animated.View key={estilo} entering={ENTRA_BLOQUE} layout={ACOMODA} style={[estilos.calArriba, estilo === 'arco' && estilos.calConArco, estilo === 'barra' && estilos.calConBarra]}>
+        {estilo !== 'barra' && <View style={MARGEN_DE_LA_FIGURA[estilo]}>{figura}</View>}
         {numeros && (
           <Aparece style={[estilos.calCifra, estilo === 'arco' && estilos.calCifraEnArco]}>
             <Text style={estilos.calEtiqueta}>{t(cifra >= 0 ? 'inicio.teQuedan' : 'inicio.deMas')}</Text>
@@ -328,9 +340,7 @@ function CaloriasConMeta({ numeros, comido, meta, ancho }: { numeros: boolean; c
           return (
             <View key={m} style={estilos.macro}>
               <View style={estilos.macroNombre}>
-                <View style={{ opacity: estado === 'falta' ? 0.55 : 1 }}>
-                  <Punto macro={m} />
-                </View>
+                <PuntoDeMacro macro={m} estado={estado} />
                 <Text style={estilos.macroNombreTexto} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t(`comida.${m}`)}</Text>
               </View>
               {numeros && <Text style={estilos.macroValor} {...EN_SU_COLUMNA}>{valor}</Text>}
@@ -452,7 +462,7 @@ function Cielo({ ancho, alIr }: { ancho: number; alIr: Ir }) {
   const titulo = t('inicio.bloques.cielo');
   return (
     <Lleva a={SECCION.cielo} alIr={alIr} cielo etiqueta={frases(titulo, dia.habitos.length > 0 && t('inicio.lector.habitos', { n: hechos, total: dia.habitos.length }))}>
-      <Cabeza titulo={titulo} derecha={dia.habitos.length ? <Chip texto={t('inicio.encendidas', { n: hechos, total: dia.habitos.length })} /> : undefined} />
+      <Cabeza titulo={titulo} derecha={dia.habitos.length ? <Cuenta texto={t('inicio.encendidas', { n: hechos, total: dia.habitos.length })} /> : undefined} />
       {dia.constelacion ? <MiniCielo constelacion={dia.constelacion} encendidas={encendidos} ancho={ancho} alto={118} /> : <View style={{ height: 40 }} />}
     </Lleva>
   );
@@ -483,7 +493,7 @@ function SuenoDeAnoche({ anchoGrafico, alIr }: { anchoGrafico: number; alIr: Ir 
             {s.deEjemplo && <Chip texto={t('inicio.ejemplo')} tipo="tenue" />}
             {/* Sin reloj, si todavía es lo que estimó el teléfono, lo dice. */}
             {estimada && <Chip texto={t('sueno.origen.estimada')} tipo="tenue" />}
-            {calidad && <Chip texto={t('inicio.calidad', { n: calidad.puntos })} />}
+            {calidad && <Cuenta texto={t('inicio.calidad', { n: calidad.puntos })} />}
           </View>
         )}
       />
@@ -496,17 +506,27 @@ function SuenoDeAnoche({ anchoGrafico, alIr }: { anchoGrafico: number; alIr: Ir 
           <Hipnograma desde={noche.dormirse} hasta={noche.despertar} tramos={noche.tramos} ancho={anchoGrafico} alto={44} />
         </View>
       ) : (
-        <Text style={estilos.nota}>{t('sueno.sinNoche')}</Text>
+        <Text style={[estilos.nota, estilos.notaSola]}>{t('sueno.sinNoche')}</Text>
       )}
     </Lleva>
   );
 }
 
 // ------------------------------------------------------------------ el agua
+/** El resplandor del vaso lleno (.in-vasos i.lleno): llega con el mismo fundido con que se llena. */
+function LuzDelVaso({ lleno }: { lleno: boolean }) {
+  const luz = useAnimatedStyle(() => ({ opacity: withTiming(lleno ? 1 : 0, { duration: 320, reduceMotion: ReduceMotion.Never }) }));
+  return <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, estilos.vasoLuz, luz]} />;
+}
+
 function Agua() {
   const e = useEstado();
   const ml = aguaDelDia(e.agua.values(), e.hoy);
   const vasos = Math.round(ml / VASO_ML);
+  // La meta, ocho vasos; con cuidados de salud, la suya (2,5 L con cálculos) o, si Moss no la pide (el riñón),
+  // ninguna: solo lo tomado, sin vasos por llenar.
+  const meta = metaDeAguaDe(e);
+  const vasosDeMeta = meta === null ? 0 : Math.round(meta / VASO_ML);
   // Restar un vaso: mantener apretada la fila (o el «+») quita el último de hoy, con «Deshacer». Sin agua hoy, nada.
   const quitar = () => {
     quitarUltimoVaso(avisar);
@@ -517,13 +537,14 @@ function Agua() {
       <Mantener alMantener={quitar} style={estilos.fila}>
         <Text style={estilos.datoCifra}>
           {decimal(ml / 1000, idioma())}
-          <Text style={estilos.datoUnidad}>{` ${t('inicio.deLitros', { meta: decimal((VASOS_META * VASO_ML) / 1000, idioma()) })}`}</Text>
+          <Text style={estilos.datoUnidad}>{meta === null ? ' L' : ` ${t('inicio.deLitros', { meta: decimal(meta / 1000, idioma()) })}`}</Text>
         </Text>
         <View style={estilos.vasos}>
-          {Array.from({ length: Math.max(VASOS_META, vasos) }, (_, i) => (
+          {Array.from({ length: Math.max(vasosDeMeta, vasos) }, (_, i) => (
             // Los de más de la meta entran y se van de a uno, y los otros se corren para hacerles lugar.
-            <Animated.View key={i} layout={ACOMODA} exiting={i >= VASOS_META ? SALE_VASO : undefined}>
-              <Vaso lleno={i < vasos} extra={i >= VASOS_META} style={estilos.vaso} llenoStyle={estilos.vasoLleno} />
+            <Animated.View key={i} layout={ACOMODA} exiting={i >= vasosDeMeta ? SALE_VASO : undefined}>
+              <LuzDelVaso lleno={i < vasos} />
+              <Vaso lleno={i < vasos} extra={i >= vasosDeMeta} style={estilos.vaso} llenoStyle={estilos.vasoLleno} />
             </Animated.View>
           ))}
         </View>
@@ -556,8 +577,11 @@ function Agua() {
 
 // ------------------------------------------------------------------ personalizar
 /** El alto de cada fila con el texto de siempre; con el texto grande, todas crecen hasta la más alta. */
-const ALTO_FILA = 56;
+const ALTO_FILA = 59;
 const LADO_CERRAR = 32;
+const FILA_LEVANTADA = '#16203f';
+// El fondo de las hojas de la galería (.hb): de la noche clara a la oscura.
+const FONDO_DE_LA_HOJA = degradado('linear-gradient(180deg, #0f1733 0%, #0a1026 55%, #080c1d 100%)');
 
 /** Una hoja con los bloques: la llave muestra u oculta, y se ordenan arrastrando de la manija (o, con VoiceOver, con «Subir» y «Bajar»). */
 function Personalizar({ abierta, orden, visibles, alCerrar }: { abierta: boolean; orden: Bloque[]; visibles: Set<Bloque>; alCerrar: () => void }) {
@@ -605,10 +629,9 @@ function Personalizar({ abierta, orden, visibles, alCerrar }: { abierta: boolean
       <GestureHandlerRootView style={estilos.modal}>
         <Animated.View style={[StyleSheet.absoluteFill, estilos.modalVelo, hoja.velo]} pointerEvents="none" />
         <Pressable style={StyleSheet.absoluteFill} onPress={alCerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
-        <Animated.View style={[estilos.hoja, { paddingBottom: insets.bottom + 20 }, hoja.estilo]} onLayout={hoja.medir} accessibilityViewIsModal onAccessibilityEscape={alCerrar}>
+        <Animated.View style={[estilos.hoja, { paddingBottom: insets.bottom + 6 }, hoja.estilo]} onLayout={hoja.medir} accessibilityViewIsModal onAccessibilityEscape={alCerrar}>
           <CabezaQueBaja arrastre={hoja} style={estilos.hojaArriba}>
-          <View style={estilos.asa} />
-          <View style={estilos.hojaCabeza}>
+            <View style={estilos.asa} />
             <Text style={estilos.hojaTitulo}>{t('inicio.personalizarTitulo')}</Text>
             <Pressable
               onPress={alCerrar}
@@ -619,10 +642,10 @@ function Personalizar({ abierta, orden, visibles, alCerrar }: { abierta: boolean
             >
               <Icono nombre="xmark" tam={13} color="rgba(239, 230, 207, 0.75)" peso="semibold" />
             </Pressable>
-          </View>
-          <Text style={estilos.hojaTexto}>{t('inicio.personalizarTexto')}</Text>
+            <Text style={estilos.hojaTexto}>{t('inicio.personalizarTexto')}</Text>
           </CabezaQueBaja>
-          <View style={{ height: alto * orden.length }}>
+          {/* Los bloques, en su caja; el borde suma dos puntos al alto de las filas. */}
+          <View style={[estilos.lista, { height: alto * orden.length + 2 }]}>
             {orden.map((b, i) => (
               <FilaDeOrden
                 key={b}
@@ -682,22 +705,22 @@ function FilaDeOrden(p: {
       }));
     },
   });
-  // La que se arrastra sigue al dedo y las otras le hacen lugar.
+  // La que se arrastra sigue al dedo, levantada (con su fondo, como .in-fila-orden.moviendo), y las otras le hacen lugar.
   const estilo = useAnimatedStyle(() => {
     const a = arrastrada.get();
-    if (a >= 0 && versionDelArrastre.get() !== version) return { transform: [{ translateY: 0 }], zIndex: 1, opacity: 1 };
-    if (a === indice) return { transform: [{ translateY: dy.get() }], zIndex: 2, opacity: 0.95 };
-    if (a < 0) return { transform: [{ translateY: withTiming(0, { duration: 150 }) }], zIndex: 1, opacity: 1 };
+    if (a >= 0 && versionDelArrastre.get() !== version) return { transform: [{ translateY: 0 }], zIndex: 1, backgroundColor: 'transparent', borderRadius: 0 };
+    if (a === indice) return { transform: [{ translateY: dy.get() }], zIndex: 2, backgroundColor: FILA_LEVANTADA, borderRadius: 12 };
+    if (a < 0) return { transform: [{ translateY: withTiming(0, { duration: 150 }) }], zIndex: 1, backgroundColor: 'transparent', borderRadius: 0 };
     const hasta = Math.max(0, Math.min(total - 1, a + Math.round(dy.get() / alto)));
     const corre = a < hasta ? (indice > a && indice <= hasta ? -alto : 0) : indice < a && indice >= hasta ? alto : 0;
-    return { transform: [{ translateY: withTiming(corre, { duration: 150 }) }], zIndex: 1, opacity: 1 };
+    return { transform: [{ translateY: withTiming(corre, { duration: 150 }) }], zIndex: 1, backgroundColor: 'transparent', borderRadius: 0 };
   });
   const acciones = [
     ...(indice > 0 ? [{ name: 'subir', label: t('inicio.subir') }] : []),
     ...(indice < total - 1 ? [{ name: 'bajar', label: t('inicio.bajar') }] : []),
   ];
   return (
-    <Animated.View style={[estilos.filaOrden, { top: indice * alto, height: alto }, estilo]}>
+    <Animated.View style={[estilos.filaOrden, indice > 0 && estilos.filaConRaya, { top: indice * alto, height: alto }, estilo]}>
       <GestureDetector gesture={pan}>
         {/* Ordenar era solo arrastrando: VoiceOver lo hace con las acciones «Subir» y «Bajar» de la manija. */}
         <View
@@ -707,7 +730,7 @@ function FilaDeOrden(p: {
           accessibilityActions={acciones}
           onAccessibilityAction={(ev) => p.alMoverConElLector(indice, ev.nativeEvent.actionName === 'subir' ? indice - 1 : indice + 1)}
         >
-          <Icono nombre="line.3.horizontal" tam={16} color="rgba(239, 230, 207, 0.45)" />
+          <Icono nombre="line.3.horizontal" tam={18} color="rgba(239, 230, 207, 0.45)" />
         </View>
       </GestureDetector>
       <Text style={estilos.filaNombre} maxFontSizeMultiplier={1.6} onLayout={(ev) => p.alMedirElNombre(ev.nativeEvent.layout.height)}>{nombre}</Text>
@@ -717,64 +740,70 @@ function FilaDeOrden(p: {
 }
 
 const estilos = StyleSheet.create({
-  fecha: { fontFamily: letras.texto, fontSize: 11, letterSpacing: 2.2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.58)' },
-  titulo: { marginTop: 6, marginBottom: 4, fontFamily: letras.numeroMedio, fontSize: 28, letterSpacing: -0.3, color: colores.pergamino },
-  cabecera: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
-  cabeceraTextos: { flexShrink: 1 },
+  fecha: { fontFamily: letras.texto, fontSize: 11, letterSpacing: 2.2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.58)', ...justo('texto', 11, 13.2) },
+  titulo: { fontFamily: letras.numeroMedio, fontSize: 28, letterSpacing: -0.3, color: colores.pergamino, ...justo('numero', 28) },
+  // De la cabecera al primer bloque, 16 (los bloques ya traen 14).
+  cabecera: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 2 },
+  cabeceraTextos: { flexShrink: 1, gap: 8 },
   energia: { marginTop: -2, marginRight: -4 },
   botonApretado: { opacity: 0.6, transform: [{ scale: 0.94 }] },
-  calorias: { paddingTop: 12 },
-  calConLuna: { marginLeft: -8 },
+  calorias: { paddingTop: 12, paddingBottom: 16 },
   calConArco: { flexDirection: 'column', alignItems: 'center', paddingTop: 6 },
   calConBarra: { flexDirection: 'column', alignItems: 'stretch', gap: 16, paddingTop: 4 },
   calCifraEnArco: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center' },
   centrado: { textAlign: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
-  chip: { paddingHorizontal: 8, paddingVertical: 5, borderRadius: 999, fontFamily: letras.textoMedio, fontSize: 10, letterSpacing: 0.6, color: 'rgba(239, 230, 207, 0.7)', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
-  chipBien: { color: colores.salvia, backgroundColor: 'rgba(166, 191, 148, 0.1)' },
-  chipAtencion: { color: colores.oroClaro, backgroundColor: 'rgba(232, 196, 106, 0.1)' },
+  chip: { paddingHorizontal: 8, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(239, 230, 207, 0.07)' },
+  chipBien: { backgroundColor: 'rgba(166, 191, 148, 0.1)' },
+  chipAtencion: { backgroundColor: 'rgba(232, 196, 106, 0.1)' },
+  chipTexto: { fontFamily: letras.textoMedio, fontSize: 10, letterSpacing: 0.8, color: 'rgba(239, 230, 207, 0.7)', ...justo('texto', 10) },
+  chipTextoBien: { color: colores.salvia },
+  chipTextoAtencion: { color: colores.oroClaro },
   calArriba: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   calCifra: { flex: 1, gap: 4, minWidth: 0 },
-  calEtiqueta: { fontFamily: letras.texto, fontSize: 10, letterSpacing: 1.8, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.62)' },
-  calNumero: { fontFamily: letras.numeroLiviano, fontSize: 54, lineHeight: 56, letterSpacing: -1.3, color: colores.cifra, fontVariant: ['tabular-nums'] },
-  calDe: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)', fontVariant: ['tabular-nums'] },
+  calEtiqueta: { fontFamily: letras.texto, fontSize: 10, letterSpacing: 1.8, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.62)', ...justo('texto', 10) },
+  calNumero: { fontFamily: letras.numeroLiviano, fontSize: 54, letterSpacing: -1.35, color: colores.cifra, fontVariant: ['tabular-nums'], ...justo('numero', 54, 51.3) },
+  calDe: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)', fontVariant: ['tabular-nums'], ...justo('texto', 12.5, 15) },
   macros: { marginTop: 12, paddingTop: 13, flexDirection: 'row', gap: 12, borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
   macro: { flex: 1, gap: 5, minWidth: 0 },
   macroNombre: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  macroNombreTexto: { flexShrink: 1, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.62)' },
-  macroValor: { fontFamily: letras.numero, fontSize: 20, color: colores.pergamino, fontVariant: ['tabular-nums'] },
-  macroDe: { fontFamily: letras.texto, fontSize: 11, color: 'rgba(239, 230, 207, 0.5)', fontVariant: ['tabular-nums'] },
+  macroNombreTexto: { flexShrink: 1, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.62)', ...justo('texto', 9.5) },
+  macroValor: { fontFamily: letras.numero, fontSize: 20, color: colores.pergamino, fontVariant: ['tabular-nums'], ...justo('numero', 20) },
+  macroDe: { fontFamily: letras.texto, fontSize: 11, color: 'rgba(239, 230, 207, 0.5)', fontVariant: ['tabular-nums'], ...justo('texto', 11) },
   barra: { height: 3, marginTop: 3, borderRadius: 3, backgroundColor: 'rgba(239, 230, 207, 0.08)', overflow: 'hidden' },
   barraLlena: { height: '100%', borderRadius: 3 },
   objFila: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', gap: 9 },
-  objCifra: { fontFamily: letras.numero, fontSize: 26, letterSpacing: -0.2, color: colores.cifra, fontVariant: ['tabular-nums'] },
-  objTexto: { fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.62)' },
+  objCifra: { fontFamily: letras.numero, fontSize: 26, letterSpacing: -0.2, color: colores.cifra, fontVariant: ['tabular-nums'], ...justo('numero', 26) },
+  objTexto: { fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.62)', ...justo('texto', 13, 15.6) },
   nota: { marginTop: 5, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17.5, color: 'rgba(239, 230, 207, 0.58)', fontVariant: ['tabular-nums'] },
+  notaSola: { marginTop: 11 },
   fila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 14 },
-  filaSegunda: { marginTop: 6, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
+  filaSegunda: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
   dato: { flex: 1, gap: 5, minWidth: 0 },
-  datoCifra: { fontFamily: letras.numero, fontSize: 26, letterSpacing: -0.2, color: colores.cifra, fontVariant: ['tabular-nums'] },
+  datoCifra: { fontFamily: letras.numero, fontSize: 26, letterSpacing: -0.2, color: colores.cifra, fontVariant: ['tabular-nums'], ...justo('numero', 26, 27) },
   datoUnidad: { fontFamily: letras.texto, fontSize: 12, letterSpacing: 0, color: 'rgba(239, 230, 207, 0.55)' },
   datoTexto: { fontFamily: letras.texto, fontSize: 11.5, lineHeight: 15, color: 'rgba(239, 230, 207, 0.55)', fontVariant: ['tabular-nums'] },
   vasos: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 3 },
   vaso: { width: 7, height: 16, borderTopLeftRadius: 2, borderTopRightRadius: 2, borderBottomLeftRadius: 3, borderBottomRightRadius: 3, borderWidth: 1, borderColor: 'rgba(188, 216, 242, 0.35)' },
   vasoLleno: { backgroundColor: '#bcd8f2', borderColor: '#bcd8f2' },
+  vasoLuz: { borderTopLeftRadius: 2, borderTopRightRadius: 2, borderBottomLeftRadius: 3, borderBottomRightRadius: 3, boxShadow: '0 0 6px rgba(188, 216, 242, 0.5)' },
   aguaMas: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.42)', backgroundColor: 'rgba(232, 196, 106, 0.08)', alignItems: 'center', justifyContent: 'center' },
   pie: { alignItems: 'center', marginTop: 18 },
   personalizar: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.12)', backgroundColor: 'rgba(8, 12, 26, 0.6)' },
-  personalizarTexto: { fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.72)' },
+  personalizarTexto: { fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.72)', ...justo('texto', 13) },
   modal: { flex: 1, justifyContent: 'flex-end' },
   modalVelo: { backgroundColor: 'rgba(1, 2, 6, 0.6)' },
-  hoja: { paddingHorizontal: 20, borderTopLeftRadius: 26, borderTopRightRadius: 26, backgroundColor: '#0f1631', borderTopWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(232, 196, 106, 0.3)' },
-  asa: { alignSelf: 'center', width: 38, height: 4, borderRadius: 2, marginBottom: 12, backgroundColor: 'rgba(239, 230, 207, 0.22)' },
+  hoja: { borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: '#0f1733', ...FONDO_DE_LA_HOJA, borderTopWidth: 1, borderColor: 'rgba(232, 196, 106, 0.2)' },
+  asa: { width: 38, height: 5, borderRadius: 3, marginTop: 8, marginBottom: 6, backgroundColor: 'rgba(239, 230, 207, 0.22)' },
   // La cabecera llega a los bordes de la hoja: desde ahí también se baja.
-  hojaArriba: { marginHorizontal: -20, paddingHorizontal: 20, paddingTop: 8 },
-  hojaCabeza: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  hojaTitulo: { fontFamily: letras.numeroMedio, fontSize: 19, color: colores.pergamino },
-  cerrar: { width: LADO_CERRAR, height: LADO_CERRAR, borderRadius: LADO_CERRAR / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.08)' },
-  hojaTexto: { marginTop: 6, marginBottom: 10, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: 'rgba(239, 230, 207, 0.6)' },
-  hojaNota: { marginTop: 12, fontFamily: letras.texto, fontSize: 12, lineHeight: 17, color: 'rgba(239, 230, 207, 0.5)' },
-  filaOrden: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)', backgroundColor: '#0f1631' },
-  manija: { width: 36, height: 44, alignItems: 'center', justifyContent: 'center' },
-  filaNombre: { flex: 1, fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
+  hojaArriba: { alignItems: 'center' },
+  hojaTitulo: { marginTop: 6, fontFamily: letras.numeroMedio, fontSize: 17, color: colores.pergamino, ...justo('numero', 17) },
+  cerrar: { position: 'absolute', right: 12, top: 8, width: LADO_CERRAR, height: LADO_CERRAR, borderRadius: LADO_CERRAR / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.08)' },
+  hojaTexto: { marginTop: 12, marginHorizontal: 24, marginBottom: 10, textAlign: 'center', fontFamily: letras.texto, fontSize: 13, lineHeight: 18.2, color: 'rgba(239, 230, 207, 0.6)' },
+  hojaNota: { marginTop: 12, marginHorizontal: 24, marginBottom: 4, textAlign: 'center', fontFamily: letras.texto, fontSize: 12, lineHeight: 16.8, color: 'rgba(239, 230, 207, 0.45)' },
+  lista: { marginTop: 4, marginHorizontal: 16, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.08)', backgroundColor: 'rgba(239, 230, 207, 0.04)' },
+  filaOrden: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 8, paddingRight: 14, borderColor: 'rgba(239, 230, 207, 0.07)' },
+  filaConRaya: { borderTopWidth: 1 },
+  manija: { width: 34, height: 44, alignItems: 'center', justifyContent: 'center' },
+  filaNombre: { flex: 1, fontFamily: letras.texto, fontSize: 15, lineHeight: 18, color: colores.pergamino },
 });

@@ -1195,8 +1195,6 @@
           "deSobraEntrena": "These days you ate plenty for your training"
         },
         "sueno": {
-          "muyBien": ", slept well and have no sleep debt",
-          "bien": ", slept well and your sleep debt is low",
           "soloAnoche": " and slept well",
           "sinDeuda": ", slept well and have no sleep debt",
           "baja": ", slept well and your sleep debt is low"
@@ -1204,28 +1202,26 @@
       },
       "partes": {
         "sueno": "Sleep",
-        "comida": "These days",
-        "musculos": "Muscles",
-        "hoy": "Today"
+        "comida": "Food",
+        "musculos": "Muscles"
       },
       "como": {
         "sueno": {
-          "muyCorta": "Very short",
-          "corta": "Short",
-          "seguidas": "Short nights",
-          "algoCorta": "A bit short",
-          "deuda": "In debt",
-          "bien": "Good",
+          "muyCorta": "very short night",
+          "corta": "short night",
+          "seguidas": "several short nights",
+          "algoCorta": "a bit short",
+          "deuda": "you have sleep debt",
           "sinDatos": "No data"
         },
         "comida": {
-          "senal": "Too little",
-          "muyPoco": "Too little",
-          "debajo": "Below target",
-          "llegaste": "Good",
-          "deSobra": "Plenty",
-          "alcanza": "Good",
-          "sinDatos": "No data"
+          "senal": "too little",
+          "muyPoco": "too little",
+          "debajo": "below target",
+          "llegaste": "good",
+          "deSobra": "plenty",
+          "alcanza": "good",
+          "sinDatos": "no data"
         },
         "musculos": {
           "cargados": "Still tired",
@@ -1234,25 +1230,19 @@
           "descanso": "Rest day"
         },
         "hoy": {
-          "temprano": "Early",
-          "alDia": "On track",
-          "atrasado": "Behind",
-          "sinComerParaEntrenar": "Eat first",
-          "sinDatos": "No data"
+          "temprano": "it's early",
+          "alDia": "on track",
+          "atrasado": "you've eaten little",
+          "sinComerParaEntrenar": "eat first"
         }
       },
-      "conviene": "What helps today",
       "consejo": {
         "dormir": "Tonight, go to bed at {hora} to wake up at {despertar}.",
         "dormirDeuda": "Tonight, go to bed at {hora}: that's how you start paying down your sleep debt.",
         "sinFallo": "If you train, better not to go to failure: reps feel harder.",
         "comerMas": "Eat a bit more these days: one more meal or a bigger portion helps.",
         "medico": "If your period has also stopped (in men, if you notice less sex drive), you've had a stress fracture or you've felt drained for weeks, talk to a doctor or a dietitian.",
-        "llegar": "You fell short of your calories: one more meal or a bigger portion helps.",
-        "seguir": "Keep it up: eat as usual and sleep what you need.",
         "comerAntesYa": "For your {hora} workout, eat something now: with carbs and some protein.",
-        "atrasado": "You're behind on food today: about {kcal} kcal to catch up.",
-        "atrasadoSinNumeros": "You're behind on food today: one more meal gets you back on track.",
         "comerAntes": "Eat something before {hora}: the pre-workout meal goes 1 to 4 h before training.",
         "comerDespues": "Now, a meal with protein: it helps you recover.",
         "inercia": "Feeling slow right after waking is normal: it passes in about half an hour. Your best time starts at {desde}.",
@@ -1264,26 +1254,7 @@
         "comerMasEntrena": "Eat a bit more these days, especially before and after training.",
         "medicoEntrena": "If your period has also stopped (in men, if you notice less sex drive), you've had a stress fracture or you've felt drained for weeks, talk to a doctor or a sports dietitian."
       },
-      "deQueSale": "Based on your sleep, your meals and your training",
-      "deQueSaleSinEntreno": "Based on your sleep and your meals",
-      "detalle": {
-        "sueno": "Last night you slept {dormido}. Sleep debt: {deuda}.",
-        "suenoSinDatos": "No nights yet: after a few days of sleep, Moss adds it in.",
-        "comida": "These days, about {kcal} kcal a day out of your {meta}.",
-        "comidaSinMeta": "These days, about {kcal} kcal a day.",
-        "comidaSinNumeros": "What you logged these days, against what your day asks for.",
-        "comidaSinDatos": "Log your meals for a few days and Moss adds them in.",
-        "hoy": "Today, about {comido} kcal of the {esperado} you usually have by this time.",
-        "hoySinNumeros": "Today, what you logged against what you usually have by this time.",
-        "hoyTemprano": "Today is just starting: at this hour what you ate doesn't count yet.",
-        "comidaEntrena": "These days, about {kcal} kcal a day out of your {meta}, and {entreno} from training.",
-        "comidaSinMetaEntrena": "These days, about {kcal} kcal a day, and {entreno} from training.",
-        "comidaSinNumerosEntrena": "What you logged these days, against what your day and your training ask for."
-      },
       "juicioDeuda": {
-        "muyBien": "none",
-        "bien": "low",
-        "algoAlta": "a bit high",
         "alta": "high",
         "sinDeuda": "none",
         "baja": "low",
@@ -1320,27 +1291,12 @@
           "alta": "Good day: now, start winding down."
         }
       },
-      "verEnSueno": "Tap to see it in Sleep.",
+      "verEnSueno": "Tap to see where it comes from.",
       "boton": {
         "baja": "Low energy",
         "suficiente": "Enough energy",
         "alta": "High energy",
         "sinDatos": "Your energy"
-      },
-      "por": {
-        "sueno": "Because of sleep",
-        "comida": "Because of food",
-        "hoy": "Because of today",
-        "musculos": "Tired muscles",
-        "todo": "All in your favor",
-        "sinDatos": "No data yet"
-      },
-      "deCuando": {
-        "titulo": "Which days it uses",
-        "sueno": "Sleep: last night, the two nights before and your sleep debt over the last two weeks.",
-        "comida": "These days: the average of the 7 days before today, with at least 4 well logged. It's an average, so one bad day weighs little: low energy shows up when you eat too little several days in a row, which is what studies measure (Loucks and Thuma 2003).",
-        "hoy": "Today: what you've logged so far, against what you usually have by this time. Before your first meal, it doesn't count.",
-        "curva": "The curve: it comes from when you wake up and go to bed, with the two-process model (Borbély 1982) and the afternoon dip (Monk 2005). It's approximate, it doesn't measure you; with sleep debt, the peaks are lower."
       },
       "cerrar": "Close",
       "masEnSueno": "More in Sleep",
@@ -1348,6 +1304,85 @@
         "pico": "Your best time",
         "bajon": "Dip",
         "segundoPico": "Second peak"
+      },
+      "hoy": "Today",
+      "estosDias": "These days",
+      "explica": {
+        "sueno": {
+          "titulo": "Sleep",
+          "anoche": "Last night you slept {dormido}; you need {necesidad}.",
+          "sinAnoche": "Last night isn't in yet.",
+          "deuda": "Your sleep debt over the last two weeks: {deuda} ({juicio}).",
+          "sinDeuda": "You have no sleep debt.",
+          "sinDatos": "No nights yet: after a few days of sleep, Moss adds it in.",
+          "como": {
+            "muyCorta": "With {muyCorta} or less, your energy is low today: focusing and performing take more effort.",
+            "corta": "With {corta} or less, your energy is low today: focusing and performing take more effort.",
+            "seguidas": "Two of your last three nights were {corta} or less: that's why your energy is low today.",
+            "algoCorta": "You slept over an hour less than you need: it doesn't lower your energy, but it keeps it from being high.",
+            "deuda": "You slept well last night, but with {deudaMedia} or more of debt your energy doesn't get to high.",
+            "bien": "You slept what you need, or close, and your debt is under {deudaMedia}: sleep isn't holding you back."
+          },
+          "mira": "Moss looks at how much you slept last night, whether two of your last three nights were short, and your sleep debt over the last two weeks.",
+          "seguir": "Keep it up: tonight, go to bed at {hora}.",
+          "seguirSinHora": "Keep sleeping what you need."
+        },
+        "hoy": {
+          "titulo": "Today's food",
+          "numeros": "Today you've had about {comido} kcal; by this time you usually have about {esperado}.",
+          "sinNumeros": {
+            "alDia": "Today you've eaten what you usually have by this time, or close.",
+            "atrasado": "Today you've eaten quite a bit less than you usually have by this time.",
+            "sinComerParaEntrenar": "Today you've eaten quite a bit less than you usually have by this time."
+          },
+          "temprano": "Your first meal's time hasn't passed yet: today doesn't count so far.",
+          "como": {
+            "alDia": "You're eating as usual: today's food isn't holding you back.",
+            "atrasado": "You're about {kcal} kcal short of your usual. Going many hours on little food slows your energy, even if you reach your target later.",
+            "atrasadoSinNumeros": "You're well short of your usual. Going many hours on little food slows your energy, even if you reach your target later.",
+            "sinComerParaEntrenar": "You're heading into training on little food: for the session, your energy is low."
+          },
+          "mira": "Moss compares what you've logged today with the share of your target you've usually eaten by this time, based on your usual meals.",
+          "conviene": {
+            "alDia": "Keep to your usual meals.",
+            "atrasado": "Eat something now: a meal or a snack makes up what's missing."
+          }
+        },
+        "estosDias": {
+          "titulo": "Food these days",
+          "numeros": "These days you ate about {kcal} kcal a day; your target is {meta}.",
+          "numerosSinMeta": "These days you ate about {kcal} kcal a day.",
+          "numerosEntrena": "These days you ate about {kcal} kcal a day, out of your {meta}, and burned about {entreno} training.",
+          "numerosSinMetaEntrena": "These days you ate about {kcal} kcal a day and burned about {entreno} training.",
+          "sinNumeros": "What you logged these days, against what your target asks for.",
+          "sinNumerosEntrena": "What you logged these days, against what your target and your training ask for.",
+          "sinDatos": "Log your meals for a few days and Moss adds them in: it takes {minimo} well-logged days.",
+          "como": {
+            "muyPoco": "What you eat isn't enough for what your body needs each day: that's why your energy is low.",
+            "senal": "Your weight over these weeks shows you're eating less than your body needs: that's why your energy is low.",
+            "debajo": "You ate under {pct}% of your target: it doesn't lower your energy, but it keeps it from being high.",
+            "llegaste": "You hit your target, or close: food these days isn't holding you back.",
+            "alcanza": "You ate what your body needs: food these days isn't holding you back.",
+            "deSobra": "You ate plenty for what you burn: food is on your side."
+          },
+          "mira": "It's the average of the {dias} days before today; only days with your usual meals logged count. One bad day weighs little: what lowers energy is eating too little several days in a row.",
+          "conviene": {
+            "debajo": "One more meal or a bigger portion gets you closer to your target.",
+            "bien": "Keep it up."
+          }
+        },
+        "musculos": {
+          "titulo": "Muscles"
+        },
+        "hora": {
+          "titulo": "Time of day",
+          "curva": "The curve comes from when you wake up and when you go to bed: it's approximate, it doesn't measure you. With sleep debt, the peaks are lower."
+        }
+      },
+      "juicio": {
+        "bien": "Good",
+        "justa": "Fair",
+        "baja": "Poor"
       }
     },
     "lector": {
@@ -1777,7 +1812,23 @@
       "propuesta": "Your long nights run about {rondan}.",
       "usar": "Use {usar}",
       "conTelefono": "Estimated with your phone. A watch or a ring makes it more precise.",
-      "comoConTelefono": "Without a watch, Moss counts as sleep all the time your phone was still, minus your margin to fall asleep, which you can change in Fine-tune, further down."
+      "comoConTelefono": "Without a watch, Moss counts as sleep all the time your phone was still, minus your margin to fall asleep, which you can change in Fine-tune, further down.",
+      "porNoche": {
+        "titulo": "Night by night",
+        "noche": "Night",
+        "dormiste": "Slept",
+        "diferencia": "Difference",
+        "pesa": "Weight",
+        "medida": "Measured",
+        "aMano": "By hand",
+        "noCuenta": "Not counted",
+        "sinDatos": "No data",
+        "justo": "on target",
+        "menos": "{t} less than you need",
+        "mas": "{t} more than you need",
+        "tope": "* Capped: a night adds up to {falta} ({estimada} if your phone estimated it) and takes off up to {sobra}.",
+        "leyenda": "“Estimated” is from your phone; “Measured”, from a watch or a ring. The bar is how much each night weighs in the debt: last night, in full."
+      }
     },
     "sinDeuda": "No debt",
     "deudaDe": "short of what you need ({necesidad} a night)",
@@ -2807,7 +2858,36 @@
     "cerrandoSesion": "Signing out…",
     "exportando": "Exporting…",
     "alertaBorrar": "Delete",
-    "cuidadoCambiado": "Care: {valor}"
+    "cuidadoCambiado": "Care: {valor}",
+    "otraCuenta": "This iPhone has data from another account, so it isn't syncing.",
+    "pais": {
+      "titulo": "Food country",
+      "delTelefono": "This iPhone's",
+      "texto": "Local food names and what's sold there come first when you search. Moss's language doesn't change.",
+      "nombres": {
+        "AR": "Argentina",
+        "BO": "Bolivia",
+        "CL": "Chile",
+        "CO": "Colombia",
+        "CR": "Costa Rica",
+        "CU": "Cuba",
+        "EC": "Ecuador",
+        "SV": "El Salvador",
+        "ES": "Spain",
+        "US": "United States",
+        "GT": "Guatemala",
+        "HN": "Honduras",
+        "MX": "Mexico",
+        "NI": "Nicaragua",
+        "PA": "Panama",
+        "PY": "Paraguay",
+        "PE": "Peru",
+        "PR": "Puerto Rico",
+        "DO": "Dominican Republic",
+        "UY": "Uruguay",
+        "VE": "Venezuela"
+      }
+    }
   },
   "fecha": {
     "dias": [
@@ -3763,6 +3843,10 @@
       "natacion": "Swimming",
       "press_plano_smith": "Smith machine bench press",
       "press_inclinado_smith": "Smith machine incline press"
+    },
+    "pronto": {
+      "valor": "Soon",
+      "globo": "Soon: your Ascent training and your food, together."
     }
   },
   "habitos": {
@@ -4204,7 +4288,8 @@
       "carrera": "Next race",
       "carreraFecha": "When",
       "carreraTexto": "If it lasts more than an hour and a half, Moss tells you what to eat the two days before.",
-      "carreraCorta": "At an hour and a half or less, there's no need to load up on carbs before."
+      "carreraCorta": "At an hour and a half or less, there's no need to load up on carbs before.",
+      "categoria": "I compete in a weight class"
     },
     "nocheCorta": "You slept {h}: it’s normal to be hungrier today."
   },

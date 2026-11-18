@@ -1,11 +1,11 @@
 import { describe, expect, it } from '@jest/globals';
 
 import type { Estado } from '../almacen/almacen';
-import { diaLogico, sumarDias, type ClaveDia } from '../dominio/fechas';
+import { diaLogico, sumarDias, type ClaveDia, type DiaSemana } from '../dominio/fechas';
 import { instanteDe } from '../dominio/sinReloj';
 import type { Noche, NochePropia, OrigenDeNoche } from '../dominio/sueno';
 import { nocheDeAhora } from '../salud/nocheSinReloj';
-import { confirmacionesDeLaLinea, decidir, lineaDeLaNoche, nocheEsperada, reloj, type ConfirmacionDelWidget } from './noche';
+import { confirmacionesDeLaLinea, decidir, despertadorPara, lineaDeLaNoche, nocheEsperada, reloj, type ConfirmacionDelWidget } from './noche';
 
 // Montevideo, todo el año a −3: los minutos se cuentan desde las 18 del día anterior.
 const ZONA = -180;
@@ -77,6 +77,26 @@ describe('la línea de tiempo del widget de la noche', () => {
     const l = armar(e, new Date(2026, 9, 21, 7, 0), { despertador: 780 });
     expect(l[0].props).toMatchObject({ horas: '23:40 → 07:10', pregunta: true });
     expect(l[1].props).toMatchObject({ horas: '23:40 → 07:00', despertar: 780, pregunta: true });
+  });
+
+  it('el despertador de Moss, en la cuenta de la noche: los días que suena, o la próxima vez si es de una sola vez', () => {
+    // El jueves 22 de octubre de 2026, a las 6:45: la 765 desde las 18 del miércoles.
+    const deSemana = { hora: 6, minuto: 45, dias: [1, 2, 3, 4, 5] as DiaSemana[] };
+    const noche = new Date(2026, 9, 21, 22, 0);
+    expect(despertadorPara(deSemana, '2026-10-22', noche)).toBe(765);
+    // El sábado no suena: queda lo de siempre.
+    expect(despertadorPara(deSemana, '2026-10-24', new Date(2026, 9, 23, 22, 0))).toBeNull();
+    expect(despertadorPara(null, '2026-10-22', noche)).toBeNull();
+    // De una sola vez: mañana, si todavía no sonó; puesta a las 5 de la mañana para las 6:45, suena hoy y no mañana.
+    const unaVez = { hora: 6, minuto: 45, dias: [] };
+    expect(despertadorPara(unaVez, '2026-10-22', noche)).toBe(765);
+    expect(despertadorPara(unaVez, '2026-10-22', new Date(2026, 9, 22, 2, 0))).toBe(765);
+    expect(despertadorPara(unaVez, '2026-10-23', new Date(2026, 9, 22, 5, 0))).toBeNull();
+    // Una alarma de las 18 o más tarde no es la de despertarse esa noche.
+    expect(despertadorPara({ hora: 19, minuto: 0, dias: [] }, '2026-10-22', noche)).toBeNull();
+    // Y la línea de mañana la usa.
+    const l = armar(estado('2026-10-21'), noche, { despertador: despertadorPara(deSemana, sumarDias(nocheDeAhora(noche), 1), noche) });
+    expect(l.find((x) => x.props.clave === '2026-10-22')!.props).toMatchObject({ horas: '23:40 → 06:45', despertar: 765, pregunta: true });
   });
 
   it('la mañana de la semana en que Moss pregunta sin proponer, el widget no propone', () => {

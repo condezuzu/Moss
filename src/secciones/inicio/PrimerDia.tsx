@@ -18,7 +18,8 @@ import { abrirRegistro } from '../comida/registro';
 import { usePersona } from '../ganchos';
 import { MiniCielo } from '../graficos/Graficos';
 import { Camino } from '../kcal/Figuras';
-import { bloques, Cabeza } from './comunes';
+import { degradado } from '../sueno/comunes';
+import { bloques, Cabeza, justo } from './comunes';
 
 type Ir = (a: 'progreso' | 'habitos') => void;
 
@@ -73,7 +74,7 @@ function Calorias() {
           </Animated.View>
         ))}
       </View>
-      <Text style={[bloques.texto, st.parrafo]}>{t('inicio.primerDia.caloriasTexto')}</Text>
+      <Text style={bloques.texto}>{t('inicio.primerDia.caloriasTexto')}</Text>
       <View style={bloques.acciones}>
         <Boton tipo="principal" icono="plus" texto={t('inicio.primerDia.anotar')} alTocar={() => abrirRegistro()} />
         <Boton icono="mic" texto={t('inicio.primerDia.decir')} alTocar={() => abrirRegistro({ panel: 'decir' })} />
@@ -157,18 +158,18 @@ const st = StyleSheet.create({
   arriba: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   luna: { width: 74, height: 74, margin: 2, marginLeft: -2, marginRight: 4 },
   lunaAro: { position: 'absolute', top: -9, left: -9, right: -9, bottom: -9, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(246, 227, 166, 0.12)' },
-  lunaDisco: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 37, backgroundColor: '#121a33' },
+  // La cara de la luna nueva, con algo de azul hacia donde le da la luz (.in-luna-nueva).
+  lunaDisco: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 37, backgroundColor: '#0c1124', ...degradado('radial-gradient(circle at 62% 38%, rgba(30, 40, 72, 0.9), rgba(8, 12, 26, 0.95) 70%)') },
   lunaLuz: { boxShadow: 'inset -3px 2px 0 rgba(246, 227, 166, 0.55), 0 0 22px rgba(246, 227, 166, 0.16)' },
   lunaLuzFuerte: { boxShadow: 'inset -4px 2px 0 rgba(246, 227, 166, 0.75), 0 0 30px rgba(246, 227, 166, 0.26)' },
   cifra: { flex: 1, gap: 4, minWidth: 0 },
-  etiqueta: { fontFamily: letras.texto, fontSize: 10, letterSpacing: 1.8, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.62)' },
-  numero: { fontFamily: letras.numeroLiviano, fontSize: 54, lineHeight: 56, letterSpacing: -1.3, color: colores.cifra, fontVariant: ['tabular-nums'] },
-  de: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)' },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 },
+  etiqueta: { fontFamily: letras.texto, fontSize: 10, letterSpacing: 1.8, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.62)', ...justo('texto', 10) },
+  numero: { fontFamily: letras.numeroLiviano, fontSize: 54, letterSpacing: -1.35, color: colores.cifra, fontVariant: ['tabular-nums'], ...justo('numero', 54, 51.3) },
+  de: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)', ...justo('texto', 12.5, 15) },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 14 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 10, borderRadius: 999, backgroundColor: 'rgba(239, 230, 207, 0.05)' },
   punto: { width: 6, height: 6, borderRadius: 3 },
-  chipCifra: { fontFamily: letras.numeroMedio, fontSize: 12.5, color: colores.pergamino },
-  chipTexto: { fontFamily: letras.texto, fontSize: 12, color: 'rgba(239, 230, 207, 0.7)' },
-  parrafo: { marginTop: 6 },
+  chipCifra: { fontFamily: letras.numeroMedio, fontSize: 12.5, color: colores.pergamino, ...justo('numero', 12.5) },
+  chipTexto: { fontFamily: letras.texto, fontSize: 12, color: 'rgba(239, 230, 207, 0.7)', ...justo('texto', 12) },
   camino: { marginTop: 8 },
 });

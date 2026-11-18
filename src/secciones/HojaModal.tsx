@@ -12,7 +12,7 @@ import { t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { CabezaQueBaja, ScrollQueBaja, useBajarParaCerrar } from './arrastre';
 import { confirmarDescartar } from './descartar';
-import { AvisoFlotante, Icono } from './comida/comunes';
+import { AvisoFlotante, degradado, Icono } from './comida/comunes';
 import { quitarAviso, useAviso } from './comida/registro';
 import { ENTRA_FUNDIDO, ENTRA_HOJA } from './movimiento';
 import { useCampoALaVista } from './teclado';
@@ -25,6 +25,9 @@ const abiertas = new Set<() => void>();
 export function cerrarLasHojas() {
   [...abiertas].forEach((cerrar) => cerrar());
 }
+
+/** Con una hoja abierta puede haber algo a medio escribir: una actualización no entra hasta que se cierre. */
+export const hayHojasAbiertas = () => abiertas.size > 0;
 
 /** Para un Modal propio (que no es una HojaModal): mientras está abierto, se cierra con las demás. */
 export function useCerrarConLasCapas(abierta: boolean, alCerrar: () => void) {
@@ -79,6 +82,7 @@ export function HojaModal({ abierta, titulo, alCerrar, children, pie, cabeza, ac
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={-insets.bottom} style={{ maxHeight: tope }}>
           <Animated.View entering={reducido ? ENTRA_FUNDIDO : ENTRA_HOJA} style={st.envoltura}>
             <Animated.View style={[st.hoja, { maxHeight: tope, paddingBottom: pie ? 0 : insets.bottom + 16 }, hoja.estilo]} onLayout={hoja.medir} accessibilityViewIsModal onAccessibilityEscape={intentarCerrar}>
+              <View style={[StyleSheet.absoluteFill, st.hojaFondo]} pointerEvents="none" />
               <CabezaQueBaja arrastre={hoja} style={st.arriba}>
                 <View style={st.asa} />
                 <View style={st.cabeza}>
@@ -112,13 +116,17 @@ const st = StyleSheet.create({
   fondo: { flex: 1, justifyContent: 'flex-end' },
   velo: { backgroundColor: 'rgba(1, 2, 6, 0.6)' },
   envoltura: { flexShrink: 1 },
-  hoja: { flexShrink: 1, borderTopLeftRadius: 26, borderTopRightRadius: 26, backgroundColor: '#0f1631', borderTopWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(232, 196, 106, 0.3)' },
+  hoja: { flexShrink: 1, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: '#0f1733', borderTopWidth: 1, borderColor: 'rgba(232, 196, 106, 0.2)' },
+  // El fondo de la galería (de #0f1733 a #0a1026 y #080c1d), como en la hoja de registro: un velo sin esquinas
+  // sobre el color de arriba, así iOS no recorta el degradado.
+  hojaFondo: degradado('linear-gradient(180deg, rgba(8, 12, 29, 0) 0%, rgba(8, 12, 29, 0.65) 45%, #080c1d 100%)'),
   // El relleno de arriba es parte de la cabecera: desde ahí también se baja.
   arriba: { paddingTop: 8 },
   asa: { alignSelf: 'center', width: 38, height: 4, borderRadius: 2, marginBottom: 12, backgroundColor: 'rgba(239, 230, 207, 0.22)' },
-  cabeza: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20 },
-  titulo: { flex: 1, fontFamily: letras.numeroMedio, fontSize: 19, color: colores.pergamino },
-  cerrar: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.08)' },
+  // Como `.hb-cab` de la galería: el título centrado y la cruz a la derecha, sin correrlo.
+  cabeza: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 56, minHeight: 32 },
+  titulo: { flexShrink: 1, textAlign: 'center', fontFamily: letras.numeroMedio, fontSize: 17, color: colores.pergamino },
+  cerrar: { position: 'absolute', right: 12, top: 0, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.08)' },
   apretado: { opacity: 0.6 },
   cuerpo: { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 18 },
   pie: { gap: 10, paddingTop: 12, paddingHorizontal: 20, borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.08)' },

@@ -11,7 +11,7 @@ import Animated, { useAnimatedStyle, useReducedMotion, withTiming } from 'react-
 import { elAlmacen } from '@/almacen';
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { cercaDeLaCama } from '@/dominio/loQueFalta';
-import { deudaDeSueno, faltaDeLaNoche, juicioDeLaDeuda, MINIMOS, necesidadesPara, necesidadPropuesta, redondearDeuda, type Noche } from '@/dominio/sueno';
+import { deudaDeSueno, faltaDeLaNoche, juicioDeLaDeuda, MINIMOS, necesidadesPara, necesidadPropuesta, nochesDeLaDeuda, redondearDeuda, TOPES_DE_UNA_NOCHE, type Noche } from '@/dominio/sueno';
 import { plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Icono } from '../comida/comunes';
@@ -87,6 +87,54 @@ function Barras({ lista, necesidad, fin, primera, animar }: { lista: (Noche | nu
       <Aparece key={elegida}>
         <Text style={st.lectura}>{textoDe(lista[elegida], claveDe(elegida))}</Text>
       </Aparece>
+    </View>
+  );
+}
+
+/**
+ * La cuenta noche por noche (lo pediste el 17/11/2026), para compararla con otra app: de anoche para atrás, el día,
+ * cuánto dormiste (con las siestas), la diferencia con lo que necesitas, cuánto pesa esa noche en una barrita y si
+ * la estimó el teléfono o la midió un reloj o un anillo. La cuenta es la de la deuda (nochesDeLaDeuda).
+ */
+function NochePorNoche({ lista, necesidad, fin }: { lista: (Noche | null)[]; necesidad: number; fin: ClaveDia }) {
+  const filas = nochesDeLaDeuda(lista, necesidad).map((f, i) => ({ ...f, clave: sumarDias(fin, i - DIAS + 1) })).reverse();
+  const conTope = filas.some((f) => f.entra !== null && f.entra !== f.falta);
+  return (
+    <View style={st.porNoche}>
+      <Text style={st.h4}>{t('sueno.deuda.porNoche.titulo')}</Text>
+      <View style={st.fila} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <Text style={[st.filaCab, st.colDia]}>{t('sueno.deuda.porNoche.noche')}</Text>
+        <Text style={[st.filaCab, st.colDormiste]}>{t('sueno.deuda.porNoche.dormiste')}</Text>
+        <Text style={[st.filaCab, st.colDiferencia]}>{t('sueno.deuda.porNoche.diferencia')}</Text>
+        <Text style={[st.filaCab, st.colPesa]}>{t('sueno.deuda.porNoche.pesa')}</Text>
+        <Text style={[st.filaCab, st.colFuente]} />
+      </View>
+      {filas.map((f) => {
+        const fuente = !f.noche ? t('sueno.deuda.porNoche.sinDatos')
+          : f.entra === null ? t('sueno.deuda.porNoche.noCuenta')
+            : f.noche.moss ? t(`sueno.origen.${f.noche.moss.origen}`)
+              : t(f.noche.aMano ? 'sueno.deuda.porNoche.aMano' : 'sueno.deuda.porNoche.medida');
+        const justo = f.falta !== null && Math.abs(f.falta) < 5;
+        // Con asterisco, la noche que pasó el tope: en la deuda entra menos de lo que faltó o sobró.
+        const diferencia = f.falta === null ? '' : justo ? t('sueno.deuda.porNoche.justo') : `${f.falta > 0 ? '−' : '+'}${enHoras(Math.abs(f.falta))}${f.entra !== null && f.entra !== f.falta ? '*' : ''}`;
+        const dicha = f.falta === null || f.dormido === null ? fuente
+          : `${duracion(f.dormido)}, ${justo ? t('sueno.graficos.justo') : t(f.falta > 0 ? 'sueno.deuda.porNoche.menos' : 'sueno.deuda.porNoche.mas', { t: duracion(Math.abs(f.falta)) })}. ${fuente}`;
+        return (
+          <View key={f.clave} style={[st.fila, st.filaDeNoche, f.entra === null && st.filaTenue]} accessible accessibilityLabel={`${diaCorto(f.clave)}. ${dicha}`}>
+            <Text style={[st.filaDia, st.colDia]} maxFontSizeMultiplier={1.25}>{diaCorto(f.clave)}</Text>
+            <Text style={[st.filaValor, st.colDormiste]} maxFontSizeMultiplier={1.25}>{f.dormido === null ? '—' : enHoras(f.dormido)}</Text>
+            <Text style={[st.filaValor, st.colDiferencia, f.entra !== null && !justo && (f.falta! > 0 ? st.deMenos : st.deMas)]} maxFontSizeMultiplier={1.25}>{diferencia}</Text>
+            <View style={st.colPesa}>{f.entra !== null && <View style={st.pesa}><View style={[st.pesaLlena, { width: `${Math.round(f.peso * 100)}%` }]} /></View>}</View>
+            <Text style={[st.filaFuente, st.colFuente, !!f.noche && f.entra !== null && !f.noche.moss && !f.noche.aMano && st.fuenteMedida]} numberOfLines={1} maxFontSizeMultiplier={1.25}>{fuente}</Text>
+          </View>
+        );
+      })}
+      {conTope && (
+        <Text style={st.chica}>
+          {t('sueno.deuda.porNoche.tope', { falta: enHoras(TOPES_DE_UNA_NOCHE.falta), estimada: enHoras(TOPES_DE_UNA_NOCHE.faltaEstimada), sobra: enHoras(TOPES_DE_UNA_NOCHE.sobra) })}
+        </Text>
+      )}
+      <Text style={st.chica}>{t('sueno.deuda.porNoche.leyenda')}</Text>
     </View>
   );
 }
@@ -187,6 +235,8 @@ export function LaDeuda({ noches, hoy, clave, necesidad, edad, conNoches, muestr
       <View style={!conNoches && st.muestra}>
         {d && juicio ? (
           <View style={st.cifraFila} accessible accessibilityLabel={juicio === 'sinDeuda' ? t('sueno.deuda.juicio.sinDeuda') : `${enHoras(redondeada)}, ${t(`sueno.deuda.juicio.${juicio}`)}`}>
+            {/* «Sin deuda», con su tilde verde, como en la galería. */}
+            {juicio === 'sinDeuda' && <View style={st.tilde}><Icono nombre="checkmark" tam={13} color="#0b2a26" peso="bold" /></View>}
             <Text style={st.cifra}>{juicio === 'sinDeuda' ? t('sueno.deuda.juicio.sinDeuda') : enHoras(redondeada)}</Text>
             {juicio !== 'sinDeuda' && <Text style={[st.pastilla, st[`pastilla_${juicio}`]]}>{t(`sueno.deuda.juicio.${juicio}`)}</Text>}
           </View>
@@ -219,6 +269,7 @@ export function LaDeuda({ noches, hoy, clave, necesidad, edad, conNoches, muestr
           <View style={!conNoches && st.muestra}>
             <Barras lista={lista} necesidad={necesidad} fin={fin} primera={conNoches ? primera : null} animar={animar} />
           </View>
+          {conNoches && <NochePorNoche lista={lista} necesidad={necesidad} fin={fin} />}
           {d && conNoches && (
             <>
               <Nota>{`${t('sueno.deudaNoches', { n: d.noches, de: d.de })}.`}</Nota>
@@ -245,13 +296,14 @@ function ultimasDe(noches: Noche[], clave: ClaveDia): (Noche | null)[] {
 const st = StyleSheet.create({
   muestra: { opacity: 0.84 },
   cifraFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
-  cifra: { flexShrink: 1, fontFamily: letras.numero, fontSize: 34, letterSpacing: -0.5, color: colores.cifra, fontVariant: ['tabular-nums'] },
-  pastilla: { overflow: 'hidden', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, fontFamily: letras.textoMedio, fontSize: 13, letterSpacing: 0.3 },
-  pastilla_baja: { color: '#b9d6fb', backgroundColor: 'rgba(120, 170, 240, 0.16)' },
-  pastilla_media: { color: colores.oroClaro, backgroundColor: 'rgba(232, 196, 106, 0.12)' },
-  pastilla_alta: { color: '#f3bd9d', backgroundColor: 'rgba(239, 176, 140, 0.16)' },
-  faltanFila: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 8, rowGap: 2 },
-  faltan: { fontFamily: letras.numero, fontSize: 28, letterSpacing: -0.4, color: colores.cifra },
+  cifra: { flexShrink: 1, flexGrow: 1, fontFamily: letras.numero, fontSize: 34, letterSpacing: -0.5, color: colores.cifra, fontVariant: ['tabular-nums'] },
+  tilde: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: SN.verdeClaro },
+  pastilla: { overflow: 'hidden', paddingHorizontal: 12, paddingVertical: 6.5, borderRadius: 999, fontFamily: letras.textoMedio, fontSize: 12.5, lineHeight: 14, letterSpacing: 0.3 },
+  pastilla_baja: { color: '#b9d6fb', backgroundColor: 'rgba(120, 170, 240, 0.18)' },
+  pastilla_media: { color: colores.oroClaro, backgroundColor: 'rgba(232, 196, 106, 0.15)' },
+  pastilla_alta: { color: '#f3bf9f', backgroundColor: 'rgba(239, 176, 140, 0.16)' },
+  faltanFila: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 8, rowGap: 2 },
+  faltan: { fontFamily: letras.numero, fontSize: 32, letterSpacing: -0.5, color: colores.cifra },
   paraSaber: { fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.58)' },
   linea: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', marginTop: 6 },
   lineaTexto: { fontFamily: letras.texto, fontSize: 14, lineHeight: 20, color: 'rgba(239, 230, 207, 0.86)', fontVariant: ['tabular-nums'] },
@@ -282,6 +334,24 @@ const st = StyleSheet.create({
   ddLetra: { fontFamily: letras.texto, fontSize: 9.5, color: SN.tenue },
   ddLetraElegida: { color: colores.pergamino },
   lectura: { minHeight: 18, marginTop: 8, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17.5, color: colores.pergamino, fontVariant: ['tabular-nums'] },
+  porNoche: { gap: 6, marginTop: 4, paddingTop: 12, borderTopWidth: 1, borderColor: SN.linea },
+  fila: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  filaDeNoche: { paddingVertical: 5, borderTopWidth: 1, borderColor: 'rgba(150, 178, 240, 0.08)' },
+  filaTenue: { opacity: 0.5 },
+  filaCab: { fontFamily: letras.texto, fontSize: 10, lineHeight: 12, letterSpacing: 0.3, color: SN.tenue },
+  filaDia: { fontFamily: letras.texto, fontSize: 12.5, lineHeight: 15, color: SN.texto },
+  filaValor: { fontFamily: letras.numero, fontSize: 12.5, lineHeight: 15, color: colores.pergamino, fontVariant: ['tabular-nums'] },
+  filaFuente: { fontFamily: letras.texto, fontSize: 10.5, lineHeight: 15, textAlign: 'right', color: SN.tenue },
+  fuenteMedida: { color: '#b9d6fb' },
+  deMenos: { color: '#a9c0fa' },
+  deMas: { color: SN.verdeClaro },
+  colDia: { width: 48 },
+  colDormiste: { width: 52 },
+  colDiferencia: { width: 62 },
+  colPesa: { flex: 1, minWidth: 30 },
+  colFuente: { width: 68 },
+  pesa: { height: 5, borderRadius: 2.5, overflow: 'hidden', backgroundColor: 'rgba(150, 178, 240, 0.12)' },
+  pesaLlena: { height: 5, borderRadius: 2.5, backgroundColor: '#a8c8fa' },
   esta: { gap: 10, marginTop: 4, paddingVertical: 13, paddingHorizontal: 14, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(143, 211, 232, 0.14)', backgroundColor: 'rgba(107, 143, 240, 0.08)' },
   h4: { fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.5, textTransform: 'uppercase', color: SN.texto },
   estaFila: { flexDirection: 'row', alignItems: 'flex-start', gap: 11 },

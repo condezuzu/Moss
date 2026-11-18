@@ -32,8 +32,9 @@ export type DatosDeCuidado = { semana: number; pesoAntes: number | null; mellizo
  */
 export type Contestado = {
   salud: boolean; edad: number; sexo: Sexo | null; alturaCm: number; pesoKg: number;
-  /** Lo que sugirieron los pasos de Salud, si los hubo. */
+  /** Lo que sugirieron los pasos de Salud, si los hubo, y cuántos son por día. */
   movimientoSugerido: Movimiento | null;
+  pasosDeSalud?: number | null;
   cuidados: Cuidado[]; consentido: boolean; datosCuidado: DatosDeCuidado;
   grasaModo: ModoDeGrasa; grasaPct: number; figura: number | null; cinta: { cintura: number; cuello: number; cadera: number };
   movimiento: Movimiento;
@@ -102,7 +103,7 @@ export function datosDelCuidado(r: Contestado, hoy: ClaveDia): DatosDelCuidado {
 /** El movimiento de tu día: lo elegido o, si lo sugirieron los pasos de Salud y no se cambió, esa sugerencia corregida con lo que entrenas. */
 export function movimientoUsado(r: Contestado, pasos: number | null): Movimiento {
   if (!r.salud || !r.movimientoSugerido || r.movimiento !== r.movimientoSugerido) return r.movimiento;
-  return movimientoPorPasos(pasos, entrenoDicho(r)?.tipos ?? []) ?? r.movimiento;
+  return movimientoPorPasos(pasos ?? r.pasosDeSalud, entrenoDicho(r)?.tipos ?? []) ?? r.movimiento;
 }
 
 /** Las reglas de lo marcado (cuidados.ts), con el nivel de actividad que más se parece al gasto sin la grasa. */

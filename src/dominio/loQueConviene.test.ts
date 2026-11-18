@@ -3,8 +3,10 @@ import { describe, expect, it } from '@jest/globals';
 import type { Sesion } from './alrededorDelEntreno';
 import { textoDelAviso, tituloDelAviso, type Aviso, type Avisos, type Notificacion, type ParaElTexto, type Sueno } from './avisos';
 import type { Comida } from './comidas';
+import { entrenoParaGuardar } from './cuestionario';
+import type { DiaSemana } from './fechas';
 import type { Habito } from './habitos';
-import { avisosConLoQueConviene, loQueConviene, QUE_CONVIENE, VIAJE_DE_FABRICA, type Conviene, type DeLoQueConviene } from './loQueConviene';
+import { avisosConLoQueConviene, delDeporte, loQueConviene, QUE_CONVIENE, VIAJE_DE_FABRICA, type Conviene, type DeLoQueConviene } from './loQueConviene';
 import es from '../textos/es.json';
 import en from '../textos/en.json';
 
@@ -200,6 +202,51 @@ describe('la proteína después de entrenar', () => {
   });
 });
 
+describe('dos sesiones el mismo día: las pesas a la mañana y el partido a la tarde', () => {
+  const partido = (inicio: string): Sesion => ({ inicio: h(inicio), minutos: 90, tipo: 'mixta' });
+  const deEntrenar = (lista: Aviso[]) => lista.filter((a) => a.tipo === 'antesDeEntrenar' || a.tipo === 'despuesDeEntrenar').map((a) => a.id);
+
+  it('cada sesión lleva lo de antes y lo de después, con su comida', () => {
+    const lista = conviene({ sesiones: [pesas('10:00'), partido('18:00')], viaje: 15 });
+    expect(deEntrenar(lista)).toEqual(['antesDeEntrenar:0', 'despuesDeEntrenar:0', 'antesDeEntrenar:1', 'despuesDeEntrenar:1']);
+    const [antes, antesDelPartido] = de(lista, 'antesDeEntrenar');
+    // El desayuno de las 7:30 antes de las pesas; la merienda caía encima de salir al partido: más temprano.
+    expect(antes.conviene).toMatchObject({ comida: 'desayuno', a: h('7:30') });
+    expect(antesDelPartido).toMatchObject({ minutos: h('16:00'), conviene: { comida: 'merienda', a: h('16:30'), adelantada: true } });
+    const [despues, despuesDelPartido] = de(lista, 'despuesDeEntrenar');
+    expect(despues).toMatchObject({ minutos: h('11:00'), conviene: { a: h('12:00') } });
+    expect(despuesDelPartido).toMatchObject({ minutos: h('19:30'), comida: 'cena', conviene: { comida: 'cena', a: h('20:30') } });
+  });
+
+  it('si la comida de después de una es la de antes de la otra, un solo aviso: el de antes, que ya dice cuánto', () => {
+    // Pesas a las 11 y a las 16, con una hora de viaje: el almuerzo de las 13 es la de después y la de antes.
+    const dos = { sesiones: [pesas('11:00'), pesas('16:00')] };
+    const lista = conviene(dos);
+    expect(deEntrenar(lista)).toEqual(['antesDeEntrenar:0', 'antesDeEntrenar:1', 'despuesDeEntrenar:1']);
+    expect(de(lista, 'antesDeEntrenar')[1]).toMatchObject({ minutos: h('12:30'), conviene: { comida: 'almuerzo', a: h('13:00'), proteina: 40, carbohidratos: 75 } });
+    // Con el de antes apagado, la proteína de después sigue en el almuerzo.
+    const sinAntes = conviene({ ...dos, ajustes: { ...TODOS, antesDeEntrenar: { encendido: false } } });
+    expect(de(sinAntes, 'despuesDeEntrenar')[0]).toMatchObject({ id: 'despuesDeEntrenar:0', comida: 'almuerzo' });
+  });
+
+  it('haber entrenado es de una sola sesión: la otra sigue con sus avisos', () => {
+    const dos = { sesiones: [pesas('10:00'), partido('18:00')], viaje: 15 };
+    const sobran = (entrenado: number) => deEntrenar(conviene({ ...dos, entrenado }).filter((a) => a.sobra));
+    // Marcaste al terminar las pesas: lo de antes de las pesas ya pasó, y lo del partido queda.
+    expect(sobran(h('11:05'))).toEqual(['antesDeEntrenar:0']);
+    // Entrenaste antes que todo: fueron las pesas, a otra hora.
+    expect(sobran(h('8:00'))).toEqual(['antesDeEntrenar:0', 'despuesDeEntrenar:0']);
+    // Marcaste después del partido: lo de las pesas no cambia.
+    expect(sobran(h('19:40'))).toEqual(['antesDeEntrenar:1']);
+  });
+
+  it('entran en el máximo como lo de entrenar, sin pasarlo', () => {
+    const lista = elDia({ ...TODOS, maximoPorDia: 6 }, { sesiones: [pesas('10:00'), partido('18:00')], viaje: 15 });
+    expect(lista).toHaveLength(6);
+    expect(lista.map(([, id]) => id)).toEqual(expect.arrayContaining(['antesDeEntrenar:0', 'despuesDeEntrenar:0', 'antesDeEntrenar:1', 'despuesDeEntrenar:1', 'dormir']));
+  });
+});
+
 describe('lo que cuenta hacia atrás desde la cama', () => {
   it('la última comida grande: cena 2 horas antes de acostarte (3 con reflujo), y reemplaza la hora de la cena', () => {
     expect(uno(conviene(), 'ultimaComida')).toEqual({
@@ -337,6 +384,13 @@ describe('las prioridades y el máximo', () => {
   it('con «sin déficit», nada de comida para entrenar ni la última comida', () => {
     expect(conviene({ sinDeficit: true }).map((a) => a.tipo)).toEqual(['cafe', 'luces']);
   });
+
+  it('con un cuidado que apaga lo de entrenar, tampoco el café de antes ni lo del deporte; la última comida queda libre', () => {
+    const lista = conviene({ sinLoDeEntrenar: true, sesiones: [pesas('14:00')], partidos: [{ dia: '2026-11-04' }] });
+    expect(lista.map((a) => a.tipo)).toEqual(['cafe', 'ultimaComida', 'luces']);
+    // El café ya no es para entrenar: queda el último del día.
+    expect(uno(lista, 'cafe').conviene).toMatchObject({ forma: 'ultimo' });
+  });
 });
 
 describe('según el deporte: la víspera del partido y la carrera larga', () => {
@@ -372,6 +426,28 @@ describe('según el deporte: la víspera del partido y la carrera larga', () => 
     const ids = (maximo: number) => elDia({ ...TODOS, maximoPorDia: maximo }, { sesiones: [], partidos }).map(([, id]) => id);
     expect(ids(8)).not.toContain('horario:almuerzo');
     expect(ids(2)).toEqual(['partido', 'dormir']);
+  });
+
+  it('de lo guardado en Perfil › Entrenamiento: los partidos de cada semana y la próxima carrera, solo con ese deporte', () => {
+    // Pesas y fútbol, con partido los sábados a las 16: el sábado 7 de noviembre.
+    const conFutbol = entrenoParaGuardar({
+      tipos: ['fuerza', 'equipo'], viaje: 15, partidos: { dia: 6, hora: h('16:00') },
+      sesiones: [{ tipo: 'fuerza', dias: [1, 3], hora: h('19:00'), minutos: 60 }, { tipo: 'equipo', dias: [6], hora: h('16:00'), minutos: 100 }],
+    })!;
+    expect(delDeporte(conFutbol, '2026-11-02', '2026-11-10')).toEqual({ partido: true, carrera: false, partidos: [{ dia: '2026-11-07', hora: h('16:00'), minutos: 100 }], proximaCarrera: null });
+    // Aunque la hora de entrenar se haya cambiado a mano, el partido sigue siendo el sábado.
+    expect(delDeporte({ ...conFutbol, hora: h('20:00') }, '2026-11-02', '2026-11-10').partidos.map((p) => p.dia)).toEqual(['2026-11-07']);
+    // El viernes 6, con su interruptor prendido, suena «Mañana juegas».
+    const viernes = (ajustes: Avisos) => loQueConviene({ ...dia({ dia: '2026-11-06', sesiones: [], partidos: delDeporte(conFutbol, '2026-11-02', '2026-11-10').partidos }), ajustes });
+    expect(viernes({ partido: si }).map((a) => a.id)).toEqual(['partido']);
+    // Con correr, la carrera; el horario de antes dice su tipo, y «mixta» va como partidos, igual que en Perfil › Entrenamiento.
+    const carrera = { fecha: '2026-11-08', minutos: 120 };
+    const corre = { dias: [2, 4] as DiaSemana[], hora: h('7:00'), minutos: 45, tipo: 'resistencia' as const, carrera };
+    expect(delDeporte(corre, '2026-11-02', '2026-11-10')).toEqual({ partido: false, carrera: true, partidos: [], proximaCarrera: carrera });
+    expect(delDeporte({ ...corre, tipo: 'mixta' }, '2026-11-02', '2026-11-10')).toEqual({ partido: true, carrera: false, partidos: [], proximaCarrera: null });
+    // Sin ese deporte, lo que quedó guardado no cuenta.
+    expect(delDeporte({ ...conFutbol, tipos: ['fuerza'] }, '2026-11-02', '2026-11-10')).toMatchObject({ partido: false, partidos: [] });
+    expect(delDeporte(null, '2026-11-02', '2026-11-10')).toEqual({ partido: false, carrera: false, partidos: [], proximaCarrera: null });
   });
 });
 

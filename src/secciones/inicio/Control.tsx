@@ -45,7 +45,8 @@ export function ControlCerca({ alIr }: { alIr: () => void }) {
 }
 
 const st = StyleSheet.create({
-  control: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 12, paddingHorizontal: 14 },
+  // Arriba y abajo por separado: `paddingVertical` no le gana al `paddingTop` del bloque.
+  control: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingTop: 12, paddingBottom: 12, paddingHorizontal: 14 },
   textos: { flex: 1, gap: 3, minWidth: 0 },
   titulo: { fontFamily: letras.textoMedio, fontSize: 14.5, lineHeight: 17.5, color: colores.pergamino },
   falta: { fontFamily: letras.texto, fontSize: 12.5, lineHeight: 16, color: 'rgba(239, 230, 207, 0.6)' },

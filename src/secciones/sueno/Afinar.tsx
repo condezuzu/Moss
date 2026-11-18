@@ -18,7 +18,8 @@ import { Icono } from '../comida/comunes';
 import { horaDelDia, useEstado } from '../comida/datos';
 import { HojaModal } from '../HojaModal';
 import { BotonDePaso } from '../paso';
-import { Aparece, Carta, Dias, EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
+import { Aparece, Dias, EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
+import { CartaDeSueno, Nota, SN } from './comunes';
 import { alarmaPuesta, hayDespertador, pedirAlarmas, permisoDeAlarmas, ponerAlarma, sacarAlarma, type Alarma, type PermisoDeAlarmas } from './despertador';
 import { GuiaCargador } from './GuiaCargador';
 
@@ -168,7 +169,7 @@ export function Afinar({ hoy }: { hoy: ClaveDia }) {
     <>
     {cargador.estado === 'dejoDeLlegar' && (
       <Aparece>
-        <Carta>
+        <CartaDeSueno>
           <View style={st.aviso2}>
             <View style={st.filaTextos}>
               <Text style={st.avisoTitulo}>{t('sueno.afinar.cargador.avisoTitulo')}</Text>
@@ -178,21 +179,16 @@ export function Afinar({ hoy }: { hoy: ClaveDia }) {
               <Text style={st.botonTexto}>{t('sueno.afinar.cargador.avisoBoton')}</Text>
             </Pressable>
           </View>
-        </Carta>
+        </CartaDeSueno>
       </Aparece>
     )}
-    <Carta titulo={t('sueno.afinar.titulo')}>
-      <Parrafo chico>{t('sueno.afinar.texto')}</Parrafo>
-      <View style={[st.margen, st.separada]}>
-        <Text style={st.filaTitulo}>{t('sueno.afinar.margen.titulo')}</Text>
-        <Segmento opciones={MARGENES.map((n) => [n, t('sueno.afinar.margen.minutos', { n })] as const)} elegida={margen} alElegir={(n) => elAlmacen().ponerLatencia(n)} />
-        <Parrafo chico>{t('sueno.afinar.margen.texto')}</Parrafo>
-      </View>
+    <CartaDeSueno titulo={t('sueno.afinar.titulo')}>
+      <Nota>{t('sueno.afinar.texto')}</Nota>
       {d.disponible && (
-        <View style={[st.fila, st.separada]}>
+        <View style={[st.fila, st.enSueno]}>
           <Pressable onPress={() => setHoja('despertador')} style={({ pressed }) => [st.filaTextos, pressed && st.textoApretado]} accessibilityRole="button">
             <Text style={st.filaTitulo}>{t('sueno.afinar.despertador.titulo')}</Text>
-            <Text style={st.filaDetalle}>{d.puesta ? resumen(d.puesta) : t('sueno.afinar.despertador.apagado')}</Text>
+            <Text style={[st.filaDetalle, st.detalleEnSueno]}>{d.puesta ? resumen(d.puesta) : t('sueno.afinar.despertador.apagado')}</Text>
           </Pressable>
           <Switch
             value={d.pendiente ?? !!d.puesta}
@@ -204,20 +200,26 @@ export function Afinar({ hoy }: { hoy: ClaveDia }) {
           />
         </View>
       )}
-      <Pressable onPress={abrirCargador} style={({ pressed }) => [st.fila, st.separada, pressed && st.apretada]} accessibilityRole="button">
+      <Pressable onPress={abrirCargador} style={({ pressed }) => [st.fila, st.enSueno, pressed && st.apretada]} accessibilityRole="button">
         <View style={st.filaTextos}>
           <Text style={st.filaTitulo}>{t('sueno.afinar.cargador.titulo')}</Text>
-          <Text style={[st.filaDetalle, cargador.estado === 'anda' && st.llego, (cargador.estado === 'dejoDeLlegar' || cargador.estado === 'aMedias') && st.falla]}>{textoDelCargador(cargador, hoy)}</Text>
+          <Text style={[st.filaDetalle, st.detalleEnSueno, cargador.estado === 'anda' && st.llegoEnSueno, (cargador.estado === 'dejoDeLlegar' || cargador.estado === 'aMedias') && st.falla]}>{textoDelCargador(cargador, hoy)}</Text>
         </View>
         <Icono nombre="chevron.right" tam={13} peso="semibold" color="rgba(239, 230, 207, 0.45)" />
       </Pressable>
-      <Pressable onPress={() => setHoja('atajos')} style={({ pressed }) => [st.fila, st.separada, pressed && st.apretada]} accessibilityRole="button">
+      <Pressable onPress={() => setHoja('atajos')} style={({ pressed }) => [st.fila, st.enSueno, pressed && st.apretada]} accessibilityRole="button">
         <View style={st.filaTextos}>
           <Text style={st.filaTitulo}>{t('sueno.afinar.atajos.titulo')}</Text>
-          <Text style={st.filaDetalle}>{t('sueno.afinar.atajos.fila')}</Text>
+          <Text style={[st.filaDetalle, st.detalleEnSueno]}>{t('sueno.afinar.atajos.fila')}</Text>
         </View>
         <Icono nombre="chevron.right" tam={13} peso="semibold" color="rgba(239, 230, 207, 0.45)" />
       </Pressable>
+      {/* El margen para dormirte, al final, como en la galería. */}
+      <View style={[st.margen, st.enSueno]}>
+        <Text style={st.filaTitulo}>{t('sueno.afinar.margen.titulo')}</Text>
+        <Segmento opciones={MARGENES.map((n) => [n, t('sueno.afinar.margen.minutos', { n })] as const)} elegida={margen} alElegir={(n) => elAlmacen().ponerLatencia(n)} />
+        <Nota>{t('sueno.afinar.margen.texto')}</Nota>
+      </View>
       {d.disponible && (
         <HojaModal abierta={hoja === 'despertador'} titulo={t('sueno.afinar.despertador.titulo')} alCerrar={() => setHoja(null)}>
           <ElDespertador d={d} />
@@ -227,7 +229,7 @@ export function Afinar({ hoy }: { hoy: ClaveDia }) {
         <LosAtajos senales={senales ?? []} hoy={hoy} />
       </HojaModal>
       <GuiaCargador key={guia.vez} abierta={guia.abierta} alCerrar={() => setGuia((g) => ({ ...g, abierta: false }))} />
-    </Carta>
+    </CartaDeSueno>
     </>
   );
 }
@@ -368,12 +370,16 @@ function LosAtajos({ senales, hoy }: { senales: Senal[]; hoy: ClaveDia }) {
 const st = StyleSheet.create({
   fila: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 },
   separada: { borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
-  margen: { gap: 8, marginTop: 10, paddingTop: 12, paddingBottom: 12 },
+  margen: { gap: 6, paddingTop: 13, paddingBottom: 4 },
   apretada: { backgroundColor: 'rgba(239, 230, 207, 0.05)' },
   textoApretado: { opacity: 0.6 },
   filaTextos: { flex: 1, paddingVertical: 10 },
   filaTitulo: { fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
   filaDetalle: { marginTop: 3, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17, color: 'rgba(239, 230, 207, 0.55)', fontVariant: ['tabular-nums'] },
+  // En la tarjeta de Sueño, sus colores (galeria/src/sueno.js, .sueno .sn-afinar-…); en las hojas, los de siempre.
+  enSueno: { minHeight: 52, borderTopWidth: 1, borderColor: SN.linea },
+  detalleEnSueno: { color: SN.texto },
+  llegoEnSueno: { color: SN.verdeClaro },
   llego: { color: colores.salvia },
   falla: { color: colores.oroClaro },
   aviso2: { flexDirection: 'row', alignItems: 'center', gap: 12 },

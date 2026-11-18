@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { ATRASO_MAXIMO, avisosDelDia } from './avisos';
+import { apagaLoQueFalta, metaDeAgua, reglasDe } from './cuidados';
 import { AGUA_META_ML, bajoAlFinal, CALORIAS_BAJAS, ESPERA_DE_LA_TARDE, horaDeLaTarde, loQueFaltaHoy, PROTEINA_BAJA, type DeHoy } from './loQueFalta';
 import { sumarDias } from './fechas';
 import type { Habito } from './habitos';
@@ -222,6 +223,32 @@ describe('el agua', () => {
     expect(loQueFaltaHoy(base({ comido: macros(1200, 90), agua: null }))).toEqual([]);
     expect(loQueFaltaHoy(base({ comido: macros(1200, 90), agua: { ml: AGUA_META_ML * 0.5 } }))).toEqual([]);
     expect(loQueFaltaHoy(base({ agua: { ml: 500 } }))[0].falta.que).toBe('proteina');
+  });
+});
+
+describe('con cuidados de salud marcados, cada cosa según lo que apagan', () => {
+  it('con cálculos: la proteína no se pide, y el agua va con su meta de 2,5 L', () => {
+    const r = reglasDe(['calculos'], {}, { sexo: 'f', edad: 30, alturaCm: 165, pesoKg: 62, actividad: 'algo' }, PAR);
+    const conCuidados = { apagado: (['proteina', 'calorias', 'agua'] as const).filter((q) => apagaLoQueFalta(q, r)), metaDeAgua: metaDeAgua(r, AGUA_META_ML) };
+    expect(conCuidados).toEqual({ apagado: ['proteina'], metaDeAgua: 2500 });
+    // Faltan 100 g de proteína, pero no se dice; con 900 ml, debajo del 40 % de 2,5 L: siete vasos (con 2 L, no avisaba).
+    expect(loQueFaltaHoy(base({ agua: { ml: 900 } })).map((f) => f.falta.que)).toEqual(['proteina']);
+    expect(loQueFaltaHoy(base({ ...conCuidados, agua: { ml: 900 } })).map((f) => [f.falta.que, f.falta.cuanto])).toEqual([['agua', 7]]);
+    // A la noche tampoco la proteína: quedan las calorías.
+    expect(loQueFaltaHoy(deNoche({ ...conCuidados, comido: macros(1500, 100), comidoALaTarde: macros(1100, 90) })).map((f) => f.falta.que)).toEqual(['calorias']);
+  });
+
+  it('con el riñón, nada: ni comer más ni tomar más agua; con un trastorno de la alimentación, solo el agua', () => {
+    const persona = { sexo: 'f' as const, edad: 30, alturaCm: 165, pesoKg: 62, actividad: 'algo' as const };
+    const de = (r: ReturnType<typeof reglasDe>) => ({ apagado: (['proteina', 'calorias', 'agua'] as const).filter((q) => apagaLoQueFalta(q, r)), metaDeAgua: metaDeAgua(r, AGUA_META_ML) });
+    const renal = de(reglasDe(['renal'], {}, persona, PAR));
+    expect(renal).toEqual({ apagado: ['proteina', 'calorias', 'agua'], metaDeAgua: null });
+    expect(loQueFaltaHoy(base({ ...renal, agua: { ml: 250 } }))).toEqual([]);
+    expect(loQueFaltaHoy(deNoche({ ...renal, comido: macros(1200, 60), agua: { ml: 250 } }))).toEqual([]);
+    const tca = de(reglasDe(['tca'], {}, persona, PAR));
+    expect(loQueFaltaHoy(base({ ...tca, agua: { ml: 250 } })).map((f) => f.falta.que)).toEqual(['agua']);
+    // Sin meta de agua no hay vasos que contar, aunque no esté apagada.
+    expect(loQueFaltaHoy(base({ comido: macros(1200, 90), metaDeAgua: null, agua: { ml: 250 } }))).toEqual([]);
   });
 });
 

@@ -42,7 +42,10 @@ export function region(): string | undefined {
 
 export const sistemaDe = (e: Pick<Estado, 'sistema'>): Sistema => e.sistema ?? sistemaDeRegion(region());
 
-export const opcionesDeIdioma = () => ({ idioma: idioma(), region: region() });
+/** El país de los alimentos: el elegido en Perfil (aparte del idioma) o, sin elegir, el del teléfono. */
+export const paisDeLosAlimentos = (): string | undefined => elAlmacen().estado().paisDeAlimentos ?? region();
+
+export const opcionesDeIdioma = () => ({ idioma: idioma(), region: paisDeLosAlimentos() });
 
 const formatos = new Map<string, Intl.NumberFormat>();
 /** Un número en el idioma de la app: «1.234» o «1,234»; con decimales, «2,5» o «2.5». */

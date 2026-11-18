@@ -8,22 +8,25 @@ import { useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
 
 import { elAlmacen } from '@/almacen';
-import type { Estado } from '@/almacen/almacen';
+import { reglasDeCuidados, type Estado } from '@/almacen/almacen';
 import { catalogo } from '@/datos/catalogo';
 import { horasDeSueno } from '@/dominio/avisos';
 import { COMIDAS, type Comida } from '@/dominio/comidas';
+import { metaDeAgua } from '@/dominio/cuidados';
+import { sumarDias } from '@/dominio/fechas';
 import { CON_WIDGETS_NUEVOS } from '@/lib/banderas';
 import { suenoParaAvisos } from '@/recordatorios/programar';
 import { nocheDeAhora } from '@/salud/nocheSinReloj';
 import { metaDelDia, numero, totalDe } from '@/secciones/comida/datos';
 import { enlaceASeccion, enlaceDeAnotar } from '@/secciones/enlaces';
+import { alarmaPuesta } from '@/secciones/sueno/despertador';
 import { idioma, t } from '@/textos';
 import { lineaDelAgua, repartirAgua, toquesDelAgua } from './agua';
 import { lineaDeAnotar } from './anotar';
 import { lineaDelCielo, repartirToques, toquesDeLaLinea } from './cielo';
 import { fondosEnElGrupo } from './fondos';
 import { aplicarToquesDeHoy, lineaDeHoy, type DelToque } from './hoy';
-import { confirmacionesDeLaLinea, decidir, lineaDeLaNoche, type ConfirmacionDelWidget } from './noche';
+import { confirmacionesDeLaLinea, decidir, despertadorPara, lineaDeLaNoche, type ConfirmacionDelWidget } from './noche';
 import type { PropsAgua, PropsAnotar, PropsCielo, PropsHoy, PropsNoche } from './tipos';
 
 type Entrada<P> = { date: Date; props: P };
@@ -119,6 +122,8 @@ async function unaVuelta() {
 
   // La noche: el «Sí» del widget confirma la estimada si coincide; si Moss todavía no la estimó, espera.
   let esperando: ConfirmacionDelWidget | null = null;
+  // Con el despertador de Moss puesto, la mañana que viene el widget propone despertar a su hora.
+  const alarma = await alarmaPuesta().catch(() => null);
   await alDia(
     w.noche,
     (linea) => {
@@ -135,6 +140,7 @@ async function unaVuelta() {
       const ahora = new Date();
       return lineaDeLaNoche(a.estado(), {
         ahora, zona, url: enlaceASeccion('sueno'), esperando, dormir: horaDeDormirHoy(a.estado(), ahora), fondo: fondos.noche,
+        despertador: despertadorPara(alarma, sumarDias(nocheDeAhora(ahora), 1), ahora),
         textos: {
           anoche: t('widgets.anoche'), si: t('widgets.si'), fueAsi: t('widgets.fueAsi'), confirmada: t('widgets.confirmada'),
           seVeEnMoss: t('widgets.seVeEnMoss'), seAnotaEnMoss: t('widgets.seAnotaEnMoss'), horas: t('widgets.horas'), duracion: t('cielo.horasMinutos'),
@@ -187,7 +193,8 @@ async function unaVuelta() {
         for (const id of r.quitar) a.quitarAgua(id);
       },
       () => lineaDelAgua(a.estado(), {
-        meta: META_DE_AGUA,
+        // Con cuidados de salud, su meta (2,5 L con cálculos). «Sin meta» todavía no tiene dibujo en el widget: la de siempre.
+        meta: metaDeAgua(reglasDeCuidados(a.estado()), META_DE_AGUA) ?? META_DE_AGUA,
         textos: { titulo: t('widgets.agua'), vasos: t('widgets.vasos'), sumar: t('mas.sumarVaso'), quitar: t('widgets.quitarVaso'), decimal: idioma() === 'es' ? ',' : '.' },
         url: enlaceASeccion('inicio'),
         fondo: fondos.noche,
@@ -253,7 +260,7 @@ export function actualizarWidgets(): Promise<void> {
 }
 
 /** Lo que muestran los widgets: si cambia, se escriben de nuevo. */
-const queMuestran = (e: Estado) => [e.listo, e.hoy, e.corte, e.latencia, e.necesidad, e.perfil, e.habitos, e.periodos, e.dias, e.marcas, e.noches, e.salud, e.metas, ...(CON_WIDGETS_NUEVOS ? [e.registros, e.agua, e.pesos] : [])] as const;
+const queMuestran = (e: Estado) => [e.listo, e.hoy, e.corte, e.latencia, e.necesidad, e.perfil, e.habitos, e.periodos, e.dias, e.marcas, e.noches, e.salud, e.metas, ...(CON_WIDGETS_NUEVOS ? [e.registros, e.agua, e.pesos, e.cuidados] : [])] as const;
 
 /**
  * En la raíz de la app: al estar listo el almacén, al volver a Moss y cuando cambia algo que muestran,

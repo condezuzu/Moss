@@ -6,7 +6,7 @@
 
 import type { Estado } from '@/almacen/almacen';
 import { horaDeReloj } from '@/dominio/avisos';
-import { partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { partesDe, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
 import { conNochesDeMoss, habitualDe, nocheDeMoss, quePreguntar, type Zona } from '@/dominio/sinReloj';
 import type { Noche, NochePropia } from '@/dominio/sueno';
 import { DESDE_LAS, nocheDeAhora } from '@/salud/nocheSinReloj';
@@ -57,6 +57,25 @@ export function nocheEsperada(noches: Noche[], clave: ClaveDia, despertador: num
   if (!h) return null;
   const de5 = (x: number) => Math.round(x / 5) * 5;
   return { dormirse: de5(h.dormirse), despertar: despertador ?? de5(h.despertar) };
+}
+
+/** Las noches cuentan desde las 18 del día anterior: una alarma de las 18 o más tarde ya no es la de esa noche. */
+const LAS_18 = 18 * 60;
+const UN_DIA = 24 * 60 * 60 * 1000;
+
+/**
+ * La hora del despertador de Moss (alarmaPuesta, en despertador.ts) para la noche que termina `clave`, en minutos
+ * desde las 18 del día anterior, o null si ese día no suena. Con días, los suyos (0 es domingo); sin días suena una
+ * sola vez: la próxima vez que sea esa hora.
+ */
+export function despertadorPara(alarma: { hora: number; minuto: number; dias: readonly DiaSemana[] } | null, clave: ClaveDia, ahora: Date): number | null {
+  if (!alarma) return null;
+  const minutos = alarma.hora * 60 + alarma.minuto;
+  if (minutos >= LAS_18) return null;
+  const p = partesDe(clave);
+  const falta = new Date(p.anio, p.mes, p.dia, alarma.hora, alarma.minuto).getTime() - ahora.getTime();
+  const suena = alarma.dias.length ? alarma.dias.includes(p.diaSemana) : falta > 0 && falta <= UN_DIA;
+  return suena ? minutos + 24 * 60 - LAS_18 : null;
 }
 
 /** Si en las dos últimas semanas hubo una noche de un reloj o un anillo: entonces no se propone nada. */

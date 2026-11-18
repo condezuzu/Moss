@@ -45,7 +45,7 @@ import { ENTRA_FUNDIDO, ENTRA_HOJA, ENTRA_VELO, SALE_FUNDIDO, SALE_HOJA, SALE_VE
 import { margenDeToque } from '../paso';
 import { ACOMODA, Aparece } from '../tarjetas';
 import { useTeclado } from '../teclado';
-import { AvisoFlotante, Boton, Etiqueta, Icono, Pastilla, type Aviso } from './comunes';
+import { AvisoFlotante, Boton, degradado, Etiqueta, Icono, Pastilla, type Aviso } from './comunes';
 import { PanelDecir } from './Decir';
 import { lineasDeHoy } from './entreno';
 import { LineaDeEntreno } from './LineaDeEntreno';
@@ -208,6 +208,8 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
   const dia = diaDicho ?? pedido.dia ?? e.hoy;
   const [comida, setComida] = useState<Comida>(pedido.comida ?? comidaDeAhora());
   const [texto, setTexto] = useState('');
+  // Con el cursor en el buscador, su borde se dora (la galería).
+  const [buscando, setBuscando] = useState(false);
   const [hallado, setHallado] = useState<{ texto: string; lista: Resultado[] } | null>(null);
   // Lo que quedó sin encontrar de lo dicho: se busca después, de a uno, a medida que se suma lo buscado.
   const [porBuscar, setPorBuscar] = useState<string[]>([]);
@@ -785,6 +787,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
         importantForAccessibility={escaner ? 'no-hide-descendants' : 'auto'}
         onAccessibilityEscape={panel || ventana || escaner ? undefined : eligiendo ? cancelarLaEleccion : intentarCerrar}
       >
+        <View style={[StyleSheet.absoluteFill, estilos.hojaFondo]} pointerEvents="none" />
         {/* Lo de adentro se va con la hoja: sus propias salidas (las filas de «decir») no corren. */}
         <LayoutAnimationConfig skipExiting>
         <CabezaQueBaja arrastre={deslizar} style={estilos.arriba}>
@@ -825,7 +828,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
           {/* Con el teclado arriba, la comida se cambia al primer toque. */}
           {!eligiendo && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={estilos.chipsLugar} contentContainerStyle={estilos.chips} keyboardShouldPersistTaps="handled" scrollsToTop={false}>
-              {COMIDAS.map((c) => <Pastilla key={c} texto={t(`comida.comidas.${c}`)} elegida={c === comida} alTocar={() => setComida(c)} estilo={estilos.chip} />)}
+              {COMIDAS.map((c) => <Pastilla key={c} texto={t(`comida.comidas.${c}`)} elegida={c === comida} alTocar={() => setComida(c)} estilo={[estilos.chip, c === comida && estilos.chipElegido]} estiloTexto={estilos.chipTexto} />)}
             </ScrollView>
           )}
           {!eligiendo && lineaDeEntreno && (
@@ -833,7 +836,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
               <LineaDeEntreno linea={lineaDeEntreno} />
             </View>
           )}
-          <View style={estilos.busca}>
+          <View style={[estilos.busca, buscando && estilos.buscaConFoco]}>
             <Icono nombre="magnifyingglass" tam={17} color="rgba(239, 230, 207, 0.5)" />
             <TextInput
               ref={buscador}
@@ -850,6 +853,8 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
               clearButtonMode="while-editing"
               maxLength={100}
               selectionColor={colores.oro}
+              onFocus={() => setBuscando(true)}
+              onBlur={() => setBuscando(false)}
               style={estilos.entrada}
               accessibilityLabel={t('comida.buscar')}
             />
@@ -896,17 +901,17 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
               <LayoutAnimationConfig skipEntering>
                 {dia === e.hoy && deAyerQueFalta.length > 0 && (
                   <Animated.View entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO}>
-                    <Boton texto={t(`comida.deAyer.${comida}`)} icono="doc.on.doc" alTocar={() => sumarVarias(deAyerQueFalta, t(`comida.deAyer.${comida}`))} />
+                    <Boton tipo="atajo" texto={t(`comida.deAyer.${comida}`)} icono="doc.on.doc" alTocar={() => sumarVarias(deAyerQueFalta, t(`comida.deAyer.${comida}`))} />
                   </Animated.View>
                 )}
                 <Animated.View layout={ACOMODA}>
-                  <Boton texto={t('comida.guardadasCorto')} icono="bookmark" alTocar={() => setPanel('guardadas')} />
+                  <Boton tipo="atajo" texto={t('comida.guardadasCorto')} icono="bookmark" alTocar={() => setPanel('guardadas')} />
                 </Animated.View>
                 <Animated.View layout={ACOMODA}>
-                  <Boton texto={t('comida.cargaRapida')} icono="bolt" alTocar={() => setPanel('rapida')} />
+                  <Boton tipo="atajo" texto={t('comida.cargaRapida')} icono="bolt" alTocar={() => setPanel('rapida')} />
                 </Animated.View>
                 <Animated.View layout={ACOMODA}>
-                  <Boton texto={t('comida.crearAlimento')} icono="pencil" alTocar={() => { setCrear({}); setPanel('crear'); }} />
+                  <Boton tipo="atajo" texto={t('comida.crearAlimento')} icono="pencil" alTocar={() => { setCrear({}); setPanel('crear'); }} />
                 </Animated.View>
               </LayoutAnimationConfig>
             </ScrollView>
@@ -940,13 +945,13 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
                   accessibilityRole="button"
                 >
                   <View style={estilos.filaTextos}>
-                    <Text style={estilos.siempreTitulo} numberOfLines={1}>{t(`comida.deSiempre.${comida}`)}</Text>
+                    <Text style={estilos.filaNombre} numberOfLines={1}>{t(`comida.deSiempre.${comida}`)}</Text>
                     <Text style={estilos.filaDetalle} numberOfLines={2}>
                       {[siempre.map((i) => i.nombre).join(', '), numeros ? `${numero(Math.round(sumarValores(siempre.map((i) => i.valores)).kcal))} kcal` : ''].filter(Boolean).join(' · ')}
                     </Text>
                   </View>
-                  <View style={estilos.mas}>
-                    <Icono nombre="plus" tam={17} peso="semibold" />
+                  <View style={estilos.siempreMas}>
+                    <Icono nombre="plus" tam={15} color={colores.tinta} peso="bold" />
                   </View>
                 </Pressable>
               </Aparece>
@@ -962,11 +967,11 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
               <Aparece>
                 <Pressable onPress={() => decir({ escuchar: false, texto: q })} style={({ pressed }) => [estilos.siempre, pressed && estilos.filaApretada]} accessibilityRole="button">
                   <View style={estilos.filaTextos}>
-                    <Text style={estilos.siempreTitulo}>{t('comida.decir.todoJunto')}</Text>
+                    <Text style={estilos.filaNombre}>{t('comida.decir.todoJunto')}</Text>
                     <Text style={estilos.filaDetalle} numberOfLines={2}>{q}</Text>
                   </View>
-                  <View style={estilos.mas}>
-                    <Icono nombre="sparkles" tam={16} peso="semibold" />
+                  <View style={estilos.siempreMas}>
+                    <Icono nombre="sparkles" tam={15} color={colores.tinta} peso="semibold" />
                   </View>
                 </Pressable>
               </Aparece>
@@ -1394,9 +1399,12 @@ const estilos = StyleSheet.create({
   // cada cambio (al escribir, con el cursor que titila), y la sombra no se veía. Los paneles y el velo de la ventana
   // llevan las mismas esquinas.
   hoja: {
-    position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: colores.hoja,
+    position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: '#0f1733',
     borderTopWidth: 1, borderColor: 'rgba(232, 196, 106, 0.22)',
   },
+  // El fondo de la galería (de #0f1733 a #0a1026 y #080c1d): sobre el color de arriba, un velo que se cierra hacia
+  // abajo. Va en una vista sin esquinas, así iOS no recorta el degradado: arriba casi no pinta, y no se nota.
+  hojaFondo: degradado('linear-gradient(180deg, rgba(8, 12, 29, 0) 0%, rgba(8, 12, 29, 0.65) 45%, #080c1d 100%)'),
   arriba: { height: 34 },
   // Chico y en mayúsculas, a la izquierda de la pestañita (en la galería, `.hj-dia`).
   dia: { position: 'absolute', left: 18, top: 9, maxWidth: '38%', fontFamily: letras.textoMedio, fontSize: 10, letterSpacing: 1.8, textTransform: 'uppercase', color: colores.oroClaro },
@@ -1408,9 +1416,13 @@ const estilos = StyleSheet.create({
   chipsLugar: { flexGrow: 0, marginBottom: -3 },
   entreno: { marginHorizontal: 16 },
   chips: { gap: 6, paddingHorizontal: 16, paddingTop: 3, paddingBottom: 6 },
-  chip: { borderRadius: 999, minHeight: 32, paddingVertical: 0, paddingHorizontal: 11 },
+  // Como en la galería (`.hj-chip`): las cinco comidas entran sin cortar la última.
+  chip: { borderRadius: 999, minHeight: 32, paddingVertical: 0, paddingHorizontal: 10 },
+  chipElegido: { backgroundColor: 'rgba(232, 196, 106, 0.16)', borderColor: 'rgba(232, 196, 106, 0.62)' },
+  chipTexto: { fontSize: 13, color: 'rgba(239, 230, 207, 0.72)' },
   // Con el alto mínimo: con el texto grande de iOS, el buscador crece en vez de cortar lo escrito.
   busca: { marginTop: 10, marginHorizontal: 16, minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 2, paddingLeft: 13, paddingRight: 4, borderRadius: 14, backgroundColor: 'rgba(239, 230, 207, 0.07)', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)' },
+  buscaConFoco: { borderColor: 'rgba(232, 196, 106, 0.55)', boxShadow: '0 0 0 3px rgba(232, 196, 106, 0.1)' },
   entrada: { flex: 1, alignSelf: 'stretch', paddingLeft: 8, paddingRight: 6, outlineWidth: 0, fontFamily: letras.texto, fontSize: 16, color: colores.pergamino },
   icono: { width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   apretado: { opacity: 0.6 },
@@ -1421,8 +1433,9 @@ const estilos = StyleSheet.create({
   titulo: { marginTop: 16, marginBottom: 2 },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 58, paddingVertical: 7, borderBottomWidth: 1, borderColor: 'rgba(239, 230, 207, 0.06)' },
   filaApretada: { opacity: 0.7 },
-  siempre: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10, marginBottom: 4, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.28)', backgroundColor: 'rgba(232, 196, 106, 0.06)' },
-  siempreTitulo: { fontFamily: letras.textoMedio, fontSize: 15, color: colores.oroClaro },
+  siempre: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12, marginBottom: 2, paddingVertical: 11, paddingLeft: 14, paddingRight: 12, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.28)', backgroundColor: 'rgba(232, 196, 106, 0.07)' },
+  // Lo que se anota de un toque lleva el «+» lleno, en oro (`.hj-siempre-mas`).
+  siempreMas: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colores.oro },
   filaTextos: { flex: 1, gap: 4, minWidth: 0 },
   filaNombre: { fontFamily: letras.texto, fontSize: 15.5, color: colores.pergamino },
   filaExtra: { fontSize: 12.5, color: 'rgba(239, 230, 207, 0.48)' },

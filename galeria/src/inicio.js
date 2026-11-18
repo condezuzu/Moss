@@ -387,8 +387,9 @@ const SeccionInicio = (() => {
     // sueles haber comido a esta hora (a la mañana no se juzga: todavía no es hora) y, con Ascent vinculada, los
     // músculos de hoy, con la regla del eslabón más débil. Lo que se dice cambia con el momento: al despertar, el día,
     // antes y después de entrenar, y la noche. Baja va arriba de todo, como advertencia; suficiente o alta, debajo de
-    // los macros. Arriba, la batería, el título y una frase; la tira de tu día (las comidas, la sesión y ahora) y cada
-    // parte con su estado. «Más» abre qué te conviene ahora y de dónde sale; se pliega en vez de «No mostrar más». Con
+    // los macros. Arriba, la batería, el título y una frase; la tira de tu día (las comidas, la sesión y ahora) y las
+    // partes: el sueño, que dice si está bien o mal, y la comida, con hoy y estos días juntos (17/11). «Más» explica cada
+    // parte: con qué números, qué significa, qué conviene y qué mira Moss; se pliega en vez de «No mostrar más». Con
     // Ascent, lleva su marca: es lo que hace Moss con el vínculo, en Inicio para no tener que abrir Ascent cada vez.
     const PERSONA_DE_ENERGIA = { sexo: 'm', objetivo: 'bajar', pesoKg: 75, alturaCm: 178, grasaPct: 19.5 };
     const NECESIDAD_DE_ENERGIA = 8 * 60;
@@ -413,7 +414,7 @@ const SeccionInicio = (() => {
     };
     // Los momentos para mirar la propuesta, con su hora.
     const HORAS_DE_LA_PROPUESTA = { manana: '7:30', mediodia: '14:30', antes: '17:15', despues: '20:30', noche: '22:00' };
-    const ICONO_DE_PARTE = { sueno: 'sueno', comida: 'comida', hoy: 'reloj', musculos: 'pesa' };
+    const ICONO_DE_PARTE = { sueno: 'sueno', comida: 'comida', hoy: 'comida', estosDias: 'comida', hora: 'reloj', musculos: 'pesa' };
     function energiaDeHoy(deporte) {
       const ascent = opciones.ascentDeHoy ? opciones.ascentDeHoy() : null;
       const ahora = hm(HORAS_DE_LA_PROPUESTA[s.energiaHora || 'mediodia']);
@@ -478,7 +479,7 @@ const SeccionInicio = (() => {
         return tx(`inicio.energia.momento.${momento}.${en.estado}`, { hora, cama: estaNoche(e.ej).cama });
       }
       // Alta: por qué, de estos días y de anoche.
-      const sueno = en.deuda === 'muyBien' || en.deuda === 'bien' ? en.deuda : 'soloAnoche';
+      const sueno = en.deuda === 'sinDeuda' || en.deuda === 'baja' ? en.deuda : 'soloAnoche';
       const comida = en.comida.como === 'deSobra' && e.ascent ? 'deSobraEntrena' : en.comida.como;
       const razones = { comida: tx('inicio.energia.razon.comida.' + comida), sueno: tx('inicio.energia.razon.sueno.' + sueno), hora };
       if (momento === 'dia') return tx(en.entrenaHoy ? 'inicio.energia.texto.altaEntrena' : 'inicio.energia.texto.alta', razones);
@@ -554,79 +555,133 @@ const SeccionInicio = (() => {
       caja.appendChild(punto);
       return caja;
     }
-    // Las partes, de un vistazo: el ícono, el nombre y cómo está cada una.
+    // Las partes, de un vistazo (17/11): el sueño, que dice si está bien o mal y por qué, y la comida en una sola fila,
+    // con hoy y estos días («Hoy: vas bien · Estos días: por debajo»). Con Ascent, los músculos. Solo lo bajo lleva color.
     function partesDeEnergia(e) {
       const en = e.dia;
-      const partes = [['sueno', en.sueno], ['comida', en.comida], ['hoy', en.hoy]];
-      if (en.musculos) partes.push(['musculos', { parte: en.musculos === 'cargados' ? 'justa' : 'bien', como: e.comoMusculos || en.musculos }]);
-      const fila = el('div', 'in-energia-partes' + (partes.length > 3 ? ' cuatro' : ''));
-      partes.forEach(([k, p]) => {
-        // Temprano, lo de hoy no se juzga: va sin color.
-        const clase = !p ? 'sin' : k === 'hoy' && p.como === 'temprano' ? 'sin' : 'es-' + p.parte;
-        const d = el('div', 'in-energia-parte ' + clase);
+      const caja = el('div', 'in-energia-partes');
+      const fila = (k, clase, valor) => {
+        const d = el('div', 'in-energia-parte es-' + clase);
         d.innerHTML = `<span class="ico">${icono(ICONO_DE_PARTE[k])}</span>`;
-        d.append(el('small', null, tx('inicio.energia.partes.' + k)), el('b', null, tx(`inicio.energia.como.${k}.${p ? p.como : 'sinDatos'}`)));
-        fila.appendChild(d);
-      });
-      return fila;
+        const textos = el('div');
+        textos.append(el('small', null, tx('inicio.energia.partes.' + k)), valor);
+        d.appendChild(textos);
+        caja.appendChild(d);
+      };
+      const peor = (a, b) => ['baja', 'justa', 'bien', 'sin'].find((x) => x === a || x === b);
+      const s = en.sueno;
+      const deSueno = s ? s.parte : 'sin';
+      fila('sueno', deSueno, el('b', 'es-' + deSueno, !s ? tx('inicio.energia.como.sueno.sinDatos') : s.como === 'bien' ? tx('inicio.energia.juicio.bien') : `${tx('inicio.energia.juicio.' + s.parte)}: ${tx('inicio.energia.como.sueno.' + s.como)}`));
+      // Temprano, lo de hoy no se juzga: va sin color.
+      const deHoy = !en.hoy ? null : en.hoy.como === 'temprano' ? 'sin' : en.hoy.parte;
+      const deEstosDias = en.comida ? en.comida.parte : 'sin';
+      const comida = el('b');
+      // Cada valor pasa entero al otro renglón.
+      const valor = (nombre, clase, como) => { const x = el('span', 'valor'); x.append(el('i', null, `${nombre}: `), el('em', 'es-' + clase, como)); return x; };
+      if (deHoy) comida.append(valor(tx('inicio.energia.hoy'), deHoy, tx('inicio.energia.como.hoy.' + en.hoy.como)), el('i', null, ' · '));
+      comida.append(valor(tx('inicio.energia.estosDias'), deEstosDias, tx('inicio.energia.como.comida.' + (en.comida ? en.comida.como : 'sinDatos'))));
+      fila('comida', deHoy ? peor(deHoy, deEstosDias) : deEstosDias, comida);
+      if (en.musculos) fila('musculos', en.musculos === 'cargados' ? 'justa' : 'bien', el('b', 'es-' + (en.musculos === 'cargados' ? 'justa' : 'bien'), tx('inicio.energia.como.musculos.' + (e.comoMusculos || en.musculos))));
+      return caja;
     }
-    // Qué te conviene ahora: primero lo que la baja, después lo que la frena y lo de la hora; si no, seguir así.
-    function consejosDeEnergia(e) {
+    // Cada parte, explicada en «Más» (17/11): con qué números, qué significa, qué conviene y qué mira Moss. Como en la app
+    // (src/secciones/sueno/Energia.tsx, explicacion); con Ascent, además, lo de entrenar y los músculos.
+    function explicacionDeEnergia(e) {
       const en = e.dia;
-      const lista = [];
-      const sueno = en.sueno;
       const noche = estaNoche(e.ej);
       const hora = en.sesion ? Avisos.horaDeReloj(en.sesion.inicio) : '';
       const conNumeros = !tel.classList.contains('sin-numeros') && !(opciones.sinDeficit && opciones.sinDeficit());
-      if (en.hoy && en.hoy.como === 'sinComerParaEntrenar') lista.push(tx('inicio.energia.consejo.comerAntesYa', { hora }));
-      if (sueno && (sueno.parte === 'baja' || sueno.como === 'algoCorta')) {
-        // Con la noche corta, sin ir al fallo (Craven 2022; Knowles 2022): lo mismo que dice Ascent.
-        if (sueno.parte === 'baja' && en.entrenaHoy && en.momento !== 'despuesDeEntrenar' && en.momento !== 'noche') lista.push(tx('inicio.energia.consejo.sinFallo'));
-        lista.push(tx('inicio.energia.consejo.dormir', noche));
-      } else if (sueno && sueno.como === 'deuda') lista.push(tx('inicio.energia.consejo.dormirDeuda', noche));
-      if (en.comida && en.comida.parte === 'baja') lista.push(tx(e.ascent ? 'inicio.energia.consejo.comerMasEntrena' : 'inicio.energia.consejo.comerMas'));
-      if (en.hoy && en.hoy.como === 'atrasado') lista.push(conNumeros ? tx('inicio.energia.consejo.atrasado', { kcal: numero(Math.round(en.hoy.falta / 10) * 10) }) : tx('inicio.energia.consejo.atrasadoSinNumeros'));
-      if (en.comerAntes && !(en.hoy && en.hoy.como === 'sinComerParaEntrenar')) lista.push(tx('inicio.energia.consejo.comerAntes', { hora: Avisos.horaDeReloj(en.sesion.inicio - 60), sesion: hora }));
-      if (en.comerDespues) lista.push(tx('inicio.energia.consejo.comerDespues'));
-      if (en.musculos === 'cargados' && e.ascent) lista.push(e.ascent.texto);
-      // Según el tramo de la curva, con sus horas: al despertar, cuándo llega el mejor momento.
-      const tramo = (que) => (en.curva ? en.curva.tramos.find((t) => t.que === que) : null);
-      en.notas.forEach((n) => {
-        if (n === 'bajarElRitmo' && e.ahora >= e.cama) { lista.push(tx('inicio.energia.consejo.aLaCama')); return; }
-        const t = tramo(n === 'inercia' ? 'pico' : n);
-        lista.push(tx('inicio.energia.consejo.' + n, { ...noche, desde: t ? Avisos.horaDeReloj(t.desde) : '', hasta: t ? Avisos.horaDeReloj(t.hasta) : '' }));
-      });
-      if (!lista.length) lista.push(tx('inicio.energia.consejo.seguir'));
-      return lista;
-    }
-    // De dónde sale: una línea por parte, con sus números si se ven.
-    function detallesDeEnergia(e) {
-      const en = e.dia;
-      const ul = el('ul', 'in-energia-detalle');
-      const fila = (k, parte, texto) => {
-        const li = el('li', 'es-' + (parte || 'sin'));
-        li.innerHTML = `<span class="ico">${icono(ICONO_DE_PARTE[k])}</span>`;
-        li.appendChild(el('p', null, texto));
-        ul.appendChild(li);
-      };
-      const conNumeros = !tel.classList.contains('sin-numeros') && !(opciones.sinDeficit && opciones.sinDeficit());
       const redondo = (x) => numero(Math.round(x / 10) * 10);
+      const bloques = [];
+
+      const s = en.sueno;
+      const deuda = e.ej ? Sueno.redondearDeuda(e.ej.deuda.minutos) : null;
+      const conviene = [];
+      // Con la noche corta, sin ir al fallo (Craven 2022; Knowles 2022): lo mismo que dice Ascent.
+      if (s && s.parte === 'baja' && en.entrenaHoy && en.momento !== 'despuesDeEntrenar' && en.momento !== 'noche') conviene.push(tx('inicio.energia.consejo.sinFallo'));
+      if (s) conviene.push(s.parte === 'bien' ? tx('inicio.energia.explica.sueno.seguir', noche) : tx(s.como === 'deuda' ? 'inicio.energia.consejo.dormirDeuda' : 'inicio.energia.consejo.dormir', noche));
+      bloques.push({
+        k: 'sueno',
+        parte: s ? s.parte : null,
+        numeros: !e.ej ? tx('inicio.energia.explica.sueno.sinDatos') : [
+          tx('inicio.energia.explica.sueno.anoche', { dormido: u.duracion(e.ej.dormido), necesidad: u.duracion(NECESIDAD_DE_ENERGIA) }),
+          !en.deuda ? '' : deuda === 0 ? tx('inicio.energia.explica.sueno.sinDeuda') : tx('inicio.energia.explica.sueno.deuda', { deuda: u.duracion(deuda), juicio: tx('inicio.energia.juicioDeuda.' + en.deuda) }),
+        ].filter(Boolean).join(' '),
+        significa: s ? tx('inicio.energia.explica.sueno.como.' + s.como, { corta: u.duracion(Rendimiento.NOCHE_CORTA), muyCorta: u.duracion(Rendimiento.NOCHE_MUY_CORTA), deudaMedia: u.duracion(Sueno.TRAMOS_DE_LA_DEUDA.media) }) : null,
+        conviene,
+        mira: tx('inicio.energia.explica.sueno.mira'),
+      });
+
+      const h = en.hoy;
+      if (h && h.como === 'temprano') {
+        bloques.push({ k: 'hoy', parte: null, numeros: tx('inicio.energia.explica.hoy.temprano'), significa: null, conviene: [], mira: tx('inicio.energia.explica.hoy.mira') });
+      } else if (h) {
+        const deHoy = [];
+        if (h.como === 'sinComerParaEntrenar') deHoy.push(tx('inicio.energia.consejo.comerAntesYa', { hora }));
+        else deHoy.push(tx(h.como === 'alDia' ? 'inicio.energia.explica.hoy.conviene.alDia' : 'inicio.energia.explica.hoy.conviene.atrasado'));
+        if (en.comerAntes && h.como !== 'sinComerParaEntrenar') deHoy.push(tx('inicio.energia.consejo.comerAntes', { hora: Avisos.horaDeReloj(en.sesion.inicio - 60), sesion: hora }));
+        if (en.comerDespues) deHoy.push(tx('inicio.energia.consejo.comerDespues'));
+        bloques.push({
+          k: 'hoy',
+          parte: h.parte,
+          numeros: conNumeros ? tx('inicio.energia.explica.hoy.numeros', { comido: redondo(h.comido), esperado: redondo(h.esperado) }) : tx('inicio.energia.explica.hoy.sinNumeros.' + h.como),
+          significa: h.como !== 'atrasado' ? tx('inicio.energia.explica.hoy.como.' + h.como)
+            : conNumeros ? tx('inicio.energia.explica.hoy.como.atrasado', { kcal: redondo(h.falta) }) : tx('inicio.energia.explica.hoy.como.atrasadoSinNumeros'),
+          conviene: deHoy,
+          mira: tx('inicio.energia.explica.hoy.mira'),
+        });
+      }
+
       // Sin Ascent, estos días contra tu meta, que ya trae lo que gastas entrenando: sin nombrar el gimnasio.
       const entrena = e.ascent ? 'Entrena' : '';
-      fila('sueno', en.sueno && en.sueno.parte, e.ej ? tx('inicio.energia.detalle.sueno', { dormido: u.duracion(e.ej.dormido), deuda: en.deuda ? tx('inicio.energia.juicioDeuda.' + en.deuda) : '—' }) : tx('inicio.energia.detalle.suenoSinDatos'));
       const c = en.deEstosDias;
-      const comida = !c ? tx('inicio.energia.detalle.comidaSinDatos')
-        : c.porQue !== 'anotado' ? SegunElDeporte.tarjetaDeEnergia({ que: 'energiaBaja', donde: 'tarjeta', tema: 'energia', senal: c.porQue }, paraElTexto()).deQueSale
-          : !conNumeros ? tx('inicio.energia.detalle.comidaSinNumeros' + entrena)
-            : tx((c.meta ? 'inicio.energia.detalle.comida' : 'inicio.energia.detalle.comidaSinMeta') + entrena, { kcal: redondo(c.kcal), meta: c.meta ? redondo(c.meta) : '', entreno: redondo(c.entreno) });
-      fila('comida', en.comida && en.comida.parte, comida);
-      if (en.hoy) {
-        const texto = en.hoy.como === 'temprano' ? tx('inicio.energia.detalle.hoyTemprano')
-          : conNumeros ? tx('inicio.energia.detalle.hoy', { comido: redondo(en.hoy.comido), esperado: redondo(en.hoy.esperado) }) : tx('inicio.energia.detalle.hoySinNumeros');
-        fila('hoy', en.hoy.como === 'temprano' ? null : en.hoy.parte, texto);
-      }
-      if (e.ascent && en.musculos) fila('musculos', en.musculos === 'cargados' ? 'justa' : 'bien', `${e.ascent.titulo}. ${e.ascent.texto}`);
-      return ul;
+      const p = en.comida;
+      bloques.push({
+        k: 'estosDias',
+        parte: p ? p.parte : null,
+        numeros: !c ? tx('inicio.energia.explica.estosDias.sinDatos', { minimo: Energia.DIAS_ANOTADOS })
+          : c.porQue !== 'anotado' ? SegunElDeporte.tarjetaDeEnergia({ que: 'energiaBaja', donde: 'tarjeta', tema: 'energia', senal: c.porQue }, paraElTexto()).deQueSale
+            : !conNumeros ? tx('inicio.energia.explica.estosDias.sinNumeros' + entrena)
+              : tx((c.meta ? 'inicio.energia.explica.estosDias.numeros' : 'inicio.energia.explica.estosDias.numerosSinMeta') + entrena, { kcal: redondo(c.kcal), meta: c.meta ? redondo(c.meta) : '', entreno: redondo(c.entreno) }),
+        significa: p ? tx('inicio.energia.explica.estosDias.como.' + p.como, { pct: Math.round(Energia.LLEGASTE * 100) }) : null,
+        conviene: !p ? [] : [p.parte === 'baja' ? tx(e.ascent ? 'inicio.energia.consejo.comerMasEntrena' : 'inicio.energia.consejo.comerMas') : tx(p.como === 'debajo' ? 'inicio.energia.explica.estosDias.conviene.debajo' : 'inicio.energia.explica.estosDias.conviene.bien')],
+        // Con la comida baja, cuándo hablarlo con alguien (el consenso del COI sobre REDs, 2023).
+        aviso: p && p.parte === 'baja' ? tx(e.ascent ? 'inicio.energia.consejo.medicoEntrena' : 'inicio.energia.consejo.medico') : null,
+        mira: tx('inicio.energia.explica.estosDias.mira', { dias: Energia.DIAS_DE_ENERGIA }),
+      });
+
+      if (e.ascent && en.musculos) bloques.push({ k: 'musculos', parte: en.musculos === 'cargados' ? 'justa' : 'bien', numeros: e.ascent.titulo + '.', significa: e.ascent.texto, conviene: [], mira: null });
+
+      // La hora: lo del tramo de la curva en que estás, con sus horas (al despertar, cuándo llega el mejor momento).
+      const tramo = (que) => (en.curva ? en.curva.tramos.find((t) => t.que === que) : null);
+      const deLaHora = [];
+      en.notas.forEach((n) => {
+        if (n === 'bajarElRitmo' && e.ahora >= e.cama) { deLaHora.push(tx('inicio.energia.consejo.aLaCama')); return; }
+        const t = tramo(n === 'inercia' ? 'pico' : n);
+        deLaHora.push(tx('inicio.energia.consejo.' + n, { ...noche, desde: t ? Avisos.horaDeReloj(t.desde) : '', hasta: t ? Avisos.horaDeReloj(t.hasta) : '' }));
+      });
+      if (en.curva || deLaHora.length) bloques.push({ k: 'hora', parte: null, numeros: null, significa: null, conviene: deLaHora, mira: en.curva ? tx('inicio.energia.explica.hora.curva') : null });
+
+      const caja = el('div', 'in-energia-explica');
+      bloques.forEach((b) => {
+        const bloque = el('section', 'in-energia-bloque es-' + (b.parte || 'sin'));
+        const cab = el('header');
+        cab.innerHTML = `<span class="ico">${icono(ICONO_DE_PARTE[b.k])}</span>`;
+        cab.appendChild(el('h4', null, tx(`inicio.energia.explica.${b.k}.titulo`)));
+        if (b.parte) cab.appendChild(el('em', null, tx('inicio.energia.juicio.' + b.parte)));
+        bloque.appendChild(cab);
+        if (b.numeros) bloque.appendChild(el('p', 'numeros', b.numeros));
+        if (b.significa) bloque.appendChild(el('p', null, b.significa));
+        if (b.conviene.length) {
+          const consejos = el('ul', 'in-energia-consejos');
+          b.conviene.forEach((t) => consejos.appendChild(el('li', null, t)));
+          bloque.appendChild(consejos);
+        }
+        if (b.aviso) bloque.appendChild(el('p', 'in-energia-chico', b.aviso));
+        if (b.mira) bloque.appendChild(el('p', 'in-energia-chico', b.mira));
+        caja.appendChild(bloque);
+      });
+      return caja;
     }
     // Tu energía, de un vistazo (lo pediste el 5/11, a la noche): un botón redondo arriba a la derecha de Inicio, con la
     // batería y cómo está, en todos los estados. Tocarlo abre ahí mismo un globo con lo básico, que crece desde el botón;
@@ -686,18 +741,14 @@ const SeccionInicio = (() => {
     function pintarBotonDeEnergia(e) {
       if (!e) { botonDeEnergia.hidden = true; return; }
       const estado = e.dia ? e.dia.estado : 'sinDatos';
-      // Debajo, por qué: lo que la baja o la frena; con todo bien, «Todo a favor».
-      const por = !e.dia ? 'sinDatos' : estado === 'alta' ? 'todo' : e.dia.limita[0] || null;
+      // Solo el título (17/11): por qué, en el globo y en Sueño.
       botonDeEnergia.hidden = false;
       botonDeEnergia.className = 'in-energia-boton ' + estado;
       botonDeEnergia.innerHTML = '';
-      const textos = el('span', 'in-energia-boton-textos');
-      textos.appendChild(el('b', null, tx('inicio.energia.boton.' + estado)));
-      if (por) textos.appendChild(el('small', null, tx('inicio.energia.por.' + por)));
       const circulo = el('span', 'in-energia-boton-circulo');
       circulo.innerHTML = bateria(estado);
-      botonDeEnergia.append(textos, circulo);
-      botonDeEnergia.setAttribute('aria-label', `${tx('inicio.energia.boton.' + estado)}${por ? '. ' + tx('inicio.energia.por.' + por) : ''}. ${tx('inicio.energia.verEnSueno')}`);
+      botonDeEnergia.append(el('b', null, tx('inicio.energia.boton.' + estado)), circulo);
+      botonDeEnergia.setAttribute('aria-label', `${tx('inicio.energia.boton.' + estado)}. ${tx('inicio.energia.verEnSueno')}`);
     }
     function tarjetaDeEnergia(e) {
       const en = e.dia;
@@ -727,17 +778,7 @@ const SeccionInicio = (() => {
       if (en) {
         dentro.append(tiraDelDia(e), partesDeEnergia(e));
         const porque = el('div', 'in-energia-porque');
-        const consejos = el('ul', 'in-energia-consejos');
-        consejosDeEnergia(e).forEach((t) => consejos.appendChild(el('li', null, t)));
-        porque.append(el('h4', null, tx('inicio.energia.conviene')), consejos);
-        // Con la comida baja, cuándo hablarlo con alguien (el consenso del COI sobre REDs, 2023).
-        if (en.comida && en.comida.parte === 'baja') porque.appendChild(el('p', 'in-energia-chico', tx(e.ascent ? 'inicio.energia.consejo.medicoEntrena' : 'inicio.energia.consejo.medico')));
-        porque.append(el('h4', null, tx(en.musculos ? 'inicio.energia.deQueSale' : 'inicio.energia.deQueSaleSinEntreno')), detallesDeEnergia(e));
-        // De qué días sale cada parte (lo preguntaste el 5/11): el sueño, de anoche y de dos semanas; la comida, de la
-        // semana, porque un día malo no la baja; lo de hoy, de lo anotado hasta ahora.
-        const cuando = el('ul', 'in-energia-cuando');
-        ['sueno', 'comida', 'hoy', 'curva'].forEach((k) => cuando.appendChild(el('li', null, tx('inicio.energia.deCuando.' + k))));
-        porque.append(el('h4', null, tx('inicio.energia.deCuando.titulo')), cuando, el('p', 'in-energia-chico', tx('inicio.energia.estimacion')));
+        porque.append(explicacionDeEnergia(e), el('p', 'in-energia-chico in-energia-estimacion', tx('inicio.energia.estimacion')));
         porque.hidden = !s.energiaMas;
         const mas = boton('in-energia-mas', `<span>${tx(s.energiaMas ? 'inicio.energia.menos' : 'inicio.energia.mas')}</span>`, () => {
           s.energiaMas = !s.energiaMas;

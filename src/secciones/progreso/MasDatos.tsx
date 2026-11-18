@@ -15,7 +15,7 @@ import { Balance, Barras, Chispa, Columnas } from '../graficos/Graficos';
 import type { Persona } from '../persona';
 import { Aparece, BotonChico, Carta, Cifra, ComoSeCalcula, Nota, Parrafo } from '../tarjetas';
 import { Flecha } from './Plan';
-import type { U } from './unidades';
+import { conSignoFijo, fijo, type U } from './unidades';
 
 /** La fila que despliega lo de abajo. */
 export function MasDatos({ abierto, alTocar, children }: { abierto: boolean; alTocar: () => void; children: ReactNode }) {
@@ -67,7 +67,7 @@ export function Semanas({ p, hoy, comidas, ancho, u, numeros }: { p: Persona; ho
     <Carta titulo={t('progreso.graficos.semanas')}>
       <Text style={s.etiqueta}>{u.texto(t('progreso.graficos.semanasCambio'))}</Text>
       <Barras valores={lista.map((x) => x.cambio)} ancho={ancho} alto={54} />
-      <Valores valores={lista.map((x) => (x.cambio === null ? null : conSigno(x.cambio, 1)))} />
+      <Valores valores={lista.map((x) => (x.cambio === null ? null : conSignoFijo(x.cambio, 1)))} />
       {meta !== null && (
         <>
           <Text style={s.etiqueta}>{t('progreso.graficos.semanasComida')}</Text>
@@ -105,7 +105,7 @@ export function LasMedidas({ p, hoy, sistema, alMedir }: { p: Persona; hoy: Clav
                   <Chispa valores={historia} ancho={54} alto={18} />
                 </View>
                 <Text style={s.filaValor}>{`${numero(l.valor, 1)} ${l.unidad}`}</Text>
-                <Text style={[s.filaCambio, c !== null && c < 0 && s.baja, c !== null && c > 0 && s.sube]}>{c === null ? '' : `${conSigno(c, 1)} ${l.unidad}`}</Text>
+                <Text style={[s.filaCambio, c !== null && c < 0 && s.baja, c !== null && c > 0 && s.sube]}>{c === null ? '' : `${conSignoFijo(c, 1)} ${l.unidad}`}</Text>
               </View>
             );
           })}
@@ -113,7 +113,7 @@ export function LasMedidas({ p, hoy, sistema, alMedir }: { p: Persona; hoy: Clav
       ) : (
         <Parrafo>{t('progreso.sinMedidas')}</Parrafo>
       )}
-      {ratio !== null && <Parrafo>{t('progreso.cinturaAltura', { n: numero(ratio, 2) })}</Parrafo>}
+      {ratio !== null && <Parrafo>{t('progreso.cinturaAltura', { n: fijo(ratio, 2) })}</Parrafo>}
       {ultima && <Nota tenue>{t('progreso.medidasDel', { fecha: fechaDiaMes(ultima.fecha) })}</Nota>}
     </Carta>
   );
@@ -143,7 +143,7 @@ export function ElGasto({ p, u, abierto, alAbrir }: { p: Persona; u: U; abierto:
           <Parrafo>{t('progreso.controlTexto', { gasto: numero(k.gastoMedido), antes: numero(p.control.gastoAntes), ahora: numero(p.gasto) })}</Parrafo>
           <ComoSeCalcula abierto={abierto} alTocar={alAbrir}>
             <Parrafo>
-              {t('progreso.comoSeCalculaTexto', { promedio: numero(k.comidaPromedio ?? 0), dias: k.dias ?? 21, cambio: conSigno(u.enUnidad(k.cambioDeTendencia ?? 0), 1), unidad: u.unidad })}
+              {t('progreso.comoSeCalculaTexto', { promedio: numero(k.comidaPromedio ?? 0), dias: k.dias ?? 21, cambio: conSignoFijo(u.enUnidad(k.cambioDeTendencia ?? 0), 1), unidad: u.unidad })}
             </Parrafo>
           </ComoSeCalcula>
         </>

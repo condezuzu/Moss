@@ -510,7 +510,7 @@
   progreso = SeccionProgreso.crear(tel, Object.assign({}, opcionesDeSeccion, {
     // Arriba a la derecha del encabezado, la entrada a Ascent, que está arriba de Progreso; y el borde
     // de su planeta asomando arriba de todo, según lo arriba que esté el scroll.
-    marcaDeAscent: () => (ascent && ascentPrendida ? ascent.marcaDeProgreso() : null),
+    marcaDeAscent: () => (ascent ? ascent.marcaDeProgreso() : null),
     alPintar: () => { if (ascent) ascent.mirarArriba(); },
     comida,
     persona,
@@ -638,7 +638,8 @@
     movimientoReducido,
     repintarInicio: () => inicio.pintar(0),
     repintarProgreso: () => progreso.pintar(),
-    // Con Ascent apagada (CON_ASCENT), no se nombra: ni la entrada de Progreso ni el borde del planeta.
+    // Con Ascent apagada (CON_ASCENT), solo dice «Pronto» (17/11): la entrada de Progreso sin llevar a ningún lado, sin el
+    // borde del planeta ni el gesto, y su fila en Perfil.
     prendida: () => ascentPrendida,
   }));
   // Inicio y Progreso se pintaron antes de que existiera Ascent, y su invitación y su entrada salen de ahí.

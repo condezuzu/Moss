@@ -659,6 +659,8 @@ const SeccionPerfil = (() => {
           );
         }
       }
+      // Con combate, si compites por categoría de peso (lo mismo que pregunta el cuestionario).
+      if (tipos.includes('contacto')) conLlave('balanza', 'gris', tx('entreno.perfil.categoria'), !!e.categoriaDePeso, (si) => poner({ categoriaDePeso: si }));
       const viaje = e.viaje ?? LoQueConviene.VIAJE_DE_FABRICA;
       const conViaje = el('div');
       conViaje.append(
@@ -707,7 +709,7 @@ const SeccionPerfil = (() => {
       h.innerHTML = '';
       const cual = s.opciones;
       const cab = el('header', 'hb-cab');
-      cab.append(el('div', 'hb-asa'), el('h3', 'hb-titulo', tx('perfil.' + cual)), boton('hb-cerrar', icono('cerrar'), () => hoja.cerrar(), tx('comida.cerrar')));
+      cab.append(el('div', 'hb-asa'), el('h3', 'hb-titulo', tx(cual === 'pais' ? 'perfil.pais.titulo' : 'perfil.' + cual)), boton('hb-cerrar', icono('cerrar'), () => hoja.cerrar(), tx('comida.cerrar')));
       const cuerpo = el('div', 'pf-avisos');
       const lista = el('div', 'pf-opciones-lista');
       const opcion = (titulo, detalle, elegida, alTocar) => {
@@ -721,6 +723,12 @@ const SeccionPerfil = (() => {
       } else if (cual === 'corte') {
         Fechas.CORTES.forEach((c) => opcion(nombreDelCorte(c), c === Fechas.CORTE_DE_FABRICA ? tx('perfil.corteDeFabrica') : null, s.corte === c, () => { s.corte = c; }));
         cuerpo.append(el('p', 'pf-texto', tx('perfil.corteTexto')), lista);
+      } else if (cual === 'pais') {
+        // El país de los alimentos, aparte del idioma (17/11): sin elegir, el del teléfono (en la galería, Uruguay).
+        const nombres = tx('perfil.pais.nombres');
+        opcion(tx('perfil.pais.delTelefono'), nombres.UY, s.pais == null, () => { s.pais = null; });
+        Object.keys(nombres).sort((a, b) => nombres[a].localeCompare(nombres[b])).forEach((p) => opcion(nombres[p], null, s.pais === p, () => { s.pais = p; }));
+        cuerpo.append(el('p', 'pf-texto', tx('perfil.pais.texto')), lista);
       } else if (cual === 'base') {
         pintarBase(cuerpo);
       } else {
@@ -1427,7 +1435,7 @@ const SeccionPerfil = (() => {
      * apaga ahí mismo (6/11, para aprobar) no lleva flecha, que es de lo que abre otra pantalla: `interruptor`
      * (sí o no) muestra la llave, y `flecha: 'valor'` deja solo el valor. `esperando`: la ruedita en vez del valor.
      */
-    function filaDe({ clave, ico, color, titulo, sub, valor, punto, tipo, alTocar, flecha = true, interruptor, esperando }) {
+    function filaDe({ clave, ico, color, titulo, sub, valor, punto, tipo, alTocar, flecha = true, interruptor, esperando, pronto }) {
       const li = el('li');
       if (clave) li.dataset.fila = clave;
       // La fila que no estaba crece; si ya estaba, entra lo que cambió de ella.
@@ -1445,6 +1453,14 @@ const SeccionPerfil = (() => {
       }
       vistos.set('sub:' + titulo, !!sub);
       b.append(cuadro(ico, color), textos);
+      // Lo que todavía no está (Ascent apagada): su pastilla en vez del valor, sin flecha y sin tocar.
+      if (pronto) {
+        b.disabled = true;
+        b.style.cursor = 'default';
+        b.append(el('em', 'pf-pronto', pronto), el('span', 'sin-flecha'));
+        li.appendChild(b);
+        return li;
+      }
       if (interruptor != null) {
         // Toda la fila prende y apaga, como el interruptor de Ajustes; la llave se mueve en el toque.
         b.setAttribute('role', 'switch');
@@ -1524,8 +1540,8 @@ const SeccionPerfil = (() => {
       grupo('perfil.conexiones', [
         { ico: 'corazon', color: 'rosa', titulo: tx('perfil.salud'), valor: tx(s.sinSalud ? 'perfil.conectar' : 'perfil.conectada'), punto: !s.sinSalud, tipo: s.sinSalud ? 'accion' : 'ok', alTocar: () => { s.sinSalud = !s.sinSalud; pintar(); } },
         { ico: opciones.sinReloj() ? 'telefono' : 'reloj3', color: 'azul', titulo: tx('perfil.aparatos.titulo'), sub: u.plural('perfil.aparatos.noches', noches), valor: aparato, alTocar: abrirAparatos },
-        // Lleva a la sección de Ascent: ahí se vincula y se ve lo de las dos.
-        conAscent() && (opciones.vinculada()
+        // Lleva a la sección de Ascent: ahí se vincula y se ve lo de las dos. Apagada (17/11), solo dice «Pronto».
+        !conAscent() ? { clave: 'ascent', ico: 'planeta', color: 'ascent', titulo: tx('perfil.ascent'), pronto: tx('ascent.pronto.valor') } : (opciones.vinculada()
           ? { ico: 'planeta', color: 'ascent', titulo: tx('perfil.ascent'), valor: tx('perfil.vinculada'), punto: true, tipo: 'ok', alTocar: opciones.abrirAscent }
           : { ico: 'planeta', color: 'ascent', titulo: tx('perfil.ascent'), sub: tx('perfil.mini.ascent'), valor: tx('perfil.vincular'), tipo: 'accion', alTocar: opciones.abrirAscent }),
       ]);
@@ -1549,6 +1565,8 @@ const SeccionPerfil = (() => {
         { clave: 'unidades', ico: 'cinta', color: 'gris', titulo: tx('perfil.unidades'), valor: tx(s.sistema === 'imperial' ? 'perfil.imperial' : 'perfil.metrico'), flecha: 'valor', alTocar: () => { if (opciones.haptico) opciones.haptico('suave'); s.sistema = s.sistema === 'imperial' ? 'metrico' : 'imperial'; pintar(); } },
         // El idioma es el del teléfono; en la galería, el botón de idioma.
         { ico: 'globo', color: 'azul', titulo: tx('perfil.idioma'), valor: tx('perfil.idiomaDelTelefono'), alTocar: () => { const otro = document.querySelector('#s-idioma button[aria-pressed="false"]'); if (otro) otro.click(); } },
+        // El país de los alimentos, aparte del idioma (17/11): los nombres de cada lugar y lo que se vende ahí.
+        { clave: 'pais', ico: 'comida', color: 'salvia', titulo: tx('perfil.pais.titulo'), valor: s.pais ? tx('perfil.pais.nombres.' + s.pais) : tx('perfil.pais.delTelefono'), alTocar: () => abrirOpciones('pais') },
         { ico: 'amanecer', color: 'oro', titulo: tx('perfil.corte'), valor: nombreDelCorte(s.corte), alTocar: () => abrirOpciones('corte') },
         { ico: 'estrella', color: 'violeta', titulo: tx('perfil.calidad'), valor: tx('perfil.calidades.' + (s.calidad || 'automatica')), alTocar: () => abrirOpciones('calidad') },
         { ico: 'campana', color: 'rosa', titulo: tx('perfil.recordatorios'), valor: tx(s.avisos.dormir || s.avisos.comidas.length || Object.keys(s.avisos.horario).length || s.avisos.pesarse

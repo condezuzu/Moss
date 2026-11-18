@@ -5,9 +5,10 @@
 // «sin déficit» no aparece nada.
 
 import type { Comida } from './comidas';
-import type { Deporte, PartidoDicho, SesionDicha } from './cuestionario';
+import { deportesDe, sesionesDeUnDia, tipoDeSesion, type Deporte, type PartidoDicho, type SesionDicha } from './cuestionario';
 import { diaDeLaSemana, diasEntre, type ClaveDia, type DiaSemana } from './fechas';
 import type { Macros } from './metas';
+import type { Carrera } from './segunElDeporte';
 
 /** Lo suave (yoga, estirar, caminar un rato) no cambia lo que se come. */
 export type TipoDeSesion = 'fuerza' | 'resistencia' | 'mixta' | 'suave';
@@ -31,12 +32,21 @@ export type Entreno = {
   sesiones?: SesionDicha[];
   partidos?: PartidoDicho | null;
   categoriaDePeso?: boolean | null;
+  /** La próxima carrera, de Perfil › Entrenamiento: dos días antes de una larga, su aviso (loQueConviene.ts). */
+  carrera?: Carrera | null;
 };
 
-/** Las sesiones de un día: la del horario, si ese día se entrena. */
+/**
+ * Las sesiones de un día, por la hora. Con los deportes del cuestionario, la de cada uno que toca ese día: puede
+ * haber dos (las pesas a la mañana y el partido a la noche), mientras el horario siga siendo el que salió de ellas
+ * (deportesDe); si se cambió a mano en Perfil, o es el horario de antes, la del horario.
+ */
 export function sesionesDelDia(entreno: Entreno | null, dia: ClaveDia): Sesion[] {
   if (!entreno || !entreno.dias.includes(diaDeLaSemana(dia))) return [];
-  return [{ inicio: entreno.hora, minutos: entreno.minutos, tipo: entreno.tipo }];
+  // «Mixta» puesta a mano no dice qué deportes son (deportesDe calla), pero el horario vale igual.
+  const deCadaDeporte = sesionesDeUnDia(deportesDe(entreno), diaDeLaSemana(dia));
+  if (!deCadaDeporte.length) return [{ inicio: entreno.hora, minutos: entreno.minutos, tipo: entreno.tipo }];
+  return deCadaDeporte.map((s) => ({ inicio: s.hora, minutos: s.minutos, tipo: tipoDeSesion([s.tipo]) ?? entreno.tipo }));
 }
 
 /**

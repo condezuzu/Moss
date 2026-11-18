@@ -1687,6 +1687,34 @@ const pasos = {
     if (await pagina.locator('.as-invita').count()) console.log('! vinculada, siguió la invitación');
     await ascent('vincular', false);
     await pagina.waitForTimeout(600);
+    // Apagada (CON_ASCENT), Ascent solo dice «Pronto» (17/11): la entrada de Progreso, sin el borde del planeta ni el
+    // gesto, su globo al tocarla y la fila de Perfil › Conexiones.
+    await pagina.evaluate(() => window.__ascentEnPerfil(false));
+    await pestana(2);
+    await pagina.waitForTimeout(500);
+    await foto('pronto-progreso');
+    await pagina.click('.as-entrada');
+    await pagina.mouse.move(1, 1);
+    await pagina.waitForTimeout(600);
+    if (!(await ascentCerrada())) console.log('! apagada, tocar la entrada abrió Ascent');
+    if (!(await pagina.locator('.as-pronto-globo.abierto').count())) console.log('! apagada, tocar la entrada no abrió el globo');
+    await foto('pronto-globo');
+    await pagina.mouse.click(200, 520);
+    await pagina.waitForTimeout(400);
+    if (await pagina.locator('.as-pronto-globo').count()) console.log('! tocar afuera no cerró el globo de «Pronto»');
+    await pagina.mouse.move(200, 150);
+    await pagina.mouse.down();
+    await pagina.mouse.move(200, 480, { steps: 12 });
+    await pagina.mouse.up();
+    await pagina.waitForTimeout(600);
+    if (!(await ascentCerrada())) console.log('! apagada, arrastrar para abajo abrió Ascent');
+    await pagina.mouse.move(1, 1);
+    await pestana(5);
+    await pagina.waitForTimeout(500);
+    await foto('pronto-perfil');
+    await pagina.evaluate(() => window.__ascentEnPerfil(true));
+    await pestana(2);
+    await pagina.waitForTimeout(400);
   },
   // Ascent, arriba de Progreso: la entrada y el borde del planeta, el gesto a mitad de camino (con el dedo
   // todavía abajo) para abrirla y para volver, sin vincular, la hoja de vincular, vinculada con los siete días

@@ -371,9 +371,9 @@ function Quitar({ que, alTocar }: { que: string; alTocar: () => void }) {
       style={({ pressed }) => [st.quitar, pressed && st.apretado]}
       accessibilityRole="button"
       accessibilityLabel={t('comida.quitarAlimento', { alimento: que })}
-      hitSlop={margenDeToque(28)}
+      hitSlop={margenDeToque(32)}
     >
-      <Icono nombre="xmark" tam={12} color="rgba(239, 230, 207, 0.55)" peso="semibold" />
+      <Icono nombre="xmark" tam={12} color="rgba(239, 230, 207, 0.62)" peso="semibold" />
     </Pressable>
   );
 }
@@ -401,7 +401,7 @@ const st = StyleSheet.create({
   buscar: { fontFamily: letras.textoMedio, fontSize: 12.5, color: colores.oroClaro },
   pasos: { flexDirection: 'row', gap: 4 },
   paso: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
-  quitar: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  quitar: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.16)' },
   pregunta: { marginTop: 2, marginBottom: 6, fontFamily: letras.texto, fontSize: 13, color: colores.oroClaro },
   opciones: { gap: 8, paddingBottom: 8, paddingRight: 8 },
   despues: { height: 34, alignItems: 'center', justifyContent: 'center' },

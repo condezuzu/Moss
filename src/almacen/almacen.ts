@@ -18,10 +18,11 @@ import { controlConCuidados, cuidadosDe, reglasDe, sinDeficitDe, type CuidadosGu
 import { archivar, cantidadesPorDia, habitosDelDia, type Habito } from '@/dominio/habitos';
 import { logrosNuevos, type Logro } from '@/dominio/logros';
 import {
-  edadDe, metaManual, metaPara, metaRepartida, metasIniciales, motivoParaNo, pesoMinimoSano, type Cuestionario, type Macros, type MetaGuardada, type Perfil,
+  edadDe, metaManual, metaPara, metaRepartida, metasIniciales, motivoParaNo, objetivoPermitido, pesoMinimoSano, type Cuestionario, type Eleccion, type Macros, type MetaGuardada, type Perfil,
 } from '@/dominio/metas';
 import { limpiarNombre, type Nombre } from '@/dominio/nombre';
 import { diaDeLosPendientes, limpiarPendiente, pendientesDe, pendientesLlenos, pendientesVigentes, type Pendiente } from '@/dominio/pendientes';
+import { pctParaLaMeta, plazoElegidoDe, type PlazoElegido } from '@/dominio/progreso';
 import { adaptarRegistros, PREFERENCIAS_DE_FABRICA, sugerenciasQueSobran, type ComidaPlaneada, type Preferencias } from '@/dominio/plan';
 import { horasDeSiempre } from '@/dominio/recordatorios';
 import {
@@ -93,6 +94,10 @@ export type Estado = MapasDeComida & {
    * en que hay que hacerlo. Los de la última semana; quedan en el teléfono.
    */
   pendientes: Pendiente[];
+  /** El ritmo o la fecha elegidos en Progreso › Ritmo y plazo (D35); sin elegir, null. Queda en el teléfono. */
+  plazo: PlazoElegido | null;
+  /** El país de los alimentos (ISO 3166-1), elegido en Perfil aparte del idioma; sin elegir, el del teléfono. Queda en el teléfono. */
+  paisDeAlimentos: string | null;
   /** De cuál aparato sale la noche (su id en Salud), si se eligió en Perfil › Aparatos; sin elegir, la automática. Queda en el teléfono. */
   fuenteDelSueno: string | null;
   /** Los números de la comida (las calorías y los gramos), o solo las figuras y las barras. Queda en el teléfono. */
@@ -180,6 +185,8 @@ const DESAYUNOS = 'desayunos';
 /** Cuántos días de despertares y de respuestas del desayuno se guardan. */
 const DIAS_DEL_DESPERTAR = 14;
 const PENDIENTES = 'pendientes';
+const PLAZO = 'plazo';
+const PAIS = 'paisDeAlimentos';
 const FUENTE_DEL_SUENO = 'fuenteDelSueno';
 const NUMEROS = 'numeros';
 const KCAL = 'kcal';
@@ -290,7 +297,10 @@ function leerEntreno(texto: string | undefined): Entreno | null {
     if (!tipos.length || !sesiones.length) return entreno;
     const p = x.partidos;
     const partidos = p && Number.isInteger(p.dia) ? { dia: dias([p.dia])[0] ?? 6, hora: typeof p.hora === 'number' ? p.hora : null } : null;
-    return { ...entreno, tipos, sesiones, partidos, categoriaDePeso: typeof x.categoriaDePeso === 'boolean' ? x.categoriaDePeso : null };
+    // La próxima carrera, de Perfil › Entrenamiento.
+    const c = x.carrera;
+    const carrera = c && typeof c.fecha === 'string' && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(c.fecha) && typeof c.minutos === 'number' && c.minutos > 0 ? { fecha: c.fecha, minutos: c.minutos } : null;
+    return { ...entreno, tipos, sesiones, partidos, categoriaDePeso: typeof x.categoriaDePeso === 'boolean' ? x.categoriaDePeso : null, ...(carrera ? { carrera } : {}) };
   } catch {
     return null;
   }
@@ -402,7 +412,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: diaLogico(ahora(), CORTE_DE_FABRICA, zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, nombre: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
-    recordatorios: null, avisos: {}, calidad: null, uso: [], despertares: {}, desayunos: {}, fuenteDelSueno: null, numeros: true, kcal: 'luna', entreno: null, respuestas: null, cuidados: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, suenoRehecho: false, necesidad: null, pendientes: [], semilla: '',
+    recordatorios: null, avisos: {}, calidad: null, uso: [], despertares: {}, desayunos: {}, fuenteDelSueno: null, numeros: true, kcal: 'luna', entreno: null, respuestas: null, cuidados: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, suenoRehecho: false, necesidad: null, pendientes: [], plazo: null, paisDeAlimentos: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -508,7 +518,7 @@ export function crearAlmacen(op: Opciones) {
       perfil: g.perfil,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), despertares: porDia(g.ajustes[DESPERTARES], esDespertar), desayunos: porDia(g.ajustes[DESAYUNOS], esRespuesta), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', kcal: ESTILOS_DE_KCAL.find((k) => k === g.ajustes[KCAL]) ?? 'luna', entreno: leerEntreno(g.ajustes[ENTRENO]), respuestas: respuestasDe(leerAvance(g.ajustes[RESPUESTAS])), cuidados: cuidadosDe(leerAvance(g.ajustes[CUIDADOS])), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), suenoRehecho: g.ajustes[SUENO_REHECHO] === 'si', necesidad: necesidadDe(g.ajustes[NECESIDAD]), pendientes: pendientesVigentes(pendientesDe(leerAvance(g.ajustes[PENDIENTES])), hoy), listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), despertares: porDia(g.ajustes[DESPERTARES], esDespertar), desayunos: porDia(g.ajustes[DESAYUNOS], esRespuesta), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', kcal: ESTILOS_DE_KCAL.find((k) => k === g.ajustes[KCAL]) ?? 'luna', entreno: leerEntreno(g.ajustes[ENTRENO]), respuestas: respuestasDe(leerAvance(g.ajustes[RESPUESTAS])), cuidados: cuidadosDe(leerAvance(g.ajustes[CUIDADOS])), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), suenoRehecho: g.ajustes[SUENO_REHECHO] === 'si', necesidad: necesidadDe(g.ajustes[NECESIDAD]), pendientes: pendientesVigentes(pendientesDe(leerAvance(g.ajustes[PENDIENTES])), hoy), plazo: plazoElegidoDe(leerAvance(g.ajustes[PLAZO])), paisDeAlimentos: /^[A-Z]{2}$/.test(g.ajustes[PAIS] ?? '') ? g.ajustes[PAIS] : null, listo: true }, true);
     revisarControl();
   }
 
@@ -550,10 +560,41 @@ export function crearAlmacen(op: Opciones) {
     const cambiaLaMeta = perfil.objetivo !== antes.objetivo || perfil.ritmo !== antes.ritmo || perfil.estilo !== antes.estilo || !!perfil.sinDeficit !== !!antes.sinDeficit;
     if (!ultima || ultima.motivo === 'manual' || pesoKg === undefined || !cambiaLaMeta) return false;
     const c = { edad: edadDe(perfil, estado.hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo, sinDeficit: perfil.sinDeficit };
-    const meta: MetaGuardada = { ...metaPara(ultima.gasto, c, perfil.estilo), desde: estado.hoy, gasto: ultima.gasto, motivo: 'objetivo', momento: momento() };
+    // Con un ritmo elegido en Progreso (otro objetivo u otro ritmo ya lo soltaron), el reparto nuevo lo sigue.
+    const meta: MetaGuardada = { ...metaPara(ultima.gasto, c, perfil.estilo, estado.plazo ? eleccionDeAhora() : undefined), desde: estado.hoy, gasto: ultima.gasto, motivo: 'objetivo', momento: momento() };
     guardar((r) => r.guardarMeta(meta));
     ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
     return true;
+  }
+
+  /**
+   * Lo que la meta sigue de lo elegido (metas.ts, Eleccion): la proteína del cuestionario y el ritmo, el de
+   * Progreso › Ritmo y plazo si se eligió ahí (D35) o, si no, el de la fecha del cuestionario.
+   */
+  function eleccionDeAhora(): Eleccion | undefined {
+    const delCuestionario = estado.respuestas?.eleccion;
+    const { perfil, plazo } = estado;
+    const pesoKg = estado.pesos[estado.pesos.length - 1]?.kg;
+    const objetivo = perfil ? objetivoPermitido(perfil) : 'mantener';
+    if (!perfil || !plazo || objetivo === 'mantener' || pesoKg === undefined) return delCuestionario;
+    return { proteinaPorKg: delCuestionario?.proteinaPorKg ?? null, pct: pctParaLaMeta(objetivo, plazo.pct, pesoKg, edadDe(perfil, estado.hoy)) };
+  }
+
+  /**
+   * La meta desde hoy con el ritmo elegido en Progreso (o, al soltarlo, con el del perfil) y el gasto que se venía
+   * midiendo. Con las metas a mano quedan las que había; con cuidados marcados, la pone el control con su regla.
+   */
+  function metaDelPlazo() {
+    const { perfil } = estado;
+    const ultima = estado.metas[estado.metas.length - 1];
+    const pesoKg = estado.pesos[estado.pesos.length - 1]?.kg;
+    if (!perfil || !ultima || ultima.motivo === 'manual' || pesoKg === undefined || estado.cuidados?.marcados.length) return;
+    const c = { edad: edadDe(perfil, estado.hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo, sinDeficit: perfil.sinDeficit };
+    const metas = metaPara(ultima.gasto, c, perfil.estilo, eleccionDeAhora());
+    if (metas.kcal === ultima.kcal && metas.proteina === ultima.proteina && metas.carbohidratos === ultima.carbohidratos && metas.grasas === ultima.grasas) return;
+    const meta: MetaGuardada = { ...metas, desde: estado.hoy, gasto: ultima.gasto, motivo: 'objetivo', momento: momento() };
+    guardar((r) => r.guardarMeta(meta));
+    ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
   }
 
   /**
@@ -581,7 +622,10 @@ export function crearAlmacen(op: Opciones) {
     if (peso) guardar((r) => r.guardarPeso(peso));
     cambiar({ perfil, pesos: peso ? [...estado.pesos.filter((p) => p.fecha !== peso.fecha), peso].sort(porFecha((p) => p.fecha)) : estado.pesos }, false);
     if (nuevo) {
-      const { respuestas, cuidados, entreno } = nuevo;
+      const { respuestas, cuidados } = nuevo;
+      // La próxima carrera es de Perfil › Entrenamiento: el cuestionario no la pregunta, y mientras siga corriendo, queda.
+      const carrera = estado.entreno?.carrera;
+      const entreno = nuevo.entreno && carrera && nuevo.entreno.tipos?.includes('resistencia') ? { ...nuevo.entreno, carrera } : nuevo.entreno;
       guardar((r) => r.guardarAjuste(RESPUESTAS, JSON.stringify(respuestas)));
       guardar((r) => r.guardarAjuste(CUIDADOS, JSON.stringify(cuidados)));
       guardar((r) => r.guardarAjuste(ENTRENO, entreno ? JSON.stringify(entreno) : ''));
@@ -639,7 +683,7 @@ export function crearAlmacen(op: Opciones) {
     const pesoKg = pesos[pesos.length - 1]?.kg;
     if (diaDelControl <= ultima.desde || pesoKg === undefined) return;
     // Lo elegido en el cuestionario (la proteína del nivel y el ritmo de la fecha) y, con cuidados, su regla: en pausa, nada.
-    const eleccion = estado.respuestas?.eleccion;
+    const eleccion = eleccionDeAhora();
     const entrada = {
       hoy, pesadas: pesos, comidas: comidasParaElControl(estado.registros.values()), gastoAnterior: ultima.gasto, metasAnteriores: soloMacros(ultima),
       perfil: { edad: edadDe(perfil, hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo, sinDeficit: perfil.sinDeficit }, estilo: perfil.estilo,
@@ -992,8 +1036,37 @@ export function crearAlmacen(op: Opciones) {
         guardar((r) => r.guardarAjuste(RESPUESTAS, JSON.stringify(respuestas)));
         cambiar({ respuestas }, false);
       }
+      // …ni lo elegido en Ritmo y plazo.
+      if (estado.plazo && (perfil.objetivo !== antes.objetivo || perfil.ritmo !== antes.ritmo)) {
+        guardar((r) => r.guardarAjuste(PLAZO, ''));
+        cambiar({ plazo: null }, false);
+      }
       // El reparto de la semana cambia la meta de hoy, y con eso la estrella de las calorías.
       if (!metaDeLaEstrategia(antes, perfil) && 'semana' in cambios) cambiar(alDia(estado).estado, false);
+    },
+    /**
+     * El ritmo o la fecha elegidos en Progreso › Ritmo y plazo (D35): quedan en el teléfono y la meta los sigue
+     * desde hoy y en cada control. Con null vuelve el ritmo del perfil, y se suelta también la fecha del cuestionario.
+     */
+    /** El país de los alimentos, elegido en Perfil; null vuelve al del teléfono. */
+    ponerPaisDeAlimentos(pais: string | null) {
+      const elegido = pais && /^[A-Z]{2}$/.test(pais) ? pais : null;
+      guardar((r) => r.guardarAjuste(PAIS, elegido ?? ''));
+      cambiar({ paisDeAlimentos: elegido }, false);
+    },
+    ponerPlazo(plazo: PlazoElegido | null) {
+      const antes = estado.plazo;
+      const r0 = estado.respuestas;
+      const delCuestionario = !!r0 && (r0.fecha !== null || r0.eleccion.pct != null);
+      if (plazo ? antes?.pct === plazo.pct && antes.fecha === plazo.fecha : !antes && !delCuestionario) return;
+      guardar((r) => r.guardarAjuste(PLAZO, plazo ? JSON.stringify(plazo) : ''));
+      cambiar({ plazo }, false);
+      if (!plazo && r0 && delCuestionario) {
+        const respuestas: RespuestasGuardadas = { ...r0, fecha: null, eleccion: { ...r0.eleccion, pct: null } };
+        guardar((r) => r.guardarAjuste(RESPUESTAS, JSON.stringify(respuestas)));
+        cambiar({ respuestas }, false);
+      }
+      metaDelPlazo();
     },
     /**
      * Tus datos, desde Perfil: el sexo, el año de nacimiento, la altura y la actividad. Las metas no

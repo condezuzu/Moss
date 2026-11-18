@@ -115,7 +115,8 @@ export const st = StyleSheet.create({
   heroe: { backgroundColor: 'rgba(13, 24, 60, 0.82)' },
   cab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, minHeight: 26 },
   titulo: { flexShrink: 1, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.5, textTransform: 'uppercase', color: SN.texto },
-  chip: { overflow: 'hidden', paddingHorizontal: 8, paddingVertical: 5, borderRadius: 999, fontFamily: letras.textoMedio, fontSize: 10, letterSpacing: 0.6, color: colores.oroClaro, backgroundColor: 'rgba(232, 196, 106, 0.1)' },
+  // 20 puntos de alto, como en la galería: sin el alto de línea, el texto de 10 los llevaba a 25.
+  chip: { overflow: 'hidden', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, fontFamily: letras.textoMedio, fontSize: 10, lineHeight: 12, letterSpacing: 0.6, color: colores.oroClaro, backgroundColor: 'rgba(232, 196, 106, 0.1)' },
   chip_alta: { color: '#b9d6fb', backgroundColor: 'rgba(120, 170, 240, 0.16)' },
   chip_media: {},
   chip_baja: { color: SN.texto, backgroundColor: 'rgba(150, 178, 240, 0.12)' },
@@ -123,7 +124,7 @@ export const st = StyleSheet.create({
   chip_enCamino: { color: '#b9d6fb', backgroundColor: 'rgba(120, 170, 240, 0.16)' },
   chip_floja: { color: SN.texto, backgroundColor: 'rgba(150, 178, 240, 0.14)' },
   chip_despacio: {},
-  ejemplo: { overflow: 'hidden', paddingHorizontal: 8, paddingVertical: 5, borderRadius: 999, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(239, 230, 207, 0.32)', backgroundColor: 'rgba(239, 230, 207, 0.1)', fontFamily: letras.textoMedio, fontSize: 10, letterSpacing: 0.8, color: colores.pergamino },
+  ejemplo: { overflow: 'hidden', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(239, 230, 207, 0.32)', backgroundColor: 'rgba(239, 230, 207, 0.1)', fontFamily: letras.textoMedio, fontSize: 10, lineHeight: 12, letterSpacing: 0.8, color: colores.pergamino },
   progreso: { marginTop: 10, paddingTop: 10, paddingHorizontal: 12, paddingBottom: 11, borderRadius: 12, backgroundColor: 'rgba(150, 178, 240, 0.09)', gap: 5 },
   progresoFila: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   progresoCuenta: { flexShrink: 1, fontFamily: letras.numeroMedio, fontSize: 12.5, color: colores.pergamino, fontVariant: ['tabular-nums'] },

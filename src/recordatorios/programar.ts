@@ -15,17 +15,17 @@ import {
   avisosDeLaSemana, cuandoSuena, esDeEntrenar, horasDeSueno, horaDeReloj, textoDelAviso, tituloDelAviso, type Aviso, type Avisos, type Evento, type Notificacion, type Sueno as SuenoDeAvisos,
 } from '@/dominio/avisos';
 import type { Comida } from '@/dominio/comidas';
-import { apagaLoQueConviene } from '@/dominio/cuidados';
+import { apagaLoQueConviene, apagaLoQueFalta, metaDeAgua, type Reglas } from '@/dominio/cuidados';
 import { claveDeMarca } from '@/dominio/dias';
 import { diaDeLaSemana, diaLogico, diasEntre, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
-import { loQueConviene, QUE_CONVIENE, type DeLoQueConviene } from '@/dominio/loQueConviene';
+import { delDeporte, loQueConviene, QUE_CONVIENE, type DeLoQueConviene } from '@/dominio/loQueConviene';
 import { periodoDeMelatonina } from '@/dominio/melatonina';
 import { edadDe } from '@/dominio/metas';
 import { pendientesPara } from '@/dominio/pendientes';
 import { avisosDelDespertar, deFabrica, RESPUESTAS_DEL_DESAYUNO, type DeSigueElDespertar, type RespuestaDelDesayuno } from '@/dominio/sigueElDespertar';
-import { horasDeSiempre } from '@/dominio/recordatorios';
+import { DIAS, horasDeSiempre } from '@/dominio/recordatorios';
 import { aguaDelDia, recientes, totalDelDia, vigentes } from '@/dominio/registros';
-import { bajoAlFinal, horaDeLaTarde, loQueFaltaHoy, type FaltaConHora } from '@/dominio/loQueFalta';
+import { AGUA_META_ML, bajoAlFinal, horaDeLaTarde, loQueFaltaHoy, QUE_FALTA, type FaltaConHora } from '@/dominio/loQueFalta';
 import { habitualDe, margenParaDormirte } from '@/dominio/sinReloj';
 import { avisoDePrueba, avisosHasta } from '@/dominio/premium';
 import { despiertoDeLaNoche, deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
@@ -121,12 +121,24 @@ function deudaDeAyer(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'noches' | 'ne
   return s.deEjemplo ? null : (deudaDeSueno(ultimasNoches(s.noches, sumarDias(e.hoy, -1), 14), s.necesidad)?.minutos ?? null);
 }
 
+/** Los cuidados de salud marcados, con sus reglas de hoy (cuidados.ts); sin ninguno, o antes del cuestionario, null. */
+function cuidadosDe(e: Pick<Estado, 'cuidados' | 'perfil' | 'pesos' | 'hoy'>): Reglas | null {
+  const reglas = reglasDeCuidados(e);
+  return reglas?.cuidados.length ? reglas : null;
+}
+
+/** Lo de fábrica y, mientras no lo hayas elegido, lo que un cuidado prende: con reflujo, la última comida grande. */
+function conLoDeFabrica(avisos: Avisos, horaDeComida: (c: Comida) => number, cuidados: Reglas | null): Avisos {
+  const a = deFabrica(avisos, horaDeComida);
+  return cuidados?.prender.includes('ultimaComida') && !a.ultimaComida ? { ...a, ultimaComida: { encendido: true } } : a;
+}
+
 /**
  * Los avisos como suenan: lo elegido y, en lo que no se tocó, lo de fábrica del día que sigue tu despertar (la deuda,
  * el horario, la melatonina, las revoluciones, las luces, la hora de dormir y el máximo de diez). Perfil muestra esto.
  */
-export function avisosDe(e: Pick<Estado, 'avisos' | 'hoy' | 'registros'>): Avisos {
-  return deFabrica(e.avisos, horasDeComida(e));
+export function avisosDe(e: Pick<Estado, 'avisos' | 'hoy' | 'registros' | 'cuidados' | 'perfil' | 'pesos'>): Avisos {
+  return conLoDeFabrica(e.avisos, horasDeComida(e), cuidadosDe(e));
 }
 
 /** La cafeína de una toma, si se anotó al menos tres de los últimos 14 días: la mediana, en mg. */
@@ -191,6 +203,7 @@ export function faltasDeHoy(e: Para, hoy: ClaveDia, ahora: number, horaDeComida:
   // El agua, solo para quien la suele anotar: al menos tres días de los últimos siete, u hoy.
   const conAgua = new Set(vigentes(e.agua.values()).filter((x) => x.dia >= sumarDias(hoy, -7)).map((x) => x.dia));
   const tomasHoy = vigentes(e.agua.values()).filter((x) => x.dia === hoy);
+  const cuidados = cuidadosDe(e);
   return loQueFaltaHoy({
     dia: hoy, ahora, meta, comido: totalDelDia(registros, hoy, true), comidoALaTarde: totalDelDia(registros.filter((r) => r.planificado || yaAnotado(r)), hoy, true), anotadas,
     planeadas: new Set(registros.filter((r) => r.planificado).map((r) => r.comida)),
@@ -201,7 +214,11 @@ export function faltasDeHoy(e: Para, hoy: ClaveDia, ahora: number, horaDeComida:
       : null,
     bajoAyer: metaDeAyer ? bajoAlFinal(metaDeAyer, totalDelDia(e.registros.values(), ayer, false)) : [],
     propios: recientes(e.registros.values(), 30).filter((i) => i.fuente !== 'rapida').map((i) => ({ nombre: i.nombre, proteina: i.valores.proteina, kcal: i.valores.kcal, azucares: i.valores.azucares, alcohol: i.valores.alcohol })),
-    dieta: e.perfil?.comer?.dieta, alergias: e.perfil?.comer?.alergias, sinDeficit: !!e.perfil?.sinDeficit, sinNumeros: !e.numeros,
+    dieta: e.perfil?.comer?.dieta, alergias: e.perfil?.comer?.alergias, sinNumeros: !e.numeros,
+    // Con cuidados marcados, cada cosa según lo que apagan, y el agua con su meta; con el «sin déficit» de antes, nada.
+    ...(cuidados
+      ? { apagado: QUE_FALTA.filter((q) => apagaLoQueFalta(q, cuidados)), metaDeAgua: metaDeAgua(cuidados, AGUA_META_ML), reflujo: cuidados.cuidados.includes('reflujo') }
+      : { sinDeficit: !!e.perfil?.sinDeficit }),
   });
 }
 
@@ -277,10 +294,13 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   // Sin acceso (venció o canceló) no suena nada: lo elegido queda, y vuelve al suscribirse.
   if (!hayPremium()) return;
   const horaDeComida = horasDeComida(e);
-  // Lo que un cuidado de salud apaga de lo que conviene (Cuidados) no suena, aunque esté prendido.
-  const reglas = reglasDeCuidados(e);
-  const apagados = reglas ? Object.fromEntries(QUE_CONVIENE.filter((q) => apagaLoQueConviene(q, reglas)).map((q) => [q, { encendido: false }])) : {};
-  const ajustes: Avisos = { ...deFabrica(e.avisos, horaDeComida), ...apagados, comidas: e.recordatorios ?? [] };
+  // Lo que un cuidado de salud apaga (Cuidados) no suena, aunque esté prendido: de lo que conviene y pesarte.
+  const cuidados = cuidadosDe(e);
+  const apagados: Avisos = cuidados ? {
+    ...Object.fromEntries(QUE_CONVIENE.filter((q) => apagaLoQueConviene(q, cuidados)).map((q) => [q, { encendido: false }])),
+    ...(cuidados.apagar.includes('pesarse') ? { pesarse: { encendido: false } } : {}),
+  } : {};
+  const ajustes: Avisos = { ...conLoDeFabrica(e.avisos, horaDeComida, cuidados), ...apagados, comidas: e.recordatorios ?? [] };
   const finDePrueba = avisoDePrueba(suscripcionActual(), Date.now());
   // Cancelada, nada después de que vence: sin acceso no suena, aunque Moss no se abra para borrarlo.
   const hasta = avisosHasta(suscripcionActual(), accesoActual());
@@ -300,12 +320,16 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   const sueno = suenoDelDia(e);
   // El control es el día que se eligió o, sin elegir, el de la primera meta (como en el almacén).
   const diaDelControl = e.perfil?.diaDelControl ?? (e.metas[0] ? diaDeLaSemana(e.metas[0].desde) : undefined);
+  // Según el deporte: los partidos de cada semana (el de mañana también cuenta para el último día) y la próxima carrera.
+  const deporte = delDeporte(e.entreno, sumarDias(hoy, -1), sumarDias(hoy, DIAS));
   // Lo que conviene y lo del día que sigue tu despertar, de cada día; hoy, con lo que ya anotaste e hiciste.
   const comun: Omit<DeLoQueConviene & DeSigueElDespertar, 'dia'> = {
     ajustes, sueno, horaDeComida, diaDelControl, deudaAntes: deudaDeAyer(e), sinNumeros: !e.numeros,
     viaje: e.entreno?.viaje, pesoKg: e.pesos[e.pesos.length - 1]?.kg ?? null, ...(e.perfil ? { edad: edadDe(e.perfil, hoy) } : {}),
     comidasHabituales: comidasHabituales(e.registros.values(), hoy), cafeinaPorToma: cafeinaPorToma(e),
-    sinDeficit: !!e.perfil?.sinDeficit, reflujo: !!reglas?.cuidados.includes('reflujo'),
+    partidos: deporte.partidos, carrera: deporte.proximaCarrera,
+    // Con cuidados marcados, lo que apagan ya está apagado arriba; con el «sin déficit» de antes, todo lo de comer.
+    ...(cuidados ? { sinLoDeEntrenar: cuidados.apagar.includes('antesDeEntrenar'), reflujo: cuidados.cuidados.includes('reflujo') } : { sinDeficit: !!e.perfil?.sinDeficit }),
   };
   const entrenadoHoy = e.habitos.filter(esDeEntrenar).map((h) => e.marcas.get(claveDeMarca(h.id, hoy))).find((m) => m?.hecho);
   const deHoyParaConviene = {

@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import type { Estado } from '@/almacen/almacen';
 import { deportesDe, partesRedondas } from '@/dominio/cuestionario';
-import { conObjetivo, DE_FABRICA, desdeLoGuardado, lugarDe, metaDeAhora, objetivoPosible, paraGuardar, preguntasDe, sinDeficit, type Contestado } from './respuestas';
+import { conObjetivo, DE_FABRICA, desdeLoGuardado, lugarDe, metaDeAhora, movimientoUsado, objetivoPosible, paraGuardar, preguntasDe, sinDeficit, type Contestado } from './respuestas';
 
 const HOY = '2026-11-16';
 const el: Contestado = { ...DE_FABRICA, sexo: 'm' };
@@ -19,6 +19,20 @@ describe('las preguntas que aparecen', () => {
     expect(preguntasDe({ ...el, cuidados: ['reflujo'] })).not.toContain('grasa');
     expect(preguntasDe({ ...el, entreno: { ...el.entreno, tipos: [] } })).not.toContain('cuando');
     expect(preguntasDe(conObjetivo(el, 'subir'))).toContain('experiencia');
+  });
+});
+
+describe('los pasos de Salud sugieren cuánto te mueves', () => {
+  const conPasos: Contestado = { ...el, salud: true, pasosDeSalud: 12500, movimientoSugerido: 'fisico', movimiento: 'fisico' };
+
+  it('la sugerencia vale mientras no se cambie, corregida con lo que entrenas', () => {
+    expect(movimientoUsado(conPasos, null)).toBe('fisico');
+    // Con correr o partidos, esos pasos ya están en el entrenamiento: no pasa de «de pie».
+    const corre: Contestado = { ...conPasos, entreno: { ...conPasos.entreno, tipos: ['resistencia'] } };
+    expect(movimientoUsado(corre, null)).toBe('dePie');
+    expect(metaDeAhora(corre, HOY).metas.kcal).toBeLessThan(metaDeAhora({ ...corre, movimientoSugerido: null }, HOY).metas.kcal);
+    // Si se elige otra cosa, vale lo elegido.
+    expect(movimientoUsado({ ...corre, movimiento: 'sentado' }, null)).toBe('sentado');
   });
 });
 

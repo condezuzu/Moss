@@ -211,8 +211,8 @@ export type PropsDeMiniCielo = { constelacion: Constelacion; encendidas: boolean
 /** La constelación de hoy en chico, con lo encendido y unas estrellas de fondo, quietas. */
 export function MiniCieloSkia({ constelacion, encendidas, ancho, alto, sinFondo }: PropsDeMiniCielo) {
   const dibujo = useMemo(() => {
-    const aspecto = ancho / alto;
-    const plano = encajar(proyectar(constelacion.estrellas), [0, 0], (aspecto - 60 / alto) * 0.9, 0.38);
+    // Como en la galería (dibujarConstelacion): llena el lienzo, con 30 de margen a los lados y 15 arriba y abajo.
+    const plano = encajar(proyectar(constelacion.estrellas), [0, 0], (ancho - 60) / alto, (alto - 30) / alto);
     const pos = plano.map(([x, y]) => ({ x: ancho / 2 + x * alto, y: alto / 2 - y * alto }));
     const fondo = estrellasDeFondo(ancho, alto);
     const lineas = Skia.PathBuilder.Make();

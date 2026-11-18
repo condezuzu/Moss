@@ -16,21 +16,23 @@ import Animated, {
   FadeIn, LayoutAnimationConfig, ReduceMotion, useAnimatedRef, useAnimatedStyle, useReducedMotion, useScrollOffset, withTiming, type EntryExitAnimationFunction,
 } from 'react-native-reanimated';
 
-import { actualizarSalud, elAlmacen, oirLaSesion } from '@/almacen';
+import { actualizarSalud, datosDeOtraCuenta, elAlmacen, oirLaSesion } from '@/almacen';
 import { reglasDeCuidados, type Estado } from '@/almacen/almacen';
 import { CON_ASCENT } from '@/lib/banderas';
 import { abrirPagina, CORREO } from '@/lib/sitio';
 import type { Calidad } from '@/cielo/mundo';
 import { CM_POR_PULGADA, KG_POR_LIBRA } from '@/dominio/cantidades';
 import type { Entreno } from '@/dominio/alrededorDelEntreno';
+import { DEPORTES, deportesDePerfil, entrenoConCambios, preguntasDelEntreno, type CambiosDelEntreno, type Deporte } from '@/dominio/cuestionario';
 import type { Comida } from '@/dominio/comidas';
-import { CORTE_DE_FABRICA, CORTES, type DiaSemana } from '@/dominio/fechas';
+import { CORTE_DE_FABRICA, CORTES, diaDeLaSemana, sumarDias, type DiaSemana } from '@/dominio/fechas';
 import { edadDe, RANGOS_DEL_CUESTIONARIO, type Actividad, type Perfil as DatosDelPerfil, type Sexo } from '@/dominio/metas';
 import { LARGO_DEL_NOMBRE } from '@/dominio/nombre';
 import { algunAviso, avisosDe, conLoQueFalta, horaDeReloj, horasDeComida, pedirPermisoDeAvisosConMotivo, suenoDelDia } from '@/recordatorios/programar';
 import { duerme, horasDeSueno, MAXIMO_POR_DIA } from '@/dominio/avisos';
 import { apagaLoQueConviene } from '@/dominio/cuidados';
-import { QUE_CONVIENE, type QueConviene } from '@/dominio/loQueConviene';
+import { delDeporte, QUE_CONVIENE, VIAJE_DE_FABRICA, VIAJES, type QueConviene } from '@/dominio/loQueConviene';
+import { CARRERA_LARGA } from '@/dominio/segunElDeporte';
 import { MAXIMO_QUE_SIGUE_EL_DESPERTAR } from '@/dominio/sigueElDespertar';
 import { necesidad, necesidadesPara } from '@/dominio/sueno';
 import { MARGENES, margenParaDormirte } from '@/dominio/sinReloj';
@@ -41,7 +43,7 @@ import { anunciar } from '../anuncio';
 import { alTocarDeNuevo, useEsLaActual } from '../arriba';
 import { PESTANAS } from '../Barra';
 import { Boton, Icono, Pastilla } from '../comida/comunes';
-import { duracion, numero, sistemaDe, useEstado } from '../comida/datos';
+import { duracion, fechaDiaMes, numero, region, sistemaDe, useEstado } from '../comida/datos';
 import { avisar } from '../comida/registro';
 import { Opcion } from '../entrada/piezas';
 import { FranjaBajoLaHora } from '../franja';
@@ -49,7 +51,7 @@ import { HojaModal } from '../HojaModal';
 import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
 import { BotonDePaso } from '../paso';
 import { usePersona } from '../ganchos';
-import { aparatoPrincipal, Aparatos } from './Aparatos';
+import { aparatoPrincipal, Aparatos, nochesDelPrincipal } from './Aparatos';
 import { EnQueSeBasa } from './Base';
 import { Cuadro, type ColorDeCuadro } from './Cuadro';
 import { Cuidados } from './Cuidados';
@@ -70,6 +72,8 @@ import { TusRespuestas } from '../entrada/TusRespuestas';
 type Fila = {
   clave: string; titulo: string; icono: SFSymbol; color: ColorDeCuadro; valor?: string; detalle?: string; alTocar?: () => void; tipo?: 'ok' | 'peligro' | 'accion';
   interruptor?: boolean; flecha?: boolean; esperando?: boolean; punto?: boolean;
+  /** Lo que todavía no está: su pastilla («Pronto») en vez del valor, y la fila no se toca. */
+  pronto?: string;
 };
 
 /** Mientras se borra o se sale: lo que está pasando y, al terminar lo de la cuenta, «Listo». */
@@ -101,10 +105,23 @@ const FUNCIONES_CON_ASCENT: { clave: 'peso' | 'calorias' | 'objetivo' | 'protein
 /** La versión, la de abajo de Perfil y la del correo de ayuda: «1.0.0 (6)». */
 const VERSION = `${Constants.expoConfig?.version ?? '1.0.0'} (${Constants.expoConfig?.ios?.buildNumber ?? '1'})`;
 
+/** Los esquemas que esta build declara (LSApplicationQueriesSchemes en app.json): de esos se puede preguntar antes de abrir. */
+const ESQUEMAS_DECLARADOS: readonly string[] = (Constants.expoConfig?.ios?.infoPlist?.LSApplicationQueriesSchemes as string[] | undefined) ?? [];
+
+/**
+ * Abre algo de otra app y dice si pudo. Con el esquema declarado, antes pregunta si se puede (sin Mail, iOS
+ * ofrecería restaurarlo). Sin declararlo (la build 6 no declara `mailto` ni `x-apple-health`), canOpenURL dice
+ * siempre que no: se abre directo, como antes.
+ */
+async function abrirEnOtraApp(url: string): Promise<boolean> {
+  const esquema = url.slice(0, url.indexOf(':'));
+  if (ESQUEMAS_DECLARADOS.includes(esquema) && !(await Linking.canOpenURL(url).catch(() => false))) return false;
+  return Linking.openURL(url).then(() => true, () => false);
+}
+
 /**
  * «Ayuda y contacto»: un correo con lo que ayuda a encontrar un problema (la versión, la actualización, el
- * iPhone y iOS); sin Mail, la página de contacto, como antes. Se abre directo: canOpenURL dice que no a
- * los esquemas que no están en LSApplicationQueriesSchemes (app.json), y eso pide otra build.
+ * iPhone y iOS); sin Mail, la página de contacto.
  */
 function escribirnos() {
   const cuerpo = t('perfil.correo.cuerpo', {
@@ -114,12 +131,14 @@ function escribirnos() {
     ios: Device.osVersion ?? String(Platform.Version),
   });
   const url = `mailto:${CORREO}?subject=${encodeURIComponent(t('perfil.correo.asunto'))}&body=${encodeURIComponent(cuerpo)}`;
-  Linking.openURL(url).catch(() => abrirPagina('contacto'));
+  abrirEnOtraApp(url).then((pudo) => {
+    if (!pudo) abrirPagina('contacto');
+  });
 }
 
 /** Con Salud ya pedida, iOS no vuelve a preguntar: «Conectada» abre Salud, donde se cambia qué lee Moss. Sin Salud, nada. */
 function abrirSalud() {
-  Linking.openURL('x-apple-health://').catch(() => {});
+  abrirEnOtraApp('x-apple-health://');
 }
 
 const PERFIL = PESTANAS.indexOf('perfil');
@@ -144,7 +163,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo, alIr }: { ancho: number; 
   const [correo, setCorreo] = useState<string | null | undefined>(correoSabido);
   const conCuenta = correo !== null && correo !== undefined;
   const [salud, setSalud] = useState(false);
-  const [hoja, setHoja] = useState<'editar' | 'privacidad' | 'recordatorios' | 'calidad' | 'corte' | 'aparatos' | 'entreno' | 'suscripcion' | 'cuidados' | 'base' | 'respuestas' | null>(null);
+  const [hoja, setHoja] = useState<'editar' | 'privacidad' | 'recordatorios' | 'calidad' | 'corte' | 'aparatos' | 'entreno' | 'suscripcion' | 'cuidados' | 'base' | 'respuestas' | 'pais' | null>(null);
   // Tu foto queda solo en el teléfono, fuera del almacén (foto.ts): se lee al armar Perfil.
   const [foto, setFoto] = useState(fotoDePerfil);
   const premium = useEstadoDePremium();
@@ -155,6 +174,14 @@ export function PaginaDePerfil({ ancho, arriba, abajo, alIr }: { ancho: number; 
   // Solo el scroll de la sección que se ve sube con un toque en la hora; tocar otra vez la pestaña, arriba de todo.
   const esLaActual = useEsLaActual(PERFIL);
   useEffect(() => alTocarDeNuevo(PERFIL, () => scroll.current?.scrollTo({ y: 0, animated: !reducido })), [reducido, scroll]);
+  // Con datos de otra cuenta en el teléfono, la sincronización no arranca (sincronizar.ts): se dice, en una línea.
+  // Se sabe recién después de la primera vuelta: se mira cada vez que se llega a Perfil.
+  const [otraCuenta, setOtraCuenta] = useState(datosDeOtraCuenta);
+  const [mirado, setMirado] = useState({ esLaActual, correo });
+  if (mirado.esLaActual !== esLaActual || mirado.correo !== correo) {
+    setMirado({ esLaActual, correo });
+    if (esLaActual) setOtraCuenta(datosDeOtraCuenta());
+  }
   // Las esperas (aprobadas en la galería el 9/11/2026): exportar muestra la ruedita mientras arma los archivos;
   // borrar y salir, después de la alerta de iOS, el velo hasta que termina.
   const [exportando, setExportando] = useState(false);
@@ -252,6 +279,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo, alIr }: { ancho: number; 
     },
   ];
 
+  const nochesDeAparato = nochesDelPrincipal(e);
   const filaDeSuscripcion: Fila = { clave: 'suscripcion', titulo: t('suscripcion.titulo'), icono: 'star', color: 'oro', valor: valorDeSuscripcion(premium), alTocar: () => setHoja('suscripcion') };
   const conexiones: [string, Fila[]] = ['perfil.conexiones', [
     ...(haySalud() ? [{
@@ -269,10 +297,11 @@ export function PaginaDePerfil({ ancho, arriba, abajo, alIr }: { ancho: number; 
     }] : []),
     {
       clave: 'aparatos', titulo: t('perfil.aparatos.titulo'), icono: e.salud?.aparatos.some((a) => a.noches > 0) ? 'applewatch' : 'iphone', color: 'azul',
-      valor: aparatoPrincipal(e.salud?.aparatos ?? []), alTocar: () => setHoja('aparatos'),
+      valor: aparatoPrincipal(e.salud?.aparatos ?? []), detalle: nochesDeAparato ? plural('perfil.aparatos.noches', nochesDeAparato, { n: nochesDeAparato }) : undefined, alTocar: () => setHoja('aparatos'),
     },
-    // Vinculada: con quién, y desvincular. Sin vincular, lleva a la sección de Ascent.
-    ...(CON_ASCENT ? [{ ...ascent, icono: 'circle.circle' as const, color: 'ascent' as const }] : []),
+    // Vinculada: con quién, y desvincular. Sin vincular, lleva a la sección de Ascent. Apagada, solo dice «Pronto».
+    CON_ASCENT ? { ...ascent, icono: 'circle.circle' as const, color: 'ascent' as const }
+      : { clave: 'ascent', titulo: t('perfil.ascent'), icono: 'circle.circle' as const, color: 'ascent' as const, pronto: t('ascent.pronto.valor') },
   ]];
   const grupos: [string, Fila[]][] = [
     // Arriba, para que se encuentren: de dónde llega todo y, cuando se prenda, Ascent.
@@ -296,6 +325,8 @@ export function PaginaDePerfil({ ancho, arriba, abajo, alIr }: { ancho: number; 
       },
       // El idioma es el del teléfono: iOS deja elegir otro solo para Moss, en sus Ajustes.
       { clave: 'idioma', titulo: t('perfil.idioma'), icono: 'globe', color: 'azul', valor: t('perfil.idiomaDelTelefono'), alTocar: () => { Linking.openSettings().catch(() => {}); } },
+      // El país de los alimentos, aparte del idioma: los nombres de cada lugar y lo que se vende ahí.
+      { clave: 'pais', titulo: t('perfil.pais.titulo'), icono: 'fork.knife', color: 'salvia', valor: e.paisDeAlimentos ? nombreDelPais(e.paisDeAlimentos) : t('perfil.pais.delTelefono'), alTocar: () => setHoja('pais') },
       { clave: 'corte', titulo: t('perfil.corte'), icono: 'sunrise', color: 'oro', valor: nombreDelCorte(e.corte), alTocar: () => setHoja('corte') },
       { clave: 'calidad', titulo: t('perfil.calidad'), icono: 'star', color: 'violeta', valor: t(`perfil.calidades.${e.calidad ?? 'automatica'}`), alTocar: () => setHoja('calidad') },
       { clave: 'recordatorios', titulo: t('perfil.recordatorios'), icono: 'bell', color: 'rosa', valor: hayAvisos(e) ? t('perfil.encendidos') : t('perfil.apagados'), alTocar: () => setHoja('recordatorios') },
@@ -333,6 +364,11 @@ export function PaginaDePerfil({ ancho, arriba, abajo, alIr }: { ancho: number; 
         scrollEventThrottle={16}
       >
         <Tarjeta nombre={e.nombre?.valor ?? ''} correo={correo === undefined ? '' : correo} foto={foto} alTocar={() => setHoja('editar')} minis={minis} />
+        {otraCuenta && conCuenta && (
+          <Aparece>
+            <Text style={st.otraCuenta}>{t('perfil.otraCuenta')}</Text>
+          </Aparece>
+        )}
         {/* Al armar Perfil todo está en su lugar (y al irse, se va entero); en el medio, lo que aparece (la fila
             de borrar la cuenta cuando llega el correo, un detalle) entra con un fundido y lo de abajo se acomoda. */}
         <LayoutAnimationConfig skipEntering skipExiting>
@@ -428,6 +464,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo, alIr }: { ancho: number; 
       {hoja === 'recordatorios' && <Avisos e={e} alCerrar={() => setHoja(null)} />}
       {hoja === 'calidad' && <CalidadDelCielo elegida={e.calidad} alCerrar={() => setHoja(null)} />}
       {hoja === 'corte' && <CorteDelDia elegido={e.corte} alCerrar={() => setHoja(null)} />}
+      {hoja === 'pais' && <PaisDeLosAlimentos elegido={e.paisDeAlimentos} alCerrar={() => setHoja(null)} />}
       {hoja === 'entreno' && <CuandoEntrenas e={e} alCerrar={() => setHoja(null)} />}
       {hoja === 'aparatos' && <Aparatos alCerrar={() => setHoja(null)} />}
       {hoja === 'suscripcion' && <HojaDeSuscripcion alCerrar={() => setHoja(null)} />}
@@ -494,6 +531,8 @@ function FilaDePerfil({ f, separada }: { f: Fila; separada?: boolean }) {
         <Animated.View key="esperando" entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} accessibilityLabel={t('perfil.exportando')}>
           <ActivityIndicator size="small" color="rgba(239, 230, 207, 0.66)" />
         </Animated.View>
+      ) : f.pronto ? (
+        <Text style={st.pronto}>{f.pronto}</Text>
       ) : f.valor ? (
         // Lo que cambia ahí mismo (las unidades, los números) entra con un fundido.
         <Animated.Text
@@ -701,6 +740,30 @@ const horaDelCorte = (minutos: number) => `${Math.floor(minutos / 60)}:${String(
 const nombreDelCorte = (minutos: number) =>
   minutos === 0 ? t('perfil.corteMedianoche') : plural('perfil.corteALaHora', Math.floor(minutos / 60), { hora: horaDelCorte(minutos) });
 
+/** Los países con nombres propios en la base de alimentos (alimentos/genericos.txt), y Estados Unidos. */
+const PAISES = ['AR', 'BO', 'CL', 'CO', 'CR', 'CU', 'EC', 'SV', 'ES', 'US', 'GT', 'HN', 'MX', 'NI', 'PA', 'PY', 'PE', 'PR', 'DO', 'UY', 'VE'] as const;
+type Pais = (typeof PAISES)[number];
+/** «Uruguay»; de un país que no está en la lista, su código. */
+const nombreDelPais = (pais: string) => (PAISES.includes(pais as Pais) ? t(`perfil.pais.nombres.${pais as Pais}`) : pais);
+
+/**
+ * El país de los alimentos, aparte del idioma (spec/nutricion.md, «Lo que se suma»): con Moss en inglés, una
+ * uruguaya sigue encontrando primero lo que se vende acá. Sin elegir, el del teléfono.
+ */
+function PaisDeLosAlimentos({ elegido, alCerrar }: { elegido: string | null; alCerrar: () => void }) {
+  const delTelefono = region();
+  const paises = [...PAISES].sort((a, b) => nombreDelPais(a).localeCompare(nombreDelPais(b)));
+  return (
+    <HojaModal abierta titulo={t('perfil.pais.titulo')} alCerrar={alCerrar}>
+      <Parrafo chico>{t('perfil.pais.texto')}</Parrafo>
+      <View style={{ gap: 8, marginTop: 12 }}>
+        <Opcion titulo={t('perfil.pais.delTelefono')} detalle={delTelefono ? nombreDelPais(delTelefono) : undefined} elegida={elegido === null} alTocar={() => elAlmacen().ponerPaisDeAlimentos(null)} />
+        {paises.map((p) => <Opcion key={p} titulo={nombreDelPais(p)} elegida={p === elegido} alTocar={() => elAlmacen().ponerPaisDeAlimentos(p)} />)}
+      </View>
+    </HojaModal>
+  );
+}
+
 /** A qué hora empieza el día (D32): lo de antes cuenta para el día anterior. */
 function CorteDelDia({ elegido, alCerrar }: { elegido: number; alCerrar: () => void }) {
   return (
@@ -733,7 +796,7 @@ const ULTIMA_HORA = 23 * 60 + 45;
 const aCuarto = (m: number) => Math.round(m / CUARTO) * CUARTO;
 
 /** Los interruptores sueltos de Perfil › Avisos: los de la noche que sigue tu despertar y lo que conviene. */
-type Suelto = 'deuda' | 'melatonina' | 'luces' | 'revoluciones' | 'descarga' | 'gafas' | 'cafe' | 'entrenarTarde' | 'ultimaComida' | 'antesDeEntrenar' | 'despuesDeEntrenar';
+type Suelto = 'deuda' | 'melatonina' | 'luces' | 'revoluciones' | 'descarga' | 'gafas' | 'cafe' | 'entrenarTarde' | 'ultimaComida' | 'antesDeEntrenar' | 'despuesDeEntrenar' | 'partido' | 'carrera';
 /** Las llaves de los avisos que piden permiso para encenderse. */
 type Llave = 'dormir' | 'horario' | 'pesarse' | 'falta' | 'comidas' | Suelto;
 /** «Más avisos», apagados de fábrica, con su cuadrito como en la galería. */
@@ -741,6 +804,8 @@ const MAS_AVISOS: readonly [Suelto, SFSymbol, ColorDeCuadro][] = [
   ['descarga', 'pencil', 'oro'], ['gafas', 'eyeglasses', 'gris'], ['cafe', 'cup.and.saucer', 'rosa'], ['entrenarTarde', 'timer', 'azul'],
   ['ultimaComida', 'fork.knife', 'violeta'], ['antesDeEntrenar', 'dumbbell', 'oro'], ['despuesDeEntrenar', 'dumbbell', 'salvia'],
 ];
+/** Según el deporte: la víspera del partido, con partidos o choques, y la carrera larga, con correr, bici o nadar. */
+const AVISOS_DEL_DEPORTE: readonly [Suelto, SFSymbol, ColorDeCuadro][] = [['partido', 'bolt', 'oro'], ['carrera', 'target', 'salvia']];
 
 /** Sin permiso para avisar (iOS ya no vuelve a preguntar), se dice dónde darlo. */
 function avisarSinPermiso() {
@@ -751,8 +816,8 @@ function avisarSinPermiso() {
 }
 
 /** Un aviso en su tarjeta, como en la galería: el cuadrito, el nombre, la llave, qué hace y, prendido, lo de abajo. */
-function TarjetaDeAviso({ icono, color, titulo, texto, prendido, alCambiar, children }: {
-  icono: SFSymbol; color: ColorDeCuadro; titulo: string; texto?: string; prendido?: boolean; alCambiar?: (si: boolean) => void; children?: ReactNode;
+function TarjetaDeAviso({ icono, color, titulo, texto, prendido, alCambiar, derecha, children }: {
+  icono: SFSymbol; color: ColorDeCuadro; titulo: string; texto?: string; prendido?: boolean; alCambiar?: (si: boolean) => void; derecha?: ReactNode; children?: ReactNode;
 }) {
   const conLlave = prendido !== undefined && !!alCambiar;
   return (
@@ -762,7 +827,7 @@ function TarjetaDeAviso({ icono, color, titulo, texto, prendido, alCambiar, chil
           <Cuadro icono={icono} color={color} />
           <Text style={st.llaveTexto}>{titulo}</Text>
         </View>
-        {conLlave && <Switch value={prendido} onValueChange={alCambiar} trackColor={LLAVE} thumbColor={colores.pergamino} accessibilityLabel={titulo} />}
+        {conLlave ? <Switch value={prendido} onValueChange={alCambiar} trackColor={LLAVE} thumbColor={colores.pergamino} accessibilityLabel={titulo} /> : derecha}
       </View>
       {!!texto && <Text style={st.avisoNota}>{texto}</Text>}
       {(!conLlave || prendido) && !!children && <Aparece style={st.avisoDebajo}>{children}</Aparece>}
@@ -849,21 +914,25 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
     const nueva = lista.includes(c) ? lista.filter((x) => x !== c) : COMIDAS_QUE_AVISAN.filter((x) => x === c || lista.includes(x));
     elAlmacen().ponerRecordatorios(nueva.length ? nueva : null);
   };
-  // Lo que un cuidado de salud apaga (la última comida y lo de entrenar) no se ofrece.
+  // Lo que un cuidado de salud apaga (la última comida, lo de entrenar, pesarte) no se ofrece. Los del deporte, solo
+  // con ese deporte en Perfil › Entrenamiento (delDeporte).
   const reglas = reglasDeCuidados(e);
-  const mas = MAS_AVISOS.filter(([q]) => !(reglas && (QUE_CONVIENE as readonly string[]).includes(q) && apagaLoQueConviene(q as QueConviene, reglas)));
+  const deporte = delDeporte(e.entreno, e.hoy, e.hoy);
+  const mas = [...MAS_AVISOS, ...AVISOS_DEL_DEPORTE.filter(([q]) => (q === 'partido' ? deporte.partido : deporte.carrera))]
+    .filter(([q]) => !(reglas && (QUE_CONVIENE as readonly string[]).includes(q) && apagaLoQueConviene(q as QueConviene, reglas)));
+  const conPesarse = !reglas?.apagar.includes('pesarse');
   // Cada tarjeta se acomoda cuando la de arriba crece (las pastillas de dormir, el horario, el permiso).
   return (
     <HojaModal abierta titulo={t('perfil.avisos.titulo')} alCerrar={alCerrar}>
       <Text style={[st.grupo, st.grupoPrimero]}>{t('perfil.avisos.tuDia')}</Text>
       <Text style={st.informacion}>{t('perfil.avisos.tuDiaTexto')}</Text>
       <TarjetaDeAviso icono="moon" color="azul" titulo={t('perfil.avisos.deuda')} texto={t('perfil.avisos.deudaTexto')} {...suelto('deuda')} />
-      <TarjetaDeAviso icono="scalemass" color="salvia" titulo={t('perfil.avisos.pesarse')} texto={t('perfil.avisos.pesarseTexto')} prendido={prendida('pesarse', !!pesarse?.encendido)} alCambiar={encenderPesarse}>
+      {conPesarse && <TarjetaDeAviso icono="scalemass" color="salvia" titulo={t('perfil.avisos.pesarse')} texto={t('perfil.avisos.pesarseTexto')} prendido={prendida('pesarse', !!pesarse?.encendido)} alCambiar={encenderPesarse}>
         <View style={st.comidas}>
           <Pastilla texto={t('perfil.avisos.pesarseControl')} elegida={!pesarse?.todos} alTocar={() => elAlmacen().ponerAvisos({ pesarse: { encendido: true } })} />
           <Pastilla texto={t('perfil.avisos.pesarseTodos')} elegida={!!pesarse?.todos} alTocar={() => elAlmacen().ponerAvisos({ pesarse: { encendido: true, todos: true } })} />
         </View>
-      </TarjetaDeAviso>
+      </TarjetaDeAviso>}
       <TarjetaDeAviso
         icono="fork.knife" color="oro" titulo={t('perfil.avisos.horario')} texto={`${t('perfil.avisos.horarioTexto')} ${t('perfil.avisos.horarioTextoDia')}`}
         prendido={prendida('horario', conHorario)} alCambiar={encenderHorario}
@@ -972,12 +1041,14 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
 }
 
 const DURACIONES = [30, 45, 60, 90, 120] as const;
-const TIPOS = ['fuerza', 'resistencia', 'mixta'] as const;
+const DURACIONES_DE_CARRERA = [60, 90, 120, 180, 240] as const;
 /** Lunes primero, como en la galería. */
 const DIAS_DE_LA_SEMANA: readonly DiaSemana[] = [1, 2, 3, 4, 5, 6, 0];
 /** La hora de entrenar, de a un cuarto de hora entre las 5:00 y las 23:00. */
 const PRIMER_ENTRENO = 5 * 60;
 const ULTIMO_ENTRENO = 23 * 60;
+/** Un partido, no antes de las 8:00. */
+const PRIMER_PARTIDO = 8 * 60;
 
 /** Si suena algún aviso: los de comidas sin anotar, dormir, el horario, pesarse, un hábito o lo que falta, si se prendió. */
 function hayAvisos(e: Estado): boolean {
@@ -998,60 +1069,149 @@ function resumenDeEntreno(entreno: Entreno | null): string {
 }
 
 /**
- * Cuándo entrenás (lo pediste el 26/10): con esto, Comida dice qué comer antes y después, en la
- * comida que toca. Con Ascent vinculada, después de la v1, sale de ahí.
+ * Cuándo entrenas y qué haces (lo pediste el 26/10; según el deporte, como en la galería: galeria/src/perfil.js):
+ * los días, la hora y la duración del horario de los avisos, los deportes (varios a la vez, los del cuestionario),
+ * el partido con partidos o choques, la próxima carrera con correr, bici o nadar, la categoría de peso con
+ * combate y cuánto tardas en llegar. Queda en el teléfono; las sesiones de cada deporte acompañan al horario
+ * (entrenoConCambios) y se contestan una por una en «Tus respuestas».
  */
 function CuandoEntrenas({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
   const entreno: Entreno = e.entreno ?? { dias: [], hora: 19 * 60, minutos: 60, tipo: 'fuerza' };
-  const poner = (cambios: Partial<Entreno>) => {
-    const nuevo = { ...entreno, ...cambios };
-    // Sin días también se guarda: así la hora, la duración y el tipo vuelven al elegir otro día.
-    elAlmacen().ponerEntreno(nuevo);
-  };
+  // Sin días también se guarda: así la hora, la duración y los deportes vuelven al elegir otro día.
+  const poner = (cambios: CambiosDelEntreno) => elAlmacen().ponerEntreno(entrenoConCambios(entreno, cambios));
   const alternarDia = (d: DiaSemana) => poner({ dias: entreno.dias.includes(d) ? entreno.dias.filter((x) => x !== d) : [...entreno.dias, d] });
   const letras = lista('fecha.diasCortos');
+  const tipos = deportesDePerfil(entreno);
+  const preguntas = preguntasDelEntreno(tipos);
+  const partido = preguntas.partidos ? entreno.partidos ?? null : null;
+  const carrera = tipos.includes('resistencia') ? entreno.carrera ?? null : null;
+  const viaje = entreno.viaje ?? VIAJE_DE_FABRICA;
+  const alternarDeporte = (x: Deporte) => {
+    const nuevos = tipos.includes(x) ? tipos.filter((d) => d !== x) : [...tipos, x];
+    // Al menos uno: el último no se saca.
+    if (nuevos.length) poner({ tipos: nuevos });
+  };
+  const moverPartido = (signo: 1 | -1) => {
+    if (!partido) return false;
+    const hora = partido.hora == null ? 16 * 60 : partido.hora + signo * 15;
+    if (hora < PRIMER_PARTIDO || hora > ULTIMO_ENTRENO) return false;
+    poner({ partidos: { ...partido, hora } });
+  };
+  const moverCarrera = (signo: 1 | -1) => {
+    if (!carrera) return false;
+    const fecha = sumarDias(carrera.fecha, signo);
+    if (fecha <= e.hoy) return false;
+    poner({ carrera: { ...carrera, fecha } });
+  };
   return (
     <HojaModal abierta titulo={t('entreno.perfil.titulo')} alCerrar={alCerrar}>
-      <Parrafo chico>{t('entreno.perfil.texto')}</Parrafo>
-      <EtiquetaDeGrupo>{t('entreno.perfil.dias')}</EtiquetaDeGrupo>
-      <View style={st.comidas}>
-        {DIAS_DE_LA_SEMANA.map((d) => <Pastilla key={d} texto={letras[d]} elegida={entreno.dias.includes(d)} alTocar={() => alternarDia(d)} />)}
-      </View>
+      <Parrafo chico>{t('entreno.perfil.textoConAvisos')}</Parrafo>
+      <TarjetaDeAviso icono="dumbbell" color="oro" titulo={t('entreno.perfil.dias')}>
+        <View style={st.dias}>
+          {DIAS_DE_LA_SEMANA.map((d) => <Pastilla key={d} texto={letras[d]} elegida={entreno.dias.includes(d)} alTocar={() => alternarDia(d)} estilo={st.dia} estiloTexto={st.diaTexto} />)}
+        </View>
+      </TarjetaDeAviso>
       {entreno.dias.length > 0 && (
         <Aparece>
-          <EtiquetaDeGrupo>{t('entreno.perfil.hora')}</EtiquetaDeGrupo>
-          <Pasos
-            valor={horaDeReloj(entreno.hora)}
-            menos={t('perfil.pasos.temprano', { que: t('entreno.perfil.titulo') })}
-            mas={t('perfil.pasos.tarde', { que: t('entreno.perfil.titulo') })}
-            alBajar={() => {
-              if (entreno.hora <= PRIMER_ENTRENO) return false;
-              poner({ hora: Math.max(PRIMER_ENTRENO, entreno.hora - 15) });
-            }}
-            alSubir={() => {
-              if (entreno.hora >= ULTIMO_ENTRENO) return false;
-              poner({ hora: Math.min(ULTIMO_ENTRENO, entreno.hora + 15) });
-            }}
+          <TarjetaDeAviso
+            icono="clock"
+            color="azul"
+            titulo={t('entreno.perfil.hora')}
+            derecha={(
+              <Pasos
+                valor={horaDeReloj(entreno.hora)}
+                menos={t('perfil.pasos.temprano', { que: t('entreno.perfil.titulo') })}
+                mas={t('perfil.pasos.tarde', { que: t('entreno.perfil.titulo') })}
+                alBajar={() => {
+                  if (entreno.hora <= PRIMER_ENTRENO) return false;
+                  poner({ hora: Math.max(PRIMER_ENTRENO, entreno.hora - 15) });
+                }}
+                alSubir={() => {
+                  if (entreno.hora >= ULTIMO_ENTRENO) return false;
+                  poner({ hora: Math.min(ULTIMO_ENTRENO, entreno.hora + 15) });
+                }}
+              />
+            )}
           />
-          <EtiquetaDeGrupo>{t('entreno.perfil.duracion')}</EtiquetaDeGrupo>
-          <View style={st.comidas}>
-            {DURACIONES.map((m) => <Pastilla key={m} texto={t('entreno.perfil.minutos', { n: m })} elegida={entreno.minutos === m} alTocar={() => poner({ minutos: m })} />)}
-          </View>
-          <EtiquetaDeGrupo>{t('entreno.perfil.tipo')}</EtiquetaDeGrupo>
-          <View style={st.comidas}>
-            {TIPOS.map((x) => <Pastilla key={x} texto={t(`entreno.perfil.tipos.${x}`)} elegida={entreno.tipo === x} alTocar={() => poner({ tipo: x })} />)}
-          </View>
-          <View style={st.llave}>
-            <Text style={st.llaveTexto}>{t('entreno.perfil.ver')}</Text>
-            <Switch
-              value={e.verEntreno}
-              onValueChange={(v) => elAlmacen().ponerVerEntreno(v)}
-              trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
-              thumbColor={colores.pergamino}
-              accessibilityLabel={t('entreno.perfil.ver')}
-            />
-          </View>
-          <Parrafo chico>{t('entreno.porQue.medico')}</Parrafo>
+          <TarjetaDeAviso icono="timer" color="violeta" titulo={t('entreno.perfil.duracion')}>
+            <View style={st.comidas}>
+              {DURACIONES.map((m) => <Pastilla key={m} texto={t('entreno.perfil.minutos', { n: m })} elegida={entreno.minutos === m} alTocar={() => poner({ minutos: m })} />)}
+            </View>
+          </TarjetaDeAviso>
+          {/* Los mismos deportes que el cuestionario, varios a la vez. */}
+          <TarjetaDeAviso icono="figure.walk" color="salvia" titulo={t('entreno.perfil.tipo')}>
+            <View style={st.comidas}>
+              {DEPORTES.map((x) => <Pastilla key={x} texto={lista(`entrada.cuestionario.entreno.tipos.${x}`)[0]} elegida={tipos.includes(x)} alTocar={() => alternarDeporte(x)} />)}
+            </View>
+            <Text style={st.avisoNota}>{t('entrada.cuestionario.entreno.texto')}</Text>
+          </TarjetaDeAviso>
+          {/* Con partidos o choques: qué día juegas y, si se sabe, a qué hora empieza (con la hora se sabe si terminas tarde). */}
+          {preguntas.partidos && (
+            <Aparece>
+              <TarjetaDeAviso icono="bolt" color="oro" titulo={t('entreno.perfil.partidos')} prendido={!!partido} alCambiar={(si) => poner({ partidos: si ? { dia: 6, hora: null } : null })}>
+                {partido && (
+                  <>
+                    <Text style={st.deporteEtiqueta}>{t('entreno.perfil.partidoDia')}</Text>
+                    <View style={st.dias}>
+                      {DIAS_DE_LA_SEMANA.map((d) => <Pastilla key={d} texto={letras[d]} elegida={partido.dia === d} alTocar={() => poner({ partidos: { ...partido, dia: d } })} estilo={st.dia} estiloTexto={st.diaTexto} />)}
+                    </View>
+                    <View style={st.deporteFila}>
+                      <Text style={st.deporteNombre}>{t('entreno.perfil.partidoHora')}</Text>
+                      <View style={st.deporteLado}>
+                        <Pastilla texto={t('entreno.perfil.partidoVaria')} elegida={partido.hora == null} alTocar={() => poner({ partidos: { ...partido, hora: null } })} />
+                        <Pasos
+                          valor={partido.hora == null ? '—:—' : horaDeReloj(partido.hora)}
+                          menos={t('perfil.pasos.temprano', { que: t('entreno.perfil.partidoHora') })}
+                          mas={t('perfil.pasos.tarde', { que: t('entreno.perfil.partidoHora') })}
+                          alBajar={() => moverPartido(-1)}
+                          alSubir={() => moverPartido(1)}
+                        />
+                      </View>
+                    </View>
+                    <Text style={st.avisoNota}>{t('entreno.perfil.partidoTexto')}</Text>
+                  </>
+                )}
+              </TarjetaDeAviso>
+            </Aparece>
+          )}
+          {/* Con correr, bici o nadar: la próxima carrera, con la fecha y cuánto dura (lo de los dos días antes, solo si es larga). */}
+          {tipos.includes('resistencia') && (
+            <Aparece>
+              <TarjetaDeAviso icono="target" color="salvia" titulo={t('entreno.perfil.carrera')} prendido={!!carrera} alCambiar={(si) => poner({ carrera: si ? { fecha: sumarDias(e.hoy, 11), minutos: 120 } : null })}>
+                {carrera && (
+                  <>
+                    <View style={[st.deporteFila, { marginTop: 0 }]}>
+                      <Text style={st.deporteNombre}>{t('entreno.perfil.carreraFecha')}</Text>
+                      <Pasos
+                        valor={`${letras[diaDeLaSemana(carrera.fecha)]} ${fechaDiaMes(carrera.fecha)}`}
+                        menos={t('perfil.pasos.temprano', { que: t('entreno.perfil.carrera') })}
+                        mas={t('perfil.pasos.tarde', { que: t('entreno.perfil.carrera') })}
+                        alBajar={() => moverCarrera(-1)}
+                        alSubir={() => moverCarrera(1)}
+                      />
+                    </View>
+                    <Text style={st.deporteEtiqueta}>{t('entreno.perfil.duracion')}</Text>
+                    <View style={st.comidas}>
+                      {DURACIONES_DE_CARRERA.map((m) => <Pastilla key={m} texto={duracion(m)} elegida={carrera.minutos === m} alTocar={() => poner({ carrera: { ...carrera, minutos: m } })} />)}
+                    </View>
+                    <Text style={st.avisoNota}>{t(carrera.minutos > CARRERA_LARGA ? 'entreno.perfil.carreraTexto' : 'entreno.perfil.carreraCorta')}</Text>
+                  </>
+                )}
+              </TarjetaDeAviso>
+            </Aparece>
+          )}
+          {preguntas.categoriaDePeso && (
+            <Aparece>
+              <TarjetaDeAviso icono="scalemass" color="gris" titulo={t('entreno.perfil.categoria')} prendido={!!entreno.categoriaDePeso} alCambiar={(si) => poner({ categoriaDePeso: si })} />
+            </Aparece>
+          )}
+          <TarjetaDeAviso icono="mappin.and.ellipse" color="gris" titulo={t('entreno.perfil.viaje')}>
+            <View style={st.comidas}>
+              {VIAJES.map((m) => <Pastilla key={m} texto={m ? t('entreno.perfil.minutos', { n: m }) : t('entreno.perfil.viajeCasa')} elegida={viaje === m} alTocar={() => poner({ viaje: m })} />)}
+            </View>
+            <Text style={st.avisoNota}>{t('entreno.perfil.viajeTexto')}</Text>
+          </TarjetaDeAviso>
+          <TarjetaDeAviso icono="fork.knife" color="rosa" titulo={t('entreno.perfil.ver')} texto={t('entreno.porQue.medico')} prendido={e.verEntreno} alCambiar={(v) => elAlmacen().ponerVerEntreno(v)} />
         </Aparece>
       )}
     </HojaModal>
@@ -1108,7 +1268,9 @@ const st = StyleSheet.create({
   filaTitulo: { fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
   filaDetalle: { marginTop: 4, fontFamily: letras.texto, fontSize: 11.5, lineHeight: 15, color: 'rgba(239, 230, 207, 0.5)' },
   // Con el texto grande, el valor se corta antes que dejar al título sin lugar.
+  otraCuenta: { marginTop: 10, paddingHorizontal: 4, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17, color: 'rgba(239, 230, 207, 0.6)' },
   filaValor: { flexShrink: 1, maxWidth: '55%', fontFamily: letras.texto, fontSize: 14, color: 'rgba(239, 230, 207, 0.6)' },
+  pronto: { paddingVertical: 6, paddingHorizontal: 9, borderRadius: 999, overflow: 'hidden', backgroundColor: 'rgba(239, 230, 207, 0.06)', fontFamily: letras.textoMedio, fontSize: 10, letterSpacing: 0.8, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.55)' },
   peligro: { color: '#f0a58a' },
   // Sin desenfoque (la galería lo tiene): más oscuro, así lo de atrás no distrae.
   velo: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 40, backgroundColor: 'rgba(3, 5, 12, 0.8)' },
@@ -1127,6 +1289,14 @@ const st = StyleSheet.create({
   avisoTitulo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 11 },
   avisoNota: { marginTop: 9, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: 'rgba(239, 230, 207, 0.6)' },
   avisoDebajo: { marginTop: 11 },
+  // Los siete días, en un renglón, como en la galería.
+  dias: { flexDirection: 'row', gap: 5 },
+  dia: { flex: 1, paddingHorizontal: 0, alignItems: 'center' },
+  diaTexto: { fontSize: 13 },
+  deporteEtiqueta: { marginTop: 12, marginBottom: 8, fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.6)' },
+  deporteFila: { marginTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 },
+  deporteNombre: { flexShrink: 1, fontFamily: letras.texto, fontSize: 14, color: colores.pergamino },
+  deporteLado: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   grupoPrimero: { marginTop: 8 },
   maximoTexto: { marginTop: 10 },
   maximoSolo: { marginTop: 10, marginBottom: 0 },

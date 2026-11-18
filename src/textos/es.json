@@ -1170,7 +1170,7 @@
       "etiqueta": "Tu energía · {cuando}",
       "titulo": {
         "baja": "Energía baja",
-        "suficiente": "Suficiente energía",
+        "suficiente": "Energía suficiente",
         "alta": "Energía alta",
         "sinDatos": "Tu energía"
       },
@@ -1195,8 +1195,6 @@
           "deSobraEntrena": "Estos días comiste de sobra para lo que entrenas"
         },
         "sueno": {
-          "muyBien": ", dormiste bien y no tienes deuda de sueño",
-          "bien": ", dormiste bien y tu deuda de sueño es baja",
           "soloAnoche": " y dormiste bien",
           "sinDeuda": ", dormiste bien y no tienes deuda de sueño",
           "baja": ", dormiste bien y tu deuda de sueño es baja"
@@ -1204,28 +1202,26 @@
       },
       "partes": {
         "sueno": "Sueño",
-        "comida": "Estos días",
-        "musculos": "Músculos",
-        "hoy": "Hoy"
+        "comida": "Comida",
+        "musculos": "Músculos"
       },
       "como": {
         "sueno": {
-          "muyCorta": "Muy corto",
-          "corta": "Corto",
-          "seguidas": "Noches cortas",
-          "algoCorta": "Algo corto",
-          "deuda": "Con deuda",
-          "bien": "Bien",
+          "muyCorta": "dormiste muy poco",
+          "corta": "dormiste poco",
+          "seguidas": "varias noches cortas",
+          "algoCorta": "dormiste algo menos",
+          "deuda": "tienes deuda de sueño",
           "sinDatos": "Sin datos"
         },
         "comida": {
-          "senal": "Muy poco",
-          "muyPoco": "Muy poco",
-          "debajo": "Por debajo",
-          "llegaste": "Bien",
-          "deSobra": "De sobra",
-          "alcanza": "Bien",
-          "sinDatos": "Sin datos"
+          "senal": "muy poco",
+          "muyPoco": "muy poco",
+          "debajo": "por debajo",
+          "llegaste": "bien",
+          "deSobra": "de sobra",
+          "alcanza": "bien",
+          "sinDatos": "sin datos"
         },
         "musculos": {
           "cargados": "Cargados",
@@ -1234,25 +1230,19 @@
           "descanso": "Descanso"
         },
         "hoy": {
-          "temprano": "Temprano",
-          "alDia": "Al día",
-          "atrasado": "Atrasado",
-          "sinComerParaEntrenar": "Falta comer",
-          "sinDatos": "Sin datos"
+          "temprano": "es temprano",
+          "alDia": "vas bien",
+          "atrasado": "comiste poco",
+          "sinComerParaEntrenar": "falta comer"
         }
       },
-      "conviene": "Qué te conviene hoy",
       "consejo": {
         "dormir": "Esta noche, acuéstate a las {hora} para despertarte a las {despertar}.",
         "dormirDeuda": "Esta noche, acuéstate a las {hora}: así empiezas a bajar tu deuda de sueño.",
         "sinFallo": "Si entrenas, mejor sin llegar al fallo: las repeticiones cuestan más.",
         "comerMas": "Come un poco más estos días: una comida más o una porción más grande ayuda.",
         "medico": "Si además se te cortó la menstruación (en hombres, si notas menos deseo sexual), tuviste una fractura por estrés o estás sin energía hace semanas, habla con un médico o un nutricionista.",
-        "llegar": "Te faltó llegar a tus calorías: una comida más o una porción más grande ayuda.",
-        "seguir": "Sigue así: come lo de siempre y duerme lo que necesitas.",
         "comerAntesYa": "Para entrenar a las {hora}, come algo ya: con carbohidratos y algo de proteína.",
-        "atrasado": "Hoy vas atrasado con la comida: te faltan unas {kcal} kcal para ir al día.",
-        "atrasadoSinNumeros": "Hoy vas atrasado con la comida: una comida más te pone al día.",
         "comerAntes": "Come algo antes de las {hora}: la comida de antes de entrenar va de 1 a 4 h antes.",
         "comerDespues": "Ahora, una comida con proteína: ayuda a recuperar.",
         "inercia": "Al despertar es normal sentirte lento: se pasa en una media hora. Tu mejor momento llega a las {desde}.",
@@ -1264,26 +1254,7 @@
         "comerMasEntrena": "Come un poco más estos días, sobre todo antes y después de entrenar.",
         "medicoEntrena": "Si además se te cortó la menstruación (en hombres, si notas menos deseo sexual), tuviste una fractura por estrés o estás sin energía hace semanas, habla con un médico o un nutricionista del deporte."
       },
-      "deQueSale": "Según tu sueño, tus comidas y tu entrenamiento",
-      "deQueSaleSinEntreno": "Según tu sueño y tus comidas",
-      "detalle": {
-        "sueno": "Anoche dormiste {dormido}. Deuda de sueño: {deuda}.",
-        "suenoSinDatos": "Todavía no hay noches: con unos días de sueño, Moss lo suma.",
-        "comida": "Estos días, unas {kcal} kcal por día de tus {meta}.",
-        "comidaSinMeta": "Estos días, unas {kcal} kcal por día.",
-        "comidaSinNumeros": "Lo que anotaste estos días, contra lo que pide tu día.",
-        "comidaSinDatos": "Anota tus comidas unos días y Moss lo suma.",
-        "hoy": "Hoy, unas {comido} kcal de las {esperado} que sueles llevar a esta hora.",
-        "hoySinNumeros": "Hoy, lo que anotaste contra lo que sueles llevar a esta hora.",
-        "hoyTemprano": "Hoy apenas empieza: a esta hora todavía no se cuenta lo que comiste.",
-        "comidaEntrena": "Estos días, unas {kcal} kcal por día de tus {meta}, y {entreno} de entrenar.",
-        "comidaSinMetaEntrena": "Estos días, unas {kcal} kcal por día, y {entreno} de entrenar.",
-        "comidaSinNumerosEntrena": "Lo que anotaste estos días, contra lo que piden tu día y tu entrenamiento."
-      },
       "juicioDeuda": {
-        "muyBien": "sin deuda",
-        "bien": "baja",
-        "algoAlta": "algo alta",
         "alta": "alta",
         "sinDeuda": "sin deuda",
         "baja": "baja",
@@ -1320,27 +1291,12 @@
           "alta": "Buen día: ahora, a ir bajando el ritmo."
         }
       },
-      "verEnSueno": "Tócalo para verla en Sueño.",
+      "verEnSueno": "Tócalo para ver de qué sale.",
       "boton": {
         "baja": "Energía baja",
         "suficiente": "Energía suficiente",
         "alta": "Energía alta",
         "sinDatos": "Tu energía"
-      },
-      "por": {
-        "sueno": "Por el sueño",
-        "comida": "Por la comida",
-        "hoy": "Por lo de hoy",
-        "musculos": "Músculos cargados",
-        "todo": "Todo a favor",
-        "sinDatos": "Sin datos todavía"
-      },
-      "deCuando": {
-        "titulo": "De qué días sale",
-        "sueno": "El sueño: anoche, las dos noches de antes y tu deuda de las últimas dos semanas.",
-        "comida": "Estos días: el promedio de los 7 días de antes de hoy, con al menos 4 bien anotados. Es un promedio, así que un día malo pesa poco: la energía baja aparece cuando comes poco varios días seguidos, que es lo que miden los estudios (Loucks y Thuma 2003).",
-        "hoy": "Hoy: lo que anotaste hasta ahora, contra lo que sueles llevar a esta hora. Antes de tu primera comida, no cuenta.",
-        "curva": "La curva: sale de tu hora de despertarte y la de acostarte, con el modelo de los dos procesos (Borbély 1982) y el bajón de la tarde (Monk 2005). Es aproximada, no te mide a ti; con deuda, los picos son más bajos."
       },
       "cerrar": "Cerrar",
       "masEnSueno": "Más en Sueño",
@@ -1348,6 +1304,85 @@
         "pico": "Tu mejor momento",
         "bajon": "Bajón",
         "segundoPico": "Otro pico"
+      },
+      "hoy": "Hoy",
+      "estosDias": "Estos días",
+      "explica": {
+        "sueno": {
+          "titulo": "El sueño",
+          "anoche": "Anoche dormiste {dormido}; necesitas {necesidad}.",
+          "sinAnoche": "Todavía no está tu noche de anoche.",
+          "deuda": "Tu deuda de sueño de las últimas dos semanas: {deuda} ({juicio}).",
+          "sinDeuda": "No tienes deuda de sueño.",
+          "sinDatos": "Todavía no hay noches: con unos días de sueño, Moss lo suma.",
+          "como": {
+            "muyCorta": "Con {muyCorta} o menos, hoy tu energía es baja: cuesta más concentrarse y rendir.",
+            "corta": "Con {corta} o menos, hoy tu energía es baja: cuesta más concentrarse y rendir.",
+            "seguidas": "Dos de tus últimas tres noches fueron de {corta} o menos: por eso hoy tu energía es baja.",
+            "algoCorta": "Dormiste más de una hora menos de lo que necesitas: no baja tu energía, pero tampoco la deja ser alta.",
+            "deuda": "Anoche dormiste bien, pero con {deudaMedia} o más de deuda tu energía no llega a ser alta.",
+            "bien": "Dormiste lo que necesitas, o casi, y tu deuda es de menos de {deudaMedia}: el sueño no te frena."
+          },
+          "mira": "Moss mira cuánto dormiste anoche, si dos de tus últimas tres noches fueron cortas y tu deuda de las últimas dos semanas.",
+          "seguir": "Sigue así: esta noche, acuéstate a las {hora}.",
+          "seguirSinHora": "Sigue durmiendo lo que necesitas."
+        },
+        "hoy": {
+          "titulo": "La comida de hoy",
+          "numeros": "Hoy llevas unas {comido} kcal; a esta hora sueles llevar unas {esperado}.",
+          "sinNumeros": {
+            "alDia": "Hoy llevas comido lo que sueles llevar a esta hora, o casi.",
+            "atrasado": "Hoy llevas comido bastante menos de lo que sueles llevar a esta hora.",
+            "sinComerParaEntrenar": "Hoy llevas comido bastante menos de lo que sueles llevar a esta hora."
+          },
+          "temprano": "Todavía no pasó la hora de tu primera comida: lo de hoy aún no cuenta.",
+          "como": {
+            "alDia": "Vas como siempre: la comida de hoy no te frena.",
+            "atrasado": "Te faltan unas {kcal} kcal para ir como siempre. Pasar muchas horas con poca comida frena tu energía, aunque después llegues a tu meta.",
+            "atrasadoSinNumeros": "Te falta bastante para ir como siempre. Pasar muchas horas con poca comida frena tu energía, aunque después llegues a tu meta.",
+            "sinComerParaEntrenar": "Llegas a entrenar con poca comida: para la sesión, tu energía es baja."
+          },
+          "mira": "Moss compara lo que anotaste hoy con la parte de tu meta que sueles llevar comida a esta hora, según tus comidas de siempre.",
+          "conviene": {
+            "alDia": "Sigue con tus comidas de siempre.",
+            "atrasado": "Come algo ahora: una comida o una merienda recupera lo que falta."
+          }
+        },
+        "estosDias": {
+          "titulo": "La comida de estos días",
+          "numeros": "Estos días comiste unas {kcal} kcal por día; tu meta es de {meta}.",
+          "numerosSinMeta": "Estos días comiste unas {kcal} kcal por día.",
+          "numerosEntrena": "Estos días comiste unas {kcal} kcal por día, de tus {meta}, y gastaste unas {entreno} entrenando.",
+          "numerosSinMetaEntrena": "Estos días comiste unas {kcal} kcal por día y gastaste unas {entreno} entrenando.",
+          "sinNumeros": "Lo que anotaste estos días, contra lo que pide tu meta.",
+          "sinNumerosEntrena": "Lo que anotaste estos días, contra lo que piden tu meta y tu entrenamiento.",
+          "sinDatos": "Anota tus comidas unos días y Moss lo suma: hacen falta {minimo} días bien anotados.",
+          "como": {
+            "muyPoco": "Lo que comes no alcanza para lo que tu cuerpo necesita cada día: por eso tu energía es baja.",
+            "senal": "Tu peso de estas semanas muestra que comes menos de lo que tu cuerpo necesita: por eso tu energía es baja.",
+            "debajo": "Comiste menos del {pct} % de tu meta: no baja tu energía, pero tampoco la deja ser alta.",
+            "llegaste": "Llegaste a tu meta, o casi: la comida de estos días no te frena.",
+            "alcanza": "Comiste lo que tu cuerpo necesita: la comida de estos días no te frena.",
+            "deSobra": "Comiste de sobra para lo que gastas: la comida está a tu favor."
+          },
+          "mira": "Es el promedio de los {dias} días de antes de hoy; solo cuentan los que tienen tus comidas de siempre anotadas. Un día malo pesa poco: lo que baja la energía es comer poco varios días seguidos.",
+          "conviene": {
+            "debajo": "Una comida más o una porción más grande te acerca a tu meta.",
+            "bien": "Sigue así."
+          }
+        },
+        "musculos": {
+          "titulo": "Los músculos"
+        },
+        "hora": {
+          "titulo": "La hora del día",
+          "curva": "La curva sale de tu hora de despertarte y la de acostarte: es aproximada, no te mide a ti. Con deuda de sueño, los picos son más bajos."
+        }
+      },
+      "juicio": {
+        "bien": "Bien",
+        "justa": "Regular",
+        "baja": "Mal"
       }
     },
     "lector": {
@@ -1777,7 +1812,23 @@
       "propuesta": "Tus noches largas rondan {rondan}.",
       "usar": "Usar {usar}",
       "conTelefono": "Estimada con tu teléfono. Con un reloj o un anillo es más precisa.",
-      "comoConTelefono": "Sin reloj, Moss cuenta como sueño todo el rato que tu teléfono estuvo quieto, menos tu margen para dormirte, que se cambia en Afinar, más abajo."
+      "comoConTelefono": "Sin reloj, Moss cuenta como sueño todo el rato que tu teléfono estuvo quieto, menos tu margen para dormirte, que se cambia en Afinar, más abajo.",
+      "porNoche": {
+        "titulo": "Noche por noche",
+        "noche": "Noche",
+        "dormiste": "Dormiste",
+        "diferencia": "Diferencia",
+        "pesa": "Pesa",
+        "medida": "Medida",
+        "aMano": "A mano",
+        "noCuenta": "No cuenta",
+        "sinDatos": "Sin datos",
+        "justo": "justo",
+        "menos": "{t} menos de lo que necesitas",
+        "mas": "{t} más de lo que necesitas",
+        "tope": "* Con tope: una noche suma hasta {falta} ({estimada} si la estimó el teléfono) y descuenta hasta {sobra}.",
+        "leyenda": "«Estimada» es con tu teléfono; «Medida», con un reloj o un anillo. La barra es cuánto pesa cada noche en la deuda: anoche, entera."
+      }
     },
     "sinDeuda": "Sin deuda",
     "deudaDe": "menos de lo que necesitas ({necesidad} por noche)",
@@ -2807,7 +2858,36 @@
     "cerrandoSesion": "Cerrando sesión…",
     "exportando": "Exportando…",
     "alertaBorrar": "Borrar",
-    "cuidadoCambiado": "Cuidados: {valor}"
+    "cuidadoCambiado": "Cuidados: {valor}",
+    "otraCuenta": "Este iPhone tiene datos de otra cuenta y por eso no sincroniza.",
+    "pais": {
+      "titulo": "País de los alimentos",
+      "delTelefono": "El del teléfono",
+      "texto": "Los nombres de cada lugar («palta» o «aguacate») y lo que se vende ahí salen primero al buscar. El idioma de Moss no cambia.",
+      "nombres": {
+        "AR": "Argentina",
+        "BO": "Bolivia",
+        "CL": "Chile",
+        "CO": "Colombia",
+        "CR": "Costa Rica",
+        "CU": "Cuba",
+        "EC": "Ecuador",
+        "SV": "El Salvador",
+        "ES": "España",
+        "US": "Estados Unidos",
+        "GT": "Guatemala",
+        "HN": "Honduras",
+        "MX": "México",
+        "NI": "Nicaragua",
+        "PA": "Panamá",
+        "PY": "Paraguay",
+        "PE": "Perú",
+        "PR": "Puerto Rico",
+        "DO": "República Dominicana",
+        "UY": "Uruguay",
+        "VE": "Venezuela"
+      }
+    }
   },
   "fecha": {
     "dias": [
@@ -3763,6 +3843,10 @@
       "natacion": "Natación",
       "press_plano_smith": "Press plano en Smith",
       "press_inclinado_smith": "Press inclinado en Smith"
+    },
+    "pronto": {
+      "valor": "Pronto",
+      "globo": "Pronto: tu entrenamiento de Ascent y tu comida, juntos."
     }
   },
   "habitos": {
@@ -4204,7 +4288,8 @@
       "carrera": "Próxima carrera",
       "carreraFecha": "Cuándo",
       "carreraTexto": "Si dura más de hora y media, Moss te dice qué comer los dos días antes.",
-      "carreraCorta": "Con hora y media o menos, no hace falta cargar carbohidratos antes."
+      "carreraCorta": "Con hora y media o menos, no hace falta cargar carbohidratos antes.",
+      "categoria": "Compito por categoría de peso"
     },
     "nocheCorta": "Dormiste {h}: es normal tener más hambre hoy."
   },
