@@ -1,7 +1,7 @@
 // La invitación de Inicio (spec/ascent.md, «Que se encuentre»; galeria/src/ascent.js): solo con Ascent en
 // este iPhone y sin vincular. Sin Ascent no se dice nada. «Vincular» abre la hoja, sin salir de Inicio: dos
-// toques. «Ahora no» queda guardado en este iPhone y no vuelve a aparecer; la señal de Hábitos y Perfil
-// siguen ahí.
+// toques. «Ahora no» queda guardado en este iPhone y vuelve a las 4 horas (VUELVE_EN); la entrada de Progreso y
+// Perfil siguen ahí.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
@@ -20,6 +20,8 @@ import { MarcaChica } from './MarcaChica';
 import { useHayAscent } from './useHayAscent';
 
 const AHORA_NO = 'moss:invitarAVincularAhoraNo';
+// Con valores iniciales propios, en la web la carta quedaba absoluta, encima del bloque de abajo.
+const ENTRA = FadeIn.duration(500);
 
 export function InvitacionDeAscent() {
   const { listo, conCuenta, vinculo } = useAscent();
@@ -41,7 +43,7 @@ export function InvitacionDeAscent() {
   return (
     <>
       {invita && (
-        <Animated.View entering={FadeIn.duration(320)} exiting={FadeOut.duration(200)} layout={ACOMODA} style={st.carta}>
+        <Animated.View entering={ENTRA} exiting={FadeOut.duration(200)} layout={ACOMODA} style={st.carta}>
           <MarcaChica tam={40} />
           <View style={st.textos}>
             <Text style={st.titulo}>{t('ascent.invitacion.titulo')}</Text>

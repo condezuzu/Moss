@@ -76,11 +76,10 @@ import { avanceDelViaje, useViajando } from './viajar';
 import { anunciar } from '@/secciones/anuncio';
 import { alTocarDeNuevo } from '@/secciones/arriba';
 import { HABITOS } from '@/secciones/Barra';
-import { entre, subirOBajar, UMBRAL, VELOCIDAD_MINIMA } from '@/secciones/movimiento';
 import { colores } from '@/tema';
 
-/** Hasta dónde sube la cámara del cielo con Ascent arriba: menos que el dedo, porque está más lejos. */
-const CAMARA_DE_ASCENT = 0.75;
+/** Hasta dónde sube la cámara del cielo con Ascent abierta, como en la galería: menos que el dedo, porque está más lejos. */
+const CAMARA_DE_ASCENT = 1;
 
 const MUESTREO = { filter: FilterMode.Linear, mipmap: MipmapMode.None };
 const ORO = 'rgb(255, 204, 112)';
@@ -88,19 +87,10 @@ const PERGAMINO = 'rgb(240, 230, 207)';
 const MUSGO_LUZ = 'rgb(189, 237, 115)';
 const aRgb = ([r, g, b]: number[]) => `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`;
 
-/**
- * Ascent, abajo de Hábitos: deslizar para arriba desde el cielo la sube siguiendo al dedo, y tocar
- * la señal también. Lo maneja este gesto, así un deslizamiento que empieza en la señal también sube
- * y un toque en ella no enciende la estrella de abajo.
- */
+/** Ascent, arriba de Progreso: mientras baja, el cielo sube con ella (el gesto es de Progreso). */
 export type Subida = {
-  /** Cuánto subió: 0 abajo, 1 arriba. */
+  /** Cuánto bajó: 0 cerrada, 1 abierta. */
   progreso: SharedValue<number>;
-  /** Más abajo no arranca: ahí está la barra, y debajo, el gesto de inicio del iPhone. */
-  limiteY: number;
-  /** El centro de la señal con la cámara en hoy. */
-  flecha: { x: number; y: number };
-  alCambiar: (abierta: boolean) => void;
 };
 
 export type PropsDelCielo = {
@@ -438,7 +428,7 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
         e.cam.y = e.cam.objetivo;
         e.cam.v = 0;
       }
-      // Ascent sube sobre el mismo cielo: la cámara sube con el dedo y lo de hoy se apaga en la
+      // Ascent baja sobre el mismo cielo: la cámara sube con el dedo y lo de hoy se apaga en la
       // primera mitad del gesto. Cerrada, la cámara vuelve a ser del cielo.
       if (ascent > 0 || e.velado > 0) {
         e.cam.y = CAMARA_DE_ASCENT * ascent;
@@ -603,8 +593,6 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
   );
 
   // ------------------------------------------------------------------ gestos
-  // Hasta dónde llega la señal de Ascent a cada lado: cambia con lo que dice.
-  const medioDeLaSenal = useSharedValue(32);
   const toque = useTapGesture({
     maxDistance: 12,
     onBegin: () => {
@@ -613,15 +601,6 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
     },
     onActivate: (ev) => {
       'worklet';
-      if (subida) {
-        const e = escena.value;
-        const fy = subida.flecha.y + e.cam.y * PARALAJE.lomas[2] * alto;
-        if (e.paginaX === 0 && subida.progreso.get() === 0 && Math.abs(ev.x - subida.flecha.x) < medioDeLaSenal.get() && Math.abs(ev.y - fy) < 22) {
-          subida.progreso.set(subirOBajar(0, 1));
-          scheduleOnRN(subida.alCambiar, true);
-          return;
-        }
-      }
       escena.modify((e) => {
         'worklet';
         tocar(e, ev.x, ev.y);
@@ -630,18 +609,13 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
       drenar();
     },
   });
-  // Arrastrar mueve la cámara: hacia abajo, el cielo baja y aparece tu universo. Hacia arriba, desde
-  // hoy y arriba de la barra, sube Ascent. De costado es de las pestañas.
-  // Se decide con el primer movimiento, desde donde se apoyó el dedo: arriba de la barra, en hoy
-  // y para arriba, es Ascent; si no, la cámara.
-  const modo = useSharedValue<'nada' | 'camara' | 'ascent'>('nada');
-  const inicioY = useSharedValue(0);
+  // Arrastrar mueve la cámara: hacia abajo, el cielo baja y aparece tu universo. De costado es de las pestañas.
+  const modo = useSharedValue<'nada' | 'camara'>('nada');
   const arrastre = usePanGesture({
     activeOffsetY: [-10, 10],
     failOffsetX: [-14, 14],
-    onBegin: (ev) => {
+    onBegin: () => {
       'worklet';
-      inicioY.set(ev.absoluteY);
       modo.set('nada');
       despertar(VIVO_AL_TOCAR);
     },
@@ -650,27 +624,17 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
       if (modo.get() === 'nada') {
         // El primer evento puede llegar sin movimiento todavía: se espera a que el dedo se mueva.
         if (Math.abs(ev.translationY) < 3) return;
-        const actual = escena.value;
-        const enHoy = actual.cam.objetivo === 0 && Math.abs(actual.cam.y) < 0.02 && actual.paginaX === 0;
-        if (subida && ev.translationY < 0 && enHoy && inicioY.get() < subida.limiteY && subida.progreso.get() === 0) {
-          modo.set('ascent');
-        } else {
-          modo.set('camara');
-          // Lo que sigue al dedo cambia la escena sin avisar: avisar en cada evento volvía a dibujar
-          // el lienzo cada vez, además del cuadro. Lo lleva a la pantalla el lazo, una vez por cuadro,
-          // y con el dedo apoyado no para (arrastrando); esto lo arranca si se había aquietado.
-          escena.modify((e) => {
-            'worklet';
-            e.cam.arrastrando = true;
-            e.cam.desde = e.cam.y - ev.translationY / e.alto;
-            return e;
-          }, false);
-          despertar(VIVO_AL_TOCAR);
-        }
-      }
-      if (modo.get() === 'ascent' && subida) {
-        subida.progreso.set(entre((-ev.translationY - 10) / alto, 0, 1));
-        return;
+        modo.set('camara');
+        // Lo que sigue al dedo cambia la escena sin avisar: avisar en cada evento volvía a dibujar
+        // el lienzo cada vez, además del cuadro. Lo lleva a la pantalla el lazo, una vez por cuadro,
+        // y con el dedo apoyado no para (arrastrando); esto lo arranca si se había aquietado.
+        escena.modify((e) => {
+          'worklet';
+          e.cam.arrastrando = true;
+          e.cam.desde = e.cam.y - ev.translationY / e.alto;
+          return e;
+        }, false);
+        despertar(VIVO_AL_TOCAR);
       }
       escena.modify((e) => {
         'worklet';
@@ -684,13 +648,6 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
     },
     onDeactivate: (ev) => {
       'worklet';
-      if (modo.get() === 'ascent' && subida) {
-        const p = subida.progreso.get();
-        const abrir = p >= UMBRAL || -ev.velocityY >= VELOCIDAD_MINIMA;
-        subida.progreso.set(subirOBajar(p, abrir ? 1 : 0));
-        scheduleOnRN(subida.alCambiar, abrir);
-        return;
-      }
       if (modo.get() !== 'camara') return;
       escena.modify((e) => {
         'worklet';
@@ -951,14 +908,6 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
         globito={globito && vistoHabitos && dia.habitos.length > 0}
         acciones={acciones}
         abajo={abajo}
-        subida={subida?.progreso}
-        senal={subida ? {
-          medio: medioDeLaSenal,
-          alAbrir: () => {
-            subida.progreso.set(subirOBajar(subida.progreso.get(), 1));
-            subida.alCambiar(true);
-          },
-        } : undefined}
         marcar={marcarDesdeElLector}
         editar={editar}
       />}

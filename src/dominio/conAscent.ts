@@ -281,6 +281,21 @@ export function tuAnio(p: {
   };
 }
 
+export type GrupoDelAnio = 'pecho' | 'piernas' | 'espalda';
+const DEL_ANIO: Partial<Record<GrupoDeAscent, GrupoDelAnio>> = { pecho: 'pecho', hombros: 'pecho', piernas: 'piernas', espalda: 'espalda' };
+
+/**
+ * El color de un día en «Tu año»: el grupo de lo que más trabajó (gruposDeLaSesion) en tres, el empuje con el
+ * pecho; los brazos, el core y el cardio solos no dicen de qué día se trata, y se mira el que sigue. Sin ninguno, null.
+ */
+export function grupoDelAnio(grupos: readonly GrupoDeAscent[]): GrupoDelAnio | null {
+  for (const g of grupos) {
+    const delAnio = DEL_ANIO[g];
+    if (delAnio) return delAnio;
+  }
+  return null;
+}
+
 /** Desde qué semana del año (lunes) hay sesiones para mirar, para no pedir de más. */
 export const primerDiaQueHaceFalta = (hoy: ClaveDia, dias: number) => {
   const anio = `${hoy.slice(0, 4)}-01-01`;

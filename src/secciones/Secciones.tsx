@@ -1,14 +1,14 @@
 // Las seis secciones con el «+» en el medio de la barra (cambio 9 de la especificación) y Ascent
-// arriba de Hábitos (cambio 10), como se aprobaron en la galería. Se pasa de una a otra tocando su
-// nombre o deslizando, con el gesto de Ascent; el cielo queda quieto detrás de todas, oscurecido
-// salvo en Hábitos, y la constelación va con su página. Abre en Inicio: la comida es el centro.
+// arriba de Progreso (spec/ascent.md, «Ascent en Progreso»), como se aprobaron en la galería. Se pasa
+// de una a otra tocando su nombre o deslizando, con el gesto de Ascent; el cielo queda quieto detrás de
+// todas, oscurecido salvo en Hábitos, y la constelación va con su página. Abre en Inicio: la comida es el centro.
 // Sin perfil, primero la entrada, sobre el mismo cielo: al terminarla aparece Inicio.
 
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Keyboard, Linking, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { Easing, FadeIn, FadeOut, interpolate, Keyframe, ReduceMotion, useAnimatedStyle, useDerivedValue, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeOut, interpolate, Keyframe, ReduceMotion, useAnimatedStyle, useDerivedValue, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -46,6 +46,7 @@ import { CEDE_EN_EL_BORDE, entre, LLEGA, subirOBajar, UMBRAL, VELOCIDAD_MINIMA, 
 import { bajarTeclado } from './teclado';
 
 const ULTIMA = PESTANAS.length - 1;
+const PROGRESO = PESTANAS.indexOf('progreso');
 const FONDO = '#000';
 // Con una hoja abierta, lo de atrás: cuánto se achica y el radio de sus esquinas.
 const ACHICA = 0.07;
@@ -88,7 +89,7 @@ const LLEGA_DEL_VIAJE = new Keyframe({
   .duration(550)
   .reduceMotion(ReduceMotion.Never);
 export default function Secciones() {
-  const { width: ancho, height: alto } = useWindowDimensions();
+  const { width: ancho } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const abajo = ALTO_BARRA + insets.bottom;
   const [actual, setActual] = useState(0);
@@ -99,7 +100,7 @@ export default function Secciones() {
   const [editando, setEditando] = useState<string | null | undefined>(undefined);
   const [verMes, setVerMes] = useState(false);
   const [sugeridos, setSugeridos] = useState(false);
-  // La pestaña, con decimales mientras se desliza; Ascent y la hoja del «+», de 0 (abajo) a 1.
+  // La pestaña, con decimales mientras se desliza; Ascent (que baja desde arriba de Progreso) y la hoja del «+», de 0 a 1.
   const posicion = useSharedValue(0);
   const desde = useSharedValue(0);
   // La sección de donde arrancó el dedo (la más cercana, si la tira venía viajando).
@@ -191,9 +192,9 @@ export default function Secciones() {
   const ir = (i: number, vibrar = true) => {
     // El teclado de un campo de la sección que se deja quedaría tapando la que llega.
     Keyboard.dismiss();
-    // Con Ascent arriba, Hábitos la baja; otra pestaña la saca de una.
+    // Con Ascent abierta, Progreso la cierra; otra pestaña la saca de una.
     if (subida.get() > 0) {
-      subida.set(i === HABITOS ? subirOBajar(subida.get(), 0) : 0);
+      subida.set(i === PROGRESO ? subirOBajar(subida.get(), 0) : 0);
       setAscentAbierta(false);
     }
     cambiarDePestana(i, vibrar);
@@ -210,15 +211,26 @@ export default function Secciones() {
     subida.set(subirOBajar(subida.get(), 0));
     setAscentAbierta(false);
   };
-  // Desde la recuperación en Sueño o la fila de Perfil: pasa por Hábitos y la sube, como en la galería.
-  useEffect(() => alAbrirAscent(() => {
-    if (actual !== HABITOS) {
-      cambiarDePestana(HABITOS);
-      posicion.set(viaje(HABITOS));
+  // Desde la entrada de Progreso, Sueño o la fila de Perfil: pasa por Progreso y la baja, como en la galería.
+  const abrirAscent = () => {
+    if (actual !== PROGRESO) {
+      cambiarDePestana(PROGRESO);
+      posicion.set(viaje(PROGRESO));
     }
     subida.set(subirOBajar(subida.get(), 1));
     setAscentAbierta(true);
-  }));
+  };
+  useEffect(() => alAbrirAscent(abrirAscent));
+  // Lo que falta en Ascent se anota en su sección: la noche, en Sueño.
+  const irDesdeAscent = () => {
+    setAscentAbierta(false);
+    subida.set(0);
+    ir(PESTANAS.indexOf('sueno'), false);
+  };
+  const ascentArriba = useMemo(
+    () => (CON_ASCENT ? { subida, abierta: ascentAbierta, alAbrir: abrirAscent, alSoltar: setAscentAbierta } : undefined),
+    [subida, ascentAbierta], // eslint-disable-line react-hooks/exhaustive-deps
+  );
   // Con Reducir movimiento la hoja del «+» no sube: aparece y se va con un fundido corto (HojaMas).
   const reducido = useReducedMotion();
   const llevarLaHoja = (hasta: 0 | 1) => hoja.set(reducido ? withTiming(hasta, { duration: 180, reduceMotion: ReduceMotion.Never }) : subirOBajar(hoja.get(), hasta));
@@ -368,7 +380,8 @@ export default function Secciones() {
     },
   });
 
-  const estiloVelo = useAnimatedStyle(() => ({ opacity: interpolate(posicion.get(), [0, 1, 2, 3, 4, 5], VELO, 'clamp') }));
+  // Ascent trae su propio velo: el cielo se aclara mientras baja.
+  const estiloVelo = useAnimatedStyle(() => ({ opacity: interpolate(posicion.get(), [0, 1, 2, 3, 4, 5], VELO, 'clamp') * (1 - subida.get()) }));
   const estiloTira = useAnimatedStyle(() => ({ transform: [{ translateX: -posicion.get() * ancho }] }));
   // Cuánto tapa una hoja (la del «+» o la de registro) lo de atrás: el cielo se frena debajo.
   const tapado = useDerivedValue(() => Math.max(hoja.get(), conRegistro.get()));
@@ -405,13 +418,8 @@ export default function Secciones() {
               <PantallaDelCielo
                 paginaX={paginaX}
                 abajo={abajo}
-                // Sin la vinculación (src/lib/banderas.ts), el cielo no tiene ni el gesto ni la flecha de Ascent.
-                subida={CON_ASCENT ? {
-                  progreso: subida,
-                  limiteY: alto - abajo - 8,
-                  flecha: { x: ancho / 2, y: alto - abajo - 24 },
-                  alCambiar: setAscentAbierta,
-                } : undefined}
+                // Mientras Ascent baja, el cielo sube con ella (sin la vinculación, src/lib/banderas.ts, no está).
+                subida={CON_ASCENT ? { progreso: subida } : undefined}
                 entrada={entrada}
                 tapado={tapado}
                 alEditarHabito={setEditando}
@@ -435,7 +443,7 @@ export default function Secciones() {
                     >
                       <SeccionVisible.Provider value={i === actual}>
                         {i === HABITOS ? (
-                          <BotonesDeHabitos ancho={ancho} arriba={insets.top} subida={subida} alNuevo={() => setEditando(null)} alMes={() => setVerMes(true)} />
+                          <BotonesDeHabitos ancho={ancho} arriba={insets.top} alNuevo={() => setEditando(null)} alMes={() => setVerMes(true)} />
                         ) : !armada(i) ? (
                           <View style={{ width: ancho }} pointerEvents="none" />
                         ) : n === 'comida' ? (
@@ -443,7 +451,7 @@ export default function Secciones() {
                         ) : n === 'inicio' ? (
                           <PaginaDeInicio ancho={ancho} arriba={insets.top} abajo={abajo} alIr={ir} />
                         ) : n === 'progreso' ? (
-                          <PaginaDeProgreso ancho={ancho} arriba={insets.top} abajo={abajo} alAbrirMas={abrirHoja} />
+                          <PaginaDeProgreso ancho={ancho} arriba={insets.top} abajo={abajo} alAbrirMas={abrirHoja} ascent={ascentArriba} />
                         ) : n === 'sueno' ? (
                           <PaginaDeSueno ancho={ancho} arriba={insets.top} abajo={abajo} />
                         ) : (
@@ -453,7 +461,7 @@ export default function Secciones() {
                     </View>
                   ))}
                 </Animated.View>
-                {CON_ASCENT && <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} />}
+                {CON_ASCENT && <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} alIr={irDesdeAscent} />}
               </Animated.View>
             )}
           </Animated.View>
@@ -490,19 +498,17 @@ export default function Secciones() {
 }
 
 /** Arriba a la derecha de Hábitos, debajo de la luz de hoy: un hábito nuevo y «Tu mes». El cielo queda limpio. */
-function BotonesDeHabitos({ ancho, arriba, subida, alNuevo, alMes }: { ancho: number; arriba: number; subida: SharedValue<number>; alNuevo: () => void; alMes: () => void }) {
-  // Con Ascent subiendo se apagan, como lo de hoy en el cielo.
-  const estilo = useAnimatedStyle(() => ({ opacity: Math.max(0, 1 - subida.get() * 2) }));
+function BotonesDeHabitos({ ancho, arriba, alNuevo, alMes }: { ancho: number; arriba: number; alNuevo: () => void; alMes: () => void }) {
   return (
     <View style={{ width: ancho }} pointerEvents="box-none">
-      <Animated.View style={[estilos.botonesDeHabitos, { top: arriba + 62 }, estilo]}>
+      <View style={[estilos.botonesDeHabitos, { top: arriba + 62 }]}>
         <Pressable onPress={alMes} style={estilos.botonDeHabitos} accessibilityRole="button" accessibilityLabel={t('habitos.mes.abrir')} hitSlop={6}>
           <Icono nombre="calendar" tam={15} color="rgba(239, 230, 207, 0.75)" />
         </Pressable>
         <Pressable onPress={alNuevo} style={estilos.botonDeHabitos} accessibilityRole="button" accessibilityLabel={t('habitos.mas')} hitSlop={6}>
           <Icono nombre="plus" tam={16} color={colores.oroClaro} peso="semibold" />
         </Pressable>
-      </Animated.View>
+      </View>
     </View>
   );
 }

@@ -2,7 +2,8 @@
 // - el cielo de Hábitos, calidad baja y dos riquezas;
 // - un toque sobre una estrella, y otra vez el cielo después de recargar (tiene que acordarse);
 // - el día completo y tu universo;
-// - las secciones: Ascent desde el cielo (y no desde la barra), la señal, las pestañas, Inicio y el «+»;
+// - las secciones: Ascent arriba de Progreso (la entrada, arrastrar para abajo y volver empujando), las
+//   pestañas, Inicio y el «+»;
 // - decir lo que comí, escrito (en la web no hay micrófono), con sus preguntas, y anotarlo;
 // - las primeras pantallas de la entrada, en un navegador sin perfil.
 // Es lo más cerca del iPhone que se puede llegar desde Windows; el rendimiento real se mide en el
@@ -19,7 +20,9 @@ const salida = process.argv[2] || 'capturas/app';
 mkdirSync(salida, { recursive: true });
 const URL = process.env.APP_URL || 'http://localhost:4174/';
 
-const navegador = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+// Cada lienzo de Skia es un contexto de WebGL, y Chrome deja 16: con más, apaga el más viejo (el cielo) y lo
+// muestra roto. En el iPhone no hay ese tope.
+const navegador = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--max-active-webgl-contexts=64'] });
 const PANTALLA = { viewport: { width: 393, height: 852 }, deviceScaleFactor: 2, locale: 'es-UY' };
 const pagina = await navegador.newPage(PANTALLA);
 const errores = [];
@@ -126,8 +129,9 @@ await panel('Hoy / Universo');
 await pagina.waitForTimeout(2500);
 await foto('universo');
 
-// Las secciones (cambios 9 y 10): Ascent sube con el dedo desde el cielo, pero no desde la barra;
-// la flecha de arriba la baja y la señal de abajo la sube; la tira de pestañas y el «+».
+// Las secciones: Ascent está arriba de Progreso (spec/ascent.md, «Ascent en Progreso»): la entrada de arriba a
+// la derecha la abre, arriba de todo de Progreso arrastrar para abajo la baja, y abajo de todo de Ascent empujar
+// para arriba (o «Volver a Progreso») vuelve; la tira de pestañas y el «+».
 await abrir();
 const { width: an, height: al } = pagina.viewportSize();
 const arrastrar = async (desde, hasta, nombre) => {
@@ -139,8 +143,8 @@ const arrastrar = async (desde, hasta, nombre) => {
   await pagina.mouse.up();
   await pagina.waitForTimeout(1200);
 };
-// Con la vinculación apagada (src/lib/banderas.ts, D30), el gesto no sube nada y Ascent no se nombra,
-// ni en lo que se lee ni en lo que dice VoiceOver: en Hábitos, en Perfil ni en Inicio.
+// Con la vinculación apagada (src/lib/banderas.ts, D30), Ascent no se nombra, ni en lo que se lee ni en lo que dice
+// VoiceOver: en Hábitos, en Perfil ni en Inicio (en Progreso, solo «Pronto»).
 const conAscent = /CON_ASCENT = true/.test(readFileSync('src/lib/banderas.ts', 'utf8'));
 const sinNombrarAscent = async (donde) => {
   if (conAscent) return;
@@ -148,25 +152,34 @@ const sinNombrarAscent = async (donde) => {
   if (nombrada) errores.push(`Ascent: con la vinculación apagada, ${donde} la nombra ${nombrada} vez o veces`);
 };
 await sinNombrarAscent('Hábitos');
-// En el borde de la barra, donde no hay botón: soltar sobre un botón lo tocaría.
-await arrastrar([3, al - 30], [3, al - 330], 'ascent-desde-la-barra');
-await arrastrar([an / 2, al - 220], [an / 2, al - 520], conAscent ? 'ascent-subiendo' : 'sin-ascent-arrastrando');
-if (!conAscent) {
-  if (await pagina.getByLabel('Volver al cielo').count()) errores.push('Ascent: con la vinculación apagada, el gesto subió la sección');
-  await sinNombrarAscent('Hábitos, después del gesto');
-} else if (await pagina.getByLabel('Volver al cielo').count()) {
+if (conAscent) {
+  await pagina.getByRole('tab', { name: 'Progreso' }).click();
+  await pagina.waitForTimeout(3500);
+  await foto('ascent-entrada');
+  const volver = pagina.getByText('Volver a Progreso', { exact: true });
+  // Cerrada, Ascent queda arriba, fuera de la pantalla.
+  const abierta = async () => {
+    const caja = await volver.boundingBox().catch(() => null);
+    return !!caja && caja.y > 0 && caja.y < al;
+  };
+  await pagina.locator('[aria-label="Abrir Ascent"], [aria-label^="Abrir Ascent:"]').first().click();
+  await pagina.waitForTimeout(1800);
   await foto('ascent');
-  await pagina.getByLabel('Volver al cielo').click();
-  await pagina.waitForTimeout(1200);
-  await foto('ascent-bajada');
-  // Tocar la señal, abajo, también la sube; no es un botón sobre el lienzo: lo resuelve el gesto del cielo.
-  await pagina.mouse.click(an / 2, al - 58 - 24);
-  await pagina.waitForTimeout(1200);
-  await foto('ascent-por-la-senal');
-  await pagina.getByLabel('Volver al cielo').click();
-  await pagina.waitForTimeout(1200);
-} else {
-  errores.push('Ascent: el gesto no subió la sección');
+  if (!(await abierta())) errores.push('Ascent: la entrada de Progreso no abrió la sección');
+  await volver.click();
+  await pagina.waitForTimeout(1500);
+  await foto('ascent-de-vuelta');
+  // Arriba de todo de Progreso, arrastrar para abajo la baja siguiendo al dedo; abajo de todo, empujar para arriba vuelve.
+  await arrastrar([an / 2, 300], [an / 2, 560], 'ascent-bajando');
+  await foto('ascent-por-el-gesto');
+  if (!(await abierta())) errores.push('Ascent: arrastrar para abajo desde arriba de Progreso no la abrió');
+  await arrastrar([an / 2, al - 150], [an / 2, al - 470], 'ascent-subiendo');
+  if (await abierta()) errores.push('Ascent: empujar para arriba abajo de todo no volvió a Progreso');
+  // En el borde de la barra, donde no hay botón (soltar sobre un botón lo tocaría): no abre nada.
+  await arrastrar([3, al - 30], [3, al - 330], 'ascent-desde-la-barra');
+  if (await abierta()) errores.push('Ascent: se abrió desde la barra');
+  await pagina.getByRole('tab', { name: 'Hábitos' }).click();
+  await pagina.waitForTimeout(1500);
 }
 await arrastrar([an - 40, 420], [an - 200, 420], 'pestanas-deslizando');
 await foto('perfil');

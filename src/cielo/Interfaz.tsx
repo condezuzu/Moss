@@ -12,7 +12,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { anunciar, conLector } from '@/secciones/anuncio';
 import { useEsLaActual } from '@/secciones/arriba';
-import { SenalDeAscent } from '@/secciones/ascent/SenalDeAscent';
 import { HABITOS } from '@/secciones/Barra';
 import { lista, t } from '@/textos';
 import { colores } from '@/tema';
@@ -57,10 +56,6 @@ type Props = {
   acciones: Acciones;
   /** Lo que ocupa la barra de pestañas abajo; sin barra, 0. */
   abajo: number;
-  /** Cuánto subió Ascent: la señal se apaga mientras sube. */
-  subida?: SharedValue<number>;
-  /** La señal de Ascent: sin la vinculación, no está. */
-  senal?: { alAbrir: () => void; medio: SharedValue<number> };
   /** Con VoiceOver, la etiqueta de la estrella `i` hace lo de su estrella: tocarla y mantenerla apretada. */
   marcar: (i: number) => void;
   editar: (i: number) => void;
@@ -91,7 +86,6 @@ export function Interfaz(p: Props) {
   // Los worklets toman solo lo que usan: con `p.escena` adentro se llevaban todas las props (el plano,
   // el día) en cada render.
   const escena = p.escena;
-  const subida = p.subida;
 
   // Todo lo de Hábitos se corre con su pestaña, como la constelación.
   const estiloCabecera = useAnimatedStyle(() => {
@@ -114,12 +108,6 @@ export function Interfaz(p: Props) {
   const estiloFrase = useAnimatedStyle(() => ({ transform: [{ translateX: escena.value.paginaX }, { translateY: escena.value.cam.y * PARALAJE.lomas[2] * alto }], opacity: (1 - escena.value.velado) * conFrase.get() }));
   // El panel de prueba es de Hábitos: no se ve encima de las otras secciones.
   const estiloPanel = useAnimatedStyle(() => ({ transform: [{ translateX: escena.value.paginaX }], opacity: 1 - escena.value.velado }));
-  // La señal de Ascent va con la frase: se corre con la pestaña y se va con el musgo a tu universo.
-  const estiloSenal = useAnimatedStyle(() => {
-    const e = escena.value;
-    const subio = subida ? subida.get() : 0;
-    return { opacity: 1 - Math.min(1, subio * 2.5), transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * PARALAJE.lomas[2] * alto }] };
-  });
   const estiloUniverso = useAnimatedStyle(() => {
     const e = escena.value;
     return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: suave(0.5, 1.1, e.cam.y) * (1 - e.velado) };
@@ -237,17 +225,10 @@ export function Interfaz(p: Props) {
         </View>
       </Animated.View>
 
-      <Animated.View style={[estilos.frase, { bottom: p.abajo ? p.abajo + (p.senal ? 46 : 38) : insets.bottom + 12 }, estiloFrase]} pointerEvents="none">
+      <Animated.View style={[estilos.frase, { bottom: p.abajo ? p.abajo + 38 : insets.bottom + 12 }, estiloFrase]} pointerEvents="none">
         <Text style={estilos.fraseTexto} maxFontSizeMultiplier={LETRA_MAXIMA}>{`“${nombreEn(p.dia.frase.texto)}”`}</Text>
         <Text style={estilos.fraseAutor} maxFontSizeMultiplier={LETRA_MAXIMA}>{nombreEn(p.dia.frase.autor)}</Text>
       </Animated.View>
-
-      {/* No toma toques: los resuelven los gestos del cielo (Cielo.tsx). */}
-      {p.senal && (
-        <Animated.View style={[estilos.senal, { bottom: p.abajo + 8 }, estiloSenal]} pointerEvents="none">
-          <SenalDeAscent escena={escena} alAbrir={p.senal.alAbrir} medio={p.senal.medio} />
-        </Animated.View>
-      )}
 
       {/* El aviso y el globito son de Hábitos: se van con su página. Con Reducir movimiento no suben: se funden. */}
       <Animated.View style={[StyleSheet.absoluteFill, estiloPanel]} pointerEvents="box-none">
@@ -255,7 +236,7 @@ export function Interfaz(p: Props) {
         <Animated.View
           entering={(reducido ? FadeIn : FadeInDown).duration(320).delay(500).reduceMotion(ReduceMotion.Never)}
           exiting={FadeOut.duration(260).reduceMotion(ReduceMotion.Never)}
-          style={[estilos.aviso, estilos.globito, { bottom: p.abajo ? p.abajo + (p.senal ? 52 : 40) : insets.bottom + 40 }]}
+          style={[estilos.aviso, estilos.globito, { bottom: p.abajo ? p.abajo + 40 : insets.bottom + 40 }]}
           pointerEvents="none"
         >
           <Text style={estilos.avisoTexto} numberOfLines={2}>{t('cielo.globito')}</Text>
@@ -266,7 +247,7 @@ export function Interfaz(p: Props) {
           key={p.aviso.clave}
           entering={(reducido ? FadeIn : FadeInDown).duration(220).reduceMotion(ReduceMotion.Never)}
           exiting={FadeOut.duration(200).reduceMotion(ReduceMotion.Never)}
-          style={[estilos.aviso, { bottom: p.abajo ? p.abajo + (p.senal ? 52 : 24) : insets.bottom + 96 }]}
+          style={[estilos.aviso, { bottom: p.abajo ? p.abajo + 24 : insets.bottom + 96 }]}
           onAccessibilityEscape={p.alCerrarAviso}
         >
           <Text style={estilos.avisoTexto} numberOfLines={2}>{p.aviso.texto}</Text>
@@ -372,7 +353,6 @@ const estilos = StyleSheet.create({
   universoNombreHoy: { color: colores.pergamino },
 
   frase: { position: 'absolute', left: 26, right: 26, alignItems: 'center' },
-  senal: { position: 'absolute', alignSelf: 'center', maxWidth: '92%' },
   fraseTexto: { fontFamily: 'CormorantGaramond_400Regular_Italic', fontSize: 14.5, lineHeight: 19, textAlign: 'center', color: 'rgba(239, 230, 207, 0.74)' },
   fraseAutor: { marginTop: 5, fontFamily: 'Jost_400Regular', fontSize: 9, letterSpacing: 1.8, textTransform: 'uppercase', color: 'rgba(185, 227, 107, 0.6)' },
 

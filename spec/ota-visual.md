@@ -129,3 +129,22 @@ Por aire a las dos builds, con la galería 54.
 
 Quedó afuera: el musgo horneado y el fondo en disco (hay que medir en un iPhone viejo), el título de Editar perfil a la
 izquierda y «Margen para dormirte» con chips (diferencias chicas con la galería), y lo que pide build.
+
+## Ascent arriba de Progreso (18/11, noche): aprobado y en la app
+
+Lo aprobaste con las capturas de la galería 54 («Sí, que entre»). Por aire a las dos builds.
+- **La sección:** la entrada arriba a la derecha de Progreso (el planeta con su órbita; vinculada, lo de hoy), arrastrar
+  para abajo desde arriba de Progreso, llegar abajo a lo principal y subir para el resto, «Volver a Progreso» o empujar
+  para arriba. El polvo estelar de fondo (`assets/ascent/`, de `node herramientas/polvo-de-ascent.mjs`). Sin vincular, la
+  hoja de vincular con sus estados; vinculada, el titular, cómo llegas a entrenar, tu último entreno, cómo te sientes de 0
+  a 10, por qué no hay porcentaje, hoy concéntrate en, de qué sale, tus músculos, tu fuerza, marcas, estancamiento, tu
+  año, lo que comparten y en qué se basa.
+- **Se fue:** la sección de abajo de Hábitos y la señal de Hábitos.
+- **Las otras secciones:** el titular de hoy es uno (`src/secciones/ascent/titularDeHoy.ts`) y lo usan la sección, tu
+  energía (Inicio y Sueño, con «con Ascent» y los músculos) y la tarjeta de Sueño sin tu energía. Perfil: la fila y el
+  final como la galería; tocar la fila vinculada pregunta «Ver lo de Ascent» o «Desvincular».
+- **Pide servidor** (funciones nuevas en `moss`, con tu sí): la rutina de Ascent (para «Tu semana en Ascent», la sesión
+  exacta de hoy y la lista de «Tu fuerza»; mientras, sale de Perfil › Entrenamiento y de tu última sesión de ese día), el
+  umbral de estancamiento de sus ajustes (mientras, 6 semanas), la racha para el rango (mientras, el polvo del rango 1) y
+  `moss.recuperacion(fecha)` con el titular, para que Ascent diga lo mismo.
+- Sin probar en un iPhone: el gesto con el dedo, Skia y la letra Outfit 200 en el teléfono.

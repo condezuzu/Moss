@@ -93,13 +93,12 @@ const APARECE_LISTO: EntryExitAnimationFunction = () => {
 /** Si el velo quedara (la entrada no llegó), se va solo después de «Listo». */
 const VELO_COMO_MUCHO = 4000;
 
-/** Lo que anda solo con las dos apps vinculadas (antes en la sección de Ascent). */
-const FUNCIONES_CON_ASCENT: { clave: 'peso' | 'calorias' | 'objetivo' | 'proteina' | 'gimnasio'; icono: SFSymbol }[] = [
+/** Lo que anda solo con las dos apps vinculadas (antes en la sección de Ascent), sin «El gimnasio se enciende solo» (2/11). */
+const FUNCIONES_CON_ASCENT: { clave: 'peso' | 'calorias' | 'objetivo' | 'proteina'; icono: SFSymbol }[] = [
   { clave: 'peso', icono: 'scalemass' },
   { clave: 'calorias', icono: 'bolt' },
   { clave: 'objetivo', icono: 'target' },
   { clave: 'proteina', icono: 'dumbbell' },
-  { clave: 'gimnasio', icono: 'star' },
 ];
 
 /** La versión, la de abajo de Perfil y la del correo de ayuda: «1.0.0 (6)». */
@@ -299,7 +298,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo, alIr }: { ancho: number; 
       clave: 'aparatos', titulo: t('perfil.aparatos.titulo'), icono: e.salud?.aparatos.some((a) => a.noches > 0) ? 'applewatch' : 'iphone', color: 'azul',
       valor: aparatoPrincipal(e.salud?.aparatos ?? []), detalle: nochesDeAparato ? plural('perfil.aparatos.noches', nochesDeAparato, { n: nochesDeAparato }) : undefined, alTocar: () => setHoja('aparatos'),
     },
-    // Vinculada: con quién, y desvincular. Sin vincular, lleva a la sección de Ascent. Apagada, solo dice «Pronto».
+    // Vinculada: «● Vinculada», y ver o desvincular. Sin vincular, lleva a la sección de Ascent. Apagada, solo dice «Pronto».
     CON_ASCENT ? { ...ascent, icono: 'circle.circle' as const, color: 'ascent' as const }
       : { clave: 'ascent', titulo: t('perfil.ascent'), icono: 'circle.circle' as const, color: 'ascent' as const, pronto: t('ascent.pronto.valor') },
   ]];
@@ -413,7 +412,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo, alIr }: { ancho: number; 
               <View style={st.lista}>
                 {FUNCIONES_CON_ASCENT.map((f, i) => (
                   <View key={f.clave} style={[st.funcion, i > 0 && st.filaSeparada]}>
-                    <Icono nombre={f.icono} tam={18} color="rgba(239, 230, 207, 0.6)" peso="light" />
+                    <Cuadro icono={f.icono} color="ascent" />
                     <View style={{ flex: 1 }}>
                       <Text style={st.funcionTitulo}>{t(`ascent.funciones.${f.clave}.titulo`)}</Text>
                       <Text style={st.funcionTexto}>{t(`ascent.funciones.${f.clave}.texto`)}</Text>
@@ -1274,7 +1273,7 @@ const st = StyleSheet.create({
   velo: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 40, backgroundColor: 'rgba(3, 5, 12, 0.8)' },
   veloTexto: { textAlign: 'center', fontFamily: letras.texto, fontSize: 14.5, lineHeight: 19, color: 'rgba(239, 230, 207, 0.86)' },
   informacion: { marginBottom: 10, marginHorizontal: 4, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: 'rgba(239, 230, 207, 0.6)' },
-  funcion: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 },
+  funcion: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 11, paddingHorizontal: 13 },
   funcionTitulo: { fontFamily: letras.texto, fontSize: 14.5, color: colores.pergamino },
   funcionTexto: { marginTop: 3, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17.5, color: 'rgba(239, 230, 207, 0.55)' },
   credito: { fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17, color: 'rgba(239, 230, 207, 0.65)' },

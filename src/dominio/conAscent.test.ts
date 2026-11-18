@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  cargaAntesDe, entrenadoSegunAscent, entrenoEl, estancamiento, gruposDeLaSesion, horasSinComer, metaDelDiaConAscent, pesoUnico, SEMANAS_SIN_SUBIR, semanaDesde, semanasParaComparar,
+  cargaAntesDe, entrenadoSegunAscent, entrenoEl, estancamiento, grupoDelAnio, gruposDeLaSesion, horasSinComer, metaDelDiaConAscent, pesoUnico, SEMANAS_SIN_SUBIR, semanaDesde, semanasParaComparar,
   sesionesConBloques, tuAnio,
   type MarcaDeAscent, type SesionDeAscent,
 } from './conAscent';
@@ -123,6 +123,14 @@ describe('lo demás', () => {
     expect(horasSinComer(['2026-10-21T11:00:00Z', '2026-10-21T23:00:00Z'], en)).toBeCloseTo(10.67, 2);
     expect(horasSinComer(['2026-10-19T11:00:00Z'], en)).toBeNull();
     expect(horasSinComer([], en)).toBeNull();
+  });
+
+  it('el color de un día de tu año: lo que más trabajó, el empuje con el pecho; los brazos solos no cuentan', () => {
+    expect(grupoDelAnio(['piernas', 'core'])).toBe('piernas');
+    expect(grupoDelAnio(['hombros', 'brazos'])).toBe('pecho');
+    expect(grupoDelAnio(['brazos', 'espalda'])).toBe('espalda');
+    expect(grupoDelAnio(['brazos', 'cardio'])).toBeNull();
+    expect(grupoDelAnio([])).toBeNull();
   });
 
   it('tu año cuenta solo lo de ese año', () => {

@@ -46,16 +46,20 @@ export type DeAscent = {
   llego: string | null;
   /** Lo dormido cada noche, en minutos, que se va juntando mientras está vinculada. */
   noches: Record<ClaveDia, number>;
-  /** Los días en que se dijo «buen día para intentar marca», por ejercicio: para los aciertos. */
-  avisos: { ejercicio: string; fecha: ClaveDia }[];
+  /** «¿Cómo te sientes para entrenar?», de 0 a 10: lo que se contestó y qué día (vale solo ese día). */
+  siente: { fecha: ClaveDia; n: number } | null;
   /** Sube con cada cambio. */
   version: number;
 };
 
 /** Las sesiones: las de este año y, en enero, las de 12 semanas atrás (el rendimiento mira 8). */
 const DIAS_DE_SESIONES = 84;
-/** Con los ejercicios de cada serie solo las de las últimas 9 semanas: lo de antes cuenta para tu año. */
-const DIAS_CON_EJERCICIOS = 63;
+/**
+ * Con las series de cada ejercicio, las de las últimas 18 semanas: la tendencia de tu fuerza mira 12 y las razones
+ * de estancamiento, lo de antes de la última marca. De lo de antes quedan los ejercicios sin las series: alcanza
+ * para el color de cada día de tu año y pesa mucho menos.
+ */
+const DIAS_CON_SERIES = 126;
 /** Las marcas de un año (y la mejor de siempre de cada ejercicio, que el servidor suma igual). */
 const DIAS_DE_MARCAS = 365;
 /** El peso, como el gráfico más largo de Progreso y la tendencia que lo arranca. */
@@ -63,16 +67,21 @@ const DIAS_DE_PESOS = 120;
 const DIAS_DE_NOCHES = 400;
 
 const SIN_VINCULO: EstadoDelVinculo = { vinculada: false, nombre: null, desde: null };
-const vacio = (): Omit<DeAscent, 'listo' | 'conCuenta' | 'version'> => ({ vinculo: SIN_VINCULO, sesiones: [], marcas: [], pesos: [], desde: null, llego: null, noches: {}, avisos: [] });
+const vacio = (): Omit<DeAscent, 'listo' | 'conCuenta' | 'version'> => ({ vinculo: SIN_VINCULO, sesiones: [], marcas: [], pesos: [], desde: null, llego: null, noches: {}, siente: null });
 const porFecha = <T extends { fecha: ClaveDia }>(a: T, b: T) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0);
 
-type Guardado = ReturnType<typeof vacio> & { v: 1; usuario: string | null };
+type Guardado = ReturnType<typeof vacio> & { v: 1; usuario: string | null; conSeries?: number };
 
 function leerGuardado(texto: string | null): Guardado | null {
   try {
-    const x = texto ? (JSON.parse(texto) as Partial<Guardado>) : null;
-    if (!x || x.v !== 1 || !x.vinculo || !Array.isArray(x.sesiones) || !Array.isArray(x.marcas) || !Array.isArray(x.pesos)) return null;
-    return { ...vacio(), ...x, v: 1, usuario: x.usuario ?? null, noches: x.noches ?? {}, avisos: Array.isArray(x.avisos) ? x.avisos : [] } as Guardado;
+    const leido = texto ? (JSON.parse(texto) as Partial<Guardado> & { avisos?: unknown }) : null;
+    if (!leido || leido.v !== 1 || !leido.vinculo || !Array.isArray(leido.sesiones) || !Array.isArray(leido.marcas) || !Array.isArray(leido.pesos)) return null;
+    // Los avisos de marca de la build 6 ya no se usan.
+    const { avisos: _a, ...x } = leido;
+    const siente = x.siente && typeof x.siente.n === 'number' && typeof x.siente.fecha === 'string' ? x.siente : null;
+    // Lo guardado con menos semanas con series (la build 6 guardaba 9): se vuelve a pedir todo.
+    const desde = x.conSeries === DIAS_CON_SERIES ? (x.desde ?? null) : null;
+    return { ...vacio(), ...x, v: 1, usuario: x.usuario ?? null, noches: x.noches ?? {}, siente, desde } as Guardado;
   } catch {
     return null;
   }
@@ -108,18 +117,18 @@ export function crearAscent(op: OpcionesDeAscent) {
     oyentes.forEach((o) => o());
   };
 
-  /** Lo de antes de las últimas 9 semanas va sin las series: alcanza para tu año y pesa mucho menos. */
   function guardar() {
-    const corte = sumarDias(op.hoy(), -DIAS_CON_EJERCICIOS);
+    const corte = sumarDias(op.hoy(), -DIAS_CON_SERIES);
     const { listo: _l, conCuenta: _c, version: _v, ...datos } = estado;
-    const g: Guardado = { ...datos, v: 1, usuario, sesiones: estado.sesiones.map((s) => (s.fecha < corte && s.ejercicios.length ? { ...s, ejercicios: [] } : s)) };
+    const sinSeries = (s: SesionDeAscent): SesionDeAscent => ({ ...s, ejercicios: s.ejercicios.map((e) => ({ ...e, series: [] })) });
+    const g: Guardado = { ...datos, v: 1, usuario, conSeries: DIAS_CON_SERIES, sesiones: estado.sesiones.map((s) => (s.fecha < corte ? sinSeries(s) : s)) };
     op.guardado.escribir(JSON.stringify(g)).catch(() => {});
   }
 
   /** Lo guardado, si es de esta cuenta (o si todavía no se sabe de quién es la sesión). Sin sesión, nada. */
   function usarLoDeAntes() {
     if (!deAntes || (sesionSabida && (!usuario || deAntes.usuario !== usuario))) return;
-    const { v: _v, usuario: _u, ...datos } = deAntes;
+    const { v: _v, usuario: _u, conSeries: _s, ...datos } = deAntes;
     cambiar({ ...datos });
   }
 
@@ -167,7 +176,6 @@ export function crearAscent(op: OpcionesDeAscent) {
         cambiar({
           sesiones: [...estado.sesiones.filter((s) => s.fecha >= primero && s.fecha < desde), ...sesiones].sort(porFecha),
           marcas, pesos, desde: primero, llego: ahora().toISOString(),
-          avisos: estado.avisos.filter((a) => a.fecha >= sumarDias(hoy, -DIAS_DE_MARCAS)),
         });
         guardar();
       } catch {
@@ -248,10 +256,11 @@ export function crearAscent(op: OpcionesDeAscent) {
       cambiar({ noches: nuevas });
       guardar();
     },
-    /** Que se dijo «buen día para intentar marca» en ese ejercicio ese día. */
-    anotarAviso(ejercicio: string, fecha: ClaveDia) {
-      if (estado.avisos.some((a) => a.ejercicio === ejercicio && a.fecha === fecha)) return;
-      cambiar({ avisos: [...estado.avisos, { ejercicio, fecha }] });
+    /** «¿Cómo te sientes para entrenar?» de hoy (null lo borra): queda en el teléfono y no sube. */
+    ponerComoTeSientes(n: number | null) {
+      const fecha = op.hoy();
+      if (n === null ? !estado.siente : estado.siente?.fecha === fecha && estado.siente.n === n) return;
+      cambiar({ siente: n === null ? null : { fecha, n } });
       guardar();
     },
   };

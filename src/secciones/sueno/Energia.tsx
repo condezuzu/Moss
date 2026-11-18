@@ -3,7 +3,8 @@
 // y una frase; la curva del día sobre la tira de tu día (las comidas y ahora) y las partes: el sueño, que dice si
 // está bien o mal, y la comida, con hoy y estos días juntos (lo pediste el 17/11). «Más» explica cada parte: con qué
 // números, qué significa, qué conviene y qué mira Moss; se pliega en vez de «No mostrar más». Sin Ascent, es la de
-// tu día: sin la sesión, los músculos ni lo de no llegar al fallo.
+// tu día: sin la sesión, los músculos ni lo de no llegar al fallo. Con Ascent vinculada, la capa del gimnasio: la
+// etiqueta dice «· con Ascent» con su marca, la tira lleva la sesión y las partes, los músculos (spec/entreno.md 5.13).
 // Vive en Sueño, debajo de la noche. Inicio usa lo mismo para su botón: useEnergia, Bateria, fraseDeEnergia,
 // TiraDelDia, PartesDeEnergia e irAEnergia (que lleva a la tarjeta).
 
@@ -19,6 +20,8 @@ import { TRAMOS_DE_LA_DEUDA } from '@/dominio/sueno';
 import { t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Relleno } from '../animados';
+import { MarcaChica } from '../ascent/MarcaChica';
+import { useTitularDeAscent } from '../ascent/titularDeHoy';
 import { Icono } from '../comida/comunes';
 import { duracion, numero, useEstado, useNumeros } from '../comida/datos';
 import { useSueno } from '../ganchos';
@@ -54,7 +57,8 @@ export function useEnergia(): DatosDeEnergia | null {
   const e = useEstado();
   const s = useSueno();
   const ahora = useAhora();
-  return useMemo(() => energiaDeHoy(e, s, ahora), [e, s, ahora]);
+  const ascent = useTitularDeAscent();
+  return useMemo(() => energiaDeHoy(e, s, ahora, ascent), [e, s, ahora, ascent]);
 }
 
 // ------------------------------------------------------------ ir a la tarjeta desde Inicio
@@ -115,7 +119,7 @@ export function fraseDeEnergia(d: DatosDeEnergia): string {
   // Alta: por qué, de estos días y de anoche.
   const sueno = en.deuda === 'sinDeuda' || en.deuda === 'baja' ? en.deuda : 'soloAnoche';
   const como = en.comida?.como;
-  const comida = como === 'deSobra' || como === 'llegaste' ? como : 'alcanza';
+  const comida = como === 'deSobra' && d.ascent ? 'deSobraEntrena' : como === 'deSobra' || como === 'llegaste' ? como : 'alcanza';
   const razones = { comida: t(`inicio.energia.razon.comida.${comida}`), sueno: t(`inicio.energia.razon.sueno.${sueno}`), hora };
   if (momento === 'dia') return t(en.entrenaHoy ? 'inicio.energia.texto.altaEntrena' : 'inicio.energia.texto.alta', razones);
   return t(`inicio.energia.momento.${momento}.alta`, razones);
@@ -123,7 +127,7 @@ export function fraseDeEnergia(d: DatosDeEnergia): string {
 
 /** Cada parte, explicada en «Más» (lo pediste el 17/11): con qué números, qué significa, qué conviene y qué mira Moss. */
 type Bloque = {
-  k: 'sueno' | 'hoy' | 'estosDias' | 'hora';
+  k: 'sueno' | 'hoy' | 'estosDias' | 'musculos' | 'hora';
   /** Cómo está, para la palabra y el color; lo que no se juzga, null. */
   parte: Parte | null;
   numeros: string | null;
@@ -134,7 +138,7 @@ type Bloque = {
   mira: string | null;
 };
 
-/** Sin Ascent, la comida de estos días va contra tu meta, sin nombrar el gimnasio. */
+/** Sin Ascent, la comida de estos días va contra tu meta, sin nombrar el gimnasio; con Ascent, lo de entrenar y los músculos. */
 function explicacion(d: DatosDeEnergia, conNumeros: boolean): Bloque[] {
   const en = d.dia!;
   const noche = d.noche;
@@ -143,6 +147,12 @@ function explicacion(d: DatosDeEnergia, conNumeros: boolean): Bloque[] {
 
   const s = en.sueno;
   const conSueno = d.dormido !== null || d.deuda !== null;
+  const sesion = en.sesion ? horaDeReloj(en.sesion.inicio) : '';
+  const deSueno: string[] = [];
+  // Con la noche corta, sin ir al fallo (Craven 2022; Knowles 2022): lo mismo que dice Ascent.
+  if (s?.parte === 'baja' && en.entrenaHoy && en.momento !== 'despuesDeEntrenar' && en.momento !== 'noche') deSueno.push(t('inicio.energia.consejo.sinFallo'));
+  if (s && !noche && s.parte === 'bien') deSueno.push(t('inicio.energia.explica.sueno.seguirSinHora'));
+  if (s && noche) deSueno.push(s.parte === 'bien' ? t('inicio.energia.explica.sueno.seguir', noche) : t(s.como === 'deuda' ? 'inicio.energia.consejo.dormirDeuda' : 'inicio.energia.consejo.dormir', noche));
   bloques.push({
     k: 'sueno',
     parte: s?.parte ?? null,
@@ -151,10 +161,7 @@ function explicacion(d: DatosDeEnergia, conNumeros: boolean): Bloque[] {
       d.deuda === null || !en.deuda ? '' : d.deuda === 0 ? t('inicio.energia.explica.sueno.sinDeuda') : t('inicio.energia.explica.sueno.deuda', { deuda: duracion(d.deuda), juicio: t(`inicio.energia.juicioDeuda.${en.deuda}`) }),
     ].filter(Boolean).join(' '),
     significa: s ? t(`inicio.energia.explica.sueno.como.${s.como}`, { corta: duracion(NOCHE_CORTA), muyCorta: duracion(NOCHE_MUY_CORTA), deudaMedia: duracion(TRAMOS_DE_LA_DEUDA.media) }) : null,
-    conviene: !s ? []
-      : !noche ? (s.parte === 'bien' ? [t('inicio.energia.explica.sueno.seguirSinHora')] : [])
-        : s.parte === 'bien' ? [t('inicio.energia.explica.sueno.seguir', noche)]
-          : [t(s.como === 'deuda' ? 'inicio.energia.consejo.dormirDeuda' : 'inicio.energia.consejo.dormir', noche)],
+    conviene: deSueno,
     mira: t('inicio.energia.explica.sueno.mira'),
   });
 
@@ -163,13 +170,18 @@ function explicacion(d: DatosDeEnergia, conNumeros: boolean): Bloque[] {
     // Temprano, lo de hoy no se juzga: todavía no es hora.
     if (h.como === 'temprano') bloques.push({ k: 'hoy', parte: null, numeros: t('inicio.energia.explica.hoy.temprano'), significa: null, conviene: [], mira: t('inicio.energia.explica.hoy.mira') });
     else {
+      const deHoy: string[] = [];
+      if (h.como === 'sinComerParaEntrenar') deHoy.push(t('inicio.energia.consejo.comerAntesYa', { hora: sesion }));
+      else deHoy.push(t(h.como === 'alDia' ? 'inicio.energia.explica.hoy.conviene.alDia' : 'inicio.energia.explica.hoy.conviene.atrasado'));
+      if (en.comerAntes && en.sesion && h.como !== 'sinComerParaEntrenar') deHoy.push(t('inicio.energia.consejo.comerAntes', { hora: horaDeReloj(en.sesion.inicio - 60), sesion }));
+      if (en.comerDespues) deHoy.push(t('inicio.energia.consejo.comerDespues'));
       bloques.push({
         k: 'hoy',
         parte: h.parte,
         numeros: conNumeros ? t('inicio.energia.explica.hoy.numeros', { comido: redondo(h.comido), esperado: redondo(h.esperado) }) : t(`inicio.energia.explica.hoy.sinNumeros.${h.como}`),
         significa: h.como !== 'atrasado' ? t(`inicio.energia.explica.hoy.como.${h.como}`)
           : conNumeros ? t('inicio.energia.explica.hoy.como.atrasado', { kcal: redondo(h.falta) }) : t('inicio.energia.explica.hoy.como.atrasadoSinNumeros'),
-        conviene: [t(h.como === 'alDia' ? 'inicio.energia.explica.hoy.conviene.alDia' : 'inicio.energia.explica.hoy.conviene.atrasado')],
+        conviene: deHoy,
         mira: t('inicio.energia.explica.hoy.mira'),
       });
     }
@@ -177,17 +189,22 @@ function explicacion(d: DatosDeEnergia, conNumeros: boolean): Bloque[] {
 
   const c = en.deEstosDias;
   const p = en.comida;
+  const entrena = d.ascent ? 'Entrena' : '';
   bloques.push({
     k: 'estosDias',
     parte: p?.parte ?? null,
     numeros: !c || c.kcal === null ? t('inicio.energia.explica.estosDias.sinDatos', { minimo: DIAS_ANOTADOS })
-      : !conNumeros ? t('inicio.energia.explica.estosDias.sinNumeros')
-        : c.meta ? t('inicio.energia.explica.estosDias.numeros', { kcal: redondo(c.kcal), meta: redondo(c.meta) }) : t('inicio.energia.explica.estosDias.numerosSinMeta', { kcal: redondo(c.kcal) }),
+      : !conNumeros ? t(`inicio.energia.explica.estosDias.sinNumeros${entrena}`)
+        // Sin lo de entrenar de estos días, sin «gastaste unas 0 entrenando».
+        : t(`inicio.energia.explica.estosDias.${c.meta ? 'numeros' : 'numerosSinMeta'}${c.entreno ? entrena : ''}`, { kcal: redondo(c.kcal), meta: c.meta ? redondo(c.meta) : '', entreno: redondo(c.entreno ?? 0) }),
     significa: p ? t(`inicio.energia.explica.estosDias.como.${p.como}`, { pct: Math.round(LLEGASTE * 100) }) : null,
-    conviene: !p ? [] : [t(p.parte === 'baja' ? 'inicio.energia.consejo.comerMas' : p.como === 'debajo' ? 'inicio.energia.explica.estosDias.conviene.debajo' : 'inicio.energia.explica.estosDias.conviene.bien')],
-    aviso: p?.parte === 'baja' ? t('inicio.energia.consejo.medico') : undefined,
+    conviene: !p ? [] : [t(p.parte === 'baja' ? `inicio.energia.consejo.comerMas${entrena}` : p.como === 'debajo' ? 'inicio.energia.explica.estosDias.conviene.debajo' : 'inicio.energia.explica.estosDias.conviene.bien')],
+    aviso: p?.parte === 'baja' ? t(`inicio.energia.consejo.medico${entrena}`) : undefined,
     mira: t('inicio.energia.explica.estosDias.mira', { dias: DIAS_DE_ENERGIA }),
   });
+
+  // Con Ascent, el titular de hoy de su sección, tal cual.
+  if (d.ascent && en.musculos) bloques.push({ k: 'musculos', parte: en.musculos === 'cargados' ? 'justa' : 'bien', numeros: `${d.ascent.titulo}.`, significa: d.ascent.texto, conviene: [], mira: null });
 
   // La hora: lo del tramo de la curva en que estás, con sus horas (al despertar, cuándo llega el mejor momento).
   const tramo = (que: TramoDeLaCurva) => en.curva?.tramos.find((x) => x.que === que);
@@ -221,7 +238,7 @@ export function Bateria({ estado, chica }: { estado: EstadoDelBoton; chica?: boo
   );
 }
 
-const ICONO_DE_PARTE = { sueno: 'moon.zzz', comida: 'fork.knife', hoy: 'fork.knife', estosDias: 'fork.knife', hora: 'clock' } as const;
+const ICONO_DE_PARTE = { sueno: 'moon.zzz', comida: 'fork.knife', hoy: 'fork.knife', estosDias: 'fork.knife', musculos: 'dumbbell', hora: 'clock' } as const;
 type Clase = Parte | 'sin';
 const colorDelIcono = (c: Clase) => (c === 'bien' ? colores.oro : c === 'baja' ? '#f2b9a2' : 'rgba(239, 230, 207, 0.75)');
 const peor = (a: Clase, b: Clase): Clase => (['baja', 'justa', 'bien', 'sin'] as const).find((x) => x === a || x === b)!;
@@ -230,7 +247,8 @@ const junto = (x: string) => x.replace(/ /g, ' ');
 
 /**
  * Las partes, de un vistazo (17/11): el sueño, que dice si está bien o mal y por qué, y la comida en una sola
- * fila, con hoy y estos días («Hoy: vas bien · Estos días: por debajo»). Solo lo bajo lleva color.
+ * fila, con hoy y estos días («Hoy: vas bien · Estos días: por debajo»). Con Ascent, los músculos. Solo lo bajo
+ * lleva color.
  */
 export function PartesDeEnergia({ datos }: { datos: DatosDeEnergia }) {
   const en = datos.dia;
@@ -246,6 +264,8 @@ export function PartesDeEnergia({ datos }: { datos: DatosDeEnergia }) {
   const estosDias = t(`inicio.energia.como.comida.${en.comida?.como ?? 'sinDatos'}`);
   const deSueno: Clase = s?.parte ?? 'sin';
   const deComida = deHoy ? peor(deHoy, deEstosDias) : deEstosDias;
+  const deMusculos: Clase | null = en.musculos ? (en.musculos === 'cargados' ? 'justa' : 'bien') : null;
+  const musculos = en.musculos ? t(`inicio.energia.como.musculos.${datos.comoMusculos ?? en.musculos}`) : '';
   return (
     <View style={st.partes}>
       <Aparece style={st.parte}>
@@ -280,6 +300,19 @@ export function PartesDeEnergia({ datos }: { datos: DatosDeEnergia }) {
           </View>
         </View>
       </Aparece>
+      {deMusculos && (
+        <Aparece demora={120} style={[st.parte, st.parteSiguiente]}>
+          <View style={st.parteFila} accessible accessibilityLabel={`${t('inicio.energia.partes.musculos')}: ${musculos}`}>
+            <View style={[st.parteIco, deMusculos === 'bien' && st.parteIcoBien]}>
+              <Icono nombre={ICONO_DE_PARTE.musculos} tam={14} color={colorDelIcono(deMusculos)} />
+            </View>
+            <View style={st.parteTextos}>
+              <Text style={st.parteNombre} maxFontSizeMultiplier={1.3}>{t('inicio.energia.partes.musculos')}</Text>
+              <Text style={[st.parteComo, st[`parteComo_${deMusculos}`]]} maxFontSizeMultiplier={1.3}>{musculos}</Text>
+            </View>
+          </View>
+        </Aparece>
+      )}
     </View>
   );
 }
@@ -341,6 +374,10 @@ export function TiraDelDia({ datos, ancho }: { datos: DatosDeEnergia; ancho: num
         <View style={st.hechoRecorte}>
           <Relleno fraccion={ahora} style={st.hecho} />
         </View>
+        {/* La sesión, solo con Ascent. */}
+        {datos.ascent && datos.dia?.sesion && (
+          <View style={[st.sesion, datos.ahora >= datos.dia.sesion.inicio + datos.dia.sesion.minutos && st.sesionHecha, { left: x(datos.dia.sesion.inicio), width: Math.max(4, x(datos.dia.sesion.inicio + datos.dia.sesion.minutos) - x(datos.dia.sesion.inicio)) }]} />
+        )}
         {datos.comidas.map((c) => {
           const clase = c.anotada ? 'anotada' : datos.ahora >= c.hora + DESPUES_DE_SU_HORA ? 'vencida' : 'futura';
           return <View key={c.comida} style={[st.comida, { left: x(c.hora) - 5 }, clase === 'anotada' ? st.comidaAnotada : clase === 'vencida' ? st.comidaVencida : st.comidaFutura]} />;
@@ -405,7 +442,12 @@ export function TarjetaDeEnergia({ datos, ancho, resaltar = 0 }: { datos: DatosD
       <View style={st.cab}>
         <View style={st.ico}><Bateria estado={estado} /></View>
         <View style={st.titulos} accessible accessibilityRole="header">
-          <Text style={st.etiqueta} maxFontSizeMultiplier={1.4}>{t('inicio.energia.etiqueta', { cuando: t(`inicio.energia.cuando.${cuandoEs(datos)}`) })}</Text>
+          <View style={st.etiquetaFila}>
+            {/* Con Ascent, su marca chica (la del ícono de Ascent) y «· con Ascent»: es lo que hace Moss con el vínculo. */}
+            {datos.ascent && <MarcaChica tam={13} />}
+            <Text style={st.etiqueta} maxFontSizeMultiplier={1.4}>{t('inicio.energia.etiqueta', { cuando: t(`inicio.energia.cuando.${cuandoEs(datos)}`) })}</Text>
+            {datos.ascent && <Text style={st.etiqueta} maxFontSizeMultiplier={1.4}>{`· ${t('inicio.energia.conAscent')}`}</Text>}
+          </View>
           <Text style={[st.titulo, estado === 'baja' && st.tituloBaja, estado === 'alta' && st.tituloAlta]}>{t(`inicio.energia.titulo.${estado}`)}</Text>
         </View>
         <Pressable
@@ -478,6 +520,7 @@ const st = StyleSheet.create({
   bateriaPunta: { marginLeft: 1.5, borderTopRightRadius: 1, borderBottomRightRadius: 1, backgroundColor: 'rgba(239, 230, 207, 0.5)' },
   titulos: { flex: 1, gap: 4 },
   etiqueta: { fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.5, textTransform: 'uppercase', color: TENUE },
+  etiquetaFila: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 6, rowGap: 2 },
   titulo: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 21, lineHeight: 24, color: colores.pergamino },
   tituloBaja: { fontSize: 27, lineHeight: 30, color: '#f2b9a2' },
   tituloAlta: { color: colores.oroClaro },
@@ -494,6 +537,8 @@ const st = StyleSheet.create({
   hechoRecorte: { position: 'absolute', left: 0, right: 0, top: 10, height: 2, borderRadius: 1, overflow: 'hidden' },
   hecho: { height: 2, backgroundColor: 'rgba(239, 230, 207, 0.45)' },
   comida: { position: 'absolute', top: 6, width: 10, height: 10, borderRadius: 5 },
+  sesion: { position: 'absolute', top: 5, height: 12, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.45)', backgroundColor: 'rgba(232, 196, 106, 0.14)' },
+  sesionHecha: { backgroundColor: 'rgba(232, 196, 106, 0.4)' },
   comidaAnotada: { backgroundColor: colores.cifra },
   comidaVencida: { borderWidth: 1.5, borderColor: '#cb8569', backgroundColor: '#0b0f1f' },
   comidaFutura: { borderWidth: 1.5, borderColor: 'rgba(239, 230, 207, 0.35)', backgroundColor: '#0b0f1f' },

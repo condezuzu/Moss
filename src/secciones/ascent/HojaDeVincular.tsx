@@ -3,7 +3,7 @@
 // equipo. Con la sesión de Ascent, «@usuario · Ascent en este iPhone» y «Vincular»; con Ascent sin
 // sesión, «Abre Ascent y vuelve»; sin Ascent, «Conseguir Ascent»; sin la cuenta de Moss, que hace
 // falta entrar. Siempre, abajo y chico, entrar con la cuenta de Ascent (correo y contraseña, que no
-// se guardan). Tiene los colores de Ascent, como la sección.
+// se guardan). Tiene los colores de Ascent, como la sección, y sube cortada arriba, con la acción en un octágono.
 
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
@@ -21,16 +21,19 @@ import { anunciar } from '../anuncio';
 import { CabezaQueBaja, ScrollQueBaja, useBajarParaCerrar } from '../arrastre';
 import { Icono } from '../comida/comunes';
 import { useCerrarConLasCapas } from '../HojaModal';
-import { MarcaDeAscent } from '../MarcaDeAscent';
 import { Aparece } from '../tarjetas';
 import { useCampoALaVista } from '../teclado';
 import { C } from './colores';
+import { Marca } from './Dibujos';
+import { Accion, Octogono } from './piezas';
 import { vincularConCorreo, type ErrorDeEntrar } from './cuentaDeAscent';
 
 type DelIphone = 'mirando' | 'sesion' | 'sinSesion' | 'sinAscent';
 type Error = { de: 'llavero' | 'correo'; cual: ErrorDeEntrar };
 
 const DEGRADE = 'linear-gradient(180deg, #0d1018 0%, #07080d 100%)';
+/** Las esquinas de arriba, cortadas. */
+const CORTE = 16;
 
 /** Lo que se espera a vincular: sin respuesta, es la conexión (antes esperaba para siempre). */
 const ESPERA_A_VINCULAR = 15_000;
@@ -150,6 +153,10 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
         <Pressable style={StyleSheet.absoluteFill} onPress={() => alCerrar(false)} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ maxHeight: height - insets.top - 24 }}>
           <Animated.View style={[st.hoja, { maxHeight: height - insets.top - 24 }, hoja.estilo]} onLayout={hoja.medir} accessibilityViewIsModal onAccessibilityEscape={() => alCerrar(false)}>
+            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+              <Octogono corte={CORTE} color="#0d1018" soloArriba style={st.borde} />
+              <View style={st.fondoDeLaHoja} />
+            </View>
             <CabezaQueBaja arrastre={hoja} style={st.arriba}>
             <View style={st.asa} />
             <View style={st.cabeza}>
@@ -161,7 +168,7 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
             </CabezaQueBaja>
             <ScrollQueBaja arrastre={hoja} contentContainerStyle={[st.cuerpo, { paddingBottom: insets.bottom + 18 }]} showsVerticalScrollIndicator={false} scrollsToTop={false}>
               <Aparece key={vista} style={st.cuenta}>
-                <MarcaDeAscent tam={52} />
+                <Marca tam={52} />
                 <View style={st.quien}>
                   {vista === 'sesion' && sesion ? (
                     <>
@@ -190,10 +197,10 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
               <Text style={st.nota}>{t('ascent.vincularHoja.nota')}</Text>
               {aviso('llavero')}
               {vista === 'sesion' && (
-                <Boton texto={t(vinculando === 'llavero' ? 'ascent.vincularHoja.vinculando' : 'ascent.vincularHoja.vincular')} alTocar={conLlavero} apagado={!!vinculando} />
+                <Accion texto={t(vinculando === 'llavero' ? 'ascent.vincularHoja.vinculando' : 'ascent.vincularHoja.vincular')} alTocar={conLlavero} apagado={!!vinculando} estilo={st.boton} />
               )}
-              {vista === 'sinSesion' && <Boton texto={t('ascent.vincularHoja.sinSesion.boton')} alTocar={abrirLaApp} />}
-              {vista === 'sinAscent' && <Boton texto={t('ascent.vincularHoja.sinAscent.boton')} alTocar={irALaAppStore} />}
+              {vista === 'sinSesion' && <Accion texto={t('ascent.vincularHoja.sinSesion.boton')} alTocar={abrirLaApp} estilo={st.boton} />}
+              {vista === 'sinAscent' && <Accion texto={t('ascent.vincularHoja.sinAscent.boton')} alTocar={irALaAppStore} estilo={st.boton} />}
               <Pressable onPress={() => alCerrar(false)} style={st.ahoraNo} accessibilityRole="button" hitSlop={8}>
                 <Text style={st.ahoraNoTexto}>{t('ascent.vincularHoja.ahoraNo')}</Text>
               </Pressable>
@@ -257,11 +264,18 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
                   <Pressable
                     onPress={entrar}
                     disabled={sinDatos || !!vinculando}
-                    style={({ pressed }) => [st.entrar, pressed && st.entrarApretado, (sinDatos || !!vinculando) && st.apagado]}
+                    style={[st.entrar, (sinDatos || !!vinculando) && st.apagado]}
                     accessibilityRole="button"
                     accessibilityState={{ disabled: sinDatos || !!vinculando, busy: vinculando === 'correo' }}
                   >
-                    <Text style={st.entrarTexto}>{t(vinculando === 'correo' ? 'ascent.vincularHoja.vinculando' : 'ascent.vincularHoja.entrar')}</Text>
+                    {({ pressed }) => (
+                      // Un octágono de contorno: el de afuera, del color del borde, y uno adentro, un punto más chico.
+                      <Octogono corte={9} color={C.apagado} style={st.entrarCaja}>
+                        <Octogono corte={9} color={pressed ? '#171a23' : C.hoja} style={st.entrarAdentro}>
+                          <Text style={st.entrarTexto}>{t(vinculando === 'correo' ? 'ascent.vincularHoja.vinculando' : 'ascent.vincularHoja.entrar')}</Text>
+                        </Octogono>
+                      </Octogono>
+                    )}
                   </Pressable>
                   <Text style={st.nota}>{t('ascent.vincularHoja.notaCorreo')}</Text>
                 </Aparece>
@@ -274,21 +288,12 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
   );
 }
 
-function Boton({ texto, alTocar, apagado }: { texto: string; alTocar: () => void; apagado?: boolean }) {
-  return (
-    <Pressable onPress={alTocar} disabled={apagado} style={({ pressed }) => [st.boton, pressed && st.botonApretado, apagado && st.apagado]} accessibilityRole="button" accessibilityState={{ disabled: !!apagado }}>
-      <Text style={st.botonTexto}>{texto}</Text>
-    </Pressable>
-  );
-}
-
 const st = StyleSheet.create({
   fondo: { flex: 1, justifyContent: 'flex-end' },
   velo: { backgroundColor: 'rgba(1, 2, 6, 0.6)' },
-  hoja: {
-    flexShrink: 1, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1, borderColor: C.lineaFuerte, backgroundColor: '#0a0c12',
-    ...((Platform.OS === 'web' ? { backgroundImage: DEGRADE } : { experimental_backgroundImage: DEGRADE }) as ViewStyle),
-  },
+  hoja: { flexShrink: 1 },
+  borde: { height: CORTE },
+  fondoDeLaHoja: { flex: 1, ...((Platform.OS === 'web' ? { backgroundImage: DEGRADE } : { experimental_backgroundImage: DEGRADE }) as ViewStyle) },
   // El relleno de arriba es parte de la cabecera: desde ahí también se baja.
   arriba: { paddingTop: 8 },
   asa: { alignSelf: 'center', width: 38, height: 5, borderRadius: 3, marginBottom: 6, backgroundColor: 'rgba(239, 230, 207, 0.22)' },
@@ -300,23 +305,22 @@ const st = StyleSheet.create({
   quien: { flex: 1 },
   quienNombre: { fontFamily: letras.texto, fontSize: 18, lineHeight: 22, color: C.tinta },
   quienTexto: { marginTop: 3, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 16.5, color: C.sub },
-  grupo: { marginTop: 16, marginBottom: 6, fontFamily: letras.texto, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: C.sub },
+  grupo: { marginTop: 16, marginBottom: 6, fontFamily: letras.textoMedio, fontSize: 10.5, letterSpacing: 2, textTransform: 'uppercase', color: C.sub },
   item: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 3 },
   punto: { width: 4, height: 4, borderRadius: 2, marginTop: 8, marginLeft: 2, backgroundColor: C.claro },
   itemTexto: { flex: 1, fontFamily: letras.texto, fontSize: 14, lineHeight: 19, color: C.tinta },
   nota: { marginTop: 16, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17.5, color: C.sub },
   error: { marginTop: 16, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: C.ambar },
-  boton: { marginTop: 18, minHeight: 50, alignItems: 'center', justifyContent: 'center', backgroundColor: C.tinta },
-  botonApretado: { backgroundColor: '#c9cedb' },
-  botonTexto: { fontFamily: letras.textoMedio, fontSize: 15, letterSpacing: 0.3, color: C.fondo },
+  boton: { marginTop: 18 },
   apagado: { opacity: 0.6 },
-  ahoraNo: { alignSelf: 'center', marginTop: 12, paddingVertical: 4 },
-  ahoraNoTexto: { fontFamily: letras.texto, fontSize: 13, color: C.claro, textDecorationLine: 'underline', textDecorationColor: 'rgba(196, 194, 186, 0.4)' },
+  ahoraNo: { alignSelf: 'center', marginTop: 12, paddingBottom: 3, borderBottomWidth: 1, borderBottomColor: 'rgba(232, 236, 246, 0.42)' },
+  ahoraNoTexto: { fontFamily: letras.texto, fontSize: 13.5, color: C.tinta },
   conCorreo: { alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 20, paddingVertical: 6 },
   conCorreoTexto: { fontFamily: letras.texto, fontSize: 12.5, color: C.sub },
   form: { marginTop: 12, gap: 8 },
   campo: { minHeight: 46, paddingHorizontal: 14, borderWidth: 1, borderColor: C.lineaFuerte, backgroundColor: 'rgba(232, 236, 246, 0.04)', fontFamily: letras.texto, fontSize: 15, color: C.tinta },
-  entrar: { marginTop: 10, minHeight: 46, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(232, 236, 246, 0.7)' },
-  entrarApretado: { backgroundColor: 'rgba(232, 236, 246, 0.08)' },
-  entrarTexto: { fontFamily: letras.textoMedio, fontSize: 14.5, letterSpacing: 0.3, color: C.tinta },
+  entrar: { marginTop: 10 },
+  entrarCaja: { minHeight: 46, padding: 1 },
+  entrarAdentro: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  entrarTexto: { fontFamily: letras.textoMedio, fontSize: 14.5, letterSpacing: 0.15, color: C.tinta },
 });

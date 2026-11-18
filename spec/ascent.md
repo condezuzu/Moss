@@ -431,11 +431,15 @@ recuperación, la probabilidad de marca y el estancamiento de 3 semanas; lo de
 abajo ya está así en la galería. Donde dice «Estás 87 % recuperado», ahora va el
 titular del día.
 
-**Es una propuesta: está en la galería (sección 7) y la app todavía no cambia.** La
-app sigue como dicen «La sección de Ascent en Moss» y «Que se encuentre», apagada con
-`CON_ASCENT`. Cuando la apruebes, esta parte reemplaza a esas dos, y el código de la
-señal en Hábitos (`src/secciones/ascent/SenalDeAscent.tsx`, y lo suyo en
-`src/cielo/Cielo.tsx` y `src/cielo/Interfaz.tsx`) se saca. Hasta entonces no se toca.
+**Aprobada el 18/11/2026 (galería 54) y en la app, por aire:** reemplaza a «La sección de
+Ascent en Moss» y a la señal de Hábitos de «Que se encuentre», que se sacaron. Las cuentas
+de la app están en `src/secciones/ascent/vista.ts` (con el dominio de abajo) y el titular,
+el mismo en Progreso, Inicio y Sueño, en `titularDeHoy.ts`. Lo que Ascent todavía no manda
+no se inventa: su rutina (la sesión de hoy sale de Perfil › Entrenamiento con la última de
+ese día de la semana, «Tu fuerza» mira los ejercicios de las últimas 4 semanas y «Tu semana
+en Ascent» no está), el umbral de estancamiento de sus Ajustes (va el de fábrica, 6) y tu
+racha (va el polvo, el rango 1). El polvo son imágenes hechas una vez con
+`node herramientas/polvo-de-ascent.mjs`, de la galería tal cual.
 
 Lo pediste así (la segunda vuelta, el 2/11): Ascent **arriba** de Progreso, como tu
 universo («entro, boom, subo a lo de Ascent»), con algo en el encabezado que diga que
@@ -828,8 +832,8 @@ En Ascent van en Stats (ver la lista de cambios).
 
 ### Que se encuentre (lo pediste el 2/11/2026)
 
-Esto es lo que hoy está en la app, apagado. Lo reemplaza «Ascent en Progreso», que
-está para aprobar.
+Esto es lo que estuvo en la app hasta el 18/11/2026. Lo reemplazó «Ascent en Progreso»
+(queda la invitación de Inicio y la fila de Perfil).
 
 Lo dijiste así: para la próxima build, cuando se prenda, que la vinculación sea
 fácil de encontrar en Moss; en Hábitos, una señal clara de que abajo está lo de
