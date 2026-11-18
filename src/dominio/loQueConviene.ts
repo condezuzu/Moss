@@ -1,13 +1,14 @@
-// Lo que conviene hacer (lo pediste el 3/11/2026): avisos como los de Rise, que dicen qué hacer, a qué hora y
-// qué evitar, así no hace falta abrir Moss para saberlo. Cada uno dice una sola cosa y suena cuando hay que
+// Lo que conviene hacer (lo pediste el 3/11/2026): avisos como los de Rise, que sugieren qué hacer, a qué hora y
+// por qué (desde el 18/11, sugerencias y no órdenes), así no hace falta abrir Moss para saberlo. Cada uno dice una sola cosa y suena cuando hay que
 // hacerla. Salen del entreno de ese día (Perfil › Entrenamiento, con lo que tardás en llegar al gimnasio) y de
 // la hora de ir a la cama (horasDeSueno, en avisos.ts):
 // - Comer antes de entrenar: la comida de siempre que cae desde 4 h antes de empezar hasta 1 h antes de salir;
 //   si ninguna cae, algo liviano 60 a 90 minutos antes de salir. Suena media hora antes de esa comida, con los
 //   gramos de alrededorDelEntreno.ts y poca grasa. La hora de esa comida, y las que caerían justo antes de salir
 //   o en medio del entreno, ya no suenan aparte: comer apenas salís no conviene.
-// - El café: una hora antes de entrenar, si todavía no le quita al sueño; si no, hasta qué hora (corteDeCafeina:
-//   desde la hora de ir a la cama y según la cafeína de una toma).
+// - El café: una hora antes de entrenar, si todavía no le quita al sueño; si no, desde qué hora mejor sin cafeína
+//   (corteDeCafeina: desde la hora de acostarte y según la cafeína de una toma). Con tu periodo de melatonina, esa
+//   hora es la del periodo (su comienzo menos tu margen para dormirte) y el aviso lo nombra (18/11/2026).
 // - La proteína de después, al terminar: en la comida que sigue o, si hace mucho que no comés, cuanto antes.
 // - Con dos sesiones el mismo día (dos deportes, sesionesDelDia), cada una lleva lo suyo. Si la comida de después
 //   de una es la de antes de la otra, queda el de antes, que ya trae los carbohidratos; y haber entrenado es de
@@ -40,7 +41,8 @@ export type QueConviene = (typeof QUE_CONVIENE)[number];
  * Lo que dice cada uno. Las horas, en minutos del día (lo de la noche puede pasar de 1440); los gramos, de a 5.
  * - antesDeEntrenar: qué comida (o algo liviano), a qué hora, si es más temprano que la de siempre y cuánto.
  * - despuesDeEntrenar: en qué comida y a qué hora o, sin comida cerca, antes de qué hora.
- * - cafe: antes de entrenar (a qué hora y cuánto falta para ir a la cama) o el último del día (hasta qué hora).
+ * - cafe: antes de entrenar (a qué hora y cuánto falta para acostarte) o el corte del día: desde qué hora, la hora de
+ *   acostarte y, si lo hay, el comienzo de tu periodo de melatonina, del que sale.
  * - entrenarTarde: hasta qué hora lo fuerte; `suave` si ya no da el tiempo.
  * - recuperacion: de 0 a 100; lo dormido anoche, solo si fue poco.
  * - partido y carrera: la víspera del partido y dos días antes de la carrera larga; el texto no lleva números.
@@ -48,7 +50,8 @@ export type QueConviene = (typeof QUE_CONVIENE)[number];
 export type Conviene =
   | { que: 'antesDeEntrenar'; comida: Comida; a: number; adelantada?: true; proteina?: number; carbohidratos?: number }
   | { que: 'despuesDeEntrenar'; comida?: Principal; a: number; proteina?: number }
-  | { que: 'cafe'; forma: 'antes' | 'ultimo' | 'ultimoEntrenas'; a: number; faltan?: number; entreno?: number }
+  | { que: 'cafe'; forma: 'antes'; a: number; faltan: number }
+  | { que: 'cafe'; forma: 'ultimo' | 'ultimoEntrenas'; a: number; cama: number; periodo?: number; entreno?: number }
   | { que: 'ultimaComida'; a: number; cama: number }
   | { que: 'entrenarTarde'; a: number; entreno: number; cama: number; suave?: true }
   | { que: 'luces'; cama: number }
@@ -73,8 +76,6 @@ export const AVISO_ANTES_DE_COMER = 30;
 /** El café para entrenar, una hora antes de empezar (ISSN 2021); el aviso, un cuarto de hora antes. */
 export const CAFE_ANTES = 60;
 const AVISO_DE_CAFE = 15;
-/** El último del día suena media hora antes del corte (corteDeCafeina, en alrededorDelEntreno.ts). */
-const AVISO_DE_ULTIMO_CAFE = 30;
 /**
  * La última comida grande, 2 h antes de ir a la cama, o 3 con reflujo (ACG 2022: 2 a 3 h; Fujiwara 2005), como lo
  * de la noche en loQueFalta.ts (cercaDeLaCama). Se corre con la hora de la cama: con deuda, también ella.
@@ -271,8 +272,10 @@ export function loQueConviene(op: DeLoQueConviene): Aviso[] {
   });
 
   if (prendido('cafe') && cama !== null) {
-    // Desde la hora de ir a la cama y según lo que tiene una toma; con un té, sin corte (null).
+    // Desde la hora de acostarte y según lo que tiene una toma; con un té, sin corte (null). Con tu periodo de
+    // melatonina, la hora de acostarte es la suya (horasDeSueno): Gardiner 2023 cuenta desde que te acuestas.
     const corte = corteDeCafeina(cama, op.cafeinaPorToma ?? null);
+    const periodo = horas?.periodo ? { periodo: horas.periodo.desde } : {};
     // La primera sesión en la que el café de antes cae después de despertarte; con «sin déficit», ninguna.
     const s = sinEntrenar ? undefined : sesiones.find((x) => despierto(x.inicio - CAFE_ANTES));
     const a = s && (corte === null || s.inicio - CAFE_ANTES <= corte) ? s.inicio - CAFE_ANTES : null;
@@ -285,12 +288,13 @@ export function loQueConviene(op: DeLoQueConviene): Aviso[] {
         id: 'cafe', tipo: 'cafe', minutos, conviene: { que: 'cafe', forma: 'antes', a, faltan: cama - a },
         ...(hecha !== null ? { sobra: true as const } : {}),
       });
-    } else if (corte !== null && despierto(corte - AVISO_DE_ULTIMO_CAFE)) {
-      // Si ya entrenaste, queda solo el corte: lo de entrenar ya no viene al caso.
+    } else if (corte !== null && despierto(corte)) {
+      // Suena en el corte: «desde ahora, mejor sin cafeína» (lo pediste el 18/11/2026). Si ya entrenaste, queda solo
+      // el corte: lo de entrenar ya no viene al caso.
       const entreno = s && hecha === null ? s.inicio : null;
       lista.push({
-        id: 'cafe', tipo: 'cafe', minutos: corte - AVISO_DE_ULTIMO_CAFE,
-        conviene: { que: 'cafe', forma: entreno !== null ? 'ultimoEntrenas' : 'ultimo', a: corte, ...(entreno !== null ? { entreno } : {}) },
+        id: 'cafe', tipo: 'cafe', minutos: corte,
+        conviene: { que: 'cafe', forma: entreno !== null ? 'ultimoEntrenas' : 'ultimo', a: corte, cama, ...periodo, ...(entreno !== null ? { entreno } : {}) },
       });
     }
   }

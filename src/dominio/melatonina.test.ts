@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { sumarDias } from './fechas';
-import { MINIMO_DE_NOCHES, periodoDeMelatonina } from './melatonina';
+import { MINIMO_DE_NOCHES, periodoDeMelatonina, seVeElPeriodo } from './melatonina';
 import { MARGEN } from './sinReloj';
 
 const HOY = '2026-11-17';
@@ -85,5 +85,22 @@ describe('periodoDeMelatonina', () => {
     // Menos de un cuarto de hora no es deuda, como en Sueño.
     expect(periodoDeMelatonina(siempre(7), HOY, { deuda: 10 })?.conDeuda).toBe(false);
     expect(periodoDeMelatonina(siempre(7), HOY, { deuda: null })?.conDeuda).toBe(false);
+  });
+});
+
+describe('seVeElPeriodo', () => {
+  const a = (hora: string, dia = '2026-11-18') => new Date(`${dia}T${hora}:00`);
+  const CORTE = 4 * 60;
+  it('de noche: desde las 19 hasta el corte del día de Moss; de día, no', () => {
+    expect([a('18:59'), a('19:00'), a('23:30'), a('00:10'), a('03:59'), a('04:00'), a('12:00')].map((x) => seVeElPeriodo(x, CORTE, []))).toEqual([false, true, true, true, true, false, false]);
+    // Con el corte a medianoche, se va a las 0.
+    expect(seVeElPeriodo(a('00:10'), 0, [])).toBe(false);
+  });
+  it('de madrugada se va cuando te despiertas: la noche que termina hoy ya está y su despertar pasó', () => {
+    // Despierto a las 2:40 (520 desde las 18): a las 3 ya no se ve; la noche de ayer no cuenta.
+    const desperto = [{ clave: '2026-11-18', despertar: 520 }];
+    expect(seVeElPeriodo(a('03:00'), CORTE, desperto)).toBe(false);
+    expect(seVeElPeriodo(a('02:30'), CORTE, desperto)).toBe(true);
+    expect(seVeElPeriodo(a('03:00'), CORTE, [{ clave: '2026-11-17', despertar: 520 }])).toBe(true);
   });
 });

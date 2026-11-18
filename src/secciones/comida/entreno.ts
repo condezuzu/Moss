@@ -2,15 +2,16 @@
 // (src/dominio/alrededorDelEntreno.ts) y dice cada línea en palabras, sin culpa.
 
 import { reglasDeCuidados, type Estado } from '@/almacen/almacen';
-import { comidasHabituales, lineaDeNocheCorta, lineasDelDia, sesionesDelDia, type Contexto, type Linea, type Principal } from '@/dominio/alrededorDelEntreno';
+import { comidasHabituales, lineaDeNocheCorta, lineasDelDia, sesionesDelDia, type Contexto, type Linea, type Principal, type Sesion } from '@/dominio/alrededorDelEntreno';
 import { horasDeSueno } from '@/dominio/avisos';
 import type { Comida } from '@/dominio/comidas';
 import { apagaLinea } from '@/dominio/cuidados';
-import { minutosEnElDia, sumarDias } from '@/dominio/fechas';
+import { minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { edadDe } from '@/dominio/metas';
 import { totalDelDia, vigentes } from '@/dominio/registros';
 import { pareceIncompleta, ultimasNoches } from '@/dominio/sueno';
 import { hayCompras } from '@/lib/premium';
+import { entrenosDelDia, type EntrenoDeSalud } from '@/salud/convertir';
 import { cafeinaPorToma, horaDeReloj, horasDeComida, suenoParaAvisos } from '@/recordatorios/programar';
 import { t } from '@/textos';
 import { suenoDe } from '../persona';
@@ -18,9 +19,26 @@ import { duracion, metaDelDia } from './datos';
 
 const PRINCIPALES: readonly Principal[] = ['desayuno', 'almuerzo', 'merienda', 'cena'];
 
+// Los tipos de HealthKit que son fuerza: pesas, fuerza funcional, crossfit y HIIT.
+const DE_FUERZA: ReadonlySet<number> = new Set([50, 20, 11, 63]);
+/** Un entrenamiento de Salud a menos de esto de una sesión prevista es esa sesión, hecha. */
+const MISMA_SESION = 90;
+
+/** Las sesiones de hoy más lo que el reloj o el anillo anotaron en Salud fuera de ellas: también es entrenar. */
+function conLasDeSalud(previstas: Sesion[], deSalud: EntrenoDeSalud[], hoy: ClaveDia): Sesion[] {
+  const hechas = deSalud.map((s): Sesion => ({ inicio: minutosEnElDia(new Date(s.desde), hoy), minutos: s.minutos, tipo: DE_FUERZA.has(s.tipo) ? 'fuerza' : 'resistencia' }));
+  const sueltas = hechas.filter((h) => !previstas.some((p) => Math.abs(p.inicio - h.inicio) <= MISMA_SESION));
+  // La prevista que ya se hizo va con su hora de verdad.
+  const ajustadas = previstas.map((p) => {
+    const hecha = hechas.find((h) => Math.abs(p.inicio - h.inicio) <= MISMA_SESION);
+    return hecha ? { ...p, inicio: hecha.inicio, minutos: hecha.minutos } : p;
+  });
+  return [...ajustadas, ...sueltas].sort((a, b) => a.inicio - b.inicio);
+}
+
 /** El contexto de hoy para la regla; sin perfil, sin meta o sin sesiones hoy, null. */
 export function contextoDeHoy(e: Estado, ahora: Date): Contexto | null {
-  const sesiones = sesionesDelDia(e.entreno, e.hoy);
+  const sesiones = conLasDeSalud(sesionesDelDia(e.entreno, e.hoy), entrenosDelDia(e.salud?.entrenamientos, e.hoy), e.hoy);
   const meta = metaDelDia(e, e.hoy);
   if (!sesiones.length || !e.perfil || !meta) return null;
   const deSiempre = horasDeComida(e);

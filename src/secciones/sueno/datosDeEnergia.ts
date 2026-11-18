@@ -15,6 +15,7 @@ import { vigentes } from '@/dominio/registros';
 import { estadoDeLaNoche, nochesCortasSeguidas } from '@/dominio/rendimiento';
 import { deudaDeSueno, juicioDeLaDeuda, redondearDeuda, ultimasNoches } from '@/dominio/sueno';
 import { horasDeComida, suenoParaAvisos } from '@/recordatorios/programar';
+import { cuentaComoEntrenar, entrenosDelDia } from '@/salud/convertir';
 import { metaDelDia } from '../comida/datos';
 import type { Sueno } from '../persona';
 
@@ -44,8 +45,20 @@ export type DatosDeEnergia = {
  */
 function kcalDeEntrenar(entreno: Estado['entreno'], dia: ClaveDia, pesoKg: number): number {
   if (!entreno || !entreno.dias.includes(diaDeLaSemana(dia)) || !(pesoKg > 0)) return 0;
-  const met = entreno.tipo === 'resistencia' ? MET_DEL_DEPORTE.resistencia : MET_DE_LA_SESION;
-  return (met - MET_EN_REPOSO) * pesoKg * (entreno.minutos / 60);
+  return kcalDeUnaSesion(entreno, pesoKg, entreno.minutos);
+}
+const kcalDeUnaSesion = (entreno: Estado['entreno'], pesoKg: number, minutos: number) =>
+  ((entreno?.tipo === 'resistencia' ? MET_DEL_DEPORTE.resistencia : MET_DE_LA_SESION) - MET_EN_REPOSO) * pesoKg * (minutos / 60);
+
+/**
+ * Lo de entrenar de un día con los entrenamientos de Salud (18/11/2026): sus calorías activas o, si no vienen, las
+ * de la sesión con su duración. Si Salud tiene entrenamientos de estas dos semanas, es lo que pasó: un día sin
+ * ninguno no se entrenó. Si no tiene ninguno (sin reloj, o sin pedirlos todavía), lo de Perfil › Entrenamiento.
+ */
+function kcalDelDia(e: Estado, dia: ClaveDia, pesoKg: number): number {
+  const deSalud = e.salud?.entrenamientos ?? [];
+  if (!deSalud.some(cuentaComoEntrenar)) return kcalDeEntrenar(e.entreno, dia, pesoKg);
+  return entrenosDelDia(deSalud, dia).reduce((t, x) => t + (x.kcal ?? kcalDeUnaSesion(e.entreno, pesoKg, x.minutos)), 0);
 }
 
 /** Tu energía de ahora; sin cuestionario, null (no hay con qué). */
@@ -74,7 +87,7 @@ export function energiaDeHoy(e: Estado, s: Sueno, ahora: Date): DatosDeEnergia |
     return {
       dia,
       kcal: delDia.reduce((t, r) => t + r.valores.kcal, 0),
-      entreno: pesoKg ? kcalDeEntrenar(e.entreno, dia, pesoKg) : 0,
+      entreno: pesoKg ? kcalDelDia(e, dia, pesoKg) : 0,
       anotadas: new Set(delDia.map((r) => r.comida)).size,
       meta: metaDelDia(e, dia)?.kcal,
     };
@@ -98,8 +111,13 @@ export function energiaDeHoy(e: Estado, s: Sueno, ahora: Date): DatosDeEnergia |
   const comidas = comidasDelPlan(n).map((c) => ({ comida: c, hora: deSiempre(c), parte: REPARTO[n][c] ?? 0, anotada: deHoy.some((r) => r.comida === c) }));
   const meta = metaDelDia(e, hoy)?.kcal ?? 0;
   const ultima = deHoy.length ? Math.max(...deHoy.map((r) => minutosEnElDia(new Date(r.momento), hoy))) : null;
+  // Un entrenamiento de Salud de hoy: las 2 h de después son «Ya entrenaste: ahora toca recuperar», con comer
+  // después. `entrenaHoy` sigue en no: sus frases son de antes de entrenar («todo a favor para entrenar»).
+  const ultimoDeHoy = entrenosDelDia(e.salud?.entrenamientos, hoy).at(-1);
+  // Hasta que terminó, con las pausas: de ahí cuentan las 2 h de después.
+  const sesion = ultimoDeHoy ? { inicio: minutosEnElDia(new Date(ultimoDeHoy.desde), hoy), minutos: Math.round((ultimoDeHoy.hasta - ultimoDeHoy.desde) / 60_000) } : null;
   const dia = energiaDeAhora({
-    deEstosDias, sueno, musculos: null, entrenaHoy: false, ahora: ahoraMin, despertar, cama, sesion: null,
+    deEstosDias, sueno, musculos: null, entrenaHoy: false, ahora: ahoraMin, despertar, cama, sesion,
     hoy: meta > 0 ? { meta, comido: deHoy.reduce((t, r) => t + r.valores.kcal, 0), comidas, ultima } : null,
   });
   return {

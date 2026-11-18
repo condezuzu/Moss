@@ -2,8 +2,8 @@
 // Inicio.
 // - Tu periodo de melatonina (Melatonina, src/dominio/melatonina.ts): la tarjeta de Sueño, en lugar de «Esta
 //   noche, a la cama a las…», y la hoja «¿Qué es?».
-// - Los avisos de la noche y de la mañana reescritos (el título dice qué hacer y el cuerpo, el detalle con la hora)
-//   ya están en la app, con sus palabras en src/textos (recordatorios): la pantalla bloqueada los toma de ahí
+// - Los avisos de la noche y de la mañana reescritos (desde el 18/11 sugieren y no mandan: el dato primero y, si
+//   hace falta, una sugerencia con su porqué) ya están en la app, con sus palabras en src/textos (recordatorios): la pantalla bloqueada los toma de ahí
 //   (Avisos.tituloDelAviso y textoDelAviso), con el mismo periodo de melatonina de la tarjeta de Sueño. Los nombres
 //   de Perfil › Avisos también (perfil.avisos).
 // - «Lo que hay que hacer hoy»: los pendientes que anotas por la noche (quedan en este navegador, como quedarían
@@ -21,8 +21,7 @@ const Periodo = (() => {
         periodo: {
           titulo: 'Tu periodo de melatonina', queEs: '¿Qué es?',
           antes: '{n} min antes que ayer', despues: '{n} min más tarde que ayer', igual: 'Igual que ayer',
-          acuestate: 'Acuéstate a las {hora} para estar dormido dentro de tu periodo.',
-          conDeuda: 'Acuéstate a las {hora}, cuando empieza tu periodo. Antes no: te costaría dormirte.',
+          texto: 'Es el rato de la noche en que más fácil te duermes.',
           faltan: { uno: 'Falta {n} noche', otros: 'Faltan {n} noches' }, paraSaber: 'para estimarlo',
           faltanTexto: 'Moss lo calcula con tus horarios: hacen falta {minimo} noches de la última semana.',
           hoja: {
@@ -155,8 +154,7 @@ const Periodo = (() => {
         periodo: {
           titulo: 'Your melatonin window', queEs: 'What is it?',
           antes: '{n} min earlier than yesterday', despues: '{n} min later than yesterday', igual: 'Same as yesterday',
-          acuestate: 'Go to bed at {hora} to be asleep within your window.',
-          conDeuda: 'Go to bed at {hora}, when your window starts. Not earlier: you would struggle to fall asleep.',
+          texto: "It's the time of night when you fall asleep most easily.",
           faltan: { uno: '{n} night to go', otros: '{n} nights to go' }, paraSaber: 'to estimate it',
           faltanTexto: 'Moss works it out from your schedule: it takes {minimo} nights from the last week.',
           hoja: {

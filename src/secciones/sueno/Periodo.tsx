@@ -24,8 +24,6 @@ const TRAMO = 'linear-gradient(90deg, #8adbc8, #9fb6ff)';
 const FONDO_DEL_DIBUJO = 'linear-gradient(150deg, rgba(34, 44, 110, 0.42), rgba(18, 60, 74, 0.34))';
 /** Lo que se ve de la noche en la línea: desde que empieza a subir la melatonina hasta una hora después del periodo. */
 const DESPUES_EN_LA_PISTA = 60;
-/** Un lugar para la hora dentro de la frase, para escribirla con más peso. */
-const MARCA = '';
 
 /** «9 min antes que ayer», «7 min más tarde que ayer» o «Igual que ayer»; sin ayer, nada. */
 function corrido(p: PeriodoDeMelatonina): string | null {
@@ -78,8 +76,6 @@ export function ElPeriodo({ periodo: p, noches, hoy, conNoches }: {
   const cambio = corrido(p);
   const total = p.hasta + DESPUES_EN_LA_PISTA - p.inicio;
   const parte = (m: number): `${number}%` => `${Number(((m / total) * 100).toFixed(1))}%`;
-  const hora = reloj(p.acostarse);
-  const [antes, despues] = t(p.conDeuda ? 'sueno.periodo.conDeuda' : 'sueno.periodo.acuestate', { hora: MARCA }).split(MARCA);
   return (
     <CartaDeSueno titulo={t('sueno.periodo.titulo')} derecha={conNoches ? <QueEs alTocar={abrir} /> : <ChipDeEjemplo />} estilo={[st.carta, degradado(FONDO)]}>
       <View style={[st.cuerpo, !conNoches && st.muestra]}>
@@ -92,11 +88,8 @@ export function ElPeriodo({ periodo: p, noches, hoy, conNoches }: {
           <View style={[st.sube, { left: 0, width: parte(p.desde - p.inicio) }, degradado(SUBE)]} />
           <Tramo desde={parte(p.desde - p.inicio)} ancho={parte(p.hasta - p.desde)} />
         </View>
-        <Text style={st.texto}>
-          {antes}
-          <Text style={st.hora}>{hora}</Text>
-          {despues}
-        </Text>
+        {/* Lo informa y no lo manda (17/11): cuándo acostarse lo decide cada uno. */}
+        <Text style={st.texto}>{t('sueno.periodo.texto')}</Text>
       </View>
       {!conNoches && <QueEs alTocar={abrir} centrado />}
       {hoja && <HojaDelPeriodo p={p} alCerrar={() => setHoja(false)} />}
@@ -168,7 +161,6 @@ const st = StyleSheet.create({
   sube: { position: 'absolute', top: 0, bottom: 0 },
   tramo: { position: 'absolute', top: 0, bottom: 0, borderRadius: 3 },
   texto: { fontFamily: letras.texto, fontSize: 14.5, lineHeight: 20.6, color: 'rgba(239, 230, 207, 0.9)' },
-  hora: { fontFamily: letras.textoMedio, color: colores.cifra, fontVariant: ['tabular-nums'] },
   faltanFila: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 8, rowGap: 2 },
   faltan: { fontFamily: letras.numero, fontSize: 32, letterSpacing: -0.5, color: colores.cifra },
   paraSaber: { fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.58)' },

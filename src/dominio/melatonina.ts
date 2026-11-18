@@ -18,7 +18,7 @@
 // - El promedio es el común: las noches cuentan desde las 18 (sueno.ts), así que vale como el circular salvo para
 //   quien duerme cruzando las 18.
 
-import { sumarDias, type ClaveDia } from './fechas';
+import { claveDelDia, sumarDias, type ClaveDia } from './fechas';
 import { margenParaDormirte } from './sinReloj';
 import { redondearDeuda, type Noche } from './sueno';
 
@@ -78,4 +78,21 @@ export function periodoDeMelatonina(noches: readonly Horas[], hoy: ClaveDia, op:
     conDeuda: redondearDeuda(op.deuda ?? 0) > 0,
     noches: esta.noches,
   };
+}
+
+/** La tarjeta del periodo se ve de noche (lo pediste el 18/11/2026): desde las 19, la hora en que casi todos están en casa. */
+export const PERIODO_DE_NOCHE_DESDE = 19 * 60;
+
+/**
+ * Si se ve la tarjeta del periodo a esta hora del teléfono: desde las 19 hasta el corte del día de Moss (`corte`, en
+ * minutos), o hasta que te despiertas, si es antes (la noche que termina hoy ya está y su despertar pasó). Es la
+ * hora y nada más: quien se acuesta antes de las 19 la ve igual desde las 19.
+ */
+export function seVeElPeriodo(ahora: Date, corte: number, noches: readonly Pick<Noche, 'clave' | 'despertar'>[]): boolean {
+  const minuto = ahora.getHours() * 60 + ahora.getMinutes();
+  if (minuto >= PERIODO_DE_NOCHE_DESDE) return true;
+  if (minuto >= corte) return false;
+  // Las noches cuentan desde las 18 del día anterior: de madrugada, el minuto de la noche es el del reloj más 6 horas.
+  const hoy = claveDelDia(ahora);
+  return !noches.some((n) => n.clave === hoy && n.despertar <= minuto + 6 * 60);
 }

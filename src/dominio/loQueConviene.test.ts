@@ -52,8 +52,8 @@ describe('tu día: almuerzas a las 13, entrenas a las 16 y tardas una hora en ll
       ['07:30', 'horario:desayuno'],
       // Media hora antes del almuerzo: reemplaza a «Hora del almuerzo».
       ['12:30', 'antesDeEntrenar:0'],
-      // El café de antes sería al salir, a las 15, y ya quita sueño: el último del día es a las 14.
-      ['13:30', 'cafe'],
+      // El café de antes sería al salir, a las 15, y ya quita sueño: suena el corte, a las 14.
+      ['14:00', 'cafe'],
       ['17:00', 'despuesDeEntrenar:0'],
       ['20:15', 'ultimaComida'],
       // «Falta anotar la cena» no se pisa con las luces: suena un rato antes.
@@ -71,7 +71,7 @@ describe('tu día: almuerzas a las 13, entrenas a las 16 y tardas una hora en ll
   });
 
   it('el café: a las 15, al salir, ya cae después del corte (9 h antes de la cama, las 14): queda el último del día', () => {
-    expect(uno(conviene(), 'cafe')).toMatchObject({ minutos: h('13:30'), conviene: { que: 'cafe', forma: 'ultimoEntrenas', a: h('14:00'), entreno: h('16:00') } });
+    expect(uno(conviene(), 'cafe')).toMatchObject({ minutos: h('14:00'), conviene: { que: 'cafe', forma: 'ultimoEntrenas', a: h('14:00'), cama: h('23:00'), entreno: h('16:00') } });
     // Entrenando a las 14, el de las 13 sí entra: faltan 10 h para ir a la cama.
     expect(uno(conviene({ sesiones: [pesas('14:00')] }), 'cafe')).toMatchObject({ minutos: h('12:45'), conviene: { que: 'cafe', forma: 'antes', a: h('13:00'), faltan: 10 * 60 } });
   });
@@ -151,17 +151,26 @@ describe('comer antes de entrenar', () => {
 
 describe('el café', () => {
   it('si entrenas tarde, el último del día, y que antes de entrenar mejor sin café', () => {
-    expect(uno(conviene({ sesiones: [pesas('20:30')] }), 'cafe')).toMatchObject({ minutos: h('13:30'), conviene: { forma: 'ultimoEntrenas', a: h('14:00'), entreno: h('20:30') } });
+    expect(uno(conviene({ sesiones: [pesas('20:30')] }), 'cafe')).toMatchObject({ minutos: h('14:00'), conviene: { forma: 'ultimoEntrenas', a: h('14:00'), entreno: h('20:30') } });
   });
 
-  it('sin entreno, el último del día, media hora antes del corte (9 horas antes de ir a la cama, sin saber la toma)', () => {
-    expect(uno(conviene({ sesiones: [] }), 'cafe')).toEqual({ id: 'cafe', tipo: 'cafe', minutos: h('13:30'), conviene: { que: 'cafe', forma: 'ultimo', a: h('14:00') } });
+  it('sin entreno, suena en el corte, «desde ahora» (9 horas antes de acostarte, sin saber la toma)', () => {
+    expect(uno(conviene({ sesiones: [] }), 'cafe')).toEqual({ id: 'cafe', tipo: 'cafe', minutos: h('14:00'), conviene: { que: 'cafe', forma: 'ultimo', a: h('14:00'), cama: h('23:00') } });
   });
 
   it('cuenta desde la hora de ir a la cama: con 20 minutos para dormirte, el corte no se corre', () => {
     const conLatencia: Sueno = { habitual: () => ({ dormirse: n('23:20'), despertar: n('7:20') }), necesidad: 8 * 60, deuda: null, latencia: 20 };
-    // A la cama a las 23:00 y dormida a las 23:20: el corte es a las 14, no a las 14:15.
-    expect(uno(conviene({ sesiones: [], sueno: conLatencia }), 'cafe').conviene).toEqual({ que: 'cafe', forma: 'ultimo', a: h('14:00') });
+    // Acostada a las 23:00 y dormida a las 23:20: el corte es a las 14, no a las 14:15.
+    expect(uno(conviene({ sesiones: [], sueno: conLatencia }), 'cafe').conviene).toEqual({ que: 'cafe', forma: 'ultimo', a: h('14:00'), cama: h('23:00') });
+  });
+
+  it('con tu periodo de melatonina, el corte sale de él: empieza a las 00:00 y te acuestas a las 23:45, así que desde las 14:45', () => {
+    const periodo = { inicio: n('22:00'), desde: n('0:00'), hasta: n('1:00'), corrido: null, acostarse: n('23:45'), conDeuda: false, noches: 7 };
+    const conPeriodo: Sueno = { ...SUENO, latencia: 15, periodo: () => periodo };
+    expect(uno(conviene({ sesiones: [], sueno: conPeriodo }), 'cafe'))
+      .toEqual({ id: 'cafe', tipo: 'cafe', minutos: h('14:45'), conviene: { que: 'cafe', forma: 'ultimo', a: h('14:45'), cama: h('23:45'), periodo: h('24:00') } });
+    // Con un preentreno (217,5 mg o más), 13,2 h: desde las 10:30. Las 12 h antes del periodo, solo con unos 400 mg.
+    expect(uno(conviene({ sesiones: [], sueno: conPeriodo, cafeinaPorToma: 250 }), 'cafe').conviene).toMatchObject({ a: h('10:30'), periodo: h('24:00') });
   });
 
   it('con más cafeína por toma, el corte es antes: con 250 mg, el tope de 13,2 horas', () => {
@@ -307,7 +316,7 @@ describe('lo que ya pasó no suena', () => {
   it('si entrenaste a otra hora, nada de antes ni de después; el café queda en el corte', () => {
     const otraHora = conviene({ entrenado: h('9:10') });
     expect([uno(otraHora, 'antesDeEntrenar'), uno(otraHora, 'despuesDeEntrenar')]).toMatchObject([{ sobra: true, sobraDesde: h('9:10') }, { sobra: true, sobraDesde: h('9:10') }]);
-    expect(uno(otraHora, 'cafe')).toEqual({ id: 'cafe', tipo: 'cafe', minutos: h('13:30'), conviene: { que: 'cafe', forma: 'ultimo', a: h('14:00') } });
+    expect(uno(otraHora, 'cafe')).toEqual({ id: 'cafe', tipo: 'cafe', minutos: h('14:00'), conviene: { que: 'cafe', forma: 'ultimo', a: h('14:00'), cama: h('23:00') } });
     // Si el café de antes ya había sonado cuando marcaste, queda como estaba, y no suena otro.
     expect(uno(conviene({ sesiones: [pesas('14:30')], entrenado: h('13:30') }), 'cafe')).toMatchObject({ minutos: h('13:15'), sobra: true });
     expect(uno(conviene({ entrenado: h('9:10'), sesiones: [pesas('20:30')] }), 'cafe').conviene).toMatchObject({ forma: 'ultimo' });
@@ -319,7 +328,7 @@ describe('lo que ya pasó no suena', () => {
   it('si entrenaste a otra hora, la hora del almuerzo y la de la merienda vuelven a sonar en su lugar', () => {
     expect(elDia(TODOS, { entrenado: h('9:10'), ahora: h('9:15') })).toEqual([
       ['13:00', 'horario:almuerzo'],
-      ['13:30', 'cafe'],
+      ['14:00', 'cafe'],
       ['17:30', 'horario:merienda'],
       ['20:15', 'ultimaComida'],
       ['21:30', 'luces'],
@@ -466,23 +475,29 @@ describe('lo que dice cada uno', () => {
   const aviso = (c: Conviene): Notificacion => ({ dia: DIA, minutos: 0, aviso: { id: 'x', minutos: 0, tipo: c.que, conviene: c } });
   const dicho = (c: Conviene, idioma: Rama = es as unknown as Rama) => [tituloDelAviso(aviso(c), para(idioma)), textoDelAviso(aviso(c), para(idioma))];
 
-  it('el título dice qué hacer y el texto, a qué hora y cuánto', () => {
+  it('el título dice de qué se trata y el texto, a qué hora, cuánto y por qué, sin mandar', () => {
     expect(dicho({ que: 'antesDeEntrenar', comida: 'almuerzo', a: h('13:00'), proteina: 40, carbohidratos: 75 }))
-      .toEqual(['Come antes de entrenar', 'Almuerzo a las 13:00: 75 g de carbohidratos, 40 g de proteína y poca grasa.']);
+      .toEqual(['Tu comida antes de entrenar', 'Almuerzo a las 13:00: 75 g de carbohidratos, 40 g de proteína y poca grasa.']);
     expect(dicho({ que: 'antesDeEntrenar', comida: 'merienda', a: h('16:15'), adelantada: true, proteina: 25 })[1]).toBe('Merienda más temprano, a las 16:15: 25 g de proteína, carbohidratos y poca grasa.');
-    expect(dicho({ que: 'cafe', forma: 'antes', a: h('15:00'), faltan: 480 })).toEqual(['Café antes de entrenar', 'Si tomas, a las 15:00: faltan 8 h para acostarte.']);
-    expect(dicho({ que: 'cafe', forma: 'ultimoEntrenas', a: h('15:00'), entreno: h('20:30') })).toEqual(['Último café', 'Hasta las 15:00. Antes de entrenar a las 20:30, mejor sin café.']);
+    expect(dicho({ que: 'cafe', forma: 'antes', a: h('15:00'), faltan: 480 })).toEqual(['Café antes de entrenar', 'Si tomas uno, las 15:00 son buen momento: una hora antes de empezar y a 8 h de acostarte.']);
+    expect(dicho({ que: 'cafe', forma: 'ultimo', a: h('14:00'), cama: h('23:45'), periodo: h('24:00') }))
+      .toEqual(['Desde ahora, mejor sin cafeína', 'Tu periodo de melatonina empieza a las 00:00: la cafeína podría quitarle calidad a tu sueño.']);
+    expect(dicho({ que: 'cafe', forma: 'ultimo', a: h('14:00'), cama: h('23:00') })[1]).toBe('Te acuestas a las 23:00: la cafeína de ahora podría quitarle calidad a tu sueño.');
+    expect(dicho({ que: 'cafe', forma: 'ultimoEntrenas', a: h('15:00'), cama: h('24:00'), entreno: h('20:30') }))
+      .toEqual(['Desde ahora, mejor sin cafeína', 'Entrenas a las 20:30, pero te acuestas a las 00:00 y la cafeína dura horas.']);
     expect(dicho({ que: 'despuesDeEntrenar', comida: 'merienda', a: h('17:30'), proteina: 40 })).toEqual(['Proteína después de entrenar', 'Unos 40 g, en la merienda de las 17:30.']);
     expect(dicho({ que: 'despuesDeEntrenar', a: h('19:00') })[1]).toBe('Algo con proteína, antes de las 19:00.');
-    expect(dicho({ que: 'ultimaComida', a: h('20:00'), cama: h('23:00') })).toEqual(['Última comida grande', 'Cena antes de las 20:00: te acuestas a las 23:00. Después, algo ligero.']);
-    expect(dicho({ que: 'entrenarTarde', a: h('21:00'), entreno: h('20:30'), cama: h('23:00') })).toEqual(['Termina antes de las 21:00', 'Más tarde, que sea suave: te acuestas a las 23:00.']);
-    expect(dicho({ que: 'luces', cama: h('23:00') })).toEqual(['Baja las luces', 'Luz baja y cálida desde ahora: la luz fuerte atrasa tu sueño. Te acuestas a las 23:00.']);
+    expect(dicho({ que: 'ultimaComida', a: h('20:00'), cama: h('23:00') })).toEqual(['Última comida grande', 'Si cenas antes de las 20:00, te acuestas a las 23:00 con la digestión hecha.']);
+    expect(dicho({ que: 'entrenarTarde', a: h('21:00'), entreno: h('20:30'), cama: h('23:00') })).toEqual(['Lo fuerte, hasta las 21:00', 'Te acuestas a las 23:00: entrenar fuerte más tarde podría costarte sueño.']);
+    expect(dicho({ que: 'luces', cama: h('23:00') })).toEqual(['Buen momento para bajar la luz', 'Te acuestas a las 23:00. Con luz baja y cálida, tu melatonina sube a tiempo.']);
     expect(dicho({ que: 'recuperacion', porcentaje: 52, fuerte: false, dormido: 340 })).toEqual(['Recuperación: 52 %', 'Hoy, mejor suave: dormiste 5 h 40 min.']);
     expect(dicho({ que: 'partido' })).toEqual(['Mañana juegas', 'Hoy y mañana, carbohidratos en cada comida.']);
     expect(dicho({ que: 'carrera' })).toEqual(['Tu carrera es pasado mañana', 'Carbohidratos en todas tus comidas y menos fibra.']);
     expect(dicho({ que: 'carrera' }, en as unknown as Rama)).toEqual(['Race in two days', 'Carbs at every meal, and less fiber.']);
     expect(dicho({ que: 'antesDeEntrenar', comida: 'almuerzo', a: h('13:00'), proteina: 40, carbohidratos: 75 }, en as unknown as Rama))
-      .toEqual(['Eat before your workout', 'Lunch at 13:00: 75 g of carbs, 40 g of protein and little fat.']);
+      .toEqual(['Your pre-workout meal', 'Lunch at 13:00: 75 g of carbs, 40 g of protein and little fat.']);
+    expect(dicho({ que: 'cafe', forma: 'ultimo', a: h('14:00'), cama: h('23:45'), periodo: h('24:00') }, en as unknown as Rama))
+      .toEqual(['Best to skip caffeine from now', 'Your melatonin window starts at 00:00: caffeine could lower your sleep quality.']);
   });
 
   it('el horario y los hábitos siguen con el nombre de la app de título', () => {
@@ -502,7 +517,10 @@ describe('lo que dice cada uno', () => {
         { que: 'despuesDeEntrenar' as const, comida, a: h('17:30') },
       ]),
       { que: 'despuesDeEntrenar', a: h('19:00'), proteina: 40 },
-      { que: 'cafe', forma: 'antes', a: h('15:00'), faltan: 480 }, { que: 'cafe', forma: 'ultimo', a: h('15:00') }, { que: 'cafe', forma: 'ultimoEntrenas', a: h('15:00'), entreno: h('20:30') },
+      { que: 'cafe', forma: 'antes', a: h('15:00'), faltan: 480 }, ...[{}, { periodo: h('24:55') }].flatMap((p) => [
+        { que: 'cafe' as const, forma: 'ultimo' as const, a: h('15:00'), cama: h('24:40'), ...p },
+        { que: 'cafe' as const, forma: 'ultimoEntrenas' as const, a: h('15:00'), cama: h('24:40'), entreno: h('20:30'), ...p },
+      ]),
       { que: 'ultimaComida', a: h('20:00'), cama: h('23:00') },
       { que: 'entrenarTarde', a: h('21:00'), entreno: h('20:30'), cama: h('23:00') }, { que: 'entrenarTarde', a: h('21:00'), entreno: h('21:15'), cama: h('23:00'), suave: true },
       { que: 'luces', cama: h('23:00') },

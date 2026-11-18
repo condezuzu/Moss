@@ -46,7 +46,7 @@ import { margenDeToque } from '../paso';
 import { ACOMODA, Aparece } from '../tarjetas';
 import { useTeclado } from '../teclado';
 import { AvisoFlotante, Boton, degradado, Etiqueta, Icono, Pastilla, type Aviso } from './comunes';
-import { PanelDecir } from './Decir';
+import { PanelDecir, type GrupoAnotado } from './Decir';
 import { lineasDeHoy } from './entreno';
 import { LineaDeEntreno } from './LineaDeEntreno';
 import { cantidadDeTexto, comidaDeAhora, horasDeComer, metaDelDia, momentoDe, numero, opcionesDeIdioma, region, sistemaDe, totalDe, useEstado, useNumeros } from './datos';
@@ -300,6 +300,21 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
       desanotarFoto(id);
     });
     cerrar();
+  };
+  /**
+   * Lo dicho, cada comida en la suya y a su hora («el desayuno comí…», dicho a la tarde), en su día (ayer si
+   * se dijo «anoche»). Un solo aviso, con «Deshacer» para todo.
+   */
+  const anotarDicho = (grupos: GrupoAnotado[]) => {
+    const nuevos = grupos.flatMap((g) => {
+      const elDia = g.ayer ? sumarDias(e.hoy, -1) : dia;
+      return a.registrar(g.items, { comida: g.comida, dia: elDia, momento: momentoDe(e, elDia, g.comida) });
+    });
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    const texto = grupos.length === 1
+      ? plural('comida.decir.anotado', nuevos.length, { comida: t(`comida.aLa.${grupos[0].comida}`) })
+      : t('comida.decir.anotadoVarias', { n: nuevos.length, m: grupos.length });
+    avisar(texto, () => nuevos.forEach((r) => a.borrarRegistro(r.id)));
   };
   // Al irse la hoja (se desarma al cerrarse), por donde se cierre.
   useEffect(() => () => {
@@ -1189,18 +1204,16 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
               abajo={insets.bottom}
               alAtras={() => (pedido.panel === 'decir' ? cerrar() : setPanel(null))}
               foto={fotoEnCurso ? { f: fotoEnCurso, desde, alOtra: () => abrirVisor(true), alBorrar: borrarLaFoto, alDespues: cerrar } : undefined}
-              alAgregar={(items, comidaDicha, ayer) => {
-                if (fotoEnCurso) return anotarConFoto(items, comidaDicha);
-                const elDia = ayer ? sumarDias(e.hoy, -1) : dia;
-                // Si se nombró otra comida, va a su hora: «el desayuno comí…», dicho a la tarde.
-                const nuevos = a.registrar(items, { comida: comidaDicha, dia: elDia, momento: momentoDe(e, elDia, comidaDicha) });
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-                avisar(plural('comida.decir.anotado', nuevos.length, { comida: t(`comida.aLa.${comidaDicha}`) }), () => nuevos.forEach((r) => a.borrarRegistro(r.id)));
+              alAgregar={(grupos) => {
+                // Con la foto, lo dicho es una sola comida: la de la foto.
+                if (fotoEnCurso && grupos[0]) return anotarConFoto(grupos[0].items, grupos[0].comida);
+                anotarDicho(grupos);
                 cerrar();
               }}
-              alBuscar={(x, encontrados, comidaDicha, { ayer: dichoAyer, pendientes }) => {
-                // Lo que sí se encontró espera en la canasta: se busca lo que falta (lo demás, después) y se
-                // agrega todo junto, en el día que se dijo.
+              alBuscar={(x, encontrados, comidaDicha, { ayer: dichoAyer, pendientes, resto }) => {
+                // Lo de las otras comidas se anota ya; lo que sí se encontró de esta espera en la canasta: se
+                // busca lo que falta (lo demás, después) y se agrega todo junto, en el día que se dijo.
+                if (resto.length) anotarDicho(resto);
                 for (const item of encontrados) a.ponerEnCanasta(item);
                 setComida(comidaDicha);
                 if (dichoAyer) setDiaDicho(sumarDias(e.hoy, -1));

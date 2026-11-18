@@ -308,13 +308,23 @@ const cuantoMueve = (e: Entendido) => {
   return Math.max(...kcal) - Math.min(...kcal);
 };
 
+const UNIONES = new Set(['y', 'e', 'and', 'de', 'del', 'con', 'with', 'of', 'a', 'al', 'en', 'el', 'la', 'los', 'las', 'the']);
+/** Si el nombre de la base dice lo mismo que lo dicho, sin palabras de más: «Arroz con pollo» es «arroz y pollo»; «Medialuna de jamón y queso» no es «jamón y queso». */
+function esEso(dicho: string, nombre: string): boolean {
+  const palabras = (t: string) => llano(t).split(' ').filter((x) => x && !UNIONES.has(x));
+  const [a, b] = [palabras(dicho), palabras(nombre)];
+  return b.length <= a.length && a.every((x) => b.includes(x));
+}
+
 /** Lo dicho, entendido: como mucho tres preguntas por comida, las que más mueven el número. */
 export async function entender(dichos: readonly Dicho[], p: ParaEntender): Promise<Entendido[]> {
   // «Arroz y pollo»: si la base no tiene el nombre entero, cada uno por su lado, con lo que se dijo de
   // los dos: «un poco de arroz y pollo» es un poco de cada uno, y «un plato de arroz y pollo», un plato.
+  // Lo encontrado tiene que ser eso y nada más: «eggs and toast» no es un sándwich con huevo y tostada.
   const lista = (await Promise.all(dichos.map(async (d) => {
     const e = await entenderUno(d, p);
-    if (e.opciones.length || !d.partes) return [e];
+    const o = e.opciones[e.elegida];
+    if (!d.partes || (o && (p.alias(d.buscado) !== undefined || esEso(d.buscado, o.alimento.nombre)))) return [e];
     const deLosDos: Partial<Dicho> = { ...(d.vago ? { vago: true, recipiente: d.recipiente } : {}), ...(d.plato ? { plato: d.plato } : {}), ...(d.cuanto ? { cuanto: d.cuanto } : {}) };
     return Promise.all(d.partes.map((x) => entenderUno({
       ...x,

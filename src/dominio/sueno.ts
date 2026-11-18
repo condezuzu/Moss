@@ -94,11 +94,22 @@ export type Noche = {
 };
 
 const MIN = 60_000;
-/** Lo dormido separado por menos de una hora es el mismo episodio. */
-const MISMO_EPISODIO = 60;
-/** A la noche se suman los episodios de 3 horas o más y los que empiezan o terminan a 2 horas del principal. */
+/**
+ * Despierto hasta una hora en el medio sigue siendo la misma noche (lo pediste el 18/11/2026): de tu primer
+ * dormirte a tu último despertar, con ese rato contado como despierto. Con más, lo que sigue es otra cosa: una
+ * siesta, salvo que los dos tramos sean largos (EPISODIO_LARGO).
+ */
+export const HUECO_DE_LA_MISMA_NOCHE = 60;
+/** El sueño partido: dos episodios de 3 horas o más del mismo día son una noche, aunque estés despierto más de una hora entre ellos. */
 const EPISODIO_LARGO = 180;
-const CERCA_DEL_PRINCIPAL = 120;
+/**
+ * De las fuentes que registraron el mismo sueño, la de la noche tiene que tenerlo casi entero: con menos de dos
+ * tercios de lo que registró la que más, vio solo un tramo (el anillo vio toda la noche y otra app, solo la última
+ * parte). Es una convención.
+ */
+const CASI_ENTERA = 2 / 3;
+/** El «en cama» que se mira para una noche: el que se le acerca a 2 horas o menos. */
+const CERCA_DE_LA_NOCHE = 120;
 /** Una siesta, desde 15 minutos dormidos. */
 const SIESTA_MINIMA = 15;
 /** Despierto menos de 5 minutos no es un despertar: es un cambio de etapa. */
@@ -152,13 +163,13 @@ function dormidoDe(muestras: Muestra[]): Muestra[] {
 
 type Episodio = { desde: number; hasta: number; dormido: number; muestras: Muestra[] };
 
-/** Los episodios de una fuente: lo dormido separado por menos de una hora, con lo despierto de adentro. */
+/** Los episodios de una fuente: lo dormido separado por una hora o menos, con lo despierto de adentro. */
 function episodios(muestras: Muestra[]): Episodio[] {
   const dormido = dormidoDe(muestras).sort((a, b) => a.desde - b.desde);
   const grupos: Muestra[][] = [];
   let fin = -Infinity;
   for (const m of dormido) {
-    if (m.desde - fin >= MISMO_EPISODIO * MIN) grupos.push([]);
+    if (m.desde - fin > HUECO_DE_LA_MISMA_NOCHE * MIN) grupos.push([]);
     grupos[grupos.length - 1].push(m);
     fin = Math.max(fin, m.hasta);
   }
@@ -258,15 +269,24 @@ export function armarNoches(muestras: Muestra[], fuentes: Fuente[], elegida?: st
     const suenos = porSueno(delDia);
     const masDormido = (g: { e: Episodio }[]) => Math.max(...g.map((x) => x.e.dormido));
     const elDeLaNoche = [...suenos].sort((a, b) => masDormido(b) - masDormido(a))[0];
-    const { id, e: principal } = elegir(elDeLaNoche);
+    const { id, e: principal } = elegir(elDeLaNoche.filter((x) => x.e.dormido >= CASI_ENTERA * masDormido(elDeLaNoche)));
     const fuente = fuentes.find((f) => f.id === id)!;
     const lista = delDia.get(id)!;
-    const deLaNoche = lista.filter((e) => e === principal || e.dormido >= EPISODIO_LARGO
-      || Math.abs(e.desde - principal.hasta) <= CERCA_DEL_PRINCIPAL * MIN || Math.abs(principal.desde - e.hasta) <= CERCA_DEL_PRINCIPAL * MIN);
+    const deLaNoche = lista.filter((e) => e === principal || (principal.dormido >= EPISODIO_LARGO && e.dormido >= EPISODIO_LARGO));
+    let desde = Math.min(...deLaNoche.map((e) => e.desde)), hasta = Math.max(...deLaNoche.map((e) => e.hasta));
+    // Un tramo que otra fuente registró pegado a la noche, sin encimarse (ahí la fuente de la noche no tiene nada),
+    // también es la noche: así no queda como siesta y no cuenta doble.
+    const deOtras = [...delDia].flatMap(([otra, es]) => (otra === id ? [] : es));
+    const pegado = () => deOtras.find((e) => !deLaNoche.includes(e)
+      && ((e.desde >= hasta && e.desde - hasta <= HUECO_DE_LA_MISMA_NOCHE * MIN) || (e.hasta <= desde && desde - e.hasta <= HUECO_DE_LA_MISMA_NOCHE * MIN)));
+    for (let otro = pegado(); otro; otro = pegado()) {
+      deLaNoche.push(otro);
+      desde = Math.min(desde, otro.desde);
+      hasta = Math.max(hasta, otro.hasta);
+    }
     // Las siestas, de cualquier fuente, cada una una vez: las que no son parte de la noche ni se le enciman.
-    const desde = Math.min(...deLaNoche.map((e) => e.desde)), hasta = Math.max(...deLaNoche.map((e) => e.hasta));
     const siestas = suenos
-      .filter((g) => !g.some((x) => x.id === id && deLaNoche.includes(x.e)) && g.every((x) => x.e.hasta <= desde || x.e.desde >= hasta))
+      .filter((g) => !g.some((x) => deLaNoche.includes(x.e)) && g.every((x) => x.e.hasta <= desde || x.e.desde >= hasta))
       .map((g) => elegir(g).e.dormido)
       .filter((d) => d >= SIESTA_MINIMA)
       .reduce((s, d) => s + d, 0);
@@ -303,7 +323,7 @@ function resumir(clave: ClaveDia, fuente: Fuente, deLaNoche: Episodio[], siestas
   const etapas = { nucleo: etapa('nucleo'), profundo: etapa('profundo'), rem: etapa('rem'), sinEtapa: etapa('dormido') };
   const conEtapas = etapas.nucleo + etapas.profundo + etapas.rem > 0;
   // En cama: solo si alguna fuente lo escribió, cerca de este sueño; primero la misma fuente.
-  const cerca = enCamaTodas.filter((m) => m.hasta > inicio - CERCA_DEL_PRINCIPAL * MIN && m.desde < fin + CERCA_DEL_PRINCIPAL * MIN);
+  const cerca = enCamaTodas.filter((m) => m.hasta > inicio - CERCA_DE_LA_NOCHE * MIN && m.desde < fin + CERCA_DE_LA_NOCHE * MIN);
   const deLaMisma = cerca.filter((m) => m.fuente === fuente.id);
   const usadas = deLaMisma.length ? deLaMisma : cerca;
   const camaI = unir(usadas.map((m) => [m.desde, m.hasta]));

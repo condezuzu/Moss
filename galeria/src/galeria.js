@@ -1550,7 +1550,7 @@
     refrescarControles();
   };
   window.__progreso = (accion, arg) => {
-    const pasos = { metas: () => progreso.verMetas(), principal: () => progreso.verPrincipal(), quien: () => progreso.ponerQuien(arg), repartir: () => progreso.repartir(arg), abrir: () => progreso.abrir(arg), bajar: () => progreso.bajarA(arg), subir: () => progreso.subir(), plazo: () => progreso.plazo(arg), rango: () => progreso.rango(arg), masDatos: () => progreso.masDatos(arg), cambiarPlan: () => progreso.cambiarPlan(arg), sinMedidas: () => progreso.sinMedidas(arg) };
+    const pasos = { metas: () => progreso.verMetas(), principal: () => progreso.verPrincipal(), quien: () => progreso.ponerQuien(arg), repartir: () => progreso.repartir(arg), abrir: () => progreso.abrir(arg), bajar: () => progreso.bajarA(arg), subir: () => progreso.subir(), plazo: () => progreso.plazo(arg), rango: () => progreso.rango(arg), masDatos: () => progreso.masDatos(arg), cambiarPlan: () => progreso.cambiarPlan(arg), sinMedidas: () => progreso.sinMedidas(arg), despues: () => progreso.despues(arg) };
     pasos[accion]();
   };
   window.__estrategia = (cambios) => ponerEstrategia(cambios);

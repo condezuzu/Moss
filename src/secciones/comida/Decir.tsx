@@ -2,7 +2,8 @@
 // con manteca y un café con leche». Se habla con el micrófono (en el teléfono) o se escribe; Moss lo
 // entiende (src/comida/frase.ts y entender.ts) y lo muestra para revisar: cada alimento con su
 // cantidad, que se cambia ahí mismo, y una pregunta solo si cambia el número, con la respuesta ya
-// marcada. «Agregar» no espera a que se conteste nada.
+// marcada. «Agregar» no espera a que se conteste nada. Con varias comidas en la frase (18/11/2026),
+// lo entendido se muestra por comida y se anota cada cosa en la suya.
 
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
@@ -13,10 +14,10 @@ import { elAlmacen } from '@/almacen';
 import { baseDeAlimentos } from '@/comida/base';
 import { normalizar } from '@/comida/buscar';
 import { claveMedida, entender, type Entendido, type Opcion } from '@/comida/entender';
-import { conCon, leerFrase, mismoNombre } from '@/comida/frase';
+import { conCon, leerFrase, mismoNombre, porComida } from '@/comida/frase';
 import { TAMANOS as TAMANOS_DE_PLATO } from '@/comida/platos';
 import { pasoDeCantidad, pasoDePorcion, type Sistema } from '@/dominio/cantidades';
-import type { Comida } from '@/dominio/comidas';
+import { COMIDAS, type Comida } from '@/dominio/comidas';
 import type { FotoDeComida } from '@/dominio/fotos';
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { itemDeAlimento, premios, recientes, sumarValores, ultimaCantidad, valoresDeCantidad, type Cantidad, type Item } from '@/dominio/registros';
@@ -25,7 +26,7 @@ import { colores, letras } from '@/tema';
 import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
 import { BotonDePaso, margenDeToque } from '../paso';
 import { ACOMODA } from '../tarjetas';
-import { Boton, Icono, Pastilla } from './comunes';
+import { Boton, Etiqueta, Icono, Pastilla } from './comunes';
 import { CabezaDeFoto } from './FotosDelDia';
 import { cantidadDeTexto, numero, opcionesDeIdioma, useEstado, useNumeros } from './datos';
 import { hayDictado, useDictado } from './dictado';
@@ -43,14 +44,14 @@ type Props = {
   /** Lo que se escribió en el buscador, si se llegó desde ahí. */
   textoInicial?: string;
   alAtras: () => void;
-  /** Lo entendido, para anotarlo en la comida (la dicha, si se dijo: «en el almuerzo»). */
-  /** `ayer`: se dijo «anoche» o «ayer», y va al día anterior. */
-  alAgregar: (items: Item[], comida: Comida, ayer: boolean) => void;
+  /** Lo entendido, por comida (la dicha, si se dijo: «en el almuerzo»; si no, la de la hoja), para anotarlo. */
+  alAgregar: (grupos: GrupoAnotado[]) => void;
   /**
-   * Lo que no se encontró se busca a mano; lo que sí, espera en la canasta. `pendientes`: lo demás que
-   * tampoco se encontró, para buscarlo después; `ayer`, si se dijo «anoche».
+   * Lo que no se encontró se busca a mano; lo que sí, de esa comida, espera en la canasta. `pendientes`:
+   * lo demás de esa comida que tampoco se encontró, para buscarlo después; `ayer`, si se dijo «anoche»;
+   * `resto`, lo de las otras comidas, que se anota ya.
    */
-  alBuscar: (texto: string, encontrados: Item[], comida: Comida, otros: { ayer: boolean; pendientes: string[] }) => void;
+  alBuscar: (texto: string, encontrados: Item[], comida: Comida, otros: { ayer: boolean; pendientes: string[]; resto: GrupoAnotado[] }) => void;
   /** El aviso de la hoja, con «Deshacer». */
   alAvisar: (texto: string, deshacer?: () => void) => void;
   abajo: number;
@@ -60,6 +61,12 @@ type Props = {
    */
   foto?: { f: FotoDeComida; desde: Rect | null; alOtra: () => void; alBorrar: () => void; alDespues: () => void };
 };
+
+/** Lo de una comida, para anotar: `ayer`, si se dijo «anoche» o «ayer», y va al día anterior. */
+export type GrupoAnotado = { items: Item[]; comida: Comida; ayer: boolean };
+/** Lo entendido, con la comida y el día en que va. */
+type Revisado = Entendido & { comida: Comida; ayer: boolean };
+const claveDeGrupo = (x: { comida: Comida; ayer: boolean }) => `${x.ayer ? 'ayer' : 'hoy'}:${x.comida}`;
 
 /** Lo que mide una cantidad: las veces de una porción, o los gramos. */
 const cuantoDe = (c: Exclude<Cantidad, null>) => ('porcion' in c ? c.veces : c.gramos);
@@ -85,15 +92,13 @@ export function PanelDecir(p: Props) {
   const numeros = useNumeros();
   const [texto, setTexto] = useState(p.textoInicial ?? '');
   useSinGuardar(!!texto.trim());
-  const [entendidos, setEntendidos] = useState<Entendido[] | null>(null);
+  const [entendidos, setEntendidos] = useState<Revisado[] | null>(null);
   const [entendiendo, setEntendiendo] = useState(false);
-  const [comida, setComida] = useState(p.comida);
-  const [ayer, setAyer] = useState(false);
   // El texto que se entendió: si se cambia, hay que volver a entender.
   const [entendido, setEntendido] = useState<string | null>(null);
 
   /** Entiende la frase; con `sumarA`, lo nuevo va después de lo que ya estaba revisado. */
-  const entenderTexto = async (frase: string, sumarA?: { lista: Entendido[]; completo: string }) => {
+  const entenderTexto = async (frase: string, sumarA?: { lista: Revisado[]; completo: string }) => {
     if (!frase.trim()) return;
     setEntendiendo(true);
     const op = opcionesDeIdioma();
@@ -106,28 +111,33 @@ export function PanelDecir(p: Props) {
       if (r && mismoNombre(r.coincide, b)) conNombre.add(b);
     }));
     const leida = leerFrase(frase, op.idioma, (b) => conNombre.has(b));
-    if (leida.comida) setComida(leida.comida);
-    // Lo que se suma después no borra el «anoche» de lo de antes.
-    setAyer((antes) => (sumarA ? antes : false) || !!leida.ayer);
-    const lista = await entender(leida.dichos, {
+    // Lo que no dice comida va a la de la hoja; lo que se suma después («y una banana»), a la de lo último.
+    const ultimo = sumarA?.lista[sumarA.lista.length - 1];
+    // Con la foto, todo va a una comida: la de la foto.
+    const grupos = p.foto
+      ? [{ comida: leida.comida ?? p.comida, ayer: false, dichos: leida.dichos }]
+      : porComida(leida.grupos, ultimo?.comida ?? p.comida, ultimo?.ayer ?? false);
+    const para = {
       buscar,
-      detalle: (id) => baseDeAlimentos.detalle(id, op),
-      ultimaCantidad: (ref) => ultimaCantidad(e.registros.values(), 'base', ref),
-      alias: (b) => e.alias[normalizar(b)],
-      conocido: (id) => (premio.get(id) ?? 0) > 0,
-      medido: (b) => e.alias[claveMedida(b)],
-    });
+      detalle: (id: number) => baseDeAlimentos.detalle(id, op),
+      ultimaCantidad: (ref: string) => ultimaCantidad(e.registros.values(), 'base', ref),
+      alias: (b: string) => e.alias[normalizar(b)],
+      conocido: (id: number) => (premio.get(id) ?? 0) > 0,
+      medido: (b: string) => e.alias[claveMedida(b)],
+    };
+    // Cada comida con sus preguntas: como mucho tres por comida.
+    const lista = (await Promise.all(grupos.map(async (g) => (await entender(g.dichos, para)).map((x) => ({ ...x, comida: g.comida, ayer: g.ayer }))))).flat();
     setEntendido(sumarA ? sumarA.completo : frase);
     setEntendidos(sumarA ? [...sumarA.lista, ...lista] : lista);
     setEntendiendo(false);
     Haptics.selectionAsync().catch(() => {});
   };
-  const entenderYa = (frase: string, sumarA?: { lista: Entendido[]; completo: string }) => {
+  const entenderYa = (frase: string, sumarA?: { lista: Revisado[]; completo: string }) => {
     entenderTexto(frase, sumarA).catch(() => setEntendiendo(false));
   };
 
   // Al volver a hablar, lo nuevo se suma («y una banana»): lo ya revisado no se pierde.
-  const [previo, setPrevio] = useState<{ texto: string; lista: Entendido[] | null }>({ texto: '', lista: null });
+  const [previo, setPrevio] = useState<{ texto: string; lista: Revisado[] | null }>({ texto: '', lista: null });
   const conPrevio = (nuevo: string) => {
     const antes = previo.texto.replace(/[\s,.;]+$/, '');
     return antes && nuevo ? `${antes}, ${nuevo}` : antes || nuevo;
@@ -161,7 +171,7 @@ export function PanelDecir(p: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const cambiar = (i: number, cambio: (x: Entendido) => Entendido) => setEntendidos((lista) => lista && lista.map((x, k) => (k === i ? cambio(x) : x)));
+  const cambiar = (i: number, cambio: (x: Revisado) => Revisado) => setEntendidos((lista) => lista && lista.map((x, k) => (k === i ? cambio(x) : x)));
   // La pastilla ya vibra al elegir otra.
   const elegir = (i: number, k: number) => cambiar(i, (x) => ({ ...x, elegida: k }));
   /** Un paso con − o +; en el tope no cambia, y el botón no vibra ni repite. */
@@ -185,23 +195,46 @@ export function PanelDecir(p: Props) {
   const elegidas = (entendidos ?? []).flatMap((x) => (x.opciones[x.elegida] ? [{ x, o: x.opciones[x.elegida] }] : []));
   const total = sumarValores(elegidas.map(({ o }) => o.valores));
   const cambioElTexto = entendido !== null && texto.trim() !== entendido.trim();
-  // «Agregar a la cena» dice el día si no es hoy: el de la hoja, o ayer si se dijo «anoche».
-  const textoDeAgregar = agregarADe(comida, p.foto ? p.foto.f.dia : ayer ? sumarDias(e.hoy, -1) : p.dia, e.hoy);
+  // Por comida, en el orden del día (lo de ayer primero), cada fila con su lugar en la lista.
+  const grupos: { clave: string; comida: Comida; ayer: boolean; filas: { x: Revisado; i: number }[] }[] = [];
+  (entendidos ?? []).forEach((x, i) => {
+    const clave = claveDeGrupo(x);
+    const g = grupos.find((y) => y.clave === clave);
+    if (g) g.filas.push({ x, i });
+    else grupos.push({ clave, comida: x.comida, ayer: x.ayer, filas: [{ x, i }] });
+  });
+  grupos.sort((a, b) => Number(b.ayer) - Number(a.ayer) || COMIDAS.indexOf(a.comida) - COMIDAS.indexOf(b.comida));
+  const conElegida = grupos.filter((g) => g.filas.some(({ x }) => x.opciones[x.elegida]));
+  // «Agregar a la cena» dice el día si no es hoy: el de la hoja, o ayer si se dijo «anoche». Con varias comidas, «Agregar todo».
+  const una = conElegida.length === 1 ? conElegida[0] : null;
+  const textoDeAgregar = una
+    ? agregarADe(una.comida, p.foto ? p.foto.f.dia : una.ayer ? sumarDias(e.hoy, -1) : p.dia, e.hoy)
+    : t('comida.decir.agregarTodo');
 
-  /** Lo elegido, como ítems. Cada respuesta se recuerda: la próxima vez, esas palabras ya no preguntan. */
-  const confirmar = () => {
+  /** Lo elegido, como ítems de cada comida. Cada respuesta se recuerda: la próxima vez, esas palabras ya no preguntan. */
+  const confirmar = (): GrupoAnotado[] => {
     for (const { x, o } of elegidas) {
       if (x.pregunta === 'cual') elAlmacen().ponerAlias(normalizar(x.dicho.buscado), Number(o.alimento.ref));
       if (x.pregunta === 'crudo') elAlmacen().ponerAlias(claveMedida(x.dicho.buscado), Number(o.alimento.ref));
     }
-    return elegidas.map(({ o }) => ({ ...itemDeAlimento('base', o.alimento.ref, o.alimento.nombre, o.alimento.por100g, o.cantidad), estimado: true as const }));
+    return conElegida.map((g) => ({
+      comida: g.comida,
+      ayer: g.ayer,
+      items: g.filas.flatMap(({ x }) => {
+        const o = x.opciones[x.elegida];
+        return o ? [{ ...itemDeAlimento('base', o.alimento.ref, o.alimento.nombre, o.alimento.por100g, o.cantidad), estimado: true as const }] : [];
+      }),
+    }));
   };
-  const agregar = () => p.alAgregar(confirmar(), comida, ayer);
-  /** «Buscarlo»: lo demás que tampoco se encontró se busca después, y lo dicho «anoche» sigue yendo a ayer. */
+  const agregar = () => p.alAgregar(confirmar());
+  /** «Buscarlo»: lo demás de esa comida que tampoco se encontró se busca después, lo dicho «anoche» sigue yendo a ayer y lo de las otras comidas se anota. */
   const buscar = (i: number) => {
     const lista = entendidos ?? [];
-    const pendientes = lista.filter((y, k) => k !== i && !y.opciones[y.elegida]).map((y) => y.dicho.buscado);
-    p.alBuscar(lista[i].dicho.buscado, confirmar(), comida, { ayer, pendientes });
+    const x = lista[i];
+    const todos = confirmar();
+    const propio = todos.find((g) => claveDeGrupo(g) === claveDeGrupo(x));
+    const pendientes = lista.filter((y, k) => k !== i && !y.opciones[y.elegida] && claveDeGrupo(y) === claveDeGrupo(x)).map((y) => y.dicho.buscado);
+    p.alBuscar(x.dicho.buscado, propio?.items ?? [], x.comida, { ayer: x.ayer, pendientes, resto: todos.filter((g) => g !== propio) });
   };
 
   const foto = p.foto;
@@ -258,14 +291,31 @@ export function PanelDecir(p: Props) {
       {entendidos && (
         <Animated.View entering={FadeIn.duration(260).reduceMotion(ReduceMotion.Never)} layout={ACOMODA}>
           {entendidos.length === 0 && <Animated.Text entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} style={st.nota}>{t('comida.decir.nada')}</Animated.Text>}
-          {entendidos.map((x, i) => (
-            <Animated.View key={claveDe(x.dicho)} entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA}>
-              <Fila x={x} sistema={p.sistema} numeros={numeros} alMover={(s) => mover(i, s)} alQuitar={() => quitar(i)} alElegir={(k) => elegir(i, k)} alBuscar={() => buscar(i)} />
+          {grupos.map((g) => (
+            <Animated.View key={g.clave} entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA}>
+              {/* Con una sola comida, «Agregar al almuerzo» ya la dice. */}
+              {grupos.length > 1 && <CabezaDeGrupo comida={g.comida} ayer={g.ayer} kcal={numeros ? sumarValores(g.filas.flatMap(({ x }) => (x.opciones[x.elegida] ? [x.opciones[x.elegida].valores] : []))).kcal : null} />}
+              {g.filas.map(({ x, i }) => (
+                <Animated.View key={claveDe(x.dicho)} entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA}>
+                  <Fila x={x} sistema={p.sistema} numeros={numeros} alMover={(s) => mover(i, s)} alQuitar={() => quitar(i)} alElegir={(k) => elegir(i, k)} alBuscar={() => buscar(i)} />
+                </Animated.View>
+              ))}
             </Animated.View>
           ))}
         </Animated.View>
       )}
     </Panel>
+  );
+}
+
+/** El nombre de la comida arriba de lo suyo, como los títulos de la hoja: «Desayuno · 420 kcal», «Cena · ayer». */
+function CabezaDeGrupo({ comida, ayer, kcal }: { comida: Comida; ayer: boolean; kcal: number | null }) {
+  const nombre = t(`comida.comidas.${comida}`);
+  const titulo = ayer ? t('comida.decir.grupoAyer', { comida: nombre }) : nombre;
+  return (
+    <Animated.View entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA}>
+      <Etiqueta estilo={st.grupo}>{kcal === null ? titulo : `${titulo} · ${numero(Math.round(kcal))} kcal`}</Etiqueta>
+    </Animated.View>
   );
 }
 
@@ -390,6 +440,7 @@ const st = StyleSheet.create({
     marginTop: 12, minHeight: 84, maxHeight: 180, padding: 12, outlineWidth: 0, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)',
     backgroundColor: 'rgba(6, 10, 22, 0.6)', fontFamily: letras.texto, fontSize: 15, lineHeight: 21, color: colores.pergamino,
   },
+  grupo: { marginTop: 16, marginBottom: 2 },
   nota: { marginTop: 14, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17.5, color: 'rgba(239, 230, 207, 0.55)' },
   bloque: { paddingVertical: 4, borderBottomWidth: 1, borderColor: 'rgba(239, 230, 207, 0.06)' },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 54, paddingVertical: 6 },

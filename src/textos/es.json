@@ -886,7 +886,10 @@
         "permiso": "Para escucharte, Moss necesita el micrófono y el reconocimiento de voz: actívalos en los Ajustes del iPhone. Mientras, puedes escribir.",
         "idioma": "Tu iPhone no reconoce este idioma sin conexión. Usa el micrófono del teclado: también funciona.",
         "otro": "No pude escucharte. Prueba de nuevo, o escríbelo."
-      }
+      },
+      "agregarTodo": "Agregar todo",
+      "grupoAyer": "{comida} · ayer",
+      "anotadoVarias": "{n} alimentos anotados en {m} comidas"
     },
     "letra": {
       "p": "P",
@@ -1237,8 +1240,8 @@
         }
       },
       "consejo": {
-        "dormir": "Esta noche, acuéstate a las {hora} para despertarte a las {despertar}.",
-        "dormirDeuda": "Esta noche, acuéstate a las {hora}: así empiezas a bajar tu deuda de sueño.",
+        "dormir": "Tu hora de acostarte esta noche: {hora}, para despertarte a las {despertar}.",
+        "dormirDeuda": "Acostarte esta noche a las {hora} te ayuda a bajar tu deuda de sueño.",
         "sinFallo": "Si entrenas, mejor sin llegar al fallo: las repeticiones cuestan más.",
         "comerMas": "Come un poco más estos días: una comida más o una porción más grande ayuda.",
         "medico": "Si además se te cortó la menstruación (en hombres, si notas menos deseo sexual), tuviste una fractura por estrés o estás sin energía hace semanas, habla con un médico o un nutricionista.",
@@ -1247,8 +1250,8 @@
         "comerDespues": "Ahora, una comida con proteína: ayuda a recuperar.",
         "inercia": "Al despertar es normal sentirte lento: se pasa en una media hora. Tu mejor momento llega a las {desde}.",
         "bajon": "Tu bajón de la tarde, hasta las {hasta}: es normal, viene del reloj del cuerpo, y la luz del día ayuda.",
-        "bajarElRitmo": "Luz baja desde ahora: te acuestas a las {cama}.",
-        "aLaCama": "Ya es hora de acostarte: con la luz baja te duermes antes.",
+        "bajarElRitmo": "Te acuestas a las {cama}: con luz baja desde ahora, te duermes más fácil.",
+        "aLaCama": "Es tu hora de acostarte: con la luz baja, el sueño llega antes.",
         "pico": "Ahora es tu mejor momento del día, hasta las {hasta}: aprovéchalo para lo que te pide más concentración.",
         "segundoPico": "Hasta las {hasta}, tu segundo buen momento del día.",
         "comerMasEntrena": "Come un poco más estos días, sobre todo antes y después de entrenar.",
@@ -1324,7 +1327,7 @@
             "bien": "Dormiste lo que necesitas, o casi, y tu deuda es de menos de {deudaMedia}: el sueño no te frena."
           },
           "mira": "Moss mira cuánto dormiste anoche, si dos de tus últimas tres noches fueron cortas y tu deuda de las últimas dos semanas.",
-          "seguir": "Sigue así: esta noche, acuéstate a las {hora}.",
+          "seguir": "Vas bien. Esta noche, tu hora de acostarte es a las {hora}.",
           "seguirSinHora": "Sigue durmiendo lo que necesitas."
         },
         "hoy": {
@@ -2300,8 +2303,6 @@
       "antes": "{n} min antes que ayer",
       "despues": "{n} min más tarde que ayer",
       "igual": "Igual que ayer",
-      "acuestate": "Acuéstate a las {hora} para estar dormido dentro de tu periodo.",
-      "conDeuda": "Acuéstate a las {hora}, cuando empieza tu periodo. Antes no: te costaría dormirte.",
       "faltan": {
         "uno": "Falta {n} noche",
         "otros": "Faltan {n} noches"
@@ -2328,7 +2329,8 @@
         "despues": "Si te acuestas después",
         "despuesTexto": "Te duermes sin problema: el periodo no se cierra. Pero la noche queda más corta.",
         "pie": "Si trabajas de noche o por turnos, esta cuenta no te sirve."
-      }
+      },
+      "texto": "Es el rato de la noche en que más fácil te duermes."
     },
     "pendientes": {
       "fila": "Lo que tienes en la cabeza",
@@ -2687,7 +2689,7 @@
     "avisos": {
       "titulo": "Avisos",
       "dormir": "Acostarte",
-      "dormirTexto": "Esta noche, acuéstate a las {hora}: con los {margen} min que tardas en dormirte, quedas dormido dentro de tu periodo de melatonina ({desde} – {hasta}). Te avisa un rato antes.",
+      "dormirTexto": "Tu hora de acostarte esta noche: {hora}. Con los {margen} min que tardas en dormirte, quedas dormido dentro de tu periodo de melatonina ({desde} – {hasta}). Te avisa un rato antes.",
       "dormirSinDatos": "A la hora que te deja dormido dentro de tu periodo de melatonina. Te avisa un rato antes.",
       "antes": "{n} min antes",
       "tardo": "Tardo en dormirme",
@@ -2705,15 +2707,15 @@
       "falta": "Si voy muy bajo en algo",
       "faltaTexto": "Un aviso corto con lo que te falta (proteína, calorías o agua) y una idea de qué comer. Uno o dos por día, como mucho, y solo si ese día anotaste algo.",
       "conviene": "Lo que conviene hacer",
-      "convieneTexto": "Te dicen qué hacer y a qué hora, sin abrir Moss. Suenan solo los que tocan ese día, dentro del máximo.",
+      "convieneTexto": "Sugerencias con su hora y su porqué, sin abrir Moss. Suenan solo las que tocan ese día, dentro del máximo.",
       "antesDeEntrenar": "Comer antes de entrenar",
       "antesDeEntrenarTexto": "Media hora antes de la comida que más te conviene: a qué hora y cuánto comer. Cuenta lo que tardas en llegar al gimnasio.",
       "despuesDeEntrenar": "Proteína después de entrenar",
       "despuesDeEntrenarTexto": "Al terminar: cuánta y en qué comida.",
       "cafe": "Café",
-      "cafeTexto": "Hasta qué hora, para que no te quite sueño. Los días que entrenas, si conviene uno antes y a qué hora.",
+      "cafeTexto": "Desde qué hora la cafeína podría quitarle calidad a tu sueño, contando hacia atrás desde tu periodo de melatonina. Los días que entrenas, si conviene uno antes y a qué hora.",
       "ultimaComida": "Última comida grande",
-      "ultimaComidaTexto": "Dos horas antes de acostarte (tres con reflujo): cena antes de esa hora y, después, algo ligero.",
+      "ultimaComidaTexto": "Dos horas antes de acostarte (tres con reflujo): hasta qué hora cenar para dormir con la digestión hecha.",
       "entrenarTarde": "Si entrenas tarde",
       "entrenarTardeTexto": "Si terminarías a menos de dos horas de acostarte: hasta qué hora entrenar fuerte.",
       "luces": "Bajar las luces",
@@ -2744,7 +2746,7 @@
       "descargaTexto": "Al acostarte, te invita a escribir tus pendientes en una nota corta, en Sueño. Por la mañana, después de despertarte, te llegan en un aviso: «Lo que hay que hacer hoy».",
       "gafas": "Gafas para la luz azul",
       "gafasTexto": "Dos horas antes de acostarte, si las tienes. La evidencia todavía es poca.",
-      "dormirSinPeriodo": "Esta noche, acuéstate a las {hora}: para despertarte a las {despertar} habiendo dormido {horas}, con {latencia} min de margen para dormirte. Te avisa un rato antes.",
+      "dormirSinPeriodo": "Tu hora de acostarte esta noche: {hora}. Así dormirías {horas} y te despertarías a las {despertar}, con {latencia} min de margen para dormirte. Te avisa un rato antes.",
       "maximoSolo": "Subió solo a {n} por los avisos que encendiste. Si eliges otro, queda el tuyo."
     },
     "cambiarCuenta": "Cambiar de cuenta",
@@ -3437,8 +3439,8 @@
         "texto": "Te acuestas a las {dormir}: lo fuerte, por lo menos 2 horas antes de dormir y mejor 4 (antes de las {mejor})."
       },
       "dormir": {
-        "titulo": "A dormir",
-        "texto": "Para dormir tus {horas} esta noche."
+        "titulo": "Tu noche",
+        "texto": "Lo que necesitas dormir esta noche: {horas}."
       },
       "proteina": {
         "titulo": "Proteína"
@@ -3555,9 +3557,9 @@
         "anotar": "Si quieres, anota cómo dormiste",
         "corregir": "¿Dormiste distinto? Corrígelo en Sueño",
         "consejos": {
-          "cortaAntes": "En el gimnasio, sin ir al fallo; y esta noche, acuéstate a las {hora}.",
-          "corta": "Esta noche, acuéstate a las {hora}.",
-          "algoCorta": "Esta noche, acuéstate a las {hora}."
+          "cortaAntes": "En el gimnasio, mejor sin ir al fallo. Tu hora de acostarte esta noche: {hora}.",
+          "corta": "Tu hora de acostarte esta noche: {hora}.",
+          "algoCorta": "Esta noche, tu hora de acostarte es a las {hora}."
         }
       },
       "musculos": {
@@ -4084,7 +4086,7 @@
     "pruebaTermina": "Tu prueba de Moss termina en dos días",
     "conviene": {
       "antes": {
-        "titulo": "Come antes de entrenar",
+        "titulo": "Tu comida antes de entrenar",
         "comida": {
           "desayuno": "Desayuno a las {hora}",
           "almuerzo": "Almuerzo a las {hora}",
@@ -4116,24 +4118,30 @@
       },
       "cafe": {
         "titulo": "Café antes de entrenar",
-        "antes": "Si tomas, a las {hora}: faltan {horas} para acostarte.",
-        "tituloUltimo": "Último café",
-        "ultimo": "Hasta las {hora}. Después, descafeinado.",
-        "ultimoEntrenas": "Hasta las {hora}. Antes de entrenar a las {entreno}, mejor sin café."
+        "antes": "Si tomas uno, las {hora} son buen momento: una hora antes de empezar y a {horas} de acostarte.",
+        "tituloUltimo": "Desde ahora, mejor sin cafeína",
+        "ultimo": {
+          "periodo": "Tu periodo de melatonina empieza a las {periodo}: la cafeína podría quitarle calidad a tu sueño.",
+          "cama": "Te acuestas a las {cama}: la cafeína de ahora podría quitarle calidad a tu sueño."
+        },
+        "ultimoEntrenas": {
+          "periodo": "Entrenas a las {entreno}, pero tu periodo de melatonina empieza a las {periodo} y la cafeína dura horas.",
+          "cama": "Entrenas a las {entreno}, pero te acuestas a las {cama} y la cafeína dura horas."
+        }
       },
       "ultimaComida": {
         "titulo": "Última comida grande",
-        "texto": "Cena antes de las {hora}: te acuestas a las {cama}. Después, algo ligero."
+        "texto": "Si cenas antes de las {hora}, te acuestas a las {cama} con la digestión hecha."
       },
       "tarde": {
-        "titulo": "Termina antes de las {hora}",
-        "texto": "Más tarde, que sea suave: te acuestas a las {cama}.",
+        "titulo": "Lo fuerte, hasta las {hora}",
+        "texto": "Te acuestas a las {cama}: entrenar fuerte más tarde podría costarte sueño.",
         "tituloSuave": "Hoy, mejor suave",
-        "suave": "Entrenar fuerte a las {entreno} te quitaría sueño: te acuestas a las {cama}."
+        "suave": "Te acuestas a las {cama}: entrenar fuerte a las {entreno} podría costarte sueño."
       },
       "luces": {
-        "titulo": "Baja las luces",
-        "texto": "Luz baja y cálida desde ahora: la luz fuerte atrasa tu sueño. Te acuestas a las {cama}."
+        "titulo": "Buen momento para bajar la luz",
+        "texto": "Te acuestas a las {cama}. Con luz baja y cálida, tu melatonina sube a tiempo."
       },
       "recuperacion": {
         "titulo": "Recuperación: {pct} %",
@@ -4169,9 +4177,9 @@
       },
       "comida": {
         "titulo": {
-          "almuerzo": "Almuerza unas {kcal} kcal",
-          "merienda": "Merienda unas {kcal} kcal",
-          "cena": "Cena unas {kcal} kcal"
+          "almuerzo": "Tu almuerzo: unas {kcal} kcal",
+          "merienda": "Tu merienda: unas {kcal} kcal",
+          "cena": "Tu cena: unas {kcal} kcal"
         },
         "texto": "Lo que no comiste en el desayuno va {lista}."
       },
@@ -4182,20 +4190,20 @@
       },
       "y": "{a} y {b}",
       "melatonina": {
-        "titulo": "Tu periodo de melatonina: {desde}",
-        "texto": "De {desde} a {hasta} es cuando menos te cuesta dormirte: tu melatonina empieza a subir más o menos ahora."
+        "titulo": "Tu periodo de melatonina empieza a las {desde}",
+        "texto": "Hasta las {hasta}, es cuando más fácil te duermes. Tu melatonina ya empieza a subir."
       },
       "revoluciones": {
-        "titulo": "Baja el ritmo",
-        "texto": "Deja lo que te acelera y las pantallas brillantes. Te acuestas a las {cama}."
+        "titulo": "Se acerca tu hora de acostarte",
+        "texto": "Es a las {cama}. Algo tranquilo y lejos de las pantallas brillantes hace más fácil dormirte."
       },
       "gafas": {
-        "titulo": "Ponte las gafas para la luz azul",
-        "texto": "Si las tienes, úsalas desde ahora hasta acostarte, a las {cama}."
+        "titulo": "Las gafas para la luz azul, si las tienes",
+        "texto": "Desde ahora hasta acostarte, a las {cama}, pueden ayudar a que tu melatonina suba a tiempo."
       },
       "descarga": {
-        "titulo": "Anota lo que tienes en la cabeza",
-        "texto": "Escribe tus pendientes antes de acostarte: con la cabeza despejada cuesta menos dormirse. Mañana Moss te los recuerda."
+        "titulo": "¿Algo dando vueltas en la cabeza?",
+        "texto": "Anotar tus pendientes antes de acostarte ayuda a dormirte antes. Mañana Moss te los recuerda."
       },
       "pendientes": {
         "titulo": "Lo que hay que hacer hoy",
@@ -4203,24 +4211,24 @@
       }
     },
     "acostarte": {
-      "titulo": "Acuéstate a las {cama}",
-      "texto": "{tiempo}. Así te duermes dentro de tu periodo de melatonina ({desde} – {hasta}).",
-      "conDeuda": "{tiempo}. Con {deuda} de deuda de sueño, esta noche no lo dejes para más tarde.",
-      "sinPeriodo": "{tiempo}. Así duermes {horas} y te despiertas a las {despertar}.",
+      "titulo": "Tu hora de acostarte: {cama}",
+      "texto": "{tiempo}. Es la que te deja dormido dentro de tu periodo de melatonina ({desde} – {hasta}).",
+      "conDeuda": "{tiempo}. Tienes {deuda} de deuda de sueño: acostarte a tu hora ayuda a bajarla.",
+      "sinPeriodo": "{tiempo}. A esa hora dormirías {horas} y te despertarías a las {despertar}.",
       "en": {
-        "15": "En 15 minutos",
-        "30": "En media hora",
-        "45": "En 45 minutos",
-        "60": "En una hora",
-        "otro": "En {n} minutos",
-        "ya": "Ahora"
+        "15": "Faltan 15 minutos",
+        "30": "Falta media hora",
+        "45": "Faltan 45 minutos",
+        "60": "Falta una hora",
+        "otro": "Faltan {n} minutos",
+        "ya": "Es ahora"
       }
     },
     "pesarte": {
-      "titulo": "Pésate antes de desayunar",
-      "texto": "Después de ir al baño y siempre igual: así se ve la tendencia.",
-      "tituloControl": "Hoy es tu control: pésate",
-      "textoControl": "Antes de desayunar, como siempre."
+      "titulo": "Buen momento para pesarte",
+      "texto": "Antes de desayunar y después de ir al baño, siempre igual: así se ve la tendencia.",
+      "tituloControl": "Hoy es tu control",
+      "textoControl": "Un peso antes de desayunar, como siempre, y Moss revisa tu semana."
     }
   },
   "entreno": {

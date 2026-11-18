@@ -120,8 +120,14 @@ cual con cuatro semanas de mentira.
 
    Es la regla de Fitbit y encaja con la de Moss (las fechas en la hora local del momento).
 4. **Episodios, sueño partido y siestas:**
-   - lo dormido separado por menos de una hora es un episodio, y el más largo es el principal;
-   - a la noche se suman los de 3 horas o más y los que empiezan o terminan a 2 horas del principal: el sueño partido es una noche;
+   - lo dormido separado por una hora o menos es un episodio, y el más largo es el principal (18/11/2026: te despiertas a
+     las 6:22 y vuelves a dormirte a las 6:30, es una noche de tu primer dormirte a tu último despertar, con esos 8 minutos
+     despierto; `HUECO_DE_LA_MISMA_NOCHE`);
+   - con más de una hora despierto, lo que sigue es otra cosa (una siesta), salvo el sueño partido: dos episodios de 3 horas o
+     más son una noche (hasta el 18/11 también se pegaban los que empezaban o terminaban a 2 horas del principal);
+   - de las fuentes que registraron el mismo sueño, la noche es de una que lo tenga casi entero (dos tercios o más de lo que
+     registró la que más): antes, otra app con etapas que solo vio el segundo tramo se quedaba con la noche (6:22 a 8:30). Un
+     tramo que registró otra fuente, pegado a la noche (a una hora o menos) y sin encimarse, también es la noche;
    - lo demás, desde 15 minutos, son siestas: cuentan para la deuda, no para el horario.
 5. **En cama** se muestra solo si alguna fuente lo escribió de verdad, y si es del
    teléfono va con confianza baja. Nunca cuenta como sueño.

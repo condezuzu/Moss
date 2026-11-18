@@ -1590,7 +1590,7 @@ const SeccionSueno = (() => {
       parte('sube', p.inicio, p.desde);
       parte('tramo', p.desde, p.hasta);
       const texto = el('p', 'sn-periodo-texto' + (conNoches ? '' : ' sn-muestra'));
-      texto.innerHTML = tx(p.conDeuda ? 'sueno.periodo.conDeuda' : 'sueno.periodo.acuestate', { hora: `<b>${reloj(p.acostarse)}</b>` });
+      texto.textContent = tx('sueno.periodo.texto');
       c.append(horas, pista, texto);
       if (!conNoches) c.appendChild(queEs());
       return c;

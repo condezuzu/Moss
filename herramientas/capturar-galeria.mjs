@@ -1263,6 +1263,25 @@ const pasos = {
     await foto('decir-todo-junto');
     await comida('cerrar');
     await pagina.waitForTimeout(800);
+    // Varias comidas en una frase (18/11): cada cosa en la suya, por comida, y «Agregar todo».
+    await mas('abrir');
+    await pagina.waitForTimeout(900);
+    await pagina.evaluate(() => document.querySelector('.mas-decir').click());
+    await esperarA(() => !!document.querySelector('.hj-decir .dc-bloque'));
+    await pagina.evaluate(() => {
+      const a = document.querySelector('.hj-decir .dc-area');
+      a.value = 'en el desayuno comí dos huevos revueltos y un café con leche, en el almuerzo una milanesa con puré y de merienda un mate con dos bizcochos. Y también en el desayuno una banana';
+      a.dispatchEvent(new Event('input'));
+      [...document.querySelectorAll('.hj-decir .fi-pie .fi-secundario')].find((b) => !b.hidden).click();
+    });
+    await pagina.waitForTimeout(800);
+    await foto('decir-varias');
+    await pagina.evaluate(() => { const c = document.querySelector('.hj-decir .hj-cuerpo'); c.scrollTop = c.scrollHeight; });
+    await pagina.waitForTimeout(400);
+    await foto('decir-varias-abajo');
+    await pagina.evaluate(() => document.querySelector('.hj-decir .fi-agregar').click());
+    await pagina.waitForTimeout(1300);
+    await foto('decir-varias-anotado');
   },
   // La foto de la comida (para aprobar, 2/11): sin fotos, Comida queda como hoy; el botón de la hoja, el
   // visor, elegir de las fotos, «¿Qué es?» con y sin preguntas, anotar, deshacer, anotar después, la tira,
@@ -2601,7 +2620,7 @@ const pasos = {
     // y acostarte), con las palabras nuevas.
     await seccion('avisosNuevos');
     await espera(600);
-    await bloqueo({ modo: 'despertar', idioma: 'es', desayuno: 'directo', anotar: false, gafas: false, hora: hora(10, 45) }, 'melatonina-bloqueo-manana', 800);
+    await bloqueo({ modo: 'despertar', idioma: 'es', desayuno: 'directo', anotar: false, gafas: false, cafe: false, hora: hora(10, 45) }, 'melatonina-bloqueo-manana', 800);
     await bloqueo({ hora: hora(23, 59) }, 'melatonina-bloqueo-noche', 800);
     // Con «Anotar lo pendiente»: la lista a la mañana y, a la noche, el aviso que abre la nota. Y con las gafas.
     await bloqueo({ anotar: true, gafas: false, hora: hora(11, 5) }, 'melatonina-bloqueo-pendientes-manana', 800);
@@ -2610,6 +2629,12 @@ const pasos = {
     await bloqueo({ anotar: false, gafas: true, hora: hora(23, 59) }, 'melatonina-bloqueo-gafas', 800);
     await bloqueo({ anotar: true, gafas: false, idioma: 'en', hora: hora(23, 59) }, 'melatonina-bloqueo-ingles', 800);
     await bloqueo({ hora: hora(11, 5) }, 'melatonina-bloqueo-ingles-manana', 800);
+    // El café (18/11): suena en el corte, que sale de tu periodo de melatonina, «Desde ahora, mejor sin cafeína».
+    await bloqueo({ anotar: false, gafas: false, cafe: true, idioma: 'es', hora: hora(16) }, 'melatonina-bloqueo-cafe', 800);
+    await bloqueo({ idioma: 'en' }, 'melatonina-bloqueo-cafe-ingles', 800);
+    await bloqueo({ cafe: false, idioma: 'es' }, null);
+    await bloqueo({ modo: 'todos', idioma: 'es', abajo: 'Café' }, 'melatonina-todos-cafe', 800);
+    await bloqueo({ idioma: 'en', abajo: 'Café' }, 'melatonina-todos-cafe-ingles', 800);
     // «Todos»: cada forma de los reescritos.
     await bloqueo({ modo: 'todos', idioma: 'es', abajo: 'Bajar las luces' }, 'melatonina-todos-luces', 800);
     await bloqueo({ abajo: 'Pesarte' }, 'melatonina-todos-pesarte');
@@ -3272,6 +3297,101 @@ const pasos = {
     await pagina.evaluate(() => window.__accion('reiniciar'));
     await espera(800);
     await pestana(0);
+  },
+  // Tanda 4 (18/11, para aprobar): las figuras de la grasa redibujadas (hombre y mujer, sin elegir y eligiendo,
+  // en es y en) y «Cuando llegues, ¿qué sigue?» con cinco opciones: cada una en el cuestionario (con y sin pesas,
+  // subiendo y sin déficit), en el resultado, en el plan de Progreso (la etapa que sigue, con su nombre y su
+  // dibujo) y en «Tus respuestas» de Perfil.
+  async tanda4() {
+    const entrada = (paso) => pagina.evaluate((p) => window.__entrada(p), paso);
+    const responder = (r) => pagina.evaluate((x) => window.__cuestionario('responder', x), r);
+    const tocar = (selector) => pagina.evaluate((s) => document.querySelector('.ent-pantalla:not(.saliendo) ' + s).click(), selector);
+    const espera = (ms = 1300) => pagina.waitForTimeout(ms);
+    const ver = async (paso, nombre, ms) => { await entrada(paso); await espera(ms); await foto('tanda4-' + nombre); };
+    const DESPUES = ['mantener', 'grasa', 'recomponer', 'musculo', 'despues'];
+    // Las hojas con display propio (la pantalla bloqueada de avisos.js) taparían todo aunque estén ocultas.
+    const ocultas = await pagina.addStyleTag({ content: '.tel [hidden]{display:none!important}' });
+    for (const idioma of ['es', 'en']) {
+      await pagina.evaluate((i) => window.__idioma(i), idioma);
+      await pagina.evaluate(() => window.__cuestionario('reiniciar'));
+      const sufijo = idioma === 'es' ? '' : '-en';
+      // La grasa por imagen: sin elegir, y eligiendo con poca, en el medio y con mucha.
+      for (const sexo of ['m', 'f']) {
+        const quien = sexo === 'm' ? 'hombre' : 'mujer';
+        await responder({ sexo, edad: 34, altura: sexo === 'm' ? 178 : 165, peso: sexo === 'm' ? 82 : 66, grasaModo: 'imagen', figura: null });
+        await ver('grasa', `grasa-${quien}${sufijo}`, 1800);
+        for (const k of idioma === 'es' ? [0, 2, 4, 6, 8] : [3]) {
+          await tocar(`.ent-figura[data-valor="${k}"]`);
+          await espera(700);
+          await foto(`tanda4-grasa-${quien}-${k}${sufijo}`);
+        }
+      }
+      // Cuando llegues, ¿qué sigue?: bajando de 82 a 76 kg con pesas, cada una; tocar una; sin pesas; subiendo;
+      // sin déficit; y el plan en una línea del resultado.
+      await pagina.evaluate(() => window.__cuestionario('entreno', { tipos: ['fuerza'] }));
+      await responder({ sexo: 'm', edad: 34, altura: 178, peso: 82, grasaModo: 'no', objetivo: 'bajar', pesoMeta: 76, fecha: null, ritmo: 'recomendado' });
+      for (const v of idioma === 'es' ? DESPUES : ['grasa']) {
+        await responder({ despues: v });
+        await ver('despues', `despues-${v}${sufijo}`, 1800);
+      }
+      if (idioma === 'es') {
+        await responder({ despues: 'mantener' });
+        await entrada('despues');
+        await espera(1600);
+        await tocar('[data-valor="recomponer"]');
+        await espera(700);
+        await foto('tanda4-despues-tocar');
+        await pagina.evaluate(() => window.__cuestionario('entreno', { tipos: ['resistencia'] }));
+        await responder({ despues: 'musculo' });
+        await ver('despues', 'despues-sin-pesas', 1800);
+        await pagina.evaluate(() => window.__cuestionario('entreno', { tipos: ['fuerza'] }));
+        await responder({ objetivo: 'subir', pesoMeta: 86, despues: 'grasa' });
+        await ver('despues', 'despues-subir', 1800);
+        await responder({ caso: 'condicion', sinDeficit: true, despues: 'musculo' });
+        await ver('despues', 'despues-sin-deficit', 1800);
+        await responder({ caso: 'nada', sinDeficit: false });
+      }
+      for (const v of ['grasa', 'recomponer']) {
+        await responder({ objetivo: 'bajar', pesoMeta: 76, despues: v });
+        await ver('resultado', `resultado-${v}${sufijo}`, 2600);
+      }
+      await pagina.evaluate(() => window.__entrada(null));
+      await espera(1200);
+    }
+    // En el plan de Progreso: la etapa que sigue a la meta, con su dibujo y su nombre, y lo que dice abajo.
+    await pestana(2);
+    for (const idioma of ['es', 'en']) {
+      await pagina.evaluate((i) => window.__idioma(i), idioma);
+      for (const v of idioma === 'es' ? DESPUES : ['grasa', 'recomponer']) {
+        await progreso('despues', v);
+        await progreso('subir');
+        await progreso('bajar', '.pg-plan');
+        await espera(2600);
+        await foto(`tanda4-progreso-${v}${idioma === 'es' ? '' : '-en'}`);
+      }
+    }
+    await progreso('despues', null);
+    await progreso('subir');
+    // «Tus respuestas» en Perfil: el cuestionario con lo contestado, en lo que sigue y en el resultado.
+    await pagina.evaluate(() => window.__idioma('es'));
+    await pestana(5);
+    await pagina.evaluate(() => window.__perfil('bajar', '[data-fila="respuestas"]'));
+    await espera(600);
+    await foto('tanda4-perfil-respuestas');
+    await pagina.evaluate(() => document.querySelector('[data-fila="respuestas"] .pf-fila').click());
+    await espera(1500);
+    await responder({ despues: 'grasa', grasaModo: 'no' });
+    await ver('despues', 'perfil-despues', 1800);
+    await ver('resultado', 'perfil-resultado', 2600);
+    // «Cerrar» está arriba de cada pregunta, no en el resultado.
+    await entrada('despues');
+    await espera(1200);
+    await tocar('.ent-revisar-cerrar');
+    await espera(1200);
+    await pagina.evaluate(() => window.__perfil('subir'));
+    await pagina.evaluate(() => window.__cuestionario('reiniciar'));
+    await pestana(0);
+    await ocultas.evaluate((n) => n.remove());
   },
 };
 

@@ -553,6 +553,11 @@ describe('las noches de Moss junto a las de Salud', () => {
     const aMano = armarNoches([muestra(true)], [reloj]);
     expect(conNochesDeMoss(aMano, [propia('2026-10-22', 'estimada')], UY)[0].fuente.id).toBe('reloj');
     expect(conNochesDeMoss(aMano, [propia('2026-10-22', 'confirmada')], UY)[0].fuente.id).toBe('moss');
+    // La de un anillo que llega a Salud después de que Moss ya estimó la noche, o de que le dijiste «Sí»: gana el anillo.
+    const anillo: Fuente = { id: 'com.moyoung.darings', nombre: 'Da Rings', tipo: 'otra' };
+    const delAnillo = armarNoches([{ ...muestra(), fuente: anillo.id }], [anillo]);
+    expect(conNochesDeMoss(delAnillo, [propia('2026-10-22', 'estimada', 'alta')], UY)[0].fuente.id).toBe(anillo.id);
+    expect(conNochesDeMoss(delAnillo, [propia('2026-10-22', 'confirmada')], UY)[0].fuente.id).toBe(anillo.id);
     // Donde Salud no tiene nada, la de Moss.
     expect(conNochesDeMoss([], [propia('2026-10-22', 'estimada')], UY).map((n) => n.clave)).toEqual(['2026-10-22']);
   });
