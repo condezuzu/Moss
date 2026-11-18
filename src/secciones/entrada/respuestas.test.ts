@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import type { Estado } from '@/almacen/almacen';
 import { deportesDe, partesRedondas } from '@/dominio/cuestionario';
-import { conObjetivo, DE_FABRICA, desdeLoGuardado, lugarDe, metaDeAhora, movimientoUsado, objetivoPosible, paraGuardar, preguntasDe, sinDeficit, type Contestado } from './respuestas';
+import { conObjetivo, DE_FABRICA, desdeLoGuardado, despuesDe, lugarDe, metaDeAhora, movimientoUsado, objetivoPosible, paraGuardar, preguntasDe, sinDeficit, type Contestado } from './respuestas';
 
 const HOY = '2026-11-16';
 const el: Contestado = { ...DE_FABRICA, sexo: 'm' };
@@ -78,5 +78,18 @@ describe('lo que se guarda, y contestarlo otra vez', () => {
       sueno: r.sueno, entreno: { tipos: ['fuerza', 'equipo'], partidos: true, diaDePartido: 6, horaDePartido: 960 },
     });
     expect(metaDeAhora(otra, HOY).metas).toEqual(metaDeAhora(r, HOY).metas);
+  });
+});
+
+describe('cuando llegues, ¿qué sigue?', () => {
+  it('lo elegido se guarda y vuelve; si ya no se puede (o es de otra versión), mantener', () => {
+    const r: Contestado = { ...conObjetivo(el, 'bajar'), pesoMeta: 70, despues: 'recomponer' };
+    const { c, nuevo } = paraGuardar(r, HOY, []);
+    expect(nuevo.respuestas.despues).toBe('recomponer');
+    const e = { hoy: HOY, perfil: { sexo: c.sexo, nacimiento: 2026 - c.edad, alturaCm: c.alturaCm, actividad: c.actividad, objetivo: c.objetivo, ritmo: c.ritmo, pesoMeta: 70, actualizado: '' }, pesos: [], respuestas: nuevo.respuestas } as unknown as Estado;
+    expect(desdeLoGuardado(e).despues).toBe('recomponer');
+    // Sin déficit, recomponer ya no se puede.
+    expect(despuesDe({ ...r, objetivo: 'subir', cuidados: ['renal'] }, HOY)).toBe('mantener');
+    expect(despuesDe({ ...r, despues: 'volar' as Contestado['despues'] }, HOY)).toBe('mantener');
   });
 });

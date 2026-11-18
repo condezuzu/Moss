@@ -193,11 +193,13 @@ type FormaDeOpcion = 'fila' | 'chip' | 'segmento' | 'cuadro';
  * Una opción del cuestionario: en fila (con su ícono a la izquierda y, si se elige más de una, su marca a la
  * derecha), en chip, en segmento (varias en una fila) o en cuadro (dos por fila). `abajo` va debajo del texto.
  */
-export function Elegible({ titulo, detalle, elegida, alTocar, forma = 'fila', icono, marca, desactivada, demora = 0, abajo, chico, alto }: {
+export function Elegible({ titulo, detalle, elegida, alTocar, forma = 'fila', icono, marca, desactivada, demora = 0, abajo, chico, alto, denso }: {
   titulo: string; detalle?: string | null; elegida: boolean; alTocar: () => void; forma?: FormaDeOpcion; icono?: SFSymbol; marca?: boolean;
   desactivada?: boolean; demora?: number; abajo?: ReactNode; chico?: boolean;
   /** En segmento, con el relleno de una opción grande (Femenino · Masculino). */
   alto?: boolean;
+  /** En fila con ícono, más junta: para cinco opciones con algo debajo (lo que sigue a la meta). */
+  denso?: boolean;
 }) {
   const reducido = useReducedMotion();
   const centrada = forma === 'segmento';
@@ -210,7 +212,7 @@ export function Elegible({ titulo, detalle, elegida, alTocar, forma = 'fila', ic
         }}
         disabled={desactivada}
         style={({ pressed }) => [
-          st.opcion, forma === 'chip' && st.chip, centrada && st.segmento, alto && { paddingVertical: 15, borderRadius: 16 }, forma === 'cuadro' && st.cuadro, forma === 'fila' && (icono || marca) && st.conIcono,
+          st.opcion, forma === 'chip' && st.chip, centrada && st.segmento, alto && { paddingVertical: 15, borderRadius: 16 }, forma === 'cuadro' && st.cuadro, forma === 'fila' && (icono || marca) && st.conIcono, denso && st.denso,
           elegida && st.opcionElegida, desactivada && { opacity: 0.45 }, pressed && { transform: [{ scale: 0.98 }] },
         ]}
         accessibilityRole={marca ? 'checkbox' : 'radio'}
@@ -218,20 +220,20 @@ export function Elegible({ titulo, detalle, elegida, alTocar, forma = 'fila', ic
       >
         {forma === 'chip' && marca && <Marca elegida={elegida} tam={18} />}
         {icono && (
-          <View style={[st.icono, elegida && st.iconoElegido]}>
+          <View style={[st.icono, denso && st.iconoDenso, elegida && st.iconoElegido]}>
             <Icono nombre={icono} tam={16} color={elegida ? colores.oroClaro : 'rgba(239, 230, 207, 0.55)'} />
           </View>
         )}
-        <View style={forma === 'chip' ? undefined : st.textos}>
+        <View style={forma === 'chip' ? undefined : [st.textos, denso && { gap: 2 }]}>
           <Text
-            style={[st.opcionTitulo, forma === 'chip' && st.chipTitulo, centrada && st.segmentoTitulo, alto && { fontSize: 16 }, forma === 'cuadro' && { fontSize: 14.5 }, chico && { fontSize: 12.5 }]}
+            style={[st.opcionTitulo, forma === 'chip' && st.chipTitulo, centrada && st.segmentoTitulo, alto && { fontSize: 16 }, forma === 'cuadro' && { fontSize: 14.5 }, chico && { fontSize: 12.5 }, denso && { fontSize: 15 }]}
             numberOfLines={centrada ? 1 : undefined}
             adjustsFontSizeToFit={centrada}
             minimumFontScale={0.75}
           >
             {titulo}
           </Text>
-          {detalle ? <Text style={[st.opcionDetalle, centrada && st.segmentoDetalle]}>{detalle}</Text> : null}
+          {detalle ? <Text style={[st.opcionDetalle, centrada && st.segmentoDetalle, denso && st.detalleDenso]}>{detalle}</Text> : null}
           {abajo}
         </View>
         {forma === 'fila' && marca && <Marca elegida={elegida} tam={20} />}
@@ -341,6 +343,9 @@ const st = StyleSheet.create({
   etiqueta: { marginBottom: 9, fontFamily: letras.texto, fontSize: 10.5, letterSpacing: 1.9, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.5)' },
   conIcono: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
   textos: { flex: 1, gap: 3 },
+  denso: { gap: 11, paddingVertical: 10 },
+  iconoDenso: { width: 30, height: 30, borderRadius: 15 },
+  detalleDenso: { fontSize: 12.5, lineHeight: 16.5 },
   icono: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)', alignItems: 'center', justifyContent: 'center' },
   iconoElegido: { borderColor: 'rgba(232, 196, 106, 0.6)', shadowColor: colores.oro, shadowOpacity: 0.3, shadowRadius: 7, shadowOffset: { width: 0, height: 0 } },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 8, paddingLeft: 9, paddingRight: 13, borderRadius: 999 },

@@ -1,7 +1,7 @@
 // Los gráficos chicos de Inicio, Progreso y Sueño, los de la galería (galeria/src/inicio.js,
 // «Graficos»): una línea con su tendencia, el balance de la semana, las barras y las columnas de
-// cada semana, la línea chiquita de una medida, el hipnograma de una noche y la constelación de hoy
-// en chico. Con los colores de la galería.
+// cada semana, la línea chiquita de una medida, el hipnograma de una noche, la constelación de hoy
+// en chico y lo que sigue a la meta del plan. Con los colores de la galería.
 
 import { BlurMask, Canvas, Circle, DashPathEffect, Group, Line, LinearGradient, Path, RadialGradient, Rect, RoundedRect, Skia, vec } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
@@ -282,6 +282,41 @@ export function MesSkia({ celdas, ancho, alto }: PropsDeMes) {
           </Group>
         );
       })}
+    </Canvas>
+  );
+}
+
+export type LoQueSigueDibujado = 'mantener' | 'grasa' | 'recomponer' | 'musculo' | 'despues';
+export type PropsDeLoQueSigue = { que: LoQueSigueDibujado; ancho: number; alto: number };
+
+/** Los caminos de cada uno, en una caja de 90 × 24: el peso baja despacio, se queda o sube despacio. */
+const DIBUJO_DE_LO_QUE_SIGUE: Record<LoQueSigueDibujado, { linea: string; punto?: [number, number]; flecha?: string; apagado?: boolean }> = {
+  mantener: { linea: 'M0 12H84', punto: [85, 12] },
+  grasa: { linea: 'M0 12C30 12 50 15 84 20.5', punto: [85, 20.7] },
+  musculo: { linea: 'M0 12C30 12 50 9 84 3.5', punto: [85, 3.3] },
+  recomponer: { linea: 'M0 12H84', punto: [85, 12], flecha: 'M62 9V2M59 5l3-3 3 3M72 15v7M69 19l3 3 3-3' },
+  despues: { linea: 'M0 12H52', apagado: true },
+};
+
+/**
+ * Lo que sigue a la meta, al final de la línea del plan (galeria/src/progreso.js): punteado como el mantenimiento,
+ * con su punto al final; la recomposición, con una flecha para cada lado; «lo decides», apagado (el signo va en
+ * Plan.tsx, como texto).
+ */
+export function LoQueSigueSkia({ que, ancho, alto }: PropsDeLoQueSigue) {
+  const d = DIBUJO_DE_LO_QUE_SIGUE[que];
+  const caminos = useMemo(() => ({ linea: Skia.Path.MakeFromSVGString(d.linea)!, flecha: d.flecha ? Skia.Path.MakeFromSVGString(d.flecha)! : null }), [d]);
+  const escala = Math.min(ancho / 90, alto / 24);
+  const color = 'rgba(239, 230, 207, 0.62)';
+  return (
+    <Canvas style={{ width: ancho, height: alto }} pointerEvents="none">
+      <Group transform={[{ translateY: (alto - 24 * escala) / 2 }, { scale: escala }]}>
+        <Path path={caminos.linea} style="stroke" strokeWidth={2} strokeCap="round" color={d.apagado ? 'rgba(239, 230, 207, 0.32)' : color}>
+          <DashPathEffect intervals={[4, 3.6]} />
+        </Path>
+        {d.punto && <Circle cx={d.punto[0]} cy={d.punto[1]} r={2.4} color={color} />}
+        {caminos.flecha && <Path path={caminos.flecha} style="stroke" strokeWidth={1.5} strokeCap="round" strokeJoin="round" color="#a6bf94" />}
+      </Group>
     </Canvas>
   );
 }

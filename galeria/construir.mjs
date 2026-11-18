@@ -184,6 +184,8 @@ const js = [
   modulo('Melatonina', 'src/dominio/melatonina.ts'),
   modulo('Entrenamiento', 'src/dominio/entrenamiento.ts'),
   modulo('Cuestionario', 'src/dominio/cuestionario.ts'),
+  // Las figuras de la grasa del cuestionario: la geometría, la misma que dibuja la app.
+  modulo('Figuras', 'src/secciones/entrada/figuras.ts'),
   // Las sesiones de cada día salen de los deportes del cuestionario.
   modulo('AlrededorDelEntreno', 'src/dominio/alrededorDelEntreno.ts'),
   // Los cuidados usan el cuestionario, el control y los micronutrientes.

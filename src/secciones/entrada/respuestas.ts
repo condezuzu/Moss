@@ -6,10 +6,10 @@
 import type { CuestionarioNuevo, Estado } from '@/almacen/almacen';
 import { CON_HORA, HORA_TIPICA } from '@/dominio/comidas';
 import {
-  actividadEquivalente, DEPORTES, eleccionDe, entrenaFuerza, entrenoParaGuardar, gastoEstimado, grasaDeFigura, metaDelCuestionario, movimientoPorPasos,
+  actividadEquivalente, DEPORTES, eleccionDe, entrenaFuerza, entrenoParaGuardar, gastoEstimado, grasaDeFigura, loQueSigue, metaDelCuestionario, movimientoPorPasos,
   NOCHES_PARA_NO_PREGUNTAR, pctDelPlan, pesoMetaSugerido, preguntasDelEntreno, rangoDelPesoMeta, ritmoSugerido,
   type Deporte, type Despues, type EntrenoDicho, type Experiencia, type GrasaDicha, type Horarios, type MetaDelCuestionario, type Movimiento,
-  type NivelDeProteina, type ObjetivoDicho, type Respuestas, type RespuestasGuardadas,
+  type NivelDeProteina, type ObjetivoDicho, type ParaLoQueSigue, type Respuestas, type RespuestasGuardadas,
 } from '@/dominio/cuestionario';
 import { rangoDeGrasa } from '@/dominio/cuerpo';
 import { fechaProbableDe, metaDelCuestionarioConCuidados, reglasDe, semanaDeEmbarazo, semanasDesdeElParto, sinDeficitDe, type Cuidado, type CuidadosGuardados, type DatosDelCuidado, type Reglas } from '@/dominio/cuidados';
@@ -113,6 +113,10 @@ export function reglasDeAhora(r: Contestado, hoy: ClaveDia, pasos: number | null
   return reglasDe(r.cuidados, datosDelCuidado(r, hoy), { sexo: sexoDe(r), edad: r.edad, alturaCm: r.alturaCm, pesoKg: r.pesoKg, actividad, dieta: r.dieta }, hoy);
 }
 export const sinDeficit = (r: Contestado, hoy: ClaveDia) => r.cuidados.length > 0 && sinDeficitDe(reglasDeAhora(r, hoy));
+/** Lo que sigue a la meta, como lo recibe la regla (cuestionario.ts, opcionesDeLoQueSigue). */
+export const paraLoQueSigue = (r: Contestado, hoy: ClaveDia): ParaLoQueSigue => ({ objetivo: r.objetivo, pesoMeta: r.pesoMeta, alturaCm: r.alturaCm, sinDeficit: sinDeficit(r, hoy) });
+/** Lo elegido para después de la meta si todavía se puede (o si vino de otra versión); si no, mantener. */
+export const despuesDe = (r: Contestado, hoy: ClaveDia) => loQueSigue(paraLoQueSigue(r, hoy), r.despues);
 /** La grasa se pregunta desde los 18 y sin cuidados: las figuras y el porcentaje no le hacen bien a quien cuida lo que come. */
 export const preguntaGrasa = (r: Contestado) => !r.cuidados.length && r.edad >= MAYORIA_DE_EDAD;
 
@@ -263,7 +267,7 @@ export function paraGuardar(r: Contestado, hoy: ClaveDia, noches: readonly Noche
     movimiento: resp.movimiento,
     grasa: resp.grasa ?? null,
     experiencia: levantaPesas(r) ? r.experiencia : null,
-    despues: usaPeso ? r.despues : null,
+    despues: usaPeso ? despuesDe(r, hoy) : null,
     proteina: r.proteina,
     recomponer: meta.recomponer,
     fecha: usaPeso ? r.fecha : null,

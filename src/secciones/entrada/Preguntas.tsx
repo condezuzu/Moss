@@ -9,18 +9,18 @@ import * as Haptics from 'expo-haptics';
 import type { SFSymbol } from 'expo-symbols';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
 import { CM_POR_PULGADA, KG_POR_LIBRA } from '@/dominio/cantidades';
 import { CON_HORA } from '@/dominio/comidas';
 import {
-  avisoDeRecomposicion, diasConDosSesiones, DEPORTES, FIGURAS, kcalDelEntreno, MOVIMIENTOS, NIVELES_DE_PROTEINA, partesRedondas, preguntasDelEntreno,
+  avisoDeRecomposicion, diasConDosSesiones, DEPORTES, FIGURAS, kcalDelEntreno, MOVIMIENTOS, NIVELES_DE_PROTEINA, opcionesDeLoQueSigue, partesRedondas, preguntasDelEntreno,
   proteinaDelNivel, rangoDelPesoMeta, ritmoSugerido, VIAJES, type Deporte, type Despues, type Movimiento, type ObjetivoDicho,
 } from '@/dominio/cuestionario';
 import { RANGOS as RANGOS_DEL_CUERPO, rangoDeGrasa } from '@/dominio/cuerpo';
 import { gruposPara, PREGUNTA, sinDeficitDe, type Cuidado } from '@/dominio/cuidados';
 import { diasEntre, partesDe, SEMANA, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
-import { EDAD_MINIMA, ESTILOS, macrosConProteina, MAYORIA_DE_EDAD, RANGOS_DEL_CUESTIONARIO, type Sexo } from '@/dominio/metas';
+import { EDAD_MINIMA, ESTILOS, macrosConProteina, MAYORIA_DE_EDAD, RANGOS_DEL_CUESTIONARIO, RITMOS, type Sexo } from '@/dominio/metas';
 import { DIETAS } from '@/dominio/plan';
 import { SEMANAS_DE_MANTENIMIENTO } from '@/dominio/progreso';
 import type { Noche } from '@/dominio/sueno';
@@ -35,8 +35,8 @@ import { BotonDePaso, margenDeToque } from '../paso';
 import { Anillos, Figura } from './Lienzos';
 import { ACOMODA, Boton, Deslizador, Dias, Elegible, entra, Etiqueta, Interruptor, Pasito, Plegable, TextoQueCambia } from './piezas';
 import {
-  cambiaPeso, conObjetivo, conPesoMeta, deporteDelPartido, entrenoDicho, levantaPesas, medidasDeCinta, metaDeAhora, objetivoPosible, objetivosQueNo, pctDe,
-  plazoDeRitmo, plazoElegido, reglasDeAhora, respuestasPara, sexoDe, suenoDeSalud, type Contestado, type Pregunta,
+  cambiaPeso, conObjetivo, conPesoMeta, deporteDelPartido, despuesDe, entrenoDicho, levantaPesas, medidasDeCinta, metaDeAhora, objetivoPosible, objetivosQueNo, pctDe,
+  paraLoQueSigue, plazoDeRitmo, plazoElegido, reglasDeAhora, respuestasPara, sexoDe, suenoDeSalud, type Contestado, type Pregunta,
 } from './respuestas';
 
 /** Lo que vino de Salud (y no se cambió a mano). */
@@ -561,8 +561,13 @@ function LaGrasa({ r, poner, alSeguir }: PropsDePregunta) {
   );
 }
 
+/** Una figura de la grilla: atenuada entera (los brazos encima del torso no se suman) y la elegida, en oro y un poco más grande. */
 function Figurita({ sexo, k, rango, elegida, alTocar }: { sexo: Sexo; k: number; rango: string; elegida: boolean; alTocar: () => void }) {
   const reducido = useReducedMotion();
+  const luz = useAnimatedStyle(() => ({
+    opacity: withTiming(elegida ? 1 : 0.56, { duration: 250, reduceMotion: ReduceMotion.Never }),
+    transform: [{ scale: withTiming(elegida ? 1.04 : 1, { duration: 350, easing: Easing.bezier(0.2, 0.7, 0.2, 1) }) }],
+  }), [elegida]);
   return (
     <Animated.View entering={entra(reducido, 300 + k * 40)} style={s.figuraCaja}>
       <Pressable
@@ -575,7 +580,9 @@ function Figurita({ sexo, k, rango, elegida, alTocar }: { sexo: Sexo; k: number;
         accessibilityLabel={rango}
         accessibilityState={{ selected: elegida }}
       >
-        <Figura sexo={sexo} k={k} color={elegida ? colores.oroClaro : 'rgba(239, 230, 207, 0.4)'} ancho={40} alto={62} />
+        <Animated.View style={luz}>
+          <Figura sexo={sexo} k={k} color={elegida ? colores.oroClaro : colores.pergamino} ancho={64} alto={100} />
+        </Animated.View>
         <Text style={[s.figuraRango, elegida && { color: colores.oroClaro }]}>{rango}</Text>
       </Pressable>
     </Animated.View>
@@ -586,7 +593,7 @@ function Figurita({ sexo, k, rango, elegida, alTocar }: { sexo: Sexo; k: number;
 const ICONOS_DEL_MOVIMIENTO: Record<Movimiento, SFSymbol> = { sentado: 'chair', dePie: 'figure.walk', fisico: 'shippingbox' };
 const ICONOS_DEL_ENTRENO: Record<Deporte | 'no', SFSymbol> = { fuerza: 'dumbbell', equipo: 'soccerball', resistencia: 'waveform.path.ecg', contacto: 'football', no: 'pause' };
 const ICONOS_DEL_OBJETIVO: Record<ObjetivoDicho, SFSymbol> = { bajar: 'chevron.down', mantener: 'scope', subir: 'chevron.up', recomponer: 'arrow.up.arrow.down' };
-const ICONOS_DE_DESPUES: Record<Despues, SFSymbol> = { mantener: 'scope', musculo: 'dumbbell', despues: 'clock' };
+const ICONOS_DE_DESPUES: Record<Despues, SFSymbol> = { mantener: 'scope', grasa: 'arrow.down.right', recomponer: 'arrow.up.arrow.down', musculo: 'dumbbell', despues: 'clock' };
 
 /** Fuera del entrenamiento, ¿cuánto te mueves? */
 function ElMovimiento({ r, poner, alSeguir }: PropsDePregunta) {
@@ -871,32 +878,47 @@ function LaMeta({ r, poner, hoy, alSeguir }: PropsDePregunta) {
   );
 }
 
-/** Cuando llegues, ¿qué sigue? El plan en una línea: hoy, la meta con su fecha y lo que sigue después del mantenimiento. */
+/**
+ * Cuando llegues, ¿qué sigue? El plan en una línea: hoy, la meta con su fecha y lo que sigue después del mantenimiento;
+ * las opciones que se pueden con lo contestado (opcionesDeLoQueSigue) y, debajo, qué hace Moss con la elegida.
+ */
 function LoQueSigue({ r, poner, hoy, alSeguir }: PropsDePregunta) {
   const plazo = plazoElegido(r, hoy);
   const llegada = plazo ? plazo.fecha : null;
   const meta = r.pesoMeta ?? r.pesoKg;
-  const musculo = lista('entrada.cuestionario.despues.musculo');
-  const opciones: [Despues, string, string][] = [
-    ['mantener', ...(lista('entrada.cuestionario.despues.mantener') as [string, string])],
-    ['musculo', musculo[0], r.objetivo === 'subir' ? t('entrada.cuestionario.despues.musculoSubir') : musculo[1]],
-    ['despues', ...(lista('entrada.cuestionario.despues.despues') as [string, string])],
-  ];
+  // Si con lo contestado antes la elegida ya no se puede, queda mantener.
+  const elegido = despuesDe(r, hoy);
+  useEffect(() => {
+    if (elegido !== r.despues) poner((x) => ({ ...x, despues: elegido }));
+  }, [elegido, r.despues, poner]);
+  const subiendo = r.objetivo === 'subir';
+  const opciones = opcionesDeLoQueSigue(paraLoQueSigue(r, hoy)).map((v): [Despues, string, string] => {
+    const [titulo, detalle] = lista(`entrada.cuestionario.despues.opciones.${v}`);
+    return [v, titulo, subiendo && v === 'grasa' ? t('entrada.cuestionario.despues.opciones.grasaSubir') : subiendo && v === 'musculo' ? t('entrada.cuestionario.despues.opciones.musculoSubir') : detalle];
+  });
+  // Lo que necesita pesas, sin pesas lo dice; si no, qué hace Moss, con su ritmo en % del peso por semana.
+  const pesas = levantaPesas(r);
+  const pct = elegido === 'grasa' ? Math.abs(RITMOS.bajar.suave) : elegido === 'musculo' ? RITMOS.subir[ritmoSugerido('subir', pesas ? r.experiencia : null)] : null;
+  const que = elegido !== 'mantener' && elegido !== 'despues' && !pesas
+    ? t(`entrada.cuestionario.despues.sinPesas.${elegido}`)
+    : t(`entrada.cuestionario.despues.que.${elegido}`, { pct: pct === null ? '' : hasta2(pct) });
   return (
     <>
       <Desliza>
-        <Titulo>{t('entrada.cuestionario.despues.titulo', { kg: kg(meta) })}</Titulo>
-        <Texto>{t('entrada.cuestionario.despues.texto', { n: SEMANAS_DE_MANTENIMIENTO })}</Texto>
+        <Titulo denso>{t('entrada.cuestionario.despues.titulo', { kg: kg(meta) })}</Titulo>
+        <Texto denso>{t('entrada.cuestionario.despues.texto', { n: SEMANAS_DE_MANTENIMIENTO })}</Texto>
         <ElPlan
+          denso
           nodos={[
             [t('entrada.cuestionario.despues.hoy'), `${kg(r.pesoKg)} kg`],
             [llegada ? fechaDelCamino(llegada, hoy) : '—', `${kg(meta)} kg`],
-            [llegada ? fechaDelCamino(sumarDias(llegada, SEMANAS_DE_MANTENIMIENTO * 7), hoy) : '—', t(`entrada.cuestionario.despues.elegido.${r.despues}`)],
+            [llegada ? fechaDelCamino(sumarDias(llegada, SEMANAS_DE_MANTENIMIENTO * 7), hoy) : '—', t(`entrada.cuestionario.despues.elegido.${elegido}`)],
           ]}
         />
-        <View style={s.opciones} accessibilityRole="radiogroup">
-          {opciones.map(([v, titulo, detalle], k) => <Elegible key={v} titulo={titulo} detalle={detalle} icono={ICONOS_DE_DESPUES[v]} elegida={r.despues === v} demora={k * 80} alTocar={() => poner((x) => ({ ...x, despues: v }))} />)}
+        <View style={[s.opciones, s.cinco]} accessibilityRole="radiogroup">
+          {opciones.map(([v, titulo, detalle], k) => <Elegible key={v} denso titulo={titulo} detalle={detalle} icono={ICONOS_DE_DESPUES[v]} elegida={elegido === v} demora={k * 70} alTocar={() => poner((x) => ({ ...x, despues: v }))} />)}
         </View>
+        <TextoQueCambia style={[s.cuando, s.despuesQue]} texto={que} />
       </Desliza>
       <Seguir alSeguir={alSeguir} />
     </>
@@ -904,7 +926,7 @@ function LoQueSigue({ r, poner, hoy, alSeguir }: PropsDePregunta) {
 }
 
 /** El plan en una línea: tres nodos y el hilo que la estrella recorre. */
-function ElPlan({ nodos }: { nodos: [string, string][] }) {
+function ElPlan({ nodos, denso }: { nodos: [string, string][]; denso?: boolean }) {
   const reducido = useReducedMotion();
   const ancho = useSharedValue(reducido ? 1 : 0);
   useEffect(() => {
@@ -912,7 +934,7 @@ function ElPlan({ nodos }: { nodos: [string, string][] }) {
   }, [ancho, reducido]);
   const hilo = useAnimatedStyle(() => ({ width: `${ancho.get() * 100}%` }));
   return (
-    <View style={s.plan}>
+    <View style={[s.plan, denso && { marginTop: 16 }]}>
       <View style={s.planHilo}>
         <Animated.View style={[s.planLleno, hilo]} />
       </View>
@@ -1081,7 +1103,7 @@ function lineaDelPlan(r: Contestado, hoy: ClaveDia, objetivo: string, recomponer
   const plazo = plazoElegido(r, hoy);
   const p = plazo ? partesDe(plazo.fecha) : null;
   const fecha = p && plazo ? t(diasEntre(hoy, plazo.fecha) > 300 ? 'entrada.cuestionario.fechaConAnio' : 'entrada.cuestionario.fecha', { num: p.dia, mes: lista('fecha.meses')[p.mes], anio: p.anio }) : '';
-  return t(`entrada.cuestionario.plan.${objetivo === 'subir' ? 'subir' : 'bajar'}`, { kg: kg(r.pesoMeta ?? r.pesoKg), fecha }) + t(`entrada.cuestionario.plan.luego.${r.despues}`);
+  return t(`entrada.cuestionario.plan.${objetivo === 'subir' ? 'subir' : 'bajar'}`, { kg: kg(r.pesoMeta ?? r.pesoKg), fecha }) + t(`entrada.cuestionario.plan.luego.${despuesDe(r, hoy)}`);
 }
 
 /**
@@ -1183,6 +1205,9 @@ const s = StyleSheet.create({
   numeroUnidad: { fontFamily: letras.texto, fontSize: 16, color: 'rgba(239, 230, 207, 0.6)' },
   fino: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
   opciones: { marginTop: 22, gap: 10 },
+  // Cinco opciones (lo que sigue a la meta), más juntas.
+  cinco: { marginTop: 16, gap: 7 },
+  despuesQue: { marginTop: 12 },
   fila: { flexDirection: 'row', gap: 6, alignItems: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
   tarjeta: { marginTop: 20, borderRadius: 18, backgroundColor: 'rgba(6, 10, 22, 0.55)', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.12)', overflow: 'hidden' },
@@ -1201,10 +1226,10 @@ const s = StyleSheet.create({
   consentimiento: { gap: 9, padding: 14, paddingBottom: 12, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(166, 191, 148, 0.42)', backgroundColor: 'rgba(6, 10, 22, 0.72)' },
   consentimientoTexto: { flexDirection: 'row', gap: 9, marginBottom: 2 },
   consentimientoLetra: { flex: 1, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 19, color: colores.pergamino },
-  figuras: { marginTop: 14, flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  figuraCaja: { width: '31.5%' },
-  figura: { alignItems: 'center', gap: 5, paddingVertical: 8, paddingHorizontal: 4, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.12)', backgroundColor: 'rgba(6, 10, 22, 0.55)' },
-  figuraElegida: { borderColor: 'rgba(232, 196, 106, 0.75)', backgroundColor: 'rgba(232, 196, 106, 0.1)' },
+  figuras: { marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  figuraCaja: { flexGrow: 1, flexBasis: '30%' },
+  figura: { alignItems: 'center', gap: 4, paddingVertical: 7, paddingHorizontal: 4, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.12)', backgroundColor: 'rgba(6, 10, 22, 0.55)' },
+  figuraElegida: { borderColor: 'rgba(232, 196, 106, 0.75)', backgroundColor: 'rgba(232, 196, 106, 0.1)', shadowColor: colores.oro, shadowOpacity: 0.18, shadowRadius: 9, shadowOffset: { width: 0, height: 0 } },
   figuraRango: { fontFamily: letras.numero, fontSize: 11.5, color: 'rgba(239, 230, 207, 0.66)', fontVariant: ['tabular-nums'] },
   medidas: { marginTop: 12, gap: 8 },
   medida: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, paddingRight: 8, paddingLeft: 14, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.1)', backgroundColor: 'rgba(6, 10, 22, 0.55)' },

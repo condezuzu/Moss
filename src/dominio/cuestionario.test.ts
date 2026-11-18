@@ -4,7 +4,7 @@ import {
   actividadEquivalente, ajusteDeRecomposicion, avisoDeRecomposicion, deportesDe, deportesDePerfil, diasConDosSesiones, eleccionDe, entrenaFuerza, entrenoConCambios, entrenoParaGuardar, FACTORES_DE_VIDA, FIGURAS, gastoEnReposo, gastoEstimado, grasaDeFigura,
   horarioDeLosAvisos, katchMcArdle, kcalDelDia, kcalDelEntreno, masaMagra, MET_DEL_DEPORTE, metaDelCuestionario, movimientoPorPasos, NIVELES_DE_PROTEINA, promedioDePasos,
   objetivoGuardado, objetivoUsado, partesRedondas, pctDelPlan, pesoMetaSugerido, preguntasDelEntreno, PROTEINA_POR_NIVEL, proteinaDelNivel, rangoDelPesoMeta,
-  respuestasDe, ritmoSugerido, sesionesDeUnDia, tipoDeSesion, usaGrasa, VIAJES,
+  loQueSigue, opcionesDeLoQueSigue, PIDEN_PESAS, respuestasDe, ritmoSugerido, sesionesDeUnDia, tipoDeSesion, usaGrasa, VIAJES,
   type Deporte, type EntrenoDicho, type GrasaDicha, type ObjetivoDicho, type Respuestas, type RespuestasGuardadas, type SesionDicha,
 } from './cuestionario';
 import type { Entreno } from './alrededorDelEntreno';
@@ -452,11 +452,42 @@ describe('lo que queda guardado', () => {
       sueno: { despertar: 420, acostarse: 1380, finDeSemana: 'tarde' }, salud: true,
     };
     expect(respuestasDe(JSON.parse(JSON.stringify(r)))).toEqual(r);
+    for (const despues of ['grasa', 'recomponer'] as const) expect(respuestasDe({ ...r, despues })?.despues).toBe(despues);
+    expect(respuestasDe({ ...r, despues: 'volar' })?.despues).toBeNull();
     expect(respuestasDe({ movimiento: 'volar' })).toBeNull();
     expect(respuestasDe(null)).toBeNull();
     expect(respuestasDe({ movimiento: 'sentado', grasa: { como: 'adivinada', pct: 20 }, proteina: 'muchisima', horarios: { cena: 3000 }, sueno: { despertar: 400 } })).toEqual({
       movimiento: 'sentado', grasa: null, experiencia: null, despues: null, proteina: 'recomendada', recomponer: false, fecha: null,
       eleccion: { proteinaPorKg: null, pct: null }, horarios: { desayuno: null, almuerzo: null, merienda: null, cena: null }, sueno: null, salud: false,
     });
+  });
+});
+
+describe('cuando llegues, ¿qué sigue?', () => {
+  // 178 cm: el peso sano mínimo es 58,7 kg.
+  const bajando = { objetivo: 'bajar' as const, pesoMeta: 76, alturaCm: 178 };
+
+  it('bajando o subiendo, las cinco', () => {
+    expect(opcionesDeLoQueSigue(bajando)).toEqual(['mantener', 'grasa', 'recomponer', 'musculo', 'despues']);
+    expect(opcionesDeLoQueSigue({ ...bajando, objetivo: 'subir', pesoMeta: 86 })).toEqual(['mantener', 'grasa', 'recomponer', 'musculo', 'despues']);
+  });
+
+  it('sin déficit, ni perder grasa ni recomponer', () => {
+    expect(opcionesDeLoQueSigue({ ...bajando, objetivo: 'subir', sinDeficit: true })).toEqual(['mantener', 'musculo', 'despues']);
+  });
+
+  it('bajando, perder grasa solo si la meta queda a 2 kg o más del peso sano mínimo', () => {
+    const minimo = pesoMinimoSano(178);
+    expect(opcionesDeLoQueSigue({ ...bajando, pesoMeta: minimo + 1.5 })).not.toContain('grasa');
+    expect(opcionesDeLoQueSigue({ ...bajando, pesoMeta: minimo + 2 })).toContain('grasa');
+    // Subiendo, la meta está lejos del mínimo: se puede.
+    expect(opcionesDeLoQueSigue({ ...bajando, objetivo: 'subir', pesoMeta: minimo + 1 })).toContain('grasa');
+  });
+
+  it('si lo elegido ya no se puede, mantener; lo que necesita pesas', () => {
+    expect(loQueSigue(bajando, 'recomponer')).toBe('recomponer');
+    expect(loQueSigue({ ...bajando, sinDeficit: true }, 'recomponer')).toBe('mantener');
+    expect(loQueSigue({ ...bajando, pesoMeta: 59 }, 'grasa')).toBe('mantener');
+    expect(PIDEN_PESAS).toEqual(['grasa', 'recomponer', 'musculo']);
   });
 });

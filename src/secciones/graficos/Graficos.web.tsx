@@ -4,9 +4,9 @@ import { WithSkiaWeb } from '@shopify/react-native-skia/lib/module/web';
 import type { ComponentType } from 'react';
 import { View } from 'react-native';
 
-import type { PropsDeBalance, PropsDeBarras, PropsDeChispa, PropsDeColumnas, PropsDeHipnograma, PropsDeLinea, PropsDeMes, PropsDeMiniCielo } from './GraficosSkia';
+import type { PropsDeBalance, PropsDeBarras, PropsDeChispa, PropsDeColumnas, PropsDeHipnograma, PropsDeLinea, PropsDeLoQueSigue, PropsDeMes, PropsDeMiniCielo } from './GraficosSkia';
 
-export type { CeldaDelMes, PuntoDeLinea } from './GraficosSkia';
+export type { CeldaDelMes, LoQueSigueDibujado, PuntoDeLinea } from './GraficosSkia';
 
 const opciones = { locateFile: (archivo: string) => `/${archivo}` };
 
@@ -31,3 +31,4 @@ export const Chispa = conSkia<PropsDeChispa>(async () => (await import('./Grafic
 export const Hipnograma =conSkia<PropsDeHipnograma>(async () => (await import('./GraficosSkia')).HipnogramaSkia);
 export const MiniCielo = conSkia<PropsDeMiniCielo>(async () => (await import('./GraficosSkia')).MiniCieloSkia);
 export const MesDeCielos = conSkia<PropsDeMes>(async () => (await import('./GraficosSkia')).MesSkia);
+export const LoQueSigue = conSkia<PropsDeLoQueSigue>(async () => (await import('./GraficosSkia')).LoQueSigueSkia);

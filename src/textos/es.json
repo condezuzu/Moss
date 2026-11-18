@@ -258,23 +258,48 @@
         "titulo": "Cuando llegues a {kg} kg, ¿qué sigue?",
         "texto": "Al llegar, {n} semanas comiendo lo que gastas, para que tu peso se asiente.",
         "hoy": "Hoy",
-        "mantener": [
-          "Mantener",
-          "Quedarte en tu peso nuevo."
-        ],
-        "musculo": [
-          "Ganar músculo",
-          "Subir despacio, con pesas."
-        ],
-        "musculoSubir": "Seguir subiendo, más despacio.",
-        "despues": [
-          "Lo decido después",
-          "Moss te pregunta al llegar."
-        ],
         "elegido": {
           "mantener": "Mantener",
           "musculo": "Ganar músculo",
-          "despues": "Lo decides"
+          "despues": "Lo decides",
+          "grasa": "Perder grasa",
+          "recomponer": "Recomposición"
+        },
+        "opciones": {
+          "mantener": [
+            "Mantener",
+            "Quedarte en tu peso nuevo."
+          ],
+          "grasa": [
+            "Perder grasa sin perder músculo",
+            "Bajar despacio, con proteína y pesas."
+          ],
+          "grasaSubir": "Bajar despacio lo que sumaste de grasa.",
+          "recomponer": [
+            "Ganar músculo y perder grasa",
+            "Recomposición: comer lo que gastas."
+          ],
+          "musculo": [
+            "Ganar músculo",
+            "Subir despacio, con pesas."
+          ],
+          "musculoSubir": "Seguir subiendo, más despacio.",
+          "despues": [
+            "Lo decido después",
+            "Moss te pregunta al llegar."
+          ]
+        },
+        "que": {
+          "mantener": "Moss ajusta tus calorías cada semana para que tu peso se quede ahí.",
+          "grasa": "Moss te pone un déficit chico ({pct} % de tu peso por semana) y la proteína alta: bajando despacio, más de lo que pierdes es grasa. Míralo en la cintura, no solo en la balanza.",
+          "recomponer": "Moss te pone en lo que gastas y la proteína alta. Con pesas, el músculo sube y la grasa baja a la vez, despacio: se nota en la cintura y en la fuerza, casi nada en la balanza.",
+          "musculo": "Moss te pone un superávit chico ({pct} % de tu peso por semana): más rápido, lo de más se suma como grasa, no como músculo.",
+          "despues": "Al llegar, Moss te muestra estas mismas opciones."
+        },
+        "sinPesas": {
+          "grasa": "Sin pesas, la proteína ayuda, pero el músculo se cuida mucho mejor entrenando fuerza.",
+          "recomponer": "Sin pesas, el músculo no tiene con qué crecer: recomponer queda casi como mantener.",
+          "musculo": "Sin pesas, el músculo no tiene con qué crecer: lo que subas va a ser casi todo grasa."
         }
       },
       "comer": {
@@ -323,7 +348,9 @@
         "luego": {
           "mantener": "; después, mantener.",
           "musculo": "; después, ganar músculo.",
-          "despues": "; después, lo decides al llegar."
+          "despues": "; después, lo decides al llegar.",
+          "grasa": "; después, perder grasa sin perder músculo.",
+          "recomponer": "; después, ganar músculo y perder grasa."
         }
       },
       "fecha": "{num} de {mes}",
@@ -1703,13 +1730,22 @@
       "luego": {
         "eliges": "Luego eliges cómo seguir.",
         "mantener": "Luego, quedarte en {kg} kg.",
-        "musculo": "Luego, ganar músculo: subir despacio."
+        "musculo": "Luego, ganar músculo: subir despacio.",
+        "grasa": "Luego, perder grasa sin perder músculo: bajar despacio, con proteína alta y pesas.",
+        "recomponer": "Luego, recomposición: comer lo que gastas, con pesas, para ganar músculo y perder grasa."
       },
       "cuando": {
         "rango": "entre el {desde} y el {hasta}",
         "mes": "en {mes}"
       },
-      "comoSeCalcula": "El ritmo sale de la recta por el promedio de tus pesadas de cada semana, de las últimas seis. El margen es el de un 80 %: cuatro de cada cinco veces, tu ritmo de verdad cae ahí. Con más semanas de pesadas se reduce y, mientras sea más ancho que tu plan, Moss no dice si vas adelantado o atrasado. Cuándo llegarías sale de lo que te falta, con el ritmo más rápido y el más lento del margen."
+      "comoSeCalcula": "El ritmo sale de la recta por el promedio de tus pesadas de cada semana, de las últimas seis. El margen es el de un 80 %: cuatro de cada cinco veces, tu ritmo de verdad cae ahí. Con más semanas de pesadas se reduce y, mientras sea más ancho que tu plan, Moss no dice si vas adelantado o atrasado. Cuándo llegarías sale de lo que te falta, con el ritmo más rápido y el más lento del margen.",
+      "siguiente": {
+        "mantener": "Quedarte",
+        "grasa": "Perder grasa",
+        "recomponer": "Recomposición",
+        "musculo": "Ganar músculo",
+        "despues": "Lo decides"
+      }
     },
     "control": {
       "titulo": "Control el {dia} · {cuando}",

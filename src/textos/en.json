@@ -258,23 +258,48 @@
         "titulo": "When you reach {kg} kg, what's next?",
         "texto": "When you get there, {n} weeks eating what you burn, so your weight settles.",
         "hoy": "Today",
-        "mantener": [
-          "Maintain",
-          "Stay at your new weight."
-        ],
-        "musculo": [
-          "Build muscle",
-          "Gain slowly, with weights."
-        ],
-        "musculoSubir": "Keep gaining, more slowly.",
-        "despues": [
-          "I'll decide later",
-          "Moss asks you when you get there."
-        ],
         "elegido": {
           "mantener": "Maintain",
           "musculo": "Build muscle",
-          "despues": "You decide"
+          "despues": "You decide",
+          "grasa": "Lose fat",
+          "recomponer": "Recomp"
+        },
+        "opciones": {
+          "mantener": [
+            "Maintain",
+            "Stay at your new weight."
+          ],
+          "grasa": [
+            "Lose fat, keep muscle",
+            "Lose slowly, with protein and weights."
+          ],
+          "grasaSubir": "Slowly lose the fat you gained.",
+          "recomponer": [
+            "Build muscle and lose fat",
+            "Recomposition: eat what you burn."
+          ],
+          "musculo": [
+            "Build muscle",
+            "Gain slowly, with weights."
+          ],
+          "musculoSubir": "Keep gaining, more slowly.",
+          "despues": [
+            "I'll decide later",
+            "Moss asks you when you get there."
+          ]
+        },
+        "que": {
+          "mantener": "Moss adjusts your calories every week so your weight stays there.",
+          "grasa": "Moss sets a small deficit ({pct}% of your weight per week) and high protein: losing slowly, more of what you lose is fat. Check your waist, not just the scale.",
+          "recomponer": "Moss sets you at what you burn, with high protein. With weights, muscle goes up and fat goes down at the same time, slowly: it shows on your waist and your strength, barely on the scale.",
+          "musculo": "Moss sets a small surplus ({pct}% of your weight per week): any faster, and the extra is added as fat, not muscle.",
+          "despues": "When you get there, Moss shows you these same options."
+        },
+        "sinPesas": {
+          "grasa": "Without weights, protein helps, but strength training protects muscle much better.",
+          "recomponer": "Without weights, muscle has nothing to grow from: recomposition ends up close to maintenance.",
+          "musculo": "Without weights, muscle has nothing to grow from: what you gain will be mostly fat."
         }
       },
       "comer": {
@@ -323,7 +348,9 @@
         "luego": {
           "mantener": ", then maintain.",
           "musculo": ", then build muscle.",
-          "despues": ", then decide when you get there."
+          "despues": ", then decide when you get there.",
+          "grasa": ", then lose fat and keep muscle.",
+          "recomponer": ", then build muscle and lose fat."
         }
       },
       "fecha": "{mes} {num}",
@@ -1703,13 +1730,22 @@
       "luego": {
         "eliges": "After that, you choose how to go on.",
         "mantener": "After that, stay at {kg} kg.",
-        "musculo": "After that, build muscle: gain slowly."
+        "musculo": "After that, build muscle: gain slowly.",
+        "grasa": "After that, lose fat and keep muscle: lose slowly, with high protein and weights.",
+        "recomponer": "After that, recomposition: eat what you burn, with weights, to build muscle and lose fat."
       },
       "cuando": {
         "rango": "between {desde} and {hasta}",
         "mes": "in {mes}"
       },
-      "comoSeCalcula": "Your pace comes from a line through the average of each week's weigh-ins, over the last six weeks. The margin is an 80% one: four times out of five, your true pace falls inside it. It narrows with more weeks of weigh-ins and, while it's wider than your plan, Moss doesn't say whether you're ahead or behind. When you'd get there comes from what you have left, at the fastest and the slowest pace in the margin."
+      "comoSeCalcula": "Your pace comes from a line through the average of each week's weigh-ins, over the last six weeks. The margin is an 80% one: four times out of five, your true pace falls inside it. It narrows with more weeks of weigh-ins and, while it's wider than your plan, Moss doesn't say whether you're ahead or behind. When you'd get there comes from what you have left, at the fastest and the slowest pace in the margin.",
+      "siguiente": {
+        "mantener": "Stay",
+        "grasa": "Lose fat",
+        "recomponer": "Recomp",
+        "musculo": "Build muscle",
+        "despues": "You decide"
+      }
     },
     "control": {
       "titulo": "Check-in on {dia} · {cuando}",
