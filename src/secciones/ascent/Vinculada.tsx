@@ -6,10 +6,10 @@
 
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { useAscent } from '@/almacen/ascent';
+import { deAscent, useAscent } from '@/almacen/ascent';
 import { POCAS_PESADAS, PROTEINA_POR_KG, type Razon } from '@/dominio/progresoCompartido';
 import { diaDeLaSemana, diasEntre, type ClaveDia } from '@/dominio/fechas';
 import type { Musculo } from '@/dominio/musculos';
@@ -22,8 +22,8 @@ import { usePersona, useSueno } from '../ganchos';
 import { C, GRUPOS_DEL_ANIO, useAcento } from './colores';
 import { Cuerpo, type EstadoDibujado } from './Dibujos';
 import { conMayuscula, cuandoDe, enFrase, nombreDelEjercicio, nombreDelMusculo, tx } from './palabras';
-import { Cambia, Desplegable, Etiqueta, Flecha, Fundido, Nota, Parte, Una, Escala, Enlace } from './piezas';
-import { calcularTodo, calcularTusMusculos, type EjercicioDeLaSemana, type Estancado, type Hoy, type MusculoDeLaSemana, type Todo, type TusMusculos as DeTusMusculos } from './vista';
+import { Accion, Cambia, Desplegable, Etiqueta, Flecha, Fundido, Nota, Parte, Una, Escala, Enlace } from './piezas';
+import { calcularTodo, calcularTusMusculos, type EjercicioDeLaSemana, type Estancado, type Hoy, type MetaConProyeccion, type MusculoDeLaSemana, type Todo, type TusMusculos as DeTusMusculos } from './vista';
 
 /** La barra del sueño va de 0 a 10 horas; la de la proteína, hasta 2,6 g por kilo. */
 const SUENO_TOPE = 10 * 60;
@@ -48,6 +48,7 @@ export function RestoVinculada({ h, tm, preparada }: { h: Hoy; tm: DeTusMusculos
   if (!todo) return <View style={st.esperando} />;
   return (
     <>
+      <Metas todo={todo} tm={tm} />
       <PorQue todo={todo} />
       <Estancados todo={todo} />
       <TuAnio h={h} todo={todo} />
@@ -57,7 +58,7 @@ export function RestoVinculada({ h, tm, preparada }: { h: Hoy; tm: DeTusMusculos
 }
 
 // ------------------------------------------------------------ en qué se basa, debajo de cada bloque
-function EnQueSeBasa({ de }: { de: 'musculos' | 'fatigados' | 'estancados' | 'porQue' }) {
+function EnQueSeBasa({ de }: { de: 'musculos' | 'fatigados' | 'estancados' | 'porQue' | 'metas' }) {
   const [abierto, setAbierto] = useState(false);
   return (
     <View style={st.base}>
@@ -435,6 +436,117 @@ function PorQue({ todo }: { todo: Todo }) {
   );
 }
 
+
+// ------------------------------------------------------------ metas (arriba de todo: lo que menos importa)
+function Metas({ todo, tm }: { todo: Todo; tm: DeTusMusculos }) {
+  const [nueva, setNueva] = useState(false);
+  return (
+    <Parte titulo={t('ascent.metas.titulo')}>
+      {!todo.metas.length && !nueva && <Una>{t('ascent.metas.ninguna')}</Una>}
+      {todo.metas.map((x, i) => <FilaDeMeta key={x.meta.id} x={x} todo={todo} tm={tm} primera={i === 0} />)}
+      <Desplegable abierto={nueva}>
+        <NuevaMeta todo={todo} alTerminar={() => setNueva(false)} />
+      </Desplegable>
+      {!nueva && <Enlace texto={t('ascent.metas.nueva')} alTocar={() => setNueva(true)} />}
+      <EnQueSeBasa de="metas" />
+    </Parte>
+  );
+}
+
+function FilaDeMeta({ x, todo, tm, primera }: { x: MetaConProyeccion; todo: Todo; tm: DeTusMusculos; primera: boolean }) {
+  const a = useAcento();
+  const p = x.proyeccion;
+  const parte = x.nivel === null ? null : Math.min(1, x.nivel / x.objetivo);
+  const linea = p.estado === 'enCamino'
+    ? (p.semanas[1] === null ? t('ascent.metas.enCaminoAbierto', { de: p.semanas[0] }) : t('ascent.metas.enCamino', { de: p.semanas[0], a: p.semanas[1] })) + (p.realista ? '' : ' ' + t('ascent.metas.lejana'))
+    : t(`ascent.metas.${p.estado}`);
+  const ej = tm.ejercicios.find((y) => y.e.id === x.meta.ejercicio);
+  const proxima = ej?.proxima;
+  const queHacer = !proxima ? null : proxima.decision === 'subir' ? t('ascent.tus.proxima.subir') : proxima.decision === 'noSeSabe' ? null : tx(`ascent.tus.proxima.${proxima.razon}`, { tope: ej?.tope ?? '' });
+  const kg = numero(x.meta.kilos, x.meta.kilos % 1 ? 1 : 0);
+  return (
+    <View style={[st.meta, primera && st.sinBorde]}>
+      <View style={st.metaCab}>
+        <Text style={st.metaNombre}>{nombreDelEjercicio(x.e)}</Text>
+        <Text style={st.metaObjetivo}>{t('ascent.metas.objetivo', { kg, reps: x.meta.reps })}</Text>
+      </View>
+      {parte !== null && (
+        <>
+          <View style={st.metaPista}><View style={[st.metaLleno, { width: `${parte * 100}%`, backgroundColor: a.claro }]} /></View>
+          <Text style={st.metaNivel}>{t('ascent.metas.nivel', { n: Math.floor(parte * 100) })}</Text>
+        </>
+      )}
+      <Text style={st.metaLinea}>{linea}</Text>
+      {p.estado !== 'lograda' && (
+        <>
+          {queHacer && <Text style={st.metaHacer}>{queHacer}</Text>}
+          {todo.proteina !== null && <Text style={st.metaHacer}>{t('ascent.metas.comer', { g: todo.proteina })}</Text>}
+          {todo.alejan.map((y) => (
+            <Text key={y.que} style={[st.metaHacer, { color: C.lejos }]}>
+              {y.que === 'sueno' ? t('ascent.metas.alejaSueno', { h: horasDe(y.minutos) }) : t('ascent.metas.alejaProteina', { g: numero(y.gPorKg, 1) })}
+            </Text>
+          ))}
+        </>
+      )}
+      <Enlace texto={t('ascent.metas.borrar')} alTocar={() => deAscent().borrarMeta(x.meta.id).catch(() => {})} />
+    </View>
+  );
+}
+
+function NuevaMeta({ todo, alTerminar }: { todo: Todo; alTerminar: () => void }) {
+  const a = useAcento();
+  const [ejercicio, setEjercicio] = useState<string | null>(null);
+  const [kilos, setKilos] = useState('');
+  const [reps, setReps] = useState('1');
+  const [error, setError] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const kg = Number(kilos.replace(',', '.'));
+  const r = Number(reps);
+  const lista = !!ejercicio && kg >= 1 && kg <= 1000 && Number.isInteger(r) && r >= 1 && r <= 10;
+  const guardar = () => {
+    if (!lista || guardando || !ejercicio) return;
+    setGuardando(true);
+    setError(false);
+    deAscent().guardarMeta({ ejercicio, kilos: kg, reps: r }).then(() => {
+      setGuardando(false);
+      setKilos('');
+      setEjercicio(null);
+      alTerminar();
+    }, () => {
+      setGuardando(false);
+      setError(true);
+    });
+  };
+  return (
+    <View style={st.nueva}>
+      <Text style={st.nuevaEtq}>{t('ascent.metas.elegir')}</Text>
+      <View style={st.nuevaEjercicios}>
+        {todo.paraMetas.map((x) => {
+          const elegido = x.id === ejercicio;
+          return (
+            <Pressable key={x.id} onPress={() => setEjercicio(x.id ?? null)} style={[st.nuevaPildora, elegido && { backgroundColor: a.claro, borderColor: a.claro }]} accessibilityRole="button" accessibilityState={{ selected: elegido }}>
+              <Text style={[st.nuevaPildoraTexto, elegido && { color: C.fondo }]}>{nombreDelEjercicio(x)}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <View style={st.nuevaNumeros}>
+        <View style={st.crece}>
+          <Text style={st.nuevaEtq}>{t('ascent.metas.kilos')}</Text>
+          <TextInput value={kilos} onChangeText={setKilos} keyboardType="decimal-pad" style={st.nuevaCampo} placeholder="100" placeholderTextColor={C.tenue} accessibilityLabel={t('ascent.metas.kilos')} />
+        </View>
+        <View style={st.crece}>
+          <Text style={st.nuevaEtq}>{t('ascent.metas.reps')}</Text>
+          <TextInput value={reps} onChangeText={setReps} keyboardType="number-pad" style={st.nuevaCampo} accessibilityLabel={t('ascent.metas.reps')} />
+        </View>
+      </View>
+      {error && <Text style={[st.metaHacer, { color: C.lejos }]}>{t('ascent.metas.error')}</Text>}
+      <Accion texto={t('ascent.metas.guardar')} alTocar={guardar} apagado={!lista || guardando} estilo={st.nuevaGuardar} />
+      <Enlace texto={t('ascent.metas.cancelar')} alTocar={alTerminar} />
+    </View>
+  );
+}
+
 // ------------------------------------------------------------ tu año
 type CeldaDelAnio = { fecha: ClaveDia; clase: 'nada' | 'futuro' | 'hoy' | 'descanso' | keyof typeof GRUPOS_DEL_ANIO; marca: boolean };
 
@@ -645,6 +757,24 @@ const st = StyleSheet.create({
   semanasDivisor: { width: 1, alignSelf: 'stretch', marginHorizontal: 4, backgroundColor: C.lineaFuerte },
   leyendaRazon: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 16, rowGap: 6, marginTop: 4 },
   contexto: { marginTop: 12, marginBottom: 2, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17.5, color: C.apagado },
+  // Metas
+  meta: { paddingTop: 14, paddingBottom: 6, borderTopWidth: 1, borderTopColor: C.lineaSuave },
+  metaCab: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 },
+  metaNombre: { flexShrink: 1, fontFamily: letras.texto, fontSize: 15.5, lineHeight: 19, color: C.tinta },
+  metaObjetivo: { fontFamily: letras.numero, fontSize: 13, color: C.sub, fontVariant: ['tabular-nums'] },
+  metaPista: { height: 6, borderRadius: 3, marginTop: 10, backgroundColor: 'rgba(170, 178, 196, 0.12)', overflow: 'hidden' },
+  metaLleno: { height: 6, borderRadius: 3 },
+  metaNivel: { marginTop: 5, fontFamily: letras.texto, fontSize: 11.5, color: C.apagado },
+  metaLinea: { marginTop: 8, fontFamily: letras.texto, fontSize: 14, lineHeight: 19, color: C.tinta },
+  metaHacer: { marginTop: 5, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: C.sub },
+  nueva: { paddingTop: 14, gap: 8 },
+  nuevaEtq: { fontFamily: letras.texto, fontSize: 12, color: C.sub },
+  nuevaEjercicios: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  nuevaPildora: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: C.lineaFuerte },
+  nuevaPildoraTexto: { fontFamily: letras.texto, fontSize: 12.5, color: C.tinta },
+  nuevaNumeros: { flexDirection: 'row', gap: 12, marginTop: 6 },
+  nuevaCampo: { marginTop: 4, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: C.lineaFuerte, fontFamily: letras.numero, fontSize: 16, color: C.tinta },
+  nuevaGuardar: { marginTop: 10 },
   // Tu año
   mapa: { marginTop: 14, gap: 2 },
   mapaFila: { flexDirection: 'row', alignItems: 'center', gap: 1.5 },

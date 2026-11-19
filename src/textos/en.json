@@ -3799,7 +3799,8 @@
       "porQue": "What may be holding back each exercise, from most to least solid.",
       "estancados": "The exercises that haven't gone up in weeks.",
       "fatigados": "The muscles still recovering and when they'll be back.",
-      "musculos": "Each muscle colored by how much you trained it this week, with its bar."
+      "musculos": "Each muscle colored by how much you trained it this week, with its bar.",
+      "metas": "Your strength goals, with when you'll reach each one."
     },
     "linea": {
       "suenoCorto": "You slept little: maximal strength barely changes; reps may feel harder."
@@ -4007,6 +4008,10 @@
       ],
       "porQue": [
         "The reasons go from most to least solid: first how much you train (sets, frequency and heavy loads: Pelland 2026), then losing weight fast, protein against 1.6 g per kilo (Morton 2018), and sleep. It's always a likely cause, never a sure one."
+      ],
+      "metas": [
+        "When you'll get there: from the trend of your last 12 weeks and its range, from the fastest pace to the slowest, because everyone progresses differently (Latella 2020; Swinton 2024). With fewer than 6 sessions of the exercise it isn't estimated. It's realistic if you'd get there within a year at the slowest pace.",
+        "What could make it slip: sleeping under 6 hours on average or eating under 1.6 g of protein per kilo, which slows what you gain over weeks (Morton 2018). What you ate yesterday doesn't change today's session."
       ]
     },
     "tutorial": {
@@ -4036,6 +4041,29 @@
           "texto": "It uses your sets in Ascent and your sleep and food in Moss: the better you log, the more accurate it is."
         }
       }
+    },
+    "metas": {
+      "titulo": "Goals",
+      "ninguna": "Set a strength goal: it tells you whether it's realistic, what to do and when you'll get there.",
+      "nueva": "New goal",
+      "objetivo": "{kg} kg × {reps}",
+      "nivel": "You're at {n}% today",
+      "lograda": "You're there: today's level passes the goal.",
+      "noSeSabe": "After 6 sessions of this exercise, it can estimate when you'll get there.",
+      "noSube": "Not at this pace: it hasn't clearly gone up in 12 weeks. See “Why you might be stuck”.",
+      "enCamino": "At the pace of your last 12 weeks, in {de} to {a} weeks.",
+      "enCaminoAbierto": "At the pace of your last 12 weeks, in {de} weeks or more.",
+      "lejana": "It's a distant goal: set an intermediate one.",
+      "comer": "Eat about {g} g of protein a day.",
+      "alejaSueno": "It could slip: you sleep {h} on average.",
+      "alejaProteina": "It could slip: you eat {g} g of protein per kilo, and 1.6 is recommended.",
+      "borrar": "Delete",
+      "elegir": "Choose an exercise",
+      "kilos": "Kilos",
+      "reps": "Reps",
+      "guardar": "Save goal",
+      "cancelar": "Cancel",
+      "error": "Couldn't save. Check your connection."
     }
   },
   "habitos": {

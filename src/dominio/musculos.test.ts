@@ -48,8 +48,8 @@ describe('las mismas listas que Ascent', () => {
   it('cada ejercicio de fuerza tiene los músculos y la parte del catálogo compartido', () => {
     const deFuerza = Object.keys(CATALOGO).filter((id) => CATALOGO[id].grupo !== 'cardio').sort();
     expect(Object.keys(compartido).sort()).toEqual(deFuerza);
-    for (const [id, x] of Object.entries(compartido as Record<string, { principal: string[]; ayuda: string[]; parte?: string }>)) {
-      expect([id, CATALOGO[id].principal, CATALOGO[id].ayudan, PARTES[id] ?? null]).toEqual([id, x.principal, x.ayuda, x.parte ?? null]);
+    for (const [id, x] of Object.entries(compartido as Record<string, { principal: string[]; ayuda: string[]; parte?: string; multiarticular: boolean }>)) {
+      expect([id, CATALOGO[id].principal, CATALOGO[id].ayudan, PARTES[id] ?? null, CATALOGO[id].multiarticular]).toEqual([id, x.principal, x.ayuda, x.parte ?? null, x.multiarticular]);
     }
   });
 

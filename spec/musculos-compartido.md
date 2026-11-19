@@ -121,8 +121,8 @@ que la mejorarían (4.4).
   - si se aleja porque comes o duermes mal.
 - Totalmente realista: la proyección sale de tu tendencia y de lo que suben los que entrenan como tú (4.6).
 - **Dónde se guarda:** en el esquema `moss`, con funciones que pueden llamar las dos cuentas del vínculo
-  (`moss.metas()`, `moss.guardar_meta(…)`, `moss.borrar_meta(id)`): la sección existe solo vinculada.
-  Es una migración nueva y se aplica con tu sí.
+  (`moss.metas_de_fuerza()`, `moss.guardar_meta_de_fuerza(…)`, `moss.borrar_meta_de_fuerza(id)`, en
+  `supabase/moss/0016_metas_de_fuerza.sql`): la sección existe solo vinculada. Se aplica en la base real con tu sí.
 - **La proyección** es un rango de fechas, y solo con 6 sesiones del ejercicio o más (Rhea 2003, Swinton
   2024, Latella 2020).
 
@@ -221,9 +221,12 @@ La regla de hoy (`src/dominio/estancados.ts`): 8 semanas de tendencia, con el um
 
 ### 4.6 Metas realistas
 
-- **Pendiente.**
-- La tendencia de 12 semanas de cada ejercicio, con su rango (`src/dominio/rendimiento.ts`), y lo que sube
-  un levantador según sus años entrenando (Latella 2020).
+- `proyeccionDeMeta` (en `progresoCompartido.ts`): con la tendencia de 12 semanas del ejercicio y su rango, cuándo
+  llegas al 1RM estimado de la meta, del ritmo rápido al lento. Con menos de 6 sesiones, «se puede calcular con 6»;
+  si ni el ritmo rápido sube, «así no llega»; realista si al ritmo lento llegas en 52 semanas o menos.
+- Cada meta dice: tu nivel de hoy contra la meta, cuándo llegas, qué hacer (la próxima sesión de ese ejercicio),
+  qué comer (1,6 g de proteína por kilo) y lo que la puede alejar (dormir menos de 6 h de promedio en la última
+  semana, o menos de 1,6 g por kilo con 4 días anotados).
 
 ## 5. Lo que hace falta de cada app
 
