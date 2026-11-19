@@ -19,7 +19,7 @@ import { diaDeLaSemana, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { habitosDelDia } from '@/dominio/habitos';
 import type { Macros } from '@/dominio/metas';
 import { conNochesDeMoss } from '@/dominio/sinReloj';
-import type { ErrorDeVincular, EstadoDelVinculo } from '@/lib/ascentRemoto';
+import type { ErrorDeVincular, EstadoDelVinculo, MetaDeFuerza } from '@/lib/ascentRemoto';
 import * as ascentRemoto from '@/lib/ascentRemoto';
 import { metaVigente, type Estado } from './almacen';
 import type { Repositorio } from './repositorio';
@@ -35,6 +35,10 @@ export type RemotoDeAscent = {
   pesosCompartidos(desde: ClaveDia): Promise<PesoCompartido[]>;
   rutinaDeAscent(): Promise<RutinaDeAscent | null>;
   ajustesDeAscent(): Promise<AjustesDeAscent | null>;
+  /** Las metas de fuerza (0016_metas_de_fuerza.sql); los tests pueden no tenerlas. */
+  metasDeFuerza?(): Promise<MetaDeFuerza[] | null>;
+  guardarMetaDeFuerza?(m: { id?: string; ejercicio: string; kilos: number; reps: number }): Promise<string | null>;
+  borrarMetaDeFuerza?(id: string): Promise<boolean>;
 };
 
 export type DeAscent = {
@@ -50,6 +54,8 @@ export type DeAscent = {
   rutina: RutinaDeAscent | null;
   /** El umbral de estancamiento de sus Ajustes y la racha; null hasta que lleguen. */
   ajustes: AjustesDeAscent | null;
+  /** Las metas de fuerza de la sección de músculos, las mismas que ve Ascent. */
+  metas: MetaDeFuerza[];
   /** Desde qué día están las sesiones; null sin ninguna. */
   desde: ClaveDia | null;
   /** Cuándo llegó lo último de Ascent (ISO). */
@@ -77,7 +83,7 @@ const DIAS_DE_PESOS = 120;
 const DIAS_DE_NOCHES = 400;
 
 const SIN_VINCULO: EstadoDelVinculo = { vinculada: false, nombre: null, desde: null };
-const vacio = (): Omit<DeAscent, 'listo' | 'conCuenta' | 'version'> => ({ vinculo: SIN_VINCULO, sesiones: [], marcas: [], pesos: [], rutina: null, ajustes: null, desde: null, llego: null, noches: {}, siente: null });
+const vacio = (): Omit<DeAscent, 'listo' | 'conCuenta' | 'version'> => ({ vinculo: SIN_VINCULO, sesiones: [], marcas: [], pesos: [], rutina: null, ajustes: null, metas: [], desde: null, llego: null, noches: {}, siente: null });
 const porFecha = <T extends { fecha: ClaveDia }>(a: T, b: T) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0);
 
 type Guardado = ReturnType<typeof vacio> & { v: 1; usuario: string | null; conSeries?: number };
@@ -93,7 +99,8 @@ function leerGuardado(texto: string | null): Guardado | null {
     const desde = x.conSeries === DIAS_CON_SERIES ? (x.desde ?? null) : null;
     // Lo que guardó la build 6 no trae la rutina ni los ajustes: quedan en null hasta que lleguen.
     const rutina = leerRutinaDeAscent(x.rutina), ajustes = leerAjustesDeAscent(x.ajustes);
-    return { ...vacio(), ...x, v: 1, usuario: x.usuario ?? null, noches: x.noches ?? {}, siente, desde, rutina, ajustes } as Guardado;
+    const metas = Array.isArray(x.metas) ? x.metas : [];
+    return { ...vacio(), ...x, v: 1, usuario: x.usuario ?? null, noches: x.noches ?? {}, siente, desde, rutina, ajustes, metas } as Guardado;
   } catch {
     return null;
   }
@@ -179,18 +186,19 @@ export function crearAscent(op: OpcionesDeAscent) {
         // corregir los días recientes).
         const ultimo = estado.desde && estado.desde <= primero && estado.sesiones.length ? estado.sesiones[estado.sesiones.length - 1].fecha : null;
         const desde = ultimo && sumarDias(ultimo, -7) > primero ? sumarDias(ultimo, -7) : primero;
-        const [sesiones, marcas, pesos, rutina, ajustes] = await Promise.all([
+        const [sesiones, marcas, pesos, rutina, ajustes, metas] = await Promise.all([
           op.remoto.sesionesDeAscent(desde),
           op.remoto.marcasDeAscent(sumarDias(hoy, -DIAS_DE_MARCAS)),
           op.remoto.pesosCompartidos(sumarDias(hoy, -DIAS_DE_PESOS)),
           // La OTA puede llegar antes que sus funciones en la base: sin ellas queda lo que había, y lo demás llega igual.
           op.remoto.rutinaDeAscent().catch(() => estado.rutina),
           op.remoto.ajustesDeAscent().catch(() => estado.ajustes),
+          (op.remoto.metasDeFuerza?.() ?? Promise.resolve(estado.metas)).catch(() => estado.metas),
         ]);
         if (de !== generacion) return;
         cambiar({
           sesiones: [...estado.sesiones.filter((s) => s.fecha >= primero && s.fecha < desde), ...sesiones].sort(porFecha),
-          marcas, pesos, rutina, ajustes, desde: primero, llego: ahora().toISOString(),
+          marcas, pesos, rutina, ajustes, metas: metas ?? [], desde: primero, llego: ahora().toISOString(),
         });
         guardar();
       } catch {
@@ -214,6 +222,26 @@ export function crearAscent(op: OpcionesDeAscent) {
     },
     iniciar,
     refrescar,
+    /** Crea o cambia una meta de fuerza y trae las de la cuenta. Sin conexión, rechaza: lo dice quien la pide. */
+    async guardarMeta(m: { id?: string; ejercicio: string; kilos: number; reps: number }) {
+      if (!op.remoto.guardarMetaDeFuerza || !op.remoto.metasDeFuerza) return;
+      await op.remoto.guardarMetaDeFuerza(m);
+      cambiar({ metas: (await op.remoto.metasDeFuerza()) ?? [] });
+      guardar();
+    },
+    async borrarMeta(id: string) {
+      if (!op.remoto.borrarMetaDeFuerza) return;
+      // Se va al instante; si el servidor no la borra, vuelve con lo que diga.
+      const antes = estado.metas;
+      cambiar({ metas: antes.filter((x) => x.id !== id) });
+      try {
+        await op.remoto.borrarMetaDeFuerza(id);
+      } catch {
+        cambiar({ metas: antes });
+        throw new Error('sin conexión');
+      }
+      guardar();
+    },
     /** La sesión de Moss en este teléfono: sin sesión no hay vínculo, y con otra cuenta se empieza de cero. */
     async ponerSesion(nuevo: string | null) {
       // La primera vez sigue aunque no haya sesión: así se va lo guardado de una sesión que ya no está.

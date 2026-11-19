@@ -219,6 +219,29 @@ function ejercicioDe(e: Objeto): EjercicioDeAscent[] {
   }];
 }
 
+/** Una meta de fuerza (0016_metas_de_fuerza.sql): «llegar a `kilos` × `reps` en el ejercicio». */
+export type MetaDeFuerza = { id: string; ejercicio: string; kilos: number; reps: number };
+
+/** Las metas de fuerza de la cuenta de Moss del vínculo; sin vínculo, null. */
+export async function metasDeFuerza(): Promise<MetaDeFuerza[] | null> {
+  const r = await llamar('metas_de_fuerza');
+  if (r === null) return null;
+  return lista(r).flatMap((m) => {
+    const id = texto(m.id), ejercicio = texto(m.ejercicio), kilos = numero(m.kilos), reps = numero(m.reps);
+    return id && ejercicio && kilos !== null && reps !== null ? [{ id, ejercicio, kilos, reps }] : [];
+  });
+}
+
+/** Crea una meta (sin id) o la cambia. Devuelve su id; sin vínculo, null. */
+export async function guardarMetaDeFuerza(m: { id?: string; ejercicio: string; kilos: number; reps: number }): Promise<string | null> {
+  const r = await llamar('guardar_meta_de_fuerza', { p_id: m.id ?? null, p_ejercicio: m.ejercicio, p_kilos: m.kilos, p_reps: m.reps });
+  return typeof r === 'string' ? r : null;
+}
+
+export async function borrarMetaDeFuerza(id: string): Promise<boolean> {
+  return (await llamar('borrar_meta_de_fuerza', { p_id: id })) === true;
+}
+
 /**
  * Las marcas de Ascent desde `desde` (incluido) y, de cada ejercicio, la mejor de siempre aunque sea
  * de antes: «tu marca» es la mejor, y «una marca en las últimas 8 semanas» se ve por la fecha.

@@ -11,7 +11,7 @@ import {
   bloquesDeLaRutina, diasDeEntrenar, diasDeLaRutina, entrenadoSegunAscent, grupoDe, gruposDelDia, gruposDeLaSesion, sesionesConBloques, tuAnio, type MarcaDeAscent, type RutinaDeAscent, type TuAnio,
 } from '@/dominio/conAscent';
 import {
-  grupoDelAnio, type GrupoDelAnio, estaEstancado, razonesDeEstancamiento, UMBRAL_DE_ASCENT, type RazonesDeEstancamiento, type SemanaDeEntreno, tendenciaDeFuerza, type TendenciaDeFuerza,
+  grupoDelAnio, type GrupoDelAnio, estaEstancado, razonesDeEstancamiento, UMBRAL_DE_ASCENT, type RazonesDeEstancamiento, type SemanaDeEntreno, tendenciaDeFuerza, type TendenciaDeFuerza, DIAS_DE_COMIDA, PROTEINA_POR_KG, proyeccionDeMeta, SUENO_POCO, type ProyeccionDeMeta,
 } from '@/dominio/progresoCompartido';
 import { calidadParaRecuperar } from '@/dominio/entrenamiento';
 import { puntosDelEjercicio, semanaDeEntreno, semanasParaLasRazones } from '@/dominio/estancados';
@@ -22,7 +22,7 @@ import {
   type Bloque, type Musculo, type Parte, type SesionConBloques, type UnoRMDe,
 } from '@/dominio/musculos';
 import {
-  DE_PIERNAS, DIAS_DEL_E1RM, dentroDeLaSemana, diasHastaListo, esDeTrabajo, esDura, estadoDeFatiga, estadoDelPuntaje, listoEl, mejorE1rm as mejorDeLasSeries, notaDeLaRutina,
+  DE_PIERNAS, DIAS_DEL_E1RM, dentroDeLaSemana, e1rm, diasHastaListo, esDeTrabajo, esDura, estadoDeFatiga, estadoDelPuntaje, listoEl, mejorE1rm as mejorDeLasSeries, notaDeLaRutina,
   proximaSesion, puntaje, seriesPorMusculo as seriesDurasPorMusculo,
   type EjercicioHecho, type EstadoDeFatiga, type EstadoDelPuntaje, type MusculoEnLaSesion, type NotaDeLaRutina, type Proxima,
 } from '@/dominio/puntajeMuscular';
@@ -33,6 +33,7 @@ import {
 import { totalDelDia, vigentes } from '@/dominio/registros';
 import { habitualDe } from '@/dominio/sinReloj';
 import { calidadDeNoche, deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
+import type { MetaDeFuerza } from '@/lib/ascentRemoto';
 import type { Persona, Sueno } from '../persona';
 import { nombreDeSesion } from './nombres';
 
@@ -192,12 +193,22 @@ function ultimaCon(previas: readonly SesionConFecha[], musculos: readonly Muscul
 export type DeLaFuerza = { e: Pick<Bloque, 'id' | 'ejercicio'>; t: TendenciaDeFuerza; puntos: { t: number; e1rm: number }[] };
 export type Estancado = { e: Pick<Bloque, 'id' | 'ejercicio'>; ultima: MarcaDeAscent; sinMarca: number; musculo: Musculo; antes: SemanaDeEntreno[]; ahora: SemanaDeEntreno[]; r: RazonesDeEstancamiento };
 export type DiaDelAnio = { fecha: ClaveDia; grupo: GrupoDelAnio | null; marca: boolean };
+/** Una meta de fuerza con tu nivel de hoy (el 1RM estimado de la tendencia), el de la meta y cuándo llegarías. */
+export type MetaConProyeccion = { meta: MetaDeFuerza; e: Pick<Bloque, 'id' | 'ejercicio'>; nivel: number | null; objetivo: number; proyeccion: ProyeccionDeMeta };
+/** Lo que puede alejar una meta: el sueño de la última semana o la proteína, por debajo de lo que pide. */
+export type Aleja = { que: 'sueno'; minutos: number } | { que: 'proteina'; gPorKg: number };
 
 export type Todo = {
   /** Las semanas sin marca que eligió en los Ajustes de Ascent (sin ellos, las de fábrica). */
   umbral: number;
   estancados: Estancado[];
   anio: { dias: DiaDelAnio[]; ultimas: (MarcaDeAscent & { grupo: GrupoDelAnio })[]; datos: TuAnio };
+  metas: MetaConProyeccion[];
+  alejan: Aleja[];
+  /** La proteína del día que pide la meta (1,6 g por kilo); sin peso, null. */
+  proteina: number | null;
+  /** Los ejercicios para elegir una meta nueva: los de la rutina o, sin ella, los de las últimas 4 semanas. */
+  paraMetas: Pick<Bloque, 'id' | 'ejercicio'>[];
 };
 
 /** El mismo ejercicio: por el id de Ascent si los dos lo tienen; si no, por el nombre. */
@@ -292,7 +303,31 @@ export function calcularTodo(h: Hoy, { e, d, sueno, persona }: Entradas): Todo {
   for (const r of vigentes(e.registros.values())) if (!r.planificado) comidas.add(r.dia);
   const datos = tuAnio({ anio, sesiones: d.sesiones, marcas: d.marcas, dias: e.dias.values(), noches, diasConComida: comidas });
 
-  return { umbral, estancados, anio: { dias, ultimas, datos } };
+  // Las metas: cada una con la tendencia de su ejercicio. Lo que la puede alejar es de la persona: el sueño y la
+  // proteína de la última semana, con los mismos cortes que las razones de estancamiento.
+  const nombreDe = (id: string) => h.sesiones.flatMap((s) => s.bloques).find((b) => b.id === id)?.ejercicio ?? h.rutina?.dias.flatMap((x) => x.ejercicios).find((x) => x.id === id)?.nombre ?? id;
+  const metas = d.metas.map((meta): MetaConProyeccion => {
+    const x = { id: meta.ejercicio, ejercicio: nombreDe(meta.ejercicio) };
+    const { t } = tendenciaDe(x);
+    const objetivo = e1rm(meta.kilos, meta.reps) ?? meta.kilos;
+    return { meta, e: x, nivel: t.nivel, objetivo, proyeccion: proyeccionDeMeta(t, objetivo) };
+  });
+  const semana = Array.from({ length: 7 }, (_, i) => sumarDias(hoy, -1 - i));
+  const dormido = promedio(semana.flatMap((f) => (noches.has(f) ? [noches.get(f)!] : [])));
+  const comidos = semana.map((f) => totalDelDia(e.registros.values(), f, false)).filter((x) => x.kcal > 0);
+  const gPorKg = comidos.length >= DIAS_DE_COMIDA && pesoKg ? comidos.reduce((s, x) => s + x.proteina, 0) / comidos.length / pesoKg : null;
+  const alejan: Aleja[] = [
+    ...(dormido !== null && dormido < SUENO_POCO ? [{ que: 'sueno' as const, minutos: dormido }] : []),
+    ...(gPorKg !== null && gPorKg < PROTEINA_POR_KG ? [{ que: 'proteina' as const, gPorKg }] : []),
+  ];
+  const vistosParaMetas = new Set<string>();
+  const paraMetas = (h.rutina ? h.rutina.dias.flatMap((x) => x.ejercicios.map((y) => ({ id: y.id, ejercicio: y.nombre })))
+    : h.sesiones.filter((s) => s.fecha >= sumarDias(hoy, -DIAS_DE_LA_REFERENCIA)).flatMap((s) => s.bloques.map((b) => ({ id: b.id, ejercicio: b.ejercicio }))))
+    .filter((x) => x.id && musculosDe(x) && !vistosParaMetas.has(x.id) && vistosParaMetas.add(x.id));
+
+  return {
+    umbral, estancados, anio: { dias, ultimas, datos }, metas, alejan, proteina: pesoKg ? Math.round(PROTEINA_POR_KG * pesoKg) : null, paraMetas,
+  };
 }
 
 // ------------------------------------------------------------ tus músculos (spec/musculos-compartido.md)

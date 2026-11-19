@@ -282,7 +282,8 @@ function SinVincular() {
   return (
     <>
       <Text style={[p.etq, st.grupo]}>{t('ascent.soloConLasDos')}</Text>
-      {vacia(t('ascent.porQue.titulo'), t('ascent.vacio.porQue'), null, true)}
+      {vacia(t('ascent.metas.titulo'), t('ascent.vacio.metas'), null, true)}
+      {vacia(t('ascent.porQue.titulo'), t('ascent.vacio.porQue'), null)}
       {vacia(t('ascent.estancados.lista'), t('ascent.vacio.estancados'), null)}
       {vacia(t('ascent.anio.titulo'), t('ascent.vacio.anio'), <MapaDelAnio hoy={hoy} dias={[]} vacio />)}
       {vacia(t('ascent.fatigados.titulo'), t('ascent.vacio.fatigados'), null)}

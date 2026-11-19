@@ -29,7 +29,7 @@
 //   que lee: quién lo ve y quién lo escribe, vincular y volver a vincular, desvincular, que lo de
 //   Ascent llega como lo cuenta Ascent y nunca lo de un tercero, el peso de las dos apps, la rutina y
 //   los ajustes de Ascent (0013_ascent_rutina.sql), vincular desde Moss con un código de un uso
-//   (0014_codigo_de_vinculo.sql), lo de Moss que lee Ascent (0015_moss_para_ascent.sql), y la app (src/lib/ascentRemoto.ts) vinculando por la función
+//   (0014_codigo_de_vinculo.sql), lo de Moss que lee Ascent (0015_moss_para_ascent.sql), las metas de fuerza y el RIR (0016_metas_de_fuerza.sql), y la app (src/lib/ascentRemoto.ts) vinculando por la función
 //   moss-vincular de verdad y pidiendo el código;
 // - y las dos cuentas (D29), con moss-vincular y moss-borrar-cuenta de verdad: vincular con el mismo
 //   correo y con correos distintos, borrar en Moss (solo de Moss, o la misma cuenta que Ascent),
@@ -1189,6 +1189,46 @@ comprobar(
 // Lo de esta prueba se va: lo que sigue cuenta los pesos y lo comido de esta cuenta.
 await db.query(`delete from moss.pesos where usuario = $1 and fecha = '2026-11-03'`, [MOSS]);
 await vincularConLaClave(MOSS, ASCENT, 'moss');
+
+// Las metas de fuerza y el RIR (0016_metas_de_fuerza.sql): las dos cuentas del vínculo leen, crean y borran las metas
+// de la cuenta de Moss; nadie más; al desvincular se borran. Y cada serie de Ascent llega con su RIR.
+const dia26 = await diaDeAscent(ASCENT, '2026-10-26');
+await sesionDeAscent(ASCENT, dia26, { inicio: '2026-10-26T21:00:00Z', minutos: 50, series: 3, bloques: [
+  { ejercicio: 'press_banca', series: 3, pesos: [80, 80, 80], reps: [5, 5, 4], rir: [2, 1, 'x'], carga: 'total' }] });
+const metasDeFuerzaDe = async (u) => (await como(u, 'select moss.metas_de_fuerza() as r')).rows[0].r;
+const guardarMetaDeFuerza = async (u, id, ejercicio, kilos, reps) => (await como(u, 'select moss.guardar_meta_de_fuerza($1, $2, $3, $4) as r', [id, ejercicio, kilos, reps])).rows[0].r;
+const borrarMetaDeFuerza = async (u, id) => (await como(u, 'select moss.borrar_meta_de_fuerza($1) as r', [id])).rows[0].r;
+const metaDeMoss = await guardarMetaDeFuerza(MOSS, null, 'press_banca', 100, 1);
+const metaDeAscent = await guardarMetaDeFuerza(ASCENT, null, 'sentadilla', 140, 3);
+const delVeintiseis = (await sesionesDe(MOSS, '2026-10-26')).find((s) => s.fecha === '2026-10-26');
+comprobar(
+  !!metaDeMoss && !!metaDeAscent && await guardarMetaDeFuerza(SOLA, null, 'press_banca', 50, 1) === null && await guardarMetaDeFuerza(TERCERO, null, 'press_banca', 50, 1) === null
+    && (await metasDeFuerzaDe(ASCENT)).length === 2 && (await metasDeFuerzaDe(MOSS)).map((m) => `${m.ejercicio}:${Number(m.kilos)}x${m.reps}`).join() === 'press_banca:100x1,sentadilla:140x3'
+    && await metasDeFuerzaDe(TERCERO) === null && await metasDeFuerzaDe(SOLA) === null
+    && await falla('anon', 'select moss.metas_de_fuerza()') && await falla(MOSS, 'select * from moss.metas_de_fuerza') && await falla(MOSS, 'select moss.cuenta_del_vinculo()')
+    && await falla(MOSS, `select moss.guardar_meta_de_fuerza(null, 'press_banca', 0, 1)`) && await falla(MOSS, `select moss.guardar_meta_de_fuerza(null, 'press_banca', 100, 31)`),
+  'metas de fuerza: las crean y las leen las dos cuentas del vínculo, nadie más, y con valores posibles',
+);
+comprobar(
+  await guardarMetaDeFuerza(ASCENT, metaDeMoss, 'press_banca', 105, 1) === metaDeMoss && await guardarMetaDeFuerza(TERCERO, metaDeMoss, 'press_banca', 200, 1) === null
+    && Number((await metasDeFuerzaDe(MOSS))[0].kilos) === 105 && await borrarMetaDeFuerza(TERCERO, metaDeAscent) === false && await borrarMetaDeFuerza(MOSS, metaDeAscent) === true
+    && (await metasDeFuerzaDe(ASCENT)).length === 1,
+  'metas de fuerza: cambiar y borrar solo las de la cuenta',
+);
+comprobar(
+  JSON.stringify(delVeintiseis?.ejercicios[0]?.series.map((x) => x.rir)) === '[2,1,null]'
+    && (await sesionesDe(MOSS)).filter((s) => s.fecha === '2026-10-20').flatMap((s) => s.ejercicios.flatMap((e) => e.series.map((x) => x.rir))).every((r) => r === null),
+  `RIR: cada serie trae el suyo, y sin anotar, null (${JSON.stringify(delVeintiseis?.ejercicios[0]?.series)})`,
+);
+await como(ASCENT, 'select moss.desvincular()');
+comprobar(
+  (await db.query('select count(*)::int as n from moss.metas_de_fuerza where usuario = $1', [MOSS])).rows[0].n === 0 && await metasDeFuerzaDe(MOSS) === null,
+  'metas de fuerza: al desvincular se borran',
+);
+await vincularConLaClave(MOSS, ASCENT, 'moss');
+// Lo de esta prueba se va: lo que sigue cuenta las sesiones de esta cuenta.
+await db.query('delete from public.sesiones where log_id = $1', [dia26]);
+await db.query('delete from public.logs where id = $1', [dia26]);
 
 // La app (src/lib/ascentRemoto.ts) y la función moss-vincular, contra esta base: Auth de mentira (cada
 // token es de una cuenta) y PostgREST como lo llama la función, con la clave de servicio.

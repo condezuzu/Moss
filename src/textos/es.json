@@ -3799,7 +3799,8 @@
       "porQue": "Lo que puede estar frenando cada ejercicio, de lo más a lo menos sólido.",
       "estancados": "Los ejercicios que hace semanas no suben.",
       "fatigados": "Los músculos que todavía se recuperan y cuándo vuelven.",
-      "musculos": "Cada músculo con el color de cuánto lo entrenaste en la semana, con su barra."
+      "musculos": "Cada músculo con el color de cuánto lo entrenaste en la semana, con su barra.",
+      "metas": "Tus metas de fuerza, con cuándo llegas a cada una."
     },
     "linea": {
       "suenoCorto": "Dormiste poco: la fuerza máxima casi no cambia; las repeticiones pueden costar más."
@@ -4007,6 +4008,10 @@
       ],
       "porQue": [
         "Las razones van de la más sólida a la menos: primero cuánto entrenas (las series, la frecuencia y la carga pesada: Pelland 2026), después bajar rápido de peso, la proteína contra 1,6 g por kilo (Morton 2018) y el sueño. Siempre es una causa probable, no segura."
+      ],
+      "metas": [
+        "Cuándo llegas: con la tendencia de tus últimas 12 semanas y su rango, del ritmo más rápido al más lento, porque cada persona sube distinto (Latella 2020; Swinton 2024). Con menos de 6 sesiones del ejercicio no se calcula. Es realista si al ritmo más lento llegas en un año o menos.",
+        "Lo que la puede alejar: dormir menos de 6 horas en promedio o comer menos de 1,6 g de proteína por kilo, que frena lo que ganas en semanas (Morton 2018). Lo que comiste ayer no cambia la sesión de hoy."
       ]
     },
     "tutorial": {
@@ -4036,6 +4041,29 @@
           "texto": "Se calcula con tus series en Ascent y tu sueño y tu comida en Moss: cuanto mejor anotas, más acierta."
         }
       }
+    },
+    "metas": {
+      "titulo": "Metas",
+      "ninguna": "Ponte una meta de fuerza: te dice si es realista, qué hacer y cuándo llegas.",
+      "nueva": "Nueva meta",
+      "objetivo": "{kg} kg × {reps}",
+      "nivel": "Hoy estás al {n} %",
+      "lograda": "Ya llegaste: tu nivel de hoy pasa la meta.",
+      "noSeSabe": "Con 6 sesiones de este ejercicio se puede calcular cuándo llegas.",
+      "noSube": "Así no llega: en 12 semanas no sube con claridad. Mira «Por qué puedes estar estancado».",
+      "enCamino": "Al ritmo de tus últimas 12 semanas, en {de} a {a} semanas.",
+      "enCaminoAbierto": "Al ritmo de tus últimas 12 semanas, en {de} semanas o más.",
+      "lejana": "Es una meta lejana: ponte una intermedia.",
+      "comer": "Come unos {g} g de proteína por día.",
+      "alejaSueno": "La puede alejar: duermes {h} en promedio.",
+      "alejaProteina": "La puede alejar: comes {g} g de proteína por kilo, y lo recomendado es 1,6.",
+      "borrar": "Borrar",
+      "elegir": "Elige un ejercicio",
+      "kilos": "Kilos",
+      "reps": "Repeticiones",
+      "guardar": "Guardar meta",
+      "cancelar": "Cancelar",
+      "error": "No se pudo guardar. Revisa la conexión."
     }
   },
   "habitos": {
