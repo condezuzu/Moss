@@ -1,6 +1,6 @@
 // La invitación de Inicio (spec/ascent.md, «Que se encuentre»; galeria/src/ascent.js): solo con Ascent en
 // este iPhone y sin vincular. Sin Ascent no se dice nada. «Vincular» abre la hoja, sin salir de Inicio: dos
-// toques. «Ahora no» queda guardado en este iPhone y vuelve a las 4 horas (VUELVE_EN); la entrada de Progreso y
+// toques; sin la sesión de Ascent en el llavero, abre Ascent con un código (vincularDesdeMoss.ts). «Ahora no» queda guardado en este iPhone y vuelve a las 4 horas (VUELVE_EN); la entrada de Progreso y
 // Perfil siguen ahí.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,6 +18,7 @@ import { C } from './colores';
 import { HojaDeVincular } from './HojaDeVincular';
 import { MarcaChica } from './MarcaChica';
 import { useHayAscent } from './useHayAscent';
+import { vincularDesdeMoss } from './vincularDesdeMoss';
 
 const AHORA_NO = 'moss:invitarAVincularAhoraNo';
 // Con valores iniciales propios, en la web la carta quedaba absoluta, encima del bloque de abajo.
@@ -51,8 +52,10 @@ export function InvitacionDeAscent() {
             <View style={st.acciones}>
               <Pressable
                 onPress={() => {
-                  setVez((x) => x + 1);
-                  setHoja(true);
+                  vincularDesdeMoss(() => {
+                    setVez((x) => x + 1);
+                    setHoja(true);
+                  }).catch(() => {});
                 }}
                 style={({ pressed }) => [st.si, pressed && st.siApretado]}
                 accessibilityRole="button"
