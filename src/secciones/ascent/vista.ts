@@ -17,6 +17,7 @@ import {
   sesionesConBloques, tuAnio,
   type GrupoDelAnio, type MarcaDeAscent, type MetaConAscent, type RutinaDeAscent, type TuAnio,
 } from '@/dominio/conAscent';
+import { cargaDeLaSemana, enLaSemana, lineaDeLaSemana, type CargaDelMusculo, type DiaQueQueda, type LineaDeLaSemana } from '@/dominio/cargaSemanal';
 import { ultimoDiaDeControl } from '@/dominio/control';
 import { diagnostico, focoDeHoy, ordenarMarcas, buenDiaParaLaMarca, type Diagnostico, type Foco } from '@/dominio/diagnostico';
 import { calidadParaRecuperar } from '@/dominio/entrenamiento';
@@ -25,7 +26,9 @@ import {
   type RazonesDeEstancamiento, type SemanaDeEntreno,
 } from '@/dominio/estancados';
 import { fatigaMuscular, fatigaPorDia, musculosParaLaFatiga, todosLosMusculos, type FatigaDelDia, type MusculoAhora } from '@/dominio/fatiga';
-import { diaDeLaSemana, diasEntre, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { diaDeLaSemana, diasEntre, minutosEnElDia, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
+import { queEsperar, type QueEsperar } from '@/dominio/llegarAEntrenar';
+import type { Macros } from '@/dominio/metas';
 import {
   CATALOGO, claveDelEjercicio, dosisDeLaSesion, esfuerzoDeSerie, grupoDelEjercicio, mejorE1rm, musculosDe, musculosTrabajados, peorEstado, residual, unRmDeAscent, estadoDe,
   type Bloque, type Musculo, type SesionConBloques, type UnoRMDe,
@@ -200,6 +203,11 @@ export type DeLaFuerza = { e: Pick<Bloque, 'id' | 'ejercicio'>; t: TendenciaDeFu
 export type DeLaMarca = { bloque: Bloque; pr: MarcaDeAscent; t: TendenciaDeFuerza; cerca: CercaDeLaMarca; condiciones: CondicionesDeLaMarca; frecuencia: { marcas: number; de: number }; fechas: ClaveDia[]; conMarca: Set<ClaveDia> };
 export type Estancado = { e: Pick<Bloque, 'id' | 'ejercicio'>; ultima: MarcaDeAscent; sinMarca: number; musculo: Musculo; antes: SemanaDeEntreno[]; ahora: SemanaDeEntreno[]; r: RazonesDeEstancamiento };
 export type DiaDelAnio = { fecha: ClaveDia; grupo: GrupoDelAnio | null; marca: boolean };
+/** Un día de la tira de la semana, de lunes a domingo. */
+export type DiaDeLaTira = { fecha: ClaveDia; dia: DiaSemana; clase: 'hecho' | 'previsto' | 'descanso'; hoy: boolean };
+export type TuSemana = { tira: DiaDeLaTira[]; carga: CargaDelMusculo[]; linea: LineaDeLaSemana; conDatos: boolean; ahora: Partial<Record<Musculo, MusculoAhora>> };
+/** Antes de entrenar: lo comido hoy contra la meta y qué esperar. */
+export type ComoLlegas = { total: Macros; meta: Macros | null; anotado: boolean; esperar: QueEsperar[] };
 
 export type Todo = {
   diag: Diagnostico | null;
@@ -216,6 +224,7 @@ export type Todo = {
   anio: { dias: DiaDelAnio[]; ultimas: (MarcaDeAscent & { grupo: GrupoDelAnio })[]; datos: TuAnio };
   comparten: { peso: { kg: number; fecha: ClaveDia } | null; conA: MetaConAscent | null };
   pesoKg: number | null;
+  llegas: ComoLlegas | null;
 };
 
 /** El mismo ejercicio: por el id de Ascent si los dos lo tienen; si no, por el nombre. */
@@ -409,9 +418,69 @@ export function calcularTodo(h: Hoy, { e, d, sueno, persona, ahora }: Entradas, 
 
   const peso = e.pesos[e.pesos.length - 1];
   return {
+    llegas: comoLlegas(h, e, pesoKg),
     diag, foco, comida, todos, semana, fuerza, marcas: ordenadas, umbral, estancados,
     anio: { dias, ultimas, datos },
     comparten: { peso: peso ? { kg: peso.kg, fecha: peso.fecha } : null, conA: semanaConAscent(e, d) },
     pesoKg,
+  };
+}
+
+// ------------------------------------------------------------ tu semana y cómo llegas
+
+/** Las series de cada músculo principal en unos ejercicios con sus series. */
+function seriesPorMusculo(ejercicios: { ref: Parameters<typeof musculosDe>[0]; series: number }[]): Partial<Record<Musculo, number>> {
+  const r: Partial<Record<Musculo, number>> = {};
+  for (const x of ejercicios) for (const m of musculosDe(x.ref)?.principal ?? []) r[m] = (r[m] ?? 0) + x.series;
+  return r;
+}
+
+/** La semana de lunes a domingo: la tira, las series duras de cada músculo contra el rango y su línea. */
+export function calcularTuSemana(h: Hoy, e: Estado): TuSemana {
+  const hoyDia = diaDeLaSemana(h.hoy);
+  const lunes = sumarDias(h.hoy, -enLaSemana(hoyDia));
+  const unoRM = h.unoRMEn(h.ahora);
+  const hechas = new Map<Musculo, number>();
+  for (const s of h.sesiones) {
+    if (s.fecha < lunes || s.fecha > h.hoy) continue;
+    for (const [m, x] of dosisDeLaSesion(s, unoRM)) hechas.set(m, (hechas.get(m) ?? 0) + x.series);
+  }
+  // Lo que queda: los días de la rutina después de hoy y hoy, si todavía no entrenaste.
+  const quedan: DiaQueQueda[] = [];
+  if (h.sesion?.como === 'prevista' && h.sesion.bloques) {
+    quedan.push({ dia: hoyDia, series: seriesPorMusculo(h.sesion.bloques.map((b) => ({ ref: b, series: b.series.length }))) });
+  }
+  for (const d of h.rutina?.dias ?? []) {
+    if (d.descanso || enLaSemana(d.dia) <= enLaSemana(hoyDia)) continue;
+    quedan.push({ dia: d.dia, series: seriesPorMusculo(d.ejercicios.map((y) => ({ ref: { id: y.id, grupo: grupoDe(y) }, series: y.series }))) });
+  }
+  const carga = cargaDeLaSemana(hechas, quedan);
+  const deHoy = h.sesion?.como === 'prevista' ? h.musculosHoy : null;
+  const diasDeEntrenar = h.rutina ? diasDeLaRutina(h.rutina) : (e.entreno?.dias ?? []);
+  const conSesion = new Set(h.sesiones.map((s) => s.fecha));
+  const tira = Array.from({ length: 7 }, (_, i): DiaDeLaTira => {
+    const fecha = sumarDias(lunes, i);
+    const dia = diaDeLaSemana(fecha);
+    const clase = conSesion.has(fecha) ? 'hecho' : fecha >= h.hoy && diasDeEntrenar.includes(dia) ? 'previsto' : 'descanso';
+    return { fecha, dia, clase, hoy: fecha === h.hoy };
+  });
+  const todos = todosLosMusculos({ sesiones: h.sesiones, en: h.ahora, unoRM, novato: !h.entrenado, minuto: h.minuto(h.ahora) });
+  return {
+    tira, carga, linea: lineaDeLaSemana({ carga, deHoy, hoy: hoyDia, quedan }), ahora: Object.fromEntries(todos.map((m) => [m.musculo, m])),
+    conDatos: h.sesiones.some((s) => s.fecha >= sumarDias(h.hoy, -DIAS_DE_LA_REFERENCIA)),
+  };
+}
+
+/** Antes de entrenar: lo comido hoy hasta ahora, contra la meta del día, y qué esperar en la sesión. */
+function comoLlegas(h: Hoy, e: Estado, pesoKg: number | null): ComoLlegas | null {
+  if (h.sesion?.como !== 'prevista') return null;
+  const deHoy = vigentes(e.registros.values()).filter((r) => r.dia === h.hoy && !r.planificado);
+  const comido = deHoy.map((r) => ({ momento: minutosEnElDia(new Date(r.momento), h.hoy), carbohidratos: r.valores.carbohidratos, proteina: r.valores.proteina, grasas: r.valores.grasas }));
+  const t = totalDelDia(e.registros.values(), h.hoy, false);
+  return {
+    total: { kcal: t.kcal, proteina: t.proteina, carbohidratos: t.carbohidratos, grasas: t.grasas },
+    meta: metaDelDia(e, h.hoy),
+    anotado: deHoy.length > 0,
+    esperar: queEsperar({ comido, inicio: h.sesion.inicio, pesoKg }),
   };
 }

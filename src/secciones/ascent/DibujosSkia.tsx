@@ -1,11 +1,16 @@
 // Los dibujos de la sección de Ascent, en Skia, con los trazos de la galería (galeria/src/ascent.js): la marca
 // (el ícono de Ascent tal cual), el cuerpo de frente y de espalda con cada músculo en su estado, y la tendencia de
-// cada ejercicio en chico.
+// cada ejercicio en chico. Y el cuerpo de tu rango, el de la app Ascent.
 
-import { BlurMask, Canvas, Circle, DashPathEffect, Group, LinearGradient, Path, RadialGradient, Skia, SweepGradient, vec, type SkPath } from '@shopify/react-native-skia';
-import { useEffect, useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useDerivedValue, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import {
+  Atlas, BlurMask, Canvas, Circle, DashPathEffect, Fill, FilterMode, Group, LinearGradient, Mask, MipmapMode, Path, Rect, RadialGradient, Shader, Skia,
+  useRSXformBuffer, vec, type SkImage, type SkPath, type SkRuntimeEffect,
+} from '@shopify/react-native-skia';
+import { useEffect, useMemo, useState } from 'react';
+import { PixelRatio, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  useAnimatedReaction, useDerivedValue, useFrameCallback, useReducedMotion, useSharedValue, withTiming, type SharedValue,
+} from 'react-native-reanimated';
 
 import { nivelEn, SEMANAS_DE_LA_TENDENCIA, type TendenciaDeFuerza } from '@/dominio/rendimiento';
 import type { Musculo } from '@/dominio/musculos';
@@ -14,6 +19,11 @@ import { t } from '@/textos';
 import { letras } from '@/tema';
 import { C, useAcento } from './colores';
 import { FORMAS, LINEAS, SILUETA, trazoDe, type Lado } from './cuerpo';
+import { fuenteDeLaParticula, fuenteDelCuerpo, fuenteDelResplandor, MODO } from './rangos.sksl';
+import {
+  alcanceDe, configDe, lineal, particulasDeLaGalaxia, particulasDelPolvo, posicionDeParticula, RESPLANDORES_DE_LA_GALAXIA, uniformsDelCuerpo,
+  type Geometria,
+} from './rangosDeAscent';
 
 // ------------------------------------------------------------ la marca
 // El ícono de Ascent (movil/assets/icon.png de su repo), medido: la órbita es 1,5 veces el planeta y abierta a la
@@ -222,177 +232,197 @@ export function TendenciaSkia({ t: x, puntos, ancho: W, alto: H }: PropsDeChispa
 }
 
 // ------------------------------------------------------------ el cuerpo de tu rango
-// Desde el rango 2, el cuerpo de tu rango de fondo en la sección (el polvo del 1 es Polvo.tsx), como la galería
-// (cuerpoDelHorizonte en galeria/src/ascent.js, .as-cielo): la parte de arriba de un círculo de 1.180 con sus
-// detalles, en 360, girado para que su luz mire a la pantalla y tenue (el sol, más). Arriba de Progreso asoma su
-// borde (TechoDelRangoSkia). Los colores son los de Ascent (src/dominio/rangoDeAscent.ts), simplificados.
+// El cuerpo de tu rango de Ascent, de fondo en la sección y asomando arriba de Progreso: el mismo de la app Ascent,
+// con sus shaders pasados a SkSL (rangos.sksl.ts) y sus parámetros (rangosDeAscent.ts). El polvo y la galaxia llevan
+// además sus partículas y, la galaxia, el resplandor del bulbo.
+//
+// Lo que cuesta, y cómo se paga poco: el lienzo cubre solo lo que se ve; se dibuja a 2x como mucho (como Ascent: en un
+// iPhone de 3x el lienzo es más chico y se agranda); y el reloj del shader avanza solo con la sección a la vista, a
+// doce cuadros por segundo, y se para al minuto sin que nada se mueva (su nucleo/quietud.ts). Con Reducir movimiento,
+// un cuadro quieto. Cada efecto se compila una vez.
 
 type Rango = ReturnType<typeof cuerpoDeAscent>;
-const LADO = 1180;
-const MEDIO = LADO / 2;
-const limbo = (x: number) => MEDIO - Math.sqrt(Math.max(0, MEDIO * MEDIO - (x - MEDIO) * (x - MEDIO)));
-/** Un azar con semilla: el mismo dibujo cada vez, como en la galería. */
-const azar = (semilla: number) => () => {
-  semilla = (semilla + 0x6d2b79f5) | 0;
-  let x = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
-  x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
-  return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-};
-/** `n` puntos en la parte que se ve, más juntos cerca del borde si `pegados`. */
-function puntos(n: number, semilla: number, pegados = 1.6) {
-  const r = azar(semilla);
-  return Array.from({ length: n }, () => {
-    const x = 300 + r() * 460;
-    const y = limbo(x) + 4 + Math.pow(r(), pegados) * 250;
-    return { x, y, a: r(), b: r() };
-  });
+
+const efectosDelModo = new Map<number, SkRuntimeEffect>();
+function efecto(clave: number, fuente: () => string) {
+  let ef = efectosDelModo.get(clave);
+  if (!ef) {
+    ef = Skia.RuntimeEffect.Make(fuente()) ?? undefined;
+    if (!ef) throw new Error(`No compiló el cuerpo de Ascent (modo ${clave}).`);
+    efectosDelModo.set(clave, ef);
+  }
+  return ef;
 }
-const canales = (hex: string) => [16, 8, 0].map((k) => (parseInt(hex.slice(1), 16) >> k) & 255);
-const hexDe = (c: number[]) => '#' + c.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
-/** Un color mezclado con otro: `f` es cuánto del otro. */
-const mezcla = (hex: string, otro: string, f: number) => {
-  const a = canales(hex), b = canales(otro);
-  return hexDe(a.map((v, i) => v * (1 - f) + b[i] * f));
+const RESPLANDOR = -1;
+const PARTICULA = -2;
+
+/** La partícula de Ascent, pintada una vez en una imagen de LADO_PARTICULA. */
+const LADO_PARTICULA = 64;
+let imagenParticula: SkImage | null = null;
+function particula() {
+  if (!imagenParticula) {
+    const sup = Skia.Surface.Make(LADO_PARTICULA, LADO_PARTICULA);
+    if (!sup) return null;
+    const pintura = Skia.Paint();
+    pintura.setShader(efecto(PARTICULA, fuenteDeLaParticula).makeShader([LADO_PARTICULA]));
+    sup.getCanvas().drawRect(Skia.XYWHRect(0, 0, LADO_PARTICULA, LADO_PARTICULA), pintura);
+    sup.flush();
+    imagenParticula = sup.makeImageSnapshot();
+  }
+  return imagenParticula;
+}
+
+// Los escalones de su nucleo/quietud.ts: doce cuadros por segundo con un margen de 2 ms, y nada al minuto quieto.
+const MS_ENTRE_CUADROS = 1000 / 12 - 2;
+const ESPERA_QUIETO_MS = 60_000;
+
+/** El tiempo del shader, en segundos: arranca en cualquier punto, como en Ascent, y avanza solo mientras `vivo`. */
+function useReloj(activo: boolean, despertar?: SharedValue<number>) {
+  const reducido = useReducedMotion();
+  const vivo = activo && !reducido;
+  const [inicio] = useState(() => Math.random() * 100);
+  const reloj = useSharedValue(inicio);
+  const ultimoCuadro = useSharedValue(-1);
+  const ultimaSenal = useSharedValue(0);
+  const senal = useSharedValue(true);
+  useAnimatedReaction(
+    () => despertar?.get() ?? 0,
+    (ahora, antes) => {
+      if (antes !== null && ahora !== antes) senal.set(true);
+    },
+  );
+  const cuadros = useFrameCallback(({ timestamp }) => {
+    if (senal.get()) {
+      senal.set(false);
+      ultimaSenal.set(timestamp);
+    }
+    if (timestamp - ultimaSenal.get() >= ESPERA_QUIETO_MS) return;
+    const antes = ultimoCuadro.get();
+    const desde = timestamp - antes;
+    if (antes >= 0 && desde < MS_ENTRE_CUADROS) return;
+    ultimoCuadro.set(timestamp);
+    // Lo que estuvo quieto o tapado no adelanta de golpe.
+    if (antes >= 0) reloj.set(reloj.get() + Math.min(desde, 250) / 1000);
+  }, false);
+  useEffect(() => {
+    senal.set(true);
+    cuadros.setActive(vivo);
+  }, [vivo, cuadros, senal]);
+  return reloj;
+}
+
+/** Cuánto se tapa el cuerpo detrás del texto: el velo de Ascent en sus pantallas con contenido (velosDe, altura «baja»). */
+const VELO = 0.4;
+
+export type PropsDelRango = {
+  rango: Rango;
+  /** Dónde va: geometriaEnLaSeccion o geometriaDelTecho (rangosDeAscent.ts). */
+  geometria: Geometria;
+  /** Con la sección a la vista: el reloj avanza. Sin esto, un cuadro quieto. */
+  activo?: boolean;
+  /** Algo que se mueve (el scroll, la sección que baja): despierta al reloj si se había parado. */
+  despertar?: SharedValue<number>;
+  /** Los puntos de abajo que se desvanecen: el techo termina sin corte. */
+  desvanece?: number;
 };
-const conAlfa = (hex: string, alfa: number) => `rgba(${canales(hex).join(', ')}, ${alfa})`;
-/** El borde: más claro que el color del rango; en el agujero negro, el naranja del disco. */
-const bordeDe = (r: Rango) => (r.cuerpo === 'agujeroNegro' ? r.paleta.principal : mezcla(r.paleta.claro, '#ffffff', 0.35));
 
-type Trazo = { path: SkPath; color: string; opacity?: number; ancho?: number };
-const svg = (d: string) => Skia.Path.MakeFromSVGString(d)!;
-const elipse = (cx: number, cy: number, rx: number, ry: number) => Skia.PathBuilder.Make().addOval(Skia.XYWHRect(cx - rx, cy - ry, 2 * rx, 2 * ry)).detach();
-const circulo = (cx: number, cy: number, r: number) => Skia.PathBuilder.Make().addCircle(cx, cy, r).detach();
-/** Cráteres: elipses más chatas cuanto más cerca del borde, con la sombra de un lado y la luz del otro. */
-const crateres = (n: number, semilla: number, tam = 1): Trazo[] => puntos(n, semilla, 1.2).flatMap(({ x, y, a, b }) => {
-  const rx = (6 + a * 22) * tam;
-  const ry = rx * (0.28 + Math.min(1, (y - limbo(x)) / 260) * 0.55);
-  return [
-    { path: elipse(x, y, rx, ry), color: `rgba(0, 0, 0, ${(0.16 + b * 0.18).toFixed(2)})` },
-    { path: svg(`M ${x - rx} ${y} A ${rx} ${ry} 0 0 0 ${x + rx} ${y}`), color: `rgba(255, 255, 255, ${(0.08 + b * 0.1).toFixed(2)})`, ancho: 1.2 },
-  ];
-});
-const PLANETAS_DEL_HORIZONTE: Record<string, { colores: string[]; crateres: number; extra?: () => Trazo[] }> = {
-  Ceres: { colores: ['#b8c0cc', '#7a828e', '#3c4048', '#0d0e12'], crateres: 26, extra: () => [{ path: elipse(575, 38, 7, 2.6), color: '#ffffff', opacity: 0.9 }, { path: elipse(596, 44, 3.5, 1.4), color: '#ffffff', opacity: 0.75 }] },
-  Mercurio: { colores: ['#b5ada4', '#7e766e', '#3a3532', '#0d0c0b'], crateres: 44 },
-  Marte: {
-    colores: ['#f0925c', '#d9531e', '#8a2e10', '#2a0e05'], crateres: 10,
-    extra: () => [{ path: elipse(600, 12, 70, 9), color: '#fff4ea', opacity: 0.75 }, { path: elipse(470, 120, 90, 26), color: '#6a2410', opacity: 0.4 }, { path: elipse(690, 96, 70, 18), color: '#6a2410', opacity: 0.35 }],
-  },
-  Venus: { colores: ['#f0e4c2', '#c9b278', '#8a7a4a', '#2a2416'], crateres: 0, extra: () => [40, 85, 135, 190].map((y, i) => ({ path: elipse(560 + i * 18, y, 420, 10 + i * 4), color: '#fff7e0', opacity: 0.14 - i * 0.025 })) },
-  Saturno: {
-    colores: ['#e8dcbe', '#b0a078', '#6e6248', '#1f1b14'], crateres: 0,
-    // Las bandas siguen el borde; los anillos cruzan por delante, con la sombra que dejan arriba.
-    extra: () => [
-      ...[26, 58, 96, 140].map((d, i) => ({ path: circulo(MEDIO, MEDIO, MEDIO - d), color: i % 2 ? '#8f8160' : '#d9cba4', ancho: 12 + i * 4, opacity: 0.28 })),
-      { path: svg('M -190 191 A 780 92 0 0 0 1370 191'), color: '#000000', ancho: 16, opacity: 0.28 },
-      { path: svg('M -190 205 A 780 92 0 0 0 1370 205'), color: '#e8dcbe', ancho: 11, opacity: 0.55 },
-      { path: svg('M -130 205 A 720 80 0 0 0 1310 205'), color: '#cbbd96', ancho: 7, opacity: 0.4 },
-    ],
-  },
-};
-
-type Degrade = { c: [number, number]; r: number; colores: string[]; posiciones: number[] };
-
-/** Lo de adentro del disco, en el espacio de 1.180: el fondo, el degradé de la esfera y los trazos encima. */
-function dibujoDelCuerpo(r: Rango): { fondo: string | null; degrade: Degrade; trazos: Trazo[] } {
-  const p = r.paleta;
-  // Una esfera con la luz en el borde de arriba, hundida hacia el fondo de Ascent para que no le gane al texto.
-  const esfera = (colores: string[], oscuro = 0.38): Degrade => ({ c: [MEDIO, 0], r: 0.24 * LADO, colores: colores.map((c) => mezcla(c, '#05060a', oscuro)), posiciones: colores.map((_, i) => i / (colores.length - 1)) });
-  if (r.cuerpo === 'galaxia') {
-    // Partículas en una banda, con su centro brillante; sin disco.
+/** El cuerpo de tu rango de Ascent, tal cual lo dibuja Ascent. */
+export function CuerpoDelRangoSkia({ rango, geometria: g, activo = false, despertar, desvanece = 0 }: PropsDelRango) {
+  const cfg = configDe(rango.rango, rango.planeta);
+  const reloj = useReloj(activo, despertar);
+  const f = Math.min(1, 2 / PixelRatio.get());
+  const densidad = f * PixelRatio.get();
+  const alcance = alcanceDe(cfg.modo, g.radio);
+  const fijos = useMemo(() => {
+    const giro = (g.giro * Math.PI) / 180;
     return {
-      fondo: null,
-      degrade: { c: [MEDIO, 0.04 * LADO], r: 0.3 * LADO, colores: ['rgba(233, 220, 255, 0.55)', conAlfa(p.principal, 0.32), conAlfa(p.apagado, 0)], posiciones: [0, 0.4, 1] },
-      trazos: puntos(420, 77, 3.2).map(({ x, y, a, b }) => ({ path: circulo(x, y, 0.6 + a * 1.5), color: b < 0.5 ? p.claro : b < 0.8 ? p.principal : '#ffffff', opacity: 0.25 + a * 0.6 })),
+      ...uniformsDelCuerpo(cfg), uCentro: [g.cx, g.cy], uEscala: alcance, uGiro: [Math.cos(giro), Math.sin(giro)],
+      uDensidad: densidad, uPixel: 844 / 390 / alcance,
     };
-  }
-  if (r.cuerpo === 'agujeroNegro') {
-    // Negro absoluto; el naranja, solo en una línea fina pegada al borde (el disco).
-    return { fondo: '#020204', degrade: { c: [MEDIO, MEDIO], r: MEDIO, colores: [conAlfa(p.principal, 0), 'rgba(255, 196, 107, 0.9)', conAlfa(p.principal, 1)], posiciones: [0.965, 0.992, 1] }, trazos: [] };
-  }
-  if (r.cuerpo === 'sol') {
-    return { fondo: '#05060a', degrade: esfera(['#ffffff', p.claro, p.principal, p.apagado, '#b8650f'], 0.12), trazos: puntos(160, 5, 1.1).map(({ x, y, a }) => ({ path: circulo(x, y, 3 + a * 6), color: '#fff6d0', opacity: 0.06 + a * 0.1 })) };
-  }
-  if (r.cuerpo === 'planeta') {
-    const pl = PLANETAS_DEL_HORIZONTE[r.planeta ?? 'Ceres'] ?? PLANETAS_DEL_HORIZONTE.Ceres;
-    return { fondo: '#05060a', degrade: esfera(pl.colores), trazos: [...crateres(pl.crateres, 31), ...(pl.extra?.() ?? [])] };
-  }
-  if (r.cuerpo === 'asteroide') {
-    const vetas = puntos(14, 19, 1).map(({ x, y, a }) => ({ path: svg(`M ${x - 40} ${y} L ${x} ${y - 6 - a * 8} L ${x + 46} ${y + 2}`), color: '#e08a3c', ancho: 1.4, opacity: 0.18 + a * 0.2 }));
-    return { fondo: '#05060a', degrade: esfera(['#c9762e', '#95491a', '#5c2a10', '#241408']), trazos: [...crateres(30, 7, 1.3), ...vetas] };
-  }
-  // La luna: gris mineral, mares oscuros y cráteres.
-  return {
-    fondo: '#05060a',
-    degrade: esfera(['#c9ced8', '#949aa5', '#5c6069', '#24262c', '#0b0c10']),
-    trazos: [{ path: elipse(455, 96, 120, 30), color: '#3c3f46', opacity: 0.45 }, { path: elipse(672, 70, 80, 18), color: '#3c3f46', opacity: 0.4 }, ...crateres(34, 3)],
-  };
-}
-
-/** Un anillo de luz en el borde, como el conic-gradient de la galería: `desde` en grados de CSS (0 arriba). */
-function Anillo({ c, r, color, paradas, desde }: { c: number; r: number; color: string; paradas: [number, number][]; desde: number }) {
+  }, [cfg, g, alcance, densidad]);
+  const uniforms = useDerivedValue(() => ({ ...fijos, uTime: reloj.get() }));
+  const aditivo = cfg.modo === MODO.nebulosa || cfg.modo === MODO.galaxia;
+  const dibujo = (
+    <Group transform={[{ scale: f }]}>
+      <Fill blendMode={aditivo ? 'plus' : 'srcOver'}>
+        <Shader source={efecto(cfg.modo, () => fuenteDelCuerpo(cfg.modo))} uniforms={uniforms} />
+      </Fill>
+      {cfg.modo === MODO.galaxia &&
+        RESPLANDORES_DE_LA_GALAXIA.map((r) => <Resplandor key={r.color} {...r} g={g} alcance={alcance} densidad={densidad} reloj={reloj} />)}
+      {aditivo && <Particulas galaxia={cfg.modo === MODO.galaxia} g={g} alcance={alcance} reloj={reloj} />}
+    </Group>
+  );
   return (
-    <Circle cx={c} cy={c} r={r} style="stroke" strokeWidth={1.5}>
-      <SweepGradient c={vec(c, c)} colors={paradas.map(([, a]) => conAlfa(color, a))} positions={paradas.map(([g]) => g / 360)} origin={vec(c, c)} transform={[{ rotate: ((desde - 90) * Math.PI) / 180 }]} />
-    </Circle>
+    <View style={{ width: g.ancho, height: g.alto, opacity: 1 - VELO }} pointerEvents="none">
+      <Canvas
+        style={{ position: 'absolute', width: g.ancho * f, height: g.alto * f, left: (g.ancho * (1 - f)) / 2, top: (g.alto * (1 - f)) / 2, transform: [{ scale: 1 / f }] }}
+        pointerEvents="none"
+      >
+        {desvanece > 0 ? (
+          <Mask
+            mode="alpha"
+            mask={
+              <Rect x={0} y={0} width={g.ancho * f} height={g.alto * f}>
+                <LinearGradient start={vec(0, (g.alto - desvanece) * f)} end={vec(0, g.alto * f)} colors={['white', 'transparent']} />
+              </Rect>
+            }
+          >
+            {dibujo}
+          </Mask>
+        ) : dibujo}
+      </Canvas>
+    </View>
   );
 }
 
-export type PropsDelRango = { rango: Rango; lado: number; margen: number };
+type PropsDelResplandor = { color: string; escala: number; fuerza: number; g: Geometria; alcance: number; densidad: number; reloj: SharedValue<number> };
 
-/** El cuerpo de tu rango (del 2 al 7), de fondo: un disco de `lado`, con `margen` alrededor para el resplandor. */
-export function CuerpoDelRangoSkia({ rango, lado, margen }: PropsDelRango) {
-  const d = useMemo(() => dibujoDelCuerpo(rango), [rango]);
-  const borde = bordeDe(rango);
-  const R = lado / 2, c = margen + R;
-  const disco = useMemo(() => circulo(c, c, R), [c, R]);
-  const resplandor: [string, number][] = rango.cuerpo === 'galaxia' ? []
-    : rango.cuerpo === 'sol' ? [['rgba(242, 194, 48, 0.42)', 23], ['rgba(239, 159, 39, 0.2)', 60]]
-      : rango.cuerpo === 'agujeroNegro' ? [['rgba(167, 139, 250, 0.24)', 18], ['rgba(255, 106, 0, 0.4)', 5]]
-        : [[conAlfa(borde, 0.15), 15]];
+/** Uno de los dos resplandores del bulbo de la galaxia. */
+function Resplandor({ color, escala, fuerza, g, alcance, densidad, reloj }: PropsDelResplandor) {
+  const fijos = useMemo(
+    () => ({ uCentro: [g.cx, g.cy], uEscala: escala * alcance, uDensidad: densidad, uColor: lineal(color), uFuerza: fuerza }),
+    [g, escala, alcance, densidad, color, fuerza],
+  );
+  const uniforms = useDerivedValue(() => ({ ...fijos, uTime: reloj.get() }));
   return (
-    <Canvas style={{ width: 2 * c, height: 2 * c }} pointerEvents="none">
-      <Group opacity={rango.cuerpo === 'sol' ? 0.32 : 0.5} transform={[{ rotate: (225 * Math.PI) / 180 }]} origin={vec(c, c)}>
-        {resplandor.map(([color, blur], i) => (
-          <Circle key={i} cx={c} cy={c} r={R} color={color}>
-            <BlurMask blur={blur} style="outer" />
-          </Circle>
-        ))}
-        <Group clip={disco}>
-          {d.fondo && <Circle cx={c} cy={c} r={R} color={d.fondo} />}
-          <Group transform={[{ translateX: c - R }, { translateY: c - R }, { scale: lado / LADO }]}>
-            <Circle cx={MEDIO} cy={MEDIO} r={MEDIO}>
-              <RadialGradient c={vec(d.degrade.c[0], d.degrade.c[1])} r={d.degrade.r} colors={d.degrade.colores} positions={d.degrade.posiciones} />
-            </Circle>
-            {d.trazos.map((x, i) => (
-              <Path key={i} path={x.path} color={x.color} opacity={x.opacity ?? 1} style={x.ancho ? 'stroke' : 'fill'} strokeWidth={x.ancho ?? 0} />
-            ))}
-          </Group>
-        </Group>
-        <Group opacity={rango.cuerpo === 'galaxia' ? 0.3 : 1}>
-          <Anillo c={c} r={R - 0.75} color={borde} desde={-40} paradas={[[0, 0.12], [24, 0.86], [46, 0.34], [70, 0.04], [320, 0], [360, 0.12]]} />
-        </Group>
-      </Group>
-    </Canvas>
+    <Fill blendMode="plus">
+      <Shader source={efecto(RESPLANDOR, fuenteDelResplandor)} uniforms={uniforms} />
+    </Fill>
   );
 }
 
-/** El techo: el círculo que cuelga arriba de Progreso, del que se ve el borde de abajo, encendido. */
-export function TechoDelRangoSkia({ rango, lado, margen }: PropsDelRango) {
-  const borde = bordeDe(rango);
-  const R = lado / 2, c = margen + R;
+/** Las partículas del polvo o de la galaxia, que se suman: cada una con su tamaño en puntos y su color. */
+function Particulas({ galaxia, g, alcance, reloj }: { galaxia: boolean; g: Geometria; alcance: number; reloj: SharedValue<number> }) {
+  const p = useMemo(() => (galaxia ? particulasDeLaGalaxia() : particulasDelPolvo()), [galaxia]);
+  const n = p.x.length;
+  const sprites = useMemo(() => Array.from({ length: n }, () => Skia.XYWHRect(0, 0, LADO_PARTICULA, LADO_PARTICULA)), [n]);
+  const colores = useMemo(() => p.color.map((c) => Float32Array.from(c)), [p]);
+  const { x: xs, y: ys, z: zs, tam } = p;
+  const { cx, cy } = g;
+  const transforms = useRSXformBuffer(n, (val, i) => {
+    'worklet';
+    const [x, y] = posicionDeParticula(xs[i], ys[i], zs[i], galaxia, reloj.get(), cx, cy, alcance);
+    const k = tam[i] / LADO_PARTICULA;
+    val.set(k, 0, x - (k * LADO_PARTICULA) / 2, y - (k * LADO_PARTICULA) / 2);
+  });
   return (
-    <Canvas style={{ width: 2 * c, height: 2 * c }} pointerEvents="none">
-      <Circle cx={c} cy={c + 6} r={R} color={conAlfa(borde, 0.16)}>
-        <BlurMask blur={14} style="outer" />
-      </Circle>
-      <Circle cx={c} cy={c} r={R}>
-        <RadialGradient c={vec(c, c + R)} r={Math.hypot(R, 2 * R)} colors={['#161922', '#0b0c12', '#05060a']} positions={[0, 0.3, 0.64]} />
-      </Circle>
-      <Anillo c={c} r={R - 0.75} color={borde} desde={120} paradas={[[0, 0], [34, 0.45], [58, 0.95], [82, 0.4], [118, 0], [360, 0]]} />
-    </Canvas>
+    <Atlas
+      image={particula()}
+      sprites={sprites}
+      transforms={transforms}
+      colors={colores}
+      colorBlendMode="modulate"
+      blendMode="plus"
+      sampling={{ filter: FilterMode.Linear, mipmap: MipmapMode.Linear }}
+    />
   );
 }
+
+/** El techo: el mismo cuerpo, más grande y colgado arriba de Progreso, del que asoma el borde de abajo. Quieto. */
+export function TechoDelRangoSkia(props: PropsDelRango) {
+  return <CuerpoDelRangoSkia {...props} activo={false} desvanece={110} />;
+}
+
 
 const st = StyleSheet.create({
   rotulos: { height: 14, marginTop: 2 },

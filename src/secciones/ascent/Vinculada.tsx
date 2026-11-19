@@ -1,15 +1,18 @@
-// La sección de Ascent vinculada, como la galería (galeria/src/ascent.js; spec/ascent.md, «Ascent en Progreso»):
-// abajo, lo principal (el titular de hoy, lo que lo decide, tu último entreno y cómo te sientes); subiendo, de lo más
-// a lo menos importante: «Hoy, concéntrate en», de qué sale, tus músculos, tu fuerza, las marcas, las razones de
-// estancamiento, tu año, lo que comparten las dos y en qué se basa. Las cuentas están en vista.ts.
+// La sección de Ascent vinculada (spec/ascent.md, «Ascent en Progreso»), como Sueño: cada parte es un dibujo con una
+// línea y lo demás se abre. Abajo, donde llegas, tu semana (la rutina, la carga de cada músculo contra el rango y la
+// recuperación, con una línea de qué hacer); subiendo, hoy según el momento (antes de entrenar, lo comido y qué
+// esperar; después, lo entrenado; o el descanso), tu noche en corto, tu fuerza, las marcas, el estancamiento, tu año,
+// lo que comparten las dos y en qué se basa. Las cuentas están en vista.ts.
 
 import * as Haptics from 'expo-haptics';
-import { Fragment, useMemo, useState, type ReactNode } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 
 import { deAscent, useAscent } from '@/almacen/ascent';
+import { RANGO_SEMANAL, type CargaDelMusculo, type EstadoDeCarga } from '@/dominio/cargaSemanal';
 import { CONDICIONES, queFalla, buenDiaParaLaMarca, type Foco } from '@/dominio/diagnostico';
 import { NOCHE_CORTA, SESIONES_MINIMAS, aDosYMedio } from '@/dominio/rendimiento';
+import { juicioDeLaDeuda } from '@/dominio/sueno';
 import { POCAS_PESADAS, PROTEINA_POR_KG, type Razon } from '@/dominio/estancados';
 import { diasEntre, type ClaveDia } from '@/dominio/fechas';
 import type { Musculo } from '@/dominio/musculos';
@@ -21,9 +24,9 @@ import { conSigno, duracion, hora, numero, useEstado, useNumeros } from '../comi
 import { usePersona, useSueno } from '../ganchos';
 import { C, GRUPOS_DEL_ANIO, useAcento } from './colores';
 import { Cuerpo, Tendencia, type EstadoDibujado } from './Dibujos';
-import { conMayuscula, cuandoDe, cuandoFue, cuandoTodos, enFrase, enLista, listaDeMusculos, nombreDelEjercicio, nombreDelMusculo, textosDelTitular, tx } from './palabras';
+import { conMayuscula, cuandoDe, cuandoFue, enFrase, enLista, listaDeMusculos, nombreDelEjercicio, nombreDelMusculo, tx } from './palabras';
 import { Cambia, Desplegable, Enlace, Escala, Etiqueta, Flecha, Fundido, Nota, Parte, Pildoras, Una, useTitulares, type EstadoDePildora } from './piezas';
-import { calcularTodo, type DeLaMarca, type Estancado, type Hoy, type Todo } from './vista';
+import { calcularTodo, calcularTuSemana, type DeLaMarca, type Estancado, type Hoy, type Todo, type TuSemana } from './vista';
 
 /** La barra del sueño va de 0 a 10 horas; la de la proteína, hasta 2,6 g por kilo. */
 const SUENO_TOPE = 10 * 60;
@@ -59,11 +62,10 @@ export function RestoVinculada({ h, preparada, como, alComo, alMedirComo, alIr }
       <Comparten h={h} todo={todo} ocultas={!numeros || sinDeficit} />
       <TuAnio h={h} todo={todo} />
       <Estancamiento todo={todo} />
-      <Marcas h={h} todo={todo} />
+      {h.sesion?.como === 'prevista' && <Marcas h={h} todo={todo} />}
       <Fuerza todo={todo} />
-      <TusMusculos todo={todo} />
-      <DeQueSale h={h} todo={todo} numeros={numeros} sinDeficit={sinDeficit} alIr={alIr} />
-      <Concentrate h={h} todo={todo} numeros={numeros} alIr={alIr} />
+      <TuNoche h={h} alIr={alIr} />
+      <HoyMomento h={h} todo={todo} numeros={numeros && !sinDeficit} />
     </>
   );
 }
@@ -74,50 +76,111 @@ function usePersonaDeAscent() {
   return useMemo(() => ({ persona, sueno }), [persona, sueno]);
 }
 
-// ------------------------------------------------------------ lo principal: el titular de hoy
+// ------------------------------------------------------------ lo principal: tu semana
 export function CabezaDelDia({ h, alVerComo }: { h: Hoy; alVerComo: () => void }) {
+  const e = useEstado();
   const a = useAcento();
   const fuente = useTitulares();
-  const [queEs, setQueEs] = useState(false);
-  const [titulo, texto] = textosDelTitular(h);
+  const [todos, setTodos] = useState(false);
+  const w = useMemo(() => calcularTuSemana(h, e), [h, e]);
   const s = h.sesion;
-  const linea = !s ? t('ascent.dia.descanso') : s.como === 'hecha' ? t('ascent.dia.hecha', { sesion: s.nombre }) : t('ascent.dia.sesion', { sesion: s.nombre, hora: hora(s.inicio) });
-  const nombres = h.trabajados.slice(0, 4).map((m) => nombreDelMusculo(m.musculo));
+  const titulo = !s ? t('ascent.momento.descanso') : s.como === 'hecha' ? t('ascent.dia.hecha', { sesion: s.nombre }) : t('ascent.dia.sesion', { sesion: s.nombre, hora: hora(s.inicio) });
+  const deHoy = new Set(h.musculosHoy);
+  // Primero los de hoy; después, los que más lejos están de 10.
+  const orden = [...w.carga].sort((x, y) => Number(deHoy.has(y.musculo)) - Number(deHoy.has(x.musculo)) || x.hechas - y.hechas);
+  const visibles = todos ? orden : orden.slice(0, VISIBLES);
   return (
     <View style={st.hoy}>
-      <Text style={st.hoySesion}>{linea}</Text>
-      <Cambia texto={titulo} style={[st.hoyTitulo, { fontFamily: fuente, color: a.claro }]} />
-      <Cambia texto={texto} style={st.hoyTexto} />
-      {s?.como === 'prevista' && <Decide h={h} />}
-      {h.ultima && nombres.length > 0 && (
-        <View style={st.ultimo}>
-          <Cuerpo ancho={84} clases={Object.fromEntries(h.trabajados.map((m) => [m.musculo, 'trabajado' as const]))} etiqueta={nombres.join(', ')} />
-          <View style={st.ultimoTextos}>
-            <Text style={st.ultimoEtq}>{t('ascent.ultimo.titulo')}</Text>
-            <Text style={st.ultimoTexto}>{t('ascent.ultimo.texto', { dia: conMayuscula(cuandoFue(h.ultima.fecha, h.hoy).replace(/^el /, '')), musculos: nombres.join(', ') })}</Text>
+      <Text style={st.hoySesion}>{t('ascent.semana.titulo')}</Text>
+      <Cambia texto={titulo} style={[st.semanaCab, { fontFamily: fuente, color: a.claro }]} />
+      <Tira w={w} />
+      {!w.conDatos ? (
+        <Text style={st.vacio}>{t('ascent.semana.sinDatos')}</Text>
+      ) : (
+        <>
+          <View style={st.cargaCuerpo}>
+            <Cuerpo ancho={190} clases={clasesDeCarga(w.carga)} etiqueta={t('ascent.semana.titulo')} />
           </View>
-        </View>
+          <Cambia texto={lineaDeTuSemana(w)} style={st.semanaLinea} />
+          <Fundido clave={visibles.map((c) => c.musculo).join()} style={st.cargas}>
+            {visibles.map((c) => <BarraDeCarga key={c.musculo} c={c} hoy={deHoy.has(c.musculo)} w={w} />)}
+          </Fundido>
+          <Text style={st.cargaRango}>{t('ascent.semana.rango')}</Text>
+        </>
       )}
-      {s?.como === 'prevista' && <ComoTeSientes valor={h.comoTeSientes} />}
-      <Enlace texto={t('ascent.porQueNo.enlace')} alTocar={() => setQueEs((x) => !x)} expandido={queEs} />
-      <Desplegable abierto={queEs} style={st.explicacionCaja}>
-        <Text style={st.explicacion}>{t('ascent.porQueNo.texto')}</Text>
+      <View style={st.enlaces}>
+        {w.conDatos && orden.length > VISIBLES && <Enlace texto={todos ? t('ascent.semana.verMenos') : t('ascent.semana.verTodos')} alTocar={() => setTodos((x) => !x)} expandido={todos} />}
         <Enlace texto={t('ascent.porQueNo.ver')} alTocar={alVerComo} />
-      </Desplegable>
+      </View>
     </View>
   );
 }
 
-/** Lo que decide hoy, en tres: la noche, lo que entrenas y cómo te sientes. Lo que pone el límite lleva el único color. */
-function Decide({ h }: { h: Hoy }) {
-  const n = h.noche;
-  const noche = !n ? t('ascent.decide.sinNoche') : n.seguidas && n.estado !== 'corta' && n.estado !== 'muyCorta' ? t('ascent.noche.seguidas') : tx(`ascent.noche.${n.estado}`);
-  const items: [string, 'moon' | 'dumbbell' | 'heart', string, string, boolean][] = [
-    ['noche', 'moon', t('ascent.decide.noche'), noche, h.titular.limita === 'sueno'],
-    ['musculos', 'dumbbell', t('ascent.decide.musculos'), h.f.peor ? tx(`ascent.decide.estados.${h.f.peor}`) : '—', h.titular.limita === 'musculos'],
-    ['siente', 'heart', t('ascent.decide.siente'), h.comoTeSientes === null ? '—' : t('ascent.siente.respuesta', { n: h.comoTeSientes }), h.titular.limita === 'teSientes'],
-  ];
-  return <DecideFila items={items} />;
+/** Los músculos que se ven sin «Ver todos». */
+const VISIBLES = 5;
+
+/** El color de cada músculo en el cuerpo: en rango, lleno; en camino o poco, tenue; mucho, terracota. */
+function clasesDeCarga(carga: readonly CargaDelMusculo[]): Partial<Record<Musculo, EstadoDibujado>> {
+  const clase: Record<EstadoDeCarga, EstadoDibujado> = { enRango: 'trabajado', enCamino: 'recuperandose', poco: 'recuperandose', mucho: 'cargado' };
+  return Object.fromEntries(carga.filter((c) => c.hechas > 0).map((c) => [c.musculo, clase[c.estado]]));
+}
+
+function lineaDeTuSemana(w: TuSemana): string {
+  const l = w.linea;
+  const m = (x: Musculo) => nombreDelMusculo(x).toLowerCase();
+  if (l.que === 'dale') {
+    const [x, y] = l.musculos;
+    if (!x.hechas && (!y || !y.hechas)) return t('ascent.semana.linea.daleNuevo', { musculos: enLista(l.musculos.map((z) => m(z.musculo))) });
+    return y ? t('ascent.semana.linea.daleDos', { a: m(x.musculo), b: m(y.musculo), n: x.hechas, m: y.hechas }) : t('ascent.semana.linea.dale', { musculo: m(x.musculo), n: x.hechas });
+  }
+  if (l.que === 'retomar') return conMayuscula(t('ascent.semana.linea.retomar', { musculo: m(l.musculo), dia: lista('fecha.dias')[l.dia] }));
+  if (l.que === 'proxima') return conMayuscula(t('ascent.semana.linea.proxima', { musculo: m(l.musculo) }));
+  if (l.que === 'mucho') return t('ascent.semana.linea.mucho', { musculo: nombreDelMusculo(l.musculo) });
+  return t('ascent.semana.linea.enRango');
+}
+
+/** Lunes a domingo: lo entrenado lleno, lo previsto en aro, el descanso tenue y hoy con un anillo. */
+function Tira({ w }: { w: TuSemana }) {
+  const a = useAcento();
+  const dias = lista('fecha.diasCortos');
+  const largos = lista('fecha.dias');
+  return (
+    <View style={st.tira} accessible accessibilityRole="image" accessibilityLabel={w.tira.map((x) => `${largos[x.dia]}: ${tx(`ascent.semana.dia.${x.clase}`)}`).join(', ')}>
+      {w.tira.map((x) => (
+        <View key={x.fecha} style={st.tiraDia}>
+          <View style={[st.tiraAnillo, x.hoy && { borderColor: C.tinta }]}>
+            <View style={[st.tiraPunto, x.clase === 'hecho' && { backgroundColor: a.claro }, x.clase === 'previsto' && [st.tiraPrevisto, { borderColor: a.claro }]]} />
+          </View>
+          <Text style={[st.tiraLetra, x.hoy && { color: C.tinta }]}>{dias[x.dia]}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const TOPE_DE_LA_BARRA = 26;
+const enLaBarra = (n: number) => `${(Math.min(TOPE_DE_LA_BARRA, n) / TOPE_DE_LA_BARRA) * 100}%` as const;
+
+/** Un músculo en una línea: su nombre, lo hecho lleno y lo previsto hueco contra la zona de 10 a 20, las series y si está listo. */
+function BarraDeCarga({ c, hoy, w }: { c: CargaDelMusculo; hoy: boolean; w: TuSemana }) {
+  const a = useAcento();
+  const ahora = w.ahora[c.musculo];
+  const descansado = !ahora || ahora.estado === 'recuperado';
+  const listo = descansado ? t('ascent.semana.listo') : conMayuscula(cuandoDe(ahora.cuando));
+  const color = c.estado === 'mucho' ? C.lejos : a.claro;
+  const estado = tx(`ascent.semana.estados.${c.estado}`);
+  return (
+    <View style={st.carga} accessible accessibilityLabel={t('ascent.semana.barra', { musculo: nombreDelMusculo(c.musculo), n: c.hechas, estado: estado.toLowerCase(), listo })}>
+      <Text style={[st.cargaNombre, hoy && { color: C.tinta }]} numberOfLines={1}>{nombreDelMusculo(c.musculo)}</Text>
+      <View style={st.cargaPista}>
+        <View style={[st.cargaZona, { left: enLaBarra(RANGO_SEMANAL.desde), width: enLaBarra(RANGO_SEMANAL.hasta - RANGO_SEMANAL.desde) }]} />
+        {c.previstas > 0 && <View style={[st.cargaPrevista, { borderColor: color, left: enLaBarra(c.hechas), width: enLaBarra(c.previstas) }]} />}
+        <View style={[st.cargaHecha, { backgroundColor: color, width: enLaBarra(c.hechas) }]} />
+      </View>
+      <Text style={[st.cargaNumero, c.estado === 'mucho' && { color: C.lejos }]}>{c.hechas}</Text>
+      <View style={[st.cargaListo, { backgroundColor: descansado ? C.tinta : ahora.estado === 'cargado' ? C.lejos : 'transparent', borderColor: descansado ? C.tinta : ahora.estado === 'cargado' ? C.lejos : C.apagado }]} />
+    </View>
+  );
 }
 
 export function DecideFila({ items, vacio }: { items: [string, 'moon' | 'dumbbell' | 'heart', string, string, boolean][]; vacio?: boolean }) {
@@ -197,136 +260,116 @@ function textosDelFoco(f: Foco, h: Hoy, todo: Todo, numeros: boolean): [string, 
   return [t('ascent.foco.faltaNoche.titulo'), t('ascent.foco.faltaNoche.texto')];
 }
 
-function Concentrate({ h, todo, numeros, alIr }: { h: Hoy; todo: Todo; numeros: boolean; alIr: (a: IrA) => void }) {
-  const { claro } = useAcento();
-  if (!todo.foco.length) return null;
-  return (
-    <View style={st.foco}>
-      <Etiqueta>{t('ascent.foco.titulo')}</Etiqueta>
-      <Fundido clave={todo.foco.map((f) => f.que).join()}>
-        {todo.foco.map((f, i) => {
-          const [titulo, texto] = textosDelFoco(f, h, todo, numeros);
-          return (
-            <View key={`${f.que}${i}`} style={[st.focoItem, i === 0 && st.focoPrimero]}>
-              <Text style={f.hora === null ? st.focoHoraSin : [st.focoHora, { color: claro }]}>{f.hora === null ? t('ascent.foco.hoy') : hora(f.hora)}</Text>
-              <View style={st.crece}>
-                <Text style={st.focoTitulo}>{titulo}</Text>
-                {!!texto && <Text style={st.focoTexto}>{texto}</Text>}
-                {f.que === 'faltaNoche' && <Enlace texto={t('ascent.diagnostico.irA.sueno')} alTocar={() => alIr('sueno')} estilo={st.focoEnlace} />}
-              </View>
-            </View>
-          );
-        })}
-      </Fundido>
-    </View>
-  );
-}
-
-// ------------------------------------------------------------ de qué sale
-function Fila({ nombre, valor, palabra, limita, primera, children }: { nombre: string; valor?: string; palabra?: string; limita?: boolean; primera?: boolean; children?: ReactNode }) {
-  return (
-    <View style={[st.fila, primera && st.filaPrimera]}>
-      <View style={st.filaCab}>
-        <Text style={st.filaNombre}>{nombre}</Text>
-        {!!valor && <Text style={st.filaValor}>{valor}</Text>}
-        {!!palabra && <Text style={[st.filaPalabra, limita && { color: C.lejos }]}>{palabra}</Text>}
-      </View>
-      {children}
-    </View>
-  );
-}
+// ------------------------------------------------------------ hoy, según el momento
 const horasDe = (min: number) => duracion(Math.round(min / 5) * 5);
-const Texto = ({ children }: { children: ReactNode }) => <Text style={st.filaTexto}>{children}</Text>;
-const Consejo = ({ children }: { children: ReactNode }) => <Text style={st.filaConsejo}>{children}</Text>;
 
-function DeQueSale({ h, todo, numeros, sinDeficit, alIr }: { h: Hoy; todo: Todo; numeros: boolean; sinDeficit: boolean; alIr: (a: IrA) => void }) {
-  const n = h.noche;
-  const necesidad = n?.necesidad ?? 480;
-  const antes = h.sesion?.como === 'prevista';
-  const hecha = h.sesion?.como === 'hecha';
-  const consejos = todo.diag ? todo.diag.consejos.map((x) => x.que) : [];
-  const acostarse = (() => {
-    const f = todo.foco.find((x) => x.que === 'dormir');
-    return f && f.hora !== null ? hora(f.hora) : null;
-  })();
-  // El sueño
-  const palabraNoche = !n ? '' : n.seguidas && n.estado !== 'corta' && n.estado !== 'muyCorta' ? t('ascent.noche.seguidas') : tx(`ascent.noche.${n.estado}`);
-  const corta = !!n && (n.estado === 'corta' || n.estado === 'muyCorta' || n.seguidas);
-  // Los músculos
-  const ms = hecha && h.despues ? h.despues.musculos : h.f.musculos;
-  const peor = hecha && h.despues ? h.despues.peor : h.f.peor;
-  const cuando = cuandoTodos(ms);
-  // La comida
-  const c = todo.comida;
-  return (
-    <View style={st.filas}>
-      <Etiqueta>{t('ascent.filas.titulo')}</Etiqueta>
-      <Fila nombre={t('ascent.filas.sueno.nombre')} valor={n ? horasDe(n.dormido) : '—'} palabra={palabraNoche} limita={h.titular.limita === 'sueno'} primera>
-        {!n ? (
-          <>
-            <Texto>{t('ascent.filas.sueno.sinNoche')}</Texto>
-            <Enlace texto={t('ascent.diagnostico.irA.sueno')} alTocar={() => alIr('sueno')} />
-          </>
+function HoyMomento({ h, todo, numeros }: { h: Hoy; todo: Todo; numeros: boolean }) {
+  const s = h.sesion;
+  const comer = todo.foco.find((f): f is Extract<Foco, { que: 'comer' }> => f.que === 'comer' && (s?.como === 'hecha' ? f.cuando !== 'antes' : f.cuando === 'antes'));
+  const linea = comer ? textosDelFoco(comer, h, todo, numeros) : null;
+  const deComer = comer && linea && (
+    <View style={st.comer}>
+      <Text style={st.comerHora}>{comer.hora === null ? '' : hora(comer.hora)}</Text>
+      <View style={st.crece}>
+        <Text style={st.focoTitulo}>{linea[0]}</Text>
+        {!!linea[1] && <Text style={st.focoTexto}>{linea[1]}</Text>}
+      </View>
+    </View>
+  );
+  if (s?.como === 'prevista') {
+    const l = todo.llegas;
+    return (
+      <Parte titulo={t('ascent.momento.antes')}>
+        {!l?.anotado ? (
+          <Una>{t('ascent.momento.sinAnotar')}</Una>
         ) : (
           <>
-            <Escala
-              valor={n.dormido} tope={SUENO_TOPE} rayas={[[NOCHE_CORTA, t('ascent.filas.sueno.seis')], [necesidad, t('ascent.filas.sueno.tuyo', { horas: duracion(necesidad) })]]}
-              limita={h.titular.limita === 'sueno'} zona={NOCHE_CORTA} etiqueta={t('ascent.filas.sueno.de', { horas: horasDe(n.dormido), necesidad: duracion(necesidad) })}
-            />
-            <Texto>
-              {[t('ascent.filas.sueno.de', { horas: horasDe(n.dormido), necesidad: duracion(necesidad) }), ...((n.despertoAntes ?? 0) >= 60 ? [t('ascent.filas.sueno.antes', { tiempo: duracion(Math.round(n.despertoAntes! / 5) * 5) })] : [])].join(' ')}
-            </Texto>
-            {n.seguidas && <Texto>{t('ascent.filas.sueno.seguidas')}</Texto>}
-            {n.calidad !== null && <Nota style={st.filaNota}>{t('ascent.filas.sueno.calidad', { n: Math.round(n.calidad) })}</Nota>}
-            {corta && acostarse && <Consejo>{t(antes ? 'ascent.filas.sueno.consejos.cortaAntes' : 'ascent.filas.sueno.consejos.corta', { hora: acostarse })}</Consejo>}
-            {!corta && n.estado === 'algoCorta' && acostarse && <Consejo>{t('ascent.filas.sueno.consejos.algoCorta', { hora: acostarse })}</Consejo>}
-            {antes && consejos.includes('siesta') && <Consejo>{t('ascent.diagnostico.consejos.siesta')}</Consejo>}
-            {consejos.includes('deuda') && <Nota style={st.filaNota}>{t('ascent.diagnostico.consejos.deuda')}</Nota>}
-            <View style={st.enlaces}>
-              {n.calidad === null && <Enlace texto={t('ascent.filas.sueno.anotar')} alTocar={() => alIr('manana')} />}
-              <Enlace texto={t('ascent.filas.sueno.corregir')} alTocar={() => alIr('corregir')} />
+            <View style={st.macros}>
+              {(['proteina', 'carbohidratos', 'grasas'] as const).map((k) => <BarraDeMacro key={k} k={k} n={l.total[k]} meta={l.meta?.[k] ?? null} numeros={numeros} />)}
+            </View>
+            <View style={st.esperar}>
+              {l.esperar.map((x) => (
+                <View key={x} style={st.esperarFila}>
+                  <View style={[st.esperarPunto, x === 'bien' && st.esperarBien]} />
+                  <Text style={st.esperarTexto}>{tx(`ascent.momento.esperar.${x}`)}</Text>
+                </View>
+              ))}
             </View>
           </>
         )}
-      </Fila>
-      <Fila nombre={t('ascent.filas.musculos.nombre')} palabra={peor ? tx(`ascent.decide.estados.${peor}`) : ''} limita={h.titular.limita === 'musculos'}>
-        {!ms.length ? (
-          <Texto>{t('ascent.filas.musculos.nada')}</Texto>
-        ) : (
-          <>
-            <PildorasDeMusculos musculos={ms} />
-            <Texto>{tx(`ascent.filas.musculos.texto.${hecha ? 'hecha' : h.sesion ? 'prevista' : 'descanso'}`, { musculos: listaDeMusculos(h.musculosHoy) })}</Texto>
-            {h.conEllos && !hecha && <Texto>{t('ascent.filas.musculos.ultima', { cuando: cuandoFue(h.conEllos.fecha, h.hoy), n: h.conEllos.series })}</Texto>}
-            {antes ? (
-              <Consejo>{tx(`ascent.filas.musculos.consejos.${peor ?? 'recuperado'}`, { cuando: cuandoDe(cuando) })}</Consejo>
-            ) : (
-              <Consejo>{cuando === 'ya' ? t('ascent.titular.descanso.listos') : t(hecha ? 'ascent.filas.musculos.listos' : 'ascent.filas.musculos.listosDescanso', { cuando: cuandoDe(cuando) })}</Consejo>
-            )}
-            <Nota style={st.filaNota}>{t('ascent.filas.musculos.nota')}</Nota>
-          </>
-        )}
-      </Fila>
-      <Fila nombre={t('ascent.filas.comida.nombre')} valor={c.gPorKg !== null && numeros && !sinDeficit ? t('ascent.filas.comida.valor', { g: numero(c.gPorKg, 1) }) : ''}>
-        {sinDeficit ? (
-          <Texto>{t('ascent.filas.comida.sinMetas')}</Texto>
-        ) : c.gPorKg === null ? (
-          <Texto>{t('ascent.filas.comida.sinDatos')}</Texto>
-        ) : (
-          <>
-            {numeros ? (
-              <>
-                <Escala valor={c.gPorKg} tope={PROTEINA_TOPE} rayas={[[PROTEINA_POR_KG, t('ascent.filas.comida.raya')]]} etiqueta={t('ascent.filas.comida.texto', { g: numero(c.gPorKg, 1), n: c.dias })} />
-                <Texto>{t('ascent.filas.comida.texto', { g: numero(c.gPorKg, 1), n: c.dias }) + (c.ayer ? ' ' + t('ascent.filas.comida.ayer', { p: numero(c.ayer.p), meta: numero(c.ayer.meta) }) : '')}</Texto>
-              </>
-            ) : (
-              <Texto>{t('ascent.filas.comida.sinNumeros')}</Texto>
-            )}
-            <Nota style={st.filaNota}>{t('ascent.filas.comida.nota')}</Nota>
-            {consejos.includes('noCompensar') && <Nota style={st.filaNota}>{t('ascent.diagnostico.consejos.noCompensar')}</Nota>}
-          </>
-        )}
-      </Fila>
+        {deComer}
+        <ComoTeSientes valor={h.comoTeSientes} />
+      </Parte>
+    );
+  }
+  if (s?.como === 'hecha') {
+    const n = h.trabajados.reduce((suma, m) => suma + m.series, 0);
+    return (
+      <Parte titulo={t('ascent.momento.hecha')}>
+        <View style={st.hecha}>
+          <Cuerpo ancho={150} clases={Object.fromEntries(h.trabajados.map((m) => [m.musculo, 'trabajado' as const]))} etiqueta={listaDeMusculos(h.trabajados.map((m) => m.musculo))} />
+          <Text style={st.hechaTexto}>{t('ascent.momento.hechaTexto', { sesion: s.nombre, n })}</Text>
+        </View>
+        {deComer}
+      </Parte>
+    );
+  }
+  const recuperandose = todo.todos.filter((m) => m.estado !== 'recuperado');
+  return (
+    <Parte titulo={t('ascent.momento.descanso')}>
+      {recuperandose.length ? (
+        <>
+          <Una>{t('ascent.momento.seRecuperan')}</Una>
+          <PildorasDeMusculos musculos={recuperandose} />
+        </>
+      ) : (
+        <Una>{t('ascent.momento.recuperado')}</Una>
+      )}
+    </Parte>
+  );
+}
+
+/** Un macro de hoy contra su meta, en una barra; sin números, solo la barra. */
+function BarraDeMacro({ k, n, meta, numeros }: { k: 'proteina' | 'carbohidratos' | 'grasas'; n: number; meta: number | null; numeros: boolean }) {
+  const a = useAcento();
+  const fraccion = meta ? Math.min(1, n / meta) : 0;
+  const texto = meta && numeros ? t('ascent.momento.deMeta', { n: numero(Math.round(n)), meta: numero(meta) }) : '';
+  return (
+    <View style={st.macro} accessible accessibilityLabel={`${tx(`comida.${k}`)} ${texto}`}>
+      <View style={st.macroCab}>
+        <Text style={st.macroNombre}>{tx(`comida.${k}`)}</Text>
+        {!!texto && <Text style={st.macroValor}>{texto}</Text>}
+      </View>
+      <View style={st.macroPista}>
+        <View style={[st.macroLleno, { backgroundColor: a.claro, width: `${fraccion * 100}%` }]} />
+      </View>
     </View>
+  );
+}
+
+// ------------------------------------------------------------ tu noche, en corto
+function TuNoche({ h, alIr }: { h: Hoy; alIr: (a: IrA) => void }) {
+  const n = h.noche;
+  const palabra = !n ? '' : n.seguidas && n.estado !== 'corta' && n.estado !== 'muyCorta' ? t('ascent.noche.seguidas') : tx(`ascent.noche.${n.estado}`);
+  const deuda = h.deuda === null ? null : tx(`sueno.deuda.juicio.${juicioDeLaDeuda({ minutos: h.deuda })}`);
+  return (
+    <Parte titulo={t('ascent.tuNoche.titulo')} derecha={n ? horasDe(n.dormido) : undefined}>
+      {!n ? (
+        <Una>{t('ascent.tuNoche.sinNoche')}</Una>
+      ) : (
+        <>
+          <Escala
+            valor={n.dormido} tope={SUENO_TOPE} rayas={[[NOCHE_CORTA, t('ascent.filas.sueno.seis')], [n.necesidad, t('ascent.filas.sueno.tuyo', { horas: duracion(n.necesidad) })]]}
+            limita={h.titular.limita === 'sueno'} zona={NOCHE_CORTA} etiqueta={t('ascent.filas.sueno.de', { horas: horasDe(n.dormido), necesidad: duracion(n.necesidad) })}
+          />
+          <View style={st.nocheFila}>
+            <Text style={[st.nochePalabra, h.titular.limita === 'sueno' && { color: C.lejos }]}>{palabra}</Text>
+            {deuda && <Text style={st.nocheDeuda}>{t('ascent.tuNoche.deuda', { palabra: deuda.toLowerCase() })}</Text>}
+          </View>
+        </>
+      )}
+      <Enlace texto={t('ascent.tuNoche.ver')} alTocar={() => alIr('sueno')} />
+    </Parte>
   );
 }
 
@@ -334,52 +377,6 @@ function DeQueSale({ h, todo, numeros, sinDeficit, alIr }: { h: Hoy; todo: Todo;
 const detalleDelMusculo = (m: MusculoAhora) => tx(`ascent.cuerpo.detalle.${m.estado}`, { musculo: nombreDelMusculo(m.musculo), cuando: cuandoDe(m.cuando) });
 function PildorasDeMusculos({ musculos, chicas }: { musculos: MusculoAhora[]; chicas?: boolean }) {
   return <Pildoras chicas={chicas} items={musculos.map((m) => ({ clave: m.musculo, texto: nombreDelMusculo(m.musculo), estado: m.estado as EstadoDePildora, etiqueta: detalleDelMusculo(m) }))} />;
-}
-
-// ------------------------------------------------------------ tus músculos
-function TusMusculos({ todo }: { todo: Todo }) {
-  const a = useAcento();
-  const peor = [...todo.todos].sort((a, b) => b.residual - a.residual)[0];
-  const [elegido, setElegido] = useState<Musculo | null>(peor && peor.estado !== 'recuperado' ? peor.musculo : null);
-  const m = elegido ? todo.todos.find((x) => x.musculo === elegido) : null;
-  const clases = Object.fromEntries(todo.todos.filter((x) => x.estado !== 'recuperado').map((x) => [x.musculo, x.estado as EstadoDibujado]));
-  return (
-    <Parte titulo={t('ascent.cuerpo.titulo')}>
-      <Una>{t('ascent.cuerpo.texto')}</Una>
-      <View style={st.cuerpo}>
-        <Cuerpo ancho={290} rotulos clases={clases} elegido={elegido} alTocar={(x) => { Haptics.selectionAsync().catch(() => {}); setElegido(x); }} etiqueta={t('ascent.cuerpo.titulo')} />
-        <View style={st.cuerpoDetalle} accessibilityLiveRegion="polite">
-          <Cambia texto={m ? detalleDelMusculo(m) : t('ascent.cuerpo.todosDescansados')} style={st.cuerpoDetalleTexto} />
-        </View>
-        <View style={st.leyendaCuerpo}>
-          {(['recuperado', 'recuperandose', 'cargado'] as const).map((x) => (
-            <View key={x} style={st.leyendaItem}>
-              <View style={[st.leyendaPunto, x === 'recuperandose' && { backgroundColor: a.claro, opacity: 0.8 }, x === 'cargado' && { backgroundColor: C.lejos }]} />
-              <Text style={st.leyendaTexto}>{tx(`ascent.cuerpo.estados.${x}`)}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-      {/* Llega con la rutina de Ascent: entra con un fundido. */}
-      <Fundido clave={todo.semana.length ? 'con' : 'sin'}>
-        {todo.semana.length > 0 && (<>
-          <Etiqueta style={st.semanaTitulo}>{t('ascent.cuerpo.semana')}</Etiqueta>
-          <View style={st.semana}>
-            {todo.semana.map((x) => (
-              <View key={x.dia} style={st.semanaFila}>
-                <Text style={[st.semanaDia, x.hoy && { color: C.tinta }]}>{lista('fecha.diasCortos')[x.dia]}</Text>
-                <View style={st.semanaTextos}>
-                  <Text style={st.semanaNombre}>{x.hoy ? t('ascent.cuerpo.hoy', { nombre: x.nombre }) : x.nombre}</Text>
-                  <PildorasDeMusculos musculos={x.musculos} chicas />
-                </View>
-              </View>
-            ))}
-          </View>
-          <Nota>{t('ascent.cuerpo.nota')}</Nota>
-        </>)}
-      </Fundido>
-    </Parte>
-  );
 }
 
 // ------------------------------------------------------------ tu fuerza
@@ -824,43 +821,54 @@ const st = StyleSheet.create({
   sienteNumero: { fontFamily: letras.numero, fontSize: 12, color: C.sub, fontVariant: ['tabular-nums'] },
   sienteExtremos: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
   sienteExtremo: { fontFamily: letras.texto, fontSize: 10.5, color: C.apagado },
-  // Hoy, concéntrate en
-  foco: { marginTop: 32, marginHorizontal: -22, paddingTop: 14, paddingHorizontal: 22, borderTopWidth: 1, borderTopColor: C.linea },
-  focoItem: { flexDirection: 'row', gap: 12, paddingVertical: 12, borderTopWidth: 1, borderTopColor: C.lineaSuave },
-  focoPrimero: { borderTopWidth: 0, paddingTop: 14 },
-  focoHora: { width: 50, paddingTop: 1, fontFamily: letras.numeroLiviano, fontSize: 17, lineHeight: 20, color: C.claro, fontVariant: ['tabular-nums'] },
-  focoHoraSin: { width: 50, fontFamily: letras.textoMedio, fontSize: 10, lineHeight: 19, letterSpacing: 1.6, textTransform: 'uppercase', color: C.sub },
-  focoTitulo: { fontFamily: letras.texto, fontSize: 15.5, lineHeight: 20, color: C.tinta },
+  // Tu semana
+  semanaCab: { marginTop: 8, fontSize: 27, lineHeight: 31, letterSpacing: -0.4 },
+  vacio: { marginTop: 18, fontFamily: letras.texto, fontSize: 14, lineHeight: 20, color: C.sub },
+  tira: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 },
+  tiraDia: { alignItems: 'center', gap: 5, flex: 1 },
+  tiraAnillo: { width: 26, height: 26, borderRadius: 13, borderWidth: 1.2, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center' },
+  tiraPunto: { width: 12, height: 12, borderRadius: 6, backgroundColor: 'rgba(170, 178, 196, 0.18)' },
+  tiraPrevisto: { backgroundColor: 'transparent', borderWidth: 1.5 },
+  tiraLetra: { fontFamily: letras.texto, fontSize: 10.5, color: C.sub },
+  cargaCuerpo: { alignItems: 'center', marginTop: 12 },
+  semanaLinea: { marginTop: 12, fontFamily: letras.texto, fontSize: 16, lineHeight: 22, color: C.tinta, textAlign: 'center' },
+  cargas: { marginTop: 14, gap: 9 },
+  carga: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  cargaNombre: { width: 92, fontFamily: letras.texto, fontSize: 13.5, color: C.sub },
+  cargaPista: { flex: 1, height: 8, borderRadius: 4, backgroundColor: 'rgba(170, 178, 196, 0.1)', overflow: 'hidden' },
+  cargaZona: { position: 'absolute', top: 0, bottom: 0, backgroundColor: 'rgba(170, 178, 196, 0.14)', borderLeftWidth: 1, borderRightWidth: 1, borderColor: 'rgba(232, 236, 246, 0.35)' },
+  cargaHecha: { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: 4 },
+  cargaPrevista: { position: 'absolute', top: 0, bottom: 0, borderWidth: 1, borderStyle: 'dashed', borderRadius: 4, opacity: 0.8 },
+  cargaNumero: { width: 20, textAlign: 'right', fontFamily: letras.texto, fontSize: 12, color: C.sub, fontVariant: ['tabular-nums'] },
+  cargaListo: { width: 9, height: 9, borderRadius: 4.5, borderWidth: 1.3 },
+  enlaces: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 20, marginTop: 4 },
+  cargaRango: { marginTop: 10, fontFamily: letras.texto, fontSize: 11.5, lineHeight: 15, color: C.apagado },
+  // Hoy, según el momento
+  macros: { gap: 12, marginTop: 6 },
+  macro: { gap: 6 },
+  macroCab: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  macroNombre: { fontFamily: letras.texto, fontSize: 14, color: C.tinta },
+  macroValor: { fontFamily: letras.texto, fontSize: 12, color: C.sub, fontVariant: ['tabular-nums'] },
+  macroPista: { height: 8, borderRadius: 4, backgroundColor: 'rgba(170, 178, 196, 0.12)', overflow: 'hidden' },
+  macroLleno: { height: 8, borderRadius: 4 },
+  esperar: { marginTop: 16, gap: 8 },
+  esperarFila: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  esperarPunto: { width: 8, height: 8, borderRadius: 4, marginTop: 6, backgroundColor: C.lejos },
+  esperarBien: { backgroundColor: C.claro },
+  esperarTexto: { flex: 1, fontFamily: letras.texto, fontSize: 15, lineHeight: 20.5, color: C.tinta },
+  comer: { flexDirection: 'row', gap: 12, marginTop: 18, paddingTop: 14, borderTopWidth: 1, borderTopColor: C.lineaSuave },
+  comerHora: { width: 46, paddingTop: 1, fontFamily: letras.numeroLiviano, fontSize: 16, lineHeight: 20, color: C.claro, fontVariant: ['tabular-nums'] },
+  focoTitulo: { fontFamily: letras.texto, fontSize: 15, lineHeight: 20, color: C.tinta },
   focoTexto: { marginTop: 3, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 18.6, color: C.sub },
-  focoEnlace: { marginTop: 8 },
-  // De qué sale
-  filas: { marginTop: 30, marginHorizontal: -22, paddingTop: 14, paddingHorizontal: 22, borderTopWidth: 1, borderTopColor: C.linea },
-  fila: { paddingTop: 16, paddingBottom: 18, borderTopWidth: 1, borderTopColor: C.lineaSuave },
-  filaPrimera: { borderTopWidth: 0, paddingTop: 10 },
-  filaCab: { flexDirection: 'row', alignItems: 'baseline', gap: 9 },
-  filaNombre: { fontFamily: letras.texto, fontSize: 16.5, lineHeight: 20, color: C.tinta },
-  filaValor: { fontFamily: letras.numeroLiviano, fontSize: 15, color: C.sub, fontVariant: ['tabular-nums'] },
-  filaPalabra: { marginLeft: 'auto', fontFamily: letras.texto, fontSize: 13.5, color: C.tinta },
-  filaTexto: { marginTop: 10, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 19, color: C.sub },
-  filaConsejo: { marginTop: 7, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 19, color: C.tinta },
-  filaNota: { marginTop: 7 },
-  enlaces: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 18 },
-  // Tus músculos
-  cuerpo: { alignItems: 'center', marginTop: 10 },
-  cuerpoDetalle: { minHeight: 38, marginTop: 10, alignSelf: 'stretch' },
-  cuerpoDetalleTexto: { fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: C.tinta, textAlign: 'center' },
-  leyendaCuerpo: { flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', columnGap: 16, rowGap: 6, marginTop: 8 },
+  hecha: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 6 },
+  hechaTexto: { flex: 1, fontFamily: letras.texto, fontSize: 15.5, lineHeight: 21, color: C.tinta },
+  // Tu noche
+  nocheFila: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 12 },
+  nochePalabra: { fontFamily: letras.texto, fontSize: 16, color: C.tinta },
+  nocheDeuda: { fontFamily: letras.texto, fontSize: 13, color: C.sub },
   leyendaItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  leyendaPunto: { width: 9, height: 9, borderRadius: 4.5, backgroundColor: 'rgba(170, 178, 196, 0.28)' },
   leyendaCuadro: { width: 9, height: 9, borderRadius: 1.5, alignItems: 'center', justifyContent: 'center' },
   leyendaTexto: { fontFamily: letras.texto, fontSize: 11, color: C.sub },
-  // Tu semana en Ascent
-  semanaTitulo: { marginTop: 22 },
-  semana: { marginTop: 16 },
-  semanaFila: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.lineaSuave },
-  semanaDia: { width: 64, paddingTop: 2, fontFamily: letras.textoMedio, fontSize: 10.5, lineHeight: 13, letterSpacing: 1.7, textTransform: 'uppercase', color: C.sub },
-  semanaTextos: { flex: 1, minWidth: 0 },
-  semanaNombre: { fontFamily: letras.texto, fontSize: 13.5, lineHeight: 17.5, color: C.tinta },
   // Tu fuerza
   fuerzaLista: { marginTop: 8 },
   fuerzaEj: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: 1, borderTopColor: C.lineaSuave },

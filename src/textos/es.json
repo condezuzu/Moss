@@ -3921,6 +3921,58 @@
       "texto": "Moss y Ascent ya comparten tus datos. Si no fuiste tú, deshazlo ahora.",
       "noFuiYo": "No fui yo",
       "deshecho": "Listo: se deshizo el vínculo con Ascent."
+    },
+    "semana": {
+      "titulo": "Tu semana",
+      "rango": "Series duras de esta semana. La zona marcada es de 10 a 20; el punto, si el músculo ya está listo.",
+      "estados": {
+        "poco": "Poco",
+        "enCamino": "En camino",
+        "enRango": "En rango",
+        "mucho": "Mucho"
+      },
+      "listo": "Listo",
+      "barra": "{musculo}: {n} series duras esta semana, {estado}. {listo}",
+      "sinDatos": "Cuando anotes tu primer entreno en Ascent, aquí vas a ver la carga de cada músculo.",
+      "verTodos": "Ver todos",
+      "verMenos": "Ver menos",
+      "dia": {
+        "hecho": "entrenado",
+        "previsto": "previsto",
+        "descanso": "descanso"
+      },
+      "linea": {
+        "dale": "Hoy, prioriza {musculo}: llevas {n} de 10 series.",
+        "daleDos": "Hoy, prioriza {a} y {b}: llevas {n} y {m} de 10 series.",
+        "retomar": "A {musculo} le faltan series: lo retomas el {dia}.",
+        "proxima": "A {musculo} le faltaron series y no vuelve esta semana: la que viene, empieza por ahí.",
+        "mucho": "{musculo} ya pasó las 20 series: el resto de la semana, más liviano.",
+        "enRango": "Tu semana va en rango.",
+        "daleNuevo": "Hoy toca {musculos}: todavía no los entrenaste esta semana."
+      }
+    },
+    "momento": {
+      "antes": "Antes de entrenar",
+      "sinAnotar": "Anota lo que comiste hoy y te digo cómo llegas.",
+      "deMeta": "{n} de {meta} g",
+      "esperar": {
+        "ayunas": "Llegas con muchas horas sin comer: algo liviano ahora te da energía.",
+        "pocosCarbohidratos": "Pocos carbohidratos hoy: las últimas series pueden costar más.",
+        "grasaCerca": "Comiste con bastante grasa hace poco: puedes sentirte pesado.",
+        "pocaProteina": "Poca proteína hasta ahora: después de entrenar, suma unos 30 g.",
+        "bien": "Lo que comiste te alcanza para entrenar."
+      },
+      "hecha": "Hoy entrenaste",
+      "hechaTexto": "{sesion}: {n} series duras.",
+      "descanso": "Hoy descansas",
+      "seRecuperan": "Todavía se recuperan:",
+      "recuperado": "Todo está recuperado."
+    },
+    "tuNoche": {
+      "titulo": "Tu noche",
+      "deuda": "Deuda: {palabra}",
+      "sinNoche": "Todavía no sé cómo dormiste.",
+      "ver": "Ver en Sueño"
     }
   },
   "habitos": {
