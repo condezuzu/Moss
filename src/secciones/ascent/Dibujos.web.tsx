@@ -4,7 +4,7 @@ import { WithSkiaWeb } from '@shopify/react-native-skia/lib/module/web';
 import type { ComponentType } from 'react';
 import { View } from 'react-native';
 
-import type { PropsDeChispa, PropsDeMarca, PropsDelCuerpo, PropsDelRango } from './DibujosSkia';
+import type { PropsDeChispa, PropsDeLaParte, PropsDelReloj, PropsDeMarca, PropsDelCuerpo, PropsDelRango } from './DibujosSkia';
 
 export type { EstadoDibujado } from './DibujosSkia';
 
@@ -24,7 +24,9 @@ function conSkia<P extends object>(cargar: () => Promise<ComponentType<P>>, tama
 }
 
 export const Marca = conSkia<PropsDeMarca>(async () => (await import('./DibujosSkia')).MarcaSkia, (p) => ({ width: p.tam, height: p.tam }));
-export const Cuerpo = conSkia<PropsDelCuerpo>(async () => (await import('./DibujosSkia')).CuerpoSkia, (p) => ({ width: p.ancho, height: (p.ancho * 188) / 210 + (p.rotulos ? 16 : 0) }));
+export const Cuerpo = conSkia<PropsDelCuerpo>(async () => (await import('./DibujosSkia')).CuerpoSkia, (p) => ({ width: p.ancho, height: (p.ancho * 188) / (p.lado ? 100 : 210) + (p.rotulos ? 16 : 0) }));
+export const Parte = conSkia<PropsDeLaParte>(async () => (await import('./DibujosSkia')).ParteSkia, (p) => ({ width: p.ancho, height: p.alto }));
+export const Reloj = conSkia<PropsDelReloj>(async () => (await import('./DibujosSkia')).RelojSkia, (p) => ({ width: p.tam, height: p.tam }));
 export const Tendencia = conSkia<PropsDeChispa>(async () => (await import('./DibujosSkia')).TendenciaSkia, (p) => ({ width: p.ancho, height: p.alto }));
 const delRango = (p: PropsDelRango) => ({ width: p.geometria.ancho, height: p.geometria.alto });
 export const CuerpoDelRango = conSkia<PropsDelRango>(async () => (await import('./DibujosSkia')).CuerpoDelRangoSkia, delRango);

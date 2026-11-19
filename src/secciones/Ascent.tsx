@@ -27,7 +27,7 @@ import { CuerpoDeFondo } from './ascent/Polvo';
 import { useAhora, useHoyEnAscent } from './ascent/titularDeHoy';
 import { useResumenParaAscent } from './ascent/resumenParaAscent';
 import { BotonDelTutorial, Tutorial, useTutorialVisto } from './ascent/Tutorial';
-import { MapaDelAnio, RestoVinculada, TusMusculos, useTusMusculos } from './ascent/Vinculada';
+import { MapaDelAnio, ParaHoy, RestoVinculada, TusMusculos, useTusMusculos } from './ascent/Vinculada';
 import { vincularDesdeMoss } from './ascent/vincularDesdeMoss';
 import { Icono } from './comida/comunes';
 import { useEstado } from './comida/datos';
@@ -48,9 +48,11 @@ type Props = {
   abierta: boolean;
   abajo: number;
   alCerrar: () => void;
+  /** «Más en Sueño», desde la sugerencia de sueño de hoy. */
+  alIrASueno: () => void;
 };
 
-export function Ascent({ subida, abierta, abajo, alCerrar }: Props) {
+export function Ascent({ subida, abierta, abajo, alCerrar, alIrASueno }: Props) {
   const { height: alto } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { vinculo } = useAscent();
@@ -218,7 +220,7 @@ export function Ascent({ subida, abierta, abajo, alCerrar }: Props) {
                   <SinVincular />
                 )}
                 <Principal vinculada={vinculada} ayuda={vinculada && tm ? <BotonDelTutorial alTocar={abrirTutorial} /> : null}>
-                  {vinculada && tm ? <TusMusculos tm={tm} /> : <CabezaSinVincular alVincular={() => vincularDesdeMoss(abrirHoja).catch(() => {})} />}
+                  {vinculada && tm && h ? <TusMusculos tm={tm} hoy={<ParaHoy h={h} tm={tm} alIrASueno={alIrASueno} />} /> : <CabezaSinVincular alVincular={() => vincularDesdeMoss(abrirHoja).catch(() => {})} />}
                 </Principal>
                 <Pie vinculada={vinculada} alVolver={alCerrar} activo={aLaVista} />
               </Animated.View>

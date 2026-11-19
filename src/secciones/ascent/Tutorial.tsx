@@ -12,7 +12,7 @@ import type { Musculo } from '@/dominio/musculos';
 import { t } from '@/textos';
 import { letras } from '@/tema';
 import { C, useAcento } from './colores';
-import { Cuerpo, type EstadoDibujado } from './Dibujos';
+import { Cuerpo, Reloj, type EstadoDibujado } from './Dibujos';
 import { Octogono, useTitulares } from './piezas';
 import { tx } from './palabras';
 
@@ -42,11 +42,12 @@ export function useTutorialVisto(desde: string | null) {
   return { visto, marcar };
 }
 
-/** El «!» de arriba a la derecha, al lado de la marca. */
+/** El «!» de arriba a la derecha, al lado de la marca, con «Cómo se lee»: solo, no se entendía que era un botón. */
 export function BotonDelTutorial({ alTocar }: { alTocar: () => void }) {
   return (
     <Pressable onPress={alTocar} hitSlop={10} style={({ pressed }) => [st.boton, pressed && { opacity: 0.6 }]} accessibilityRole="button" accessibilityLabel={t('ascent.tutorial.abrir')}>
-      <Text style={st.botonTexto}>!</Text>
+      <View style={st.botonCirculo}><Text style={st.botonTexto}>!</Text></View>
+      <Text style={st.botonEtiqueta}>{t('ascent.tutorial.abrir')}</Text>
     </Pressable>
   );
 }
@@ -150,13 +151,13 @@ function BarraQueSube() {
   return (
     <View style={st.barraDibujo}>
       <View style={st.barraPista}>
-        <View style={[st.barraZona, { left: '35%', width: '30%' }]} />
+        <View style={[st.barraZona, { left: '33.3%', width: '33.3%' }]} />
         <Animated.View style={[st.barraLleno, { backgroundColor: a.claro }, lleno]} />
-        <View style={[st.barraBordes, { left: '35%', width: '30%' }]} />
+        <View style={[st.barraBordes, { left: '33.3%', width: '33.3%' }]} />
       </View>
       <View style={st.barraEje}>
-        {['0', '70', '100', '130', '200'].map((x, k) => (
-          <Text key={x} style={[st.barraNumero, { left: `${[0, 35, 50, 65, 100][k]}%` }, x === '100' && { color: C.tinta }]}>{x}</Text>
+        {['0', '10', '15', '20', '30'].map((x, k) => (
+          <Text key={x} style={[st.barraNumero, { left: `${[0, 33.3, 50, 66.7, 100][k]}%` }, x === '15' && { color: C.tinta }]}>{x}</Text>
         ))}
       </View>
     </View>
@@ -169,10 +170,6 @@ function Tocando() {
   return (
     <View style={st.centro}>
       <Cuerpo ancho={190} clases={{ pecho: 'enSuPunto', triceps: 'poco', hombros: 'poco' }} elegido={elegido} etiqueta={tx('ascent.tutorial.pasos.toca.titulo')} />
-      <View style={[st.lineas, { opacity: k === 2 ? 1 : 0.15 }]}>
-        <View style={[st.linea, { width: 150 }]} />
-        <View style={[st.linea, { width: 110 }]} />
-      </View>
     </View>
   );
 }
@@ -181,7 +178,11 @@ function Recuperandose() {
   const k = usePaso(2, 1300);
   return (
     <View style={st.centro}>
-      <Cuerpo ancho={190} clases={{ cuadriceps: 'enSuPunto', gluteos: 'enSuPunto', isquios: 'poco' }} fatigados={k === 0 ? ['cuadriceps', 'gluteos'] : ['cuadriceps']} etiqueta={tx('ascent.tutorial.pasos.fatigados.titulo')} />
+      <Cuerpo ancho={170} clases={{ cuadriceps: 'enSuPunto', gluteos: 'enSuPunto', isquios: 'poco' }} fatigados={k === 0 ? ['cuadriceps', 'gluteos'] : ['cuadriceps']} etiqueta={tx('ascent.tutorial.pasos.fatigados.titulo')} />
+      <View style={st.relojDibujo}>
+        <Reloj tam={34} hecho={k === 0 ? 0.35 : 0.75} color={C.lejos} />
+        <Text style={st.relojTexto}>{t('ascent.fatigados.vuelve', { cuando: t(k === 0 ? 'ascent.titular.cuando.pasadoManana' : 'ascent.titular.cuando.manana') })}</Text>
+      </View>
     </View>
   );
 }
@@ -189,7 +190,7 @@ function Recuperandose() {
 function ConLoQueAnotas() {
   const a = useAcento();
   const k = usePaso(4, 700);
-  const cosas = [t('ascent.titulo'), t('sueno.titulo'), t('pestanas.comida')];
+  const cosas = [t('ascent.tutorial.fuentes.ascent'), t('ascent.tutorial.fuentes.sueno'), t('ascent.tutorial.fuentes.comida')];
   return (
     <View style={st.anotas}>
       {cosas.map((x, n) => (
@@ -203,8 +204,10 @@ function ConLoQueAnotas() {
 }
 
 const st = StyleSheet.create({
-  boton: { width: 26, height: 26, borderRadius: 13, borderWidth: 1.2, borderColor: C.lineaFuerte, alignItems: 'center', justifyContent: 'center' },
-  botonTexto: { fontFamily: letras.textoMedio, fontSize: 13, lineHeight: 16, color: C.sub },
+  boton: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4, paddingLeft: 4, paddingRight: 10, borderRadius: 999, borderWidth: 1, borderColor: C.lineaFuerte },
+  botonCirculo: { width: 18, height: 18, borderRadius: 9, borderWidth: 1.2, borderColor: C.sub, alignItems: 'center', justifyContent: 'center' },
+  botonEtiqueta: { fontFamily: letras.texto, fontSize: 12, color: C.sub },
+  botonTexto: { fontFamily: letras.textoMedio, fontSize: 11, lineHeight: 13, color: C.sub },
   fondo: { flex: 1, backgroundColor: C.fondo, paddingHorizontal: 28, paddingTop: 70, paddingBottom: 44 },
   contador: { fontFamily: letras.textoMedio, fontSize: 10.5, letterSpacing: 2, textTransform: 'uppercase', color: C.sub },
   contenido: { flex: 1, justifyContent: 'center' },
@@ -218,6 +221,8 @@ const st = StyleSheet.create({
   accionLleno: { right: undefined, opacity: 0.9 },
   accionTexto: { fontFamily: letras.textoMedio, fontSize: 15, letterSpacing: 0.15, color: C.fondo },
   centro: { alignItems: 'center' },
+  relojDibujo: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
+  relojTexto: { fontFamily: letras.texto, fontSize: 15, color: C.tinta },
   barraDibujo: { width: 280 },
   barraPista: { height: 14, borderRadius: 7, backgroundColor: 'rgba(170, 178, 196, 0.1)', overflow: 'hidden' },
   barraZona: { position: 'absolute', top: 0, bottom: 0, backgroundColor: 'rgba(170, 178, 196, 0.16)' },

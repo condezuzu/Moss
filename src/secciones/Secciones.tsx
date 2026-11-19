@@ -221,6 +221,12 @@ export default function Secciones() {
     setAscentAbierta(true);
   };
   useEffect(() => alAbrirAscent(abrirAscent));
+  // «Más en Sueño», desde la sección de Ascent: se cierra y se va a Sueño.
+  const irASuenoDesdeAscent = () => {
+    setAscentAbierta(false);
+    subida.set(0);
+    ir(PESTANAS.indexOf('sueno'), false);
+  };
   const ascentArriba = useMemo(
     () => (CON_ASCENT ? { subida, abierta: ascentAbierta, alAbrir: abrirAscent, alSoltar: setAscentAbierta } : undefined),
     [subida, ascentAbierta], // eslint-disable-line react-hooks/exhaustive-deps
@@ -462,7 +468,7 @@ export default function Secciones() {
                     </View>
                   ))}
                 </Animated.View>
-                {CON_ASCENT && <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} />}
+                {CON_ASCENT && <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} alIrASueno={irASuenoDesdeAscent} />}
               </Animated.View>
             )}
           </Animated.View>
