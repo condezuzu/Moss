@@ -1,8 +1,9 @@
 // Vincular con Ascent en dos toques (spec/ascent.md, D27), la hoja de la galería (galeria/src/ascent.js):
 // al abrirse y cada vez que la app vuelve a primer plano, mira el llavero que comparten las apps del
 // equipo. Con la sesión de Ascent, «@usuario · Ascent en este iPhone» y «Vincular»; con Ascent sin
-// sesión, «Abre Ascent y vuelve»; sin Ascent, «Conseguir Ascent»; sin la cuenta de Moss, que hace
-// falta entrar. Siempre, abajo y chico, entrar con la cuenta de Ascent (correo y contraseña, que no
+// sesión, el correo y la contraseña de Ascent ya abiertos (18/11: las builds de Ascent de la tienda no dejan
+// su sesión, y mandar a abrir Ascent la devolvía acá, sin fin); sin Ascent, «Conseguir Ascent»; sin la
+// cuenta de Moss, que hace falta entrar. Siempre, abajo y chico, entrar con la cuenta de Ascent (correo y contraseña, que no
 // se guardan). Tiene los colores de Ascent, como la sección, y sube cortada arriba, con la acción en un octágono.
 
 import * as Haptics from 'expo-haptics';
@@ -13,7 +14,7 @@ import Animated, { useAnimatedStyle, useReducedMotion, withTiming } from 'react-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { deAscent, useAscent } from '@/almacen/ascent';
-import { abrirLaApp, hayAscent, irALaAppStore } from '@/lib/ascent';
+import { hayAscent, irALaAppStore } from '@/lib/ascent';
 import { sesionDeAscent, vigente, type SesionCompartida } from '@/lib/llavero';
 import { lista, t } from '@/textos';
 import { letras } from '@/tema';
@@ -104,6 +105,8 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
   }, [abierta]);
 
   const vista = conCuenta ? iphone : 'sinCuenta';
+  const correoPrimero = vista === 'sinSesion';
+  const conElCorreo = conCorreo || correoPrimero;
   const listo = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     alCerrar(true);
@@ -199,12 +202,11 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
               {vista === 'sesion' && (
                 <Accion texto={t(vinculando === 'llavero' ? 'ascent.vincularHoja.vinculando' : 'ascent.vincularHoja.vincular')} alTocar={conLlavero} apagado={!!vinculando} estilo={st.boton} />
               )}
-              {vista === 'sinSesion' && <Accion texto={t('ascent.vincularHoja.sinSesion.boton')} alTocar={abrirLaApp} estilo={st.boton} />}
               {vista === 'sinAscent' && <Accion texto={t('ascent.vincularHoja.sinAscent.boton')} alTocar={irALaAppStore} estilo={st.boton} />}
               <Pressable onPress={() => alCerrar(false)} style={st.ahoraNo} accessibilityRole="button" hitSlop={8}>
                 <Text style={st.ahoraNoTexto}>{t('ascent.vincularHoja.ahoraNo')}</Text>
               </Pressable>
-              {vista !== 'sinCuenta' && (
+              {vista !== 'sinCuenta' && !correoPrimero && (
                 <Pressable
                   onPress={() => {
                     setConCorreo((x) => !x);
@@ -221,7 +223,7 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
                   </Animated.View>
                 </Pressable>
               )}
-              {conCorreo && vista !== 'sinCuenta' && (
+              {conElCorreo && vista !== 'sinCuenta' && (
                 <Aparece style={st.form}>
                   <TextInput
                     value={correo}

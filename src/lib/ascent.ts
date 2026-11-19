@@ -1,4 +1,4 @@
-// Ascent, la otra app del equipo (spec/ascent.md): si está en este iPhone, abrirla y su página en la
+// Ascent, la otra app del equipo (spec/ascent.md): si está en este iPhone y su página en la
 // App Store. Para saber si está, app.json declara su esquema en LSApplicationQueriesSchemes.
 
 import { Linking } from 'react-native';
@@ -13,11 +13,6 @@ export async function hayAscent(): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-/** Abre Ascent: al entrar deja su sesión en el llavero compartido, y Moss la ve al volver. */
-export function abrirLaApp(): void {
-  Linking.openURL(ESQUEMA).catch(() => {});
 }
 
 export function irALaAppStore(): void {

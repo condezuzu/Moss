@@ -3366,9 +3366,8 @@
       "vincular": "Vincular",
       "ahoraNo": "Ahora no",
       "sinSesion": {
-        "titulo": "Abre Ascent y vuelve",
-        "texto": "Ascent está en este iPhone, pero sin sesión: al entrar, la deja para Moss.",
-        "boton": "Abrir Ascent"
+        "titulo": "Entra con tu cuenta de Ascent",
+        "texto": "Escribe el correo y la contraseña con que entras a Ascent. Moss no los guarda."
       },
       "sinAscent": {
         "titulo": "Ascent no está en este iPhone",
