@@ -83,6 +83,8 @@ export type PropsDelCuerpo = {
   clases: Partial<Record<Musculo, EstadoDibujado>>;
   /** Los que todavía se recuperan: un borde punteado en terracota, encima del color. */
   fatigados?: readonly Musculo[];
+  /** Solo un lado (la figura de 100 de ancho); sin él, de frente y de espalda juntos. */
+  lado?: Lado;
   elegido?: Musculo | null;
   /** «De frente» y «De espalda» debajo. */
   rotulos?: boolean;
@@ -93,6 +95,7 @@ export type PropsDelCuerpo = {
 };
 
 const ANCHO_DEL_CUERPO = 210;
+const ANCHO_DE_UN_LADO = 100;
 const ALTO_DEL_CUERPO = 188;
 const LADOS: Lado[] = ['frente', 'espalda'];
 /** El relleno de cada estado, con el acento de tu rango. */
@@ -120,23 +123,24 @@ function trazos() {
 
 const ESPEJO = [{ translateX: 100 }, { scaleX: -1 }];
 
-export function CuerpoSkia({ ancho, clases, fatigados = [], elegido = null, rotulos = false, apagado = false, alTocar, etiqueta }: PropsDelCuerpo) {
+export function CuerpoSkia({ ancho, clases, fatigados = [], elegido = null, rotulos = false, apagado = false, alTocar, etiqueta, lado: soloUno }: PropsDelCuerpo) {
   const { formas: f, lineas: l, silueta: s } = trazos();
   const RELLENO = relleno(useAcento().claro);
-  const k = ancho / ANCHO_DEL_CUERPO;
+  const lados = soloUno ? [soloUno] : LADOS;
+  const k = ancho / (soloUno ? ANCHO_DE_UN_LADO : ANCHO_DEL_CUERPO);
   const alto = ALTO_DEL_CUERPO * k;
   const tocar = (x: number, y: number) => {
     const vx = x / k, vy = y / k;
-    const lado: Lado = vx < 105 ? 'frente' : 'espalda';
-    let lx = vx - (lado === 'frente' ? 0 : 110);
+    const lado: Lado = soloUno ?? (vx < 105 ? 'frente' : 'espalda');
+    let lx = vx - (soloUno || lado === 'frente' ? 0 : 110);
     if (lx > 50) lx = 100 - lx;
     const hit = f[lado].find((x2) => x2.path.contains(lx, vy));
     if (hit && alTocar) alTocar(hit.musculo);
   };
   const figura = (lado: Lado) => {
     const musculos = f[lado].map(({ musculo, path }, i) => {
-      const [color, op] = apagado ? ['rgba(170, 178, 196, 0.1)', 1] : RELLENO[clases[musculo] ?? 'nada'];
       const marcado = musculo === elegido;
+      const [color, op] = apagado ? ['rgba(170, 178, 196, 0.1)', 1] : RELLENO[elegido && !marcado ? 'nada' : (clases[musculo] ?? 'nada')];
       const fatigado = !apagado && fatigados.includes(musculo);
       return [false, true].map((espejo) => (
         <Group key={`${i}${espejo}`} transform={espejo ? ESPEJO : []}>
@@ -151,7 +155,7 @@ export function CuerpoSkia({ ancho, clases, fatigados = [], elegido = null, rotu
       ));
     });
     return (
-      <Group key={lado} transform={[{ translateX: lado === 'frente' ? 0 : 110 }]}>
+      <Group key={lado} transform={[{ translateX: soloUno || lado === 'frente' ? 0 : 110 }]}>
         <Path path={s} color="rgba(170, 178, 196, 0.1)" />
         {musculos}
         {l[lado].map((p, i) => [false, true].map((espejo) => (
@@ -164,7 +168,7 @@ export function CuerpoSkia({ ancho, clases, fatigados = [], elegido = null, rotu
   };
   const lienzo = (
     <Canvas style={{ width: ancho, height: alto }} pointerEvents="none">
-      <Group transform={[{ scale: k }]}>{LADOS.map(figura)}</Group>
+      <Group transform={[{ scale: k }]}>{lados.map(figura)}</Group>
     </Canvas>
   );
   return (
@@ -176,11 +180,90 @@ export function CuerpoSkia({ ancho, clases, fatigados = [], elegido = null, rotu
       ) : lienzo}
       {rotulos && (
         <View style={[st.rotulos, { width: ancho }]}>
-          {LADOS.map((lado) => (
-            <Text key={lado} style={[st.rotulo, { left: ((lado === 'frente' ? 50 : 160) / ANCHO_DEL_CUERPO) * ancho - 50 }]}>{t(`ascent.cuerpo.${lado}`)}</Text>
+          {lados.map((lado) => (
+            <Text key={lado} style={[st.rotulo, { left: soloUno ? ancho / 2 - 50 : ((lado === 'frente' ? 50 : 160) / ANCHO_DEL_CUERPO) * ancho - 50 }]}>{t(`ascent.cuerpo.${lado}`)}</Text>
           ))}
         </View>
       )}
+    </View>
+  );
+}
+
+// ------------------------------------------------------------ las partes de un músculo, de cerca
+export type PropsDeLaParte = {
+  musculo: 'pecho' | 'triceps';
+  ancho: number;
+  alto: number;
+  /** Cómo está la parte (pecho alto, cabeza larga) y cómo está el resto. */
+  parte: EstadoDibujado | null;
+  resto: EstadoDibujado | null;
+  etiqueta?: string;
+};
+
+/**
+ * El músculo solo, de cerca, partido en dos: el pecho alto arriba (un poco más de un tercio) y la cabeza larga del
+ * tríceps del lado del cuerpo (la de adentro). Es un dibujo para ubicarse, no una medida de dónde termina cada parte.
+ */
+export function ParteSkia({ musculo, ancho, alto, parte, resto, etiqueta }: PropsDeLaParte) {
+  const { formas: f } = trazos();
+  const RELLENO = relleno(useAcento().claro);
+  const lado: Lado = musculo === 'pecho' ? 'frente' : 'espalda';
+  const paths = f[lado].filter((x) => x.musculo === musculo).map((x) => x.path);
+  // El pecho va entero (las dos mitades se tocan); el tríceps, un brazo solo.
+  const conEspejo = musculo === 'pecho';
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const p of paths) {
+    const b = p.computeTightBounds();
+    x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + b.width); y1 = Math.max(y1, b.y + b.height);
+  }
+  const bx0 = conEspejo ? Math.min(x0, 100 - x1) : x0;
+  const bx1 = conEspejo ? Math.max(x1, 100 - x0) : x1;
+  const w = bx1 - bx0, h = y1 - y0;
+  const k = Math.min(ancho / w, alto / h) * 0.9;
+  const dx = (ancho - w * k) / 2 - bx0 * k, dy = (alto - h * k) / 2 - y0 * k;
+  const corte = musculo === 'pecho' ? y0 + h * 0.42 : x0 + (x1 - x0) * 0.5;
+  const zonaParte = musculo === 'pecho' ? Skia.XYWHRect(-10, y0 - 5, 120, corte - y0 + 5) : Skia.XYWHRect(corte, y0 - 5, x1 - corte + 5, h + 10);
+  const zonaResto = musculo === 'pecho' ? Skia.XYWHRect(-10, corte, 120, y1 - corte + 5) : Skia.XYWHRect(x0 - 5, y0 - 5, corte - x0 + 5, h + 10);
+  const linea = musculo === 'pecho'
+    ? Skia.PathBuilder.Make().moveTo(bx0, corte).lineTo(bx1, corte).detach()
+    : Skia.PathBuilder.Make().moveTo(corte, y0).lineTo(corte, y1).detach();
+  const dibujar = (clase: EstadoDibujado | null, conBorde: boolean) => paths.flatMap((p, j) => (conEspejo ? [false, true] : [false]).map((espejo) => {
+    const [color, op] = RELLENO[clase ?? 'nada'];
+    return (
+      <Group key={`${j}${espejo}`} transform={espejo ? ESPEJO : []}>
+        {conBorde ? <Path path={p} style="stroke" strokeWidth={0.5} color={C.tinta} opacity={0.5} /> : <Path path={p} color={color} opacity={op} />}
+      </Group>
+    );
+  }));
+  return (
+    <View accessible accessibilityRole="image" accessibilityLabel={etiqueta}>
+      <Canvas style={{ width: ancho, height: alto }} pointerEvents="none">
+        <Group transform={[{ translateX: dx }, { translateY: dy }, { scale: k }]}>
+          <Group clip={zonaResto}>{dibujar(resto, false)}</Group>
+          <Group clip={zonaParte}>{dibujar(parte, false)}</Group>
+          {dibujar(null, true)}
+          <Path path={linea} style="stroke" strokeWidth={0.6} color={C.tinta}>
+            <DashPathEffect intervals={[1.5, 1.2]} />
+          </Path>
+        </Group>
+      </Canvas>
+    </View>
+  );
+}
+
+// ------------------------------------------------------------ el reloj de la recuperación
+export type PropsDelReloj = { tam: number; hecho: number; color: string; etiqueta?: string };
+
+/** Un aro que se llena hasta que el músculo está listo: `hecho` de 0 a 1 (lo que ya pasó de su recuperación). */
+export function RelojSkia({ tam, hecho, color, etiqueta }: PropsDelReloj) {
+  const r = tam / 2 - 2;
+  const arco = Skia.PathBuilder.Make().addArc(Skia.XYWHRect(2, 2, tam - 4, tam - 4), -90, 360 * Math.max(0.04, Math.min(1, hecho))).detach();
+  return (
+    <View accessible={!!etiqueta} accessibilityRole="image" accessibilityLabel={etiqueta}>
+      <Canvas style={{ width: tam, height: tam }} pointerEvents="none">
+        <Circle cx={tam / 2} cy={tam / 2} r={r} style="stroke" strokeWidth={2} color="rgba(170, 178, 196, 0.22)" />
+        <Path path={arco} style="stroke" strokeWidth={2.4} strokeCap="round" color={color} />
+      </Canvas>
     </View>
   );
 }

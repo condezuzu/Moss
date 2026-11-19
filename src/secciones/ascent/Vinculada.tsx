@@ -5,23 +5,29 @@
 // «En qué se basa», solo lo suyo. Las cuentas están en vista.ts y en puntajeMuscular.ts.
 
 import * as Haptics from 'expo-haptics';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { reglasDeCuidados } from '@/almacen/almacen';
 import { deAscent, useAscent } from '@/almacen/ascent';
 import { POCAS_PESADAS, PROTEINA_POR_KG, type Razon } from '@/dominio/progresoCompartido';
-import { diaDeLaSemana, diasEntre, type ClaveDia } from '@/dominio/fechas';
+import { musculosPrincipales } from '@/dominio/fatiga';
+import { diaDeLaSemana, diasEntre, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { periodoDeMelatonina } from '@/dominio/melatonina';
 import type { Musculo } from '@/dominio/musculos';
-import { FRANJA, PUNTAJE_TOPE, type EstadoDelPuntaje } from '@/dominio/puntajeMuscular';
-import { NOCHE_CORTA } from '@/dominio/rendimiento';
+import { pesoSiguiente, RANGO, type EstadoDelPuntaje } from '@/dominio/puntajeMuscular';
+import { aDosYMedio, NOCHE_CORTA } from '@/dominio/rendimiento';
+import { totalDelDia } from '@/dominio/registros';
+import { juicioDeLaDeuda } from '@/dominio/sueno';
+import { sugerenciasDeHoy, type SugerenciasDeHoy } from '@/dominio/sugerenciasDeHoy';
 import { lista, plural, t, type ClaveDeLista } from '@/textos';
 import { letras } from '@/tema';
-import { duracion, numero, useEstado } from '../comida/datos';
+import { duracion, hora, metaDelDia, numero, useEstado } from '../comida/datos';
 import { usePersona, useSueno } from '../ganchos';
 import { C, GRUPOS_DEL_ANIO, useAcento } from './colores';
-import { Cuerpo, type EstadoDibujado } from './Dibujos';
-import { conMayuscula, cuandoDe, enFrase, nombreDelEjercicio, nombreDelMusculo, tx } from './palabras';
+import { Cuerpo, Parte as ParteDeCerca, Reloj, type EstadoDibujado } from './Dibujos';
+import { conMayuscula, cuandoDe, enFrase, enLista, nombreDelEjercicio, nombreDelMusculo, tx } from './palabras';
 import { Accion, Cambia, Desplegable, Etiqueta, Flecha, Fundido, Nota, Parte, Una, Escala, Enlace } from './piezas';
 import { calcularTodo, calcularTusMusculos, type EjercicioDeLaSemana, type Estancado, type Hoy, type MetaConProyeccion, type MusculoDeLaSemana, type Todo, type TusMusculos as DeTusMusculos } from './vista';
 
@@ -49,9 +55,10 @@ export function RestoVinculada({ h, tm, preparada }: { h: Hoy; tm: DeTusMusculos
   return (
     <>
       <Metas todo={todo} tm={tm} />
-      <PorQue todo={todo} />
+      {todo.estancados.length > 0 && <PorQue todo={todo} />}
       <Estancados todo={todo} />
       <TuAnio h={h} todo={todo} />
+      <Rutina nota={tm.nota} />
       <Fatigados tm={tm} />
     </>
   );
@@ -80,11 +87,74 @@ function EnQueSeBasa({ de }: { de: 'musculos' | 'fatigados' | 'estancados' | 'po
   );
 }
 
-// ------------------------------------------------------------ tus músculos (lo principal, donde se llega)
-const ESTADOS: readonly EstadoDelPuntaje[] = ['sinEntrenar', 'poco', 'enSuPunto', 'mucho'];
+// ------------------------------------------------------------ para hoy (lo primero que se ve al llegar)
+/** Las tres sugerencias de hoy (sugerenciasDeHoy.ts, igual en Ascent) con lo de Moss y lo de Ascent de hoy. */
+function useSugerenciasDeHoy(h: Hoy, tm: DeTusMusculos): SugerenciasDeHoy {
+  const e = useEstado();
+  const sueno = useSueno();
+  return useMemo(() => {
+    const musculos = h.sesion?.bloques ? musculosPrincipales(h.sesion.bloques) : [];
+    const sinRecuperar = musculos.filter((m) => tm.fatigados.some((f) => f.musculo === m));
+    const noches = sueno.deEjemplo ? [] : sueno.noches;
+    const periodo = noches.length ? periodoDeMelatonina(noches, e.hoy, { margen: e.latencia, deuda: h.deuda }) : null;
+    const ayer = sumarDias(e.hoy, -1);
+    const comido = totalDelDia(e.registros.values(), ayer, false);
+    const meta = metaDelDia(e, ayer);
+    return sugerenciasDeHoy({
+      sesion: h.sesion ? { musculos, minutos: h.sesion.minutos, hecha: h.sesion.como === 'hecha' } : null,
+      sinRecuperar,
+      objetivo: 'musculo',
+      noche: h.noche ? { dormido: h.noche.dormido, despertoAntes: h.noche.despertoAntes } : null,
+      deuda: h.deuda === null ? null : juicioDeLaDeuda({ minutos: h.deuda }),
+      acostarse: periodo?.acostarse ?? null,
+      ayer: comido.kcal > 0 && meta ? { kcal: comido.kcal, proteina: comido.proteina, metaKcal: meta.kcal, metaProteina: meta.proteina } : null,
+      cuidadoConLaComida: !!reglasDeCuidados(e)?.cuidados.includes('tca'),
+    });
+  }, [h, tm, e, sueno]);
+}
 
-export function TusMusculos({ tm }: { tm: DeTusMusculos }) {
+export function ParaHoy({ h, tm, alIrASueno }: { h: Hoy; tm: DeTusMusculos; alIrASueno?: () => void }) {
+  const a = useAcento();
+  const s = useSugerenciasDeHoy(h, tm);
+  const lista = (ms: readonly string[] | undefined) =>
+    ms?.length ? enLista(ms.map((m) => nombreDelMusculo(m as Musculo).toLowerCase())) : (h.sesion?.nombre ?? '').toLowerCase();
+  // Con más de un músculo que se recupera, el verbo va en plural.
+  const clave = (x: SugerenciasDeHoy['entreno']) => (x.clave === 'conFatiga' && (x.fatigados?.length ?? 0) > 1 ? 'conFatigaVarios' : x.clave);
+  const texto = (grupo: 'entreno' | 'comida' | 'sueno', x: SugerenciasDeHoy['entreno']) => tx(`ascent.sugerencias.${grupo}.${clave(x)}`, {
+    musculos: lista(x.musculos), fatigados: conMayuscula(lista(x.fatigados)), reps: x.reps ?? '', reserva: x.reserva ?? '',
+    hora: x.hora === undefined ? '' : hora(x.hora), gramos: x.gramos ?? '',
+  });
+  const filas = [['entreno', s.entreno], ['comida', s.comida], ['sueno', s.sueno]] as const;
+  return (
+    <View style={st.paraHoy}>
+      <Etiqueta>{t('ascent.sugerencias.titulo')}</Etiqueta>
+      {filas.map(([grupo, x]) => (
+        <View key={grupo} style={st.sugerencia}>
+          <View style={[st.sugerenciaPunto, { backgroundColor: a.claro }]} />
+          <View style={st.crece}>
+            <Text style={st.sugerenciaTipo}>{t(`ascent.sugerencias.tipos.${grupo}`)}</Text>
+            <Text style={st.sugerenciaTexto}>{texto(grupo, x)}</Text>
+            {grupo === 'sueno' && alIrASueno && <Enlace texto={t('ascent.sugerencias.masEnSueno')} alTocar={alIrASueno} estilo={st.sugerenciaEnlace} />}
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+// ------------------------------------------------------------ tus músculos (lo principal, donde se llega)
+/** Los músculos que se ven de frente y los de espalda: la lista de cada lado va al lado del dibujo. */
+const DEL_FRENTE: readonly Musculo[] = ['pecho', 'hombros', 'biceps', 'antebrazos', 'abdomen', 'cuadriceps', 'aductores'];
+const DE_ESPALDA: readonly Musculo[] = ['trapecio', 'dorsales', 'triceps', 'espaldaBaja', 'gluteos', 'isquios', 'pantorrillas'];
+/** La barra de cada músculo va de 0 a 30 series, con la franja de 10 a 20 marcada. */
+const TOPE_DE_SERIES = 30;
+const enLaBarra = (n: number) => (Math.min(TOPE_DE_SERIES, Math.max(0, n)) / TOPE_DE_SERIES) * 100;
+/** Las series se dicen redondeadas: «6,5» (una media serie del músculo que ayuda) se leía raro. */
+const series = (n: number) => numero(Math.round(n));
+
+export function TusMusculos({ tm, hoy }: { tm: DeTusMusculos; hoy?: ReactNode }) {
   const { width } = useWindowDimensions();
+  const [lado, setLado] = useState<'frente' | 'espalda'>('frente');
   const [elegido, setElegido] = useState<Musculo | null>(null);
   const elegir = (m: Musculo) => {
     Haptics.selectionAsync().catch(() => {});
@@ -92,167 +162,185 @@ export function TusMusculos({ tm }: { tm: DeTusMusculos }) {
   };
   const clases = Object.fromEntries(tm.musculos.filter((m) => m.estado !== 'sinEntrenar').map((m) => [m.musculo, m.estado as EstadoDibujado]));
   const fatigados = tm.fatigados.map((m) => m.musculo);
-  // De los que más necesitan a los que menos: los entrenados en la semana, del puntaje más bajo al más alto.
-  const entrenados = tm.musculos.filter((m) => m.series > 0).sort((a, b) => a.puntaje - b.puntaje);
+  const delLado = (lado === 'frente' ? DEL_FRENTE : DE_ESPALDA).map((m) => tm.musculos.find((x) => x.musculo === m)!).filter(Boolean);
   const del = elegido ? tm.musculos.find((m) => m.musculo === elegido) ?? null : null;
-  const etiqueta = entrenados.map((m) => `${nombreDelMusculo(m.musculo)}: ${tx(`ascent.tus.estados.${m.estado}`).toLowerCase()}`).join(', ');
+  const anchoDelCuerpo = Math.min(160, Math.round((width - 44) * 0.42));
   return (
     <View style={st.tus}>
-      <Text style={st.tusEtq}>{t('ascent.tus.titulo')}</Text>
+      <Text style={st.paraQue}>{t('ascent.tus.paraQue')}</Text>
       {!tm.conDatos ? (
         <Text style={st.vacio}>{t('ascent.tus.sinDatos')}</Text>
       ) : (
         <>
-          <View style={st.cuerpo}>
-            <Cuerpo ancho={Math.min(width - 44, 360)} clases={clases} fatigados={fatigados} elegido={elegido} rotulos alTocar={elegir} etiqueta={etiqueta || t('ascent.tus.titulo')} />
+          <Etiqueta style={st.semanaEtq}>{t('ascent.tus.semana')}</Etiqueta>
+          <Text style={st.semanaTexto}>{t('ascent.tus.semanaTexto')}</Text>
+          <View style={st.lados}>
+            {(['frente', 'espalda'] as const).map((x) => (
+              <Pressable key={x} onPress={() => { setLado(x); setElegido(null); }} style={[st.ladoBoton, lado === x && st.ladoElegido]} accessibilityRole="button" accessibilityState={{ selected: lado === x }}>
+                <Text style={[st.ladoTexto, lado === x && st.ladoTextoElegido]}>{t(`ascent.cuerpo.${x}`)}</Text>
+              </Pressable>
+            ))}
           </View>
-          <Leyenda />
-          <Fundido clave={elegido ?? 'lista'} style={st.debajo}>
-            {del ? (
-              <DetalleDelMusculo m={del} tm={tm} alVolver={() => setElegido(null)} />
-            ) : (
-              <>
-                <View style={st.barras}>
-                  {entrenados.map((m) => <FilaDelMusculo key={m.musculo} m={m} alTocar={() => elegir(m.musculo)} />)}
-                </View>
-                <Text style={st.franja}>{t('ascent.tus.franja')}</Text>
-                <Text style={st.toca}>{t('ascent.tus.toca')}</Text>
-              </>
-            )}
+          <Fundido clave={lado} style={st.cuerpoYLista}>
+            <Cuerpo ancho={anchoDelCuerpo} lado={lado} clases={clases} fatigados={fatigados} elegido={elegido} alTocar={elegir} etiqueta={t('ascent.tus.titulo')} />
+            <View style={st.listaDelLado}>
+              {delLado.map((m) => <FilaDelMusculo key={m.musculo} m={m} elegido={m.musculo === elegido} alTocar={() => elegir(m.musculo)} />)}
+            </View>
           </Fundido>
-          <Rutina nota={tm.nota} />
-          <Nota style={st.anotas}>{t('ascent.tus.anotas')}</Nota>
+          {del ? (
+            <Fundido clave={del.musculo} style={st.debajo}>
+              <DetalleDelMusculo m={del} tm={tm} alCerrar={() => setElegido(null)} />
+            </Fundido>
+          ) : (
+            <Leyenda />
+          )}
         </>
       )}
+      {hoy}
+      <Nota style={st.anotas}>{t('ascent.tus.anotas')}</Nota>
       <EnQueSeBasa de="musculos" />
     </View>
   );
 }
 
-/** Los colores del cuerpo, con «fatigado» aparte: un borde punteado. */
+/** Qué hacer según cómo está cada músculo esta semana, con su color; y el borde de lo que todavía se recupera. */
 function Leyenda() {
   const a = useAcento();
-  const relleno: Record<EstadoDelPuntaje, object> = {
-    sinEntrenar: { backgroundColor: 'rgba(170, 178, 196, 0.2)' },
-    poco: { backgroundColor: a.claro, opacity: 0.45 },
+  const relleno: Record<Exclude<EstadoDelPuntaje, 'sinEntrenar'>, object> = {
+    poco: { backgroundColor: a.claro, opacity: 0.4 },
     enSuPunto: { backgroundColor: a.claro },
     mucho: { backgroundColor: C.ambar, opacity: 0.85 },
   };
   return (
     <View style={st.leyenda}>
-      {ESTADOS.map((x) => (
-        <View key={x} style={st.leyendaItem}>
+      {(['poco', 'enSuPunto', 'mucho'] as const).map((x) => (
+        <View key={x} style={st.leyendaFila}>
           <View style={[st.leyendaCuadro, relleno[x]]} />
-          <Text style={st.leyendaTexto}>{tx(`ascent.tus.estados.${x}`)}</Text>
+          <Text style={st.leyendaTexto}><Text style={st.leyendaEstado}>{tx(`ascent.tus.estados.${x}`)}: </Text>{tx(`ascent.tus.acciones.${x}`)}</Text>
         </View>
       ))}
-      <View style={st.leyendaItem}>
+      <View style={st.leyendaFila}>
         <View style={[st.leyendaCuadro, st.leyendaFatigado]} />
-        <Text style={st.leyendaTexto}>{t('ascent.tus.estados.fatigado')}</Text>
+        <Text style={st.leyendaTexto}><Text style={st.leyendaEstado}>{t('ascent.tus.estados.fatigado')}: </Text>{t('ascent.tus.acciones.fatigado')}</Text>
       </View>
+      <Text style={st.toca}>{t('ascent.tus.toca')}</Text>
     </View>
   );
 }
 
-const enLaBarra = (p: number) => (Math.min(PUNTAJE_TOPE, Math.max(0, p)) / PUNTAJE_TOPE) * 100;
-
-/** El puntaje de 0 a 200, con la franja «en su punto» (70 a 130) marcada; lo lleno crece al aparecer. */
-function BarraDePuntaje({ p, estado, alta = 8 }: { p: number; estado: EstadoDelPuntaje; alta?: number }) {
+/** Las series de la semana de 0 a 30, con la franja de 10 a 20; lo lleno crece al aparecer. */
+function BarraDeSeries({ n, estado, alta = 6 }: { n: number; estado: EstadoDelPuntaje; alta?: number }) {
   const a = useAcento();
   const reducido = useReducedMotion();
   const v = useSharedValue(0);
   useEffect(() => {
-    v.set(withTiming(enLaBarra(p), { duration: reducido ? 0 : 700, easing: LLEGA }));
-  }, [p, reducido, v]);
+    v.set(withTiming(enLaBarra(n), { duration: reducido ? 0 : 700, easing: LLEGA }));
+  }, [n, reducido, v]);
   const lleno = useAnimatedStyle(() => ({ width: `${v.get()}%` }));
   const color = estado === 'mucho' ? C.ambar : a.claro;
+  const zona = { left: `${enLaBarra(RANGO.desde)}%`, width: `${enLaBarra(RANGO.hasta) - enLaBarra(RANGO.desde)}%` } as const;
   return (
     <View style={[st.pista, { height: alta, borderRadius: alta / 2 }]}>
-      <View style={[st.zona, { left: `${enLaBarra(FRANJA.desde)}%`, width: `${enLaBarra(FRANJA.hasta) - enLaBarra(FRANJA.desde)}%` }]} />
-      <Animated.View style={[st.lleno, { backgroundColor: color, borderRadius: alta / 2, opacity: estado === 'poco' ? 0.6 : 1 }, lleno]} />
-      <View style={[st.bordes, { left: `${enLaBarra(FRANJA.desde)}%`, width: `${enLaBarra(FRANJA.hasta) - enLaBarra(FRANJA.desde)}%` }]} />
+      <View style={[st.zona, zona]} />
+      <Animated.View style={[st.lleno, { backgroundColor: color, borderRadius: alta / 2, opacity: estado === 'poco' ? 0.55 : 1 }, lleno]} />
+      <View style={[st.bordes, zona]} />
     </View>
   );
 }
 
-const series = (n: number) => numero(n, n % 1 ? 1 : 0);
-
-function FilaDelMusculo({ m, alTocar }: { m: MusculoDeLaSemana; alTocar: () => void }) {
+function FilaDelMusculo({ m, elegido, alTocar }: { m: MusculoDeLaSemana; elegido: boolean; alTocar: () => void }) {
   const estado = tx(`ascent.tus.estados.${m.estado}`);
   return (
     <Pressable
       onPress={alTocar}
-      style={({ pressed }) => [st.fila, pressed && st.apretado]}
+      style={({ pressed }) => [st.fila, elegido && st.filaElegida, pressed && st.apretado]}
       accessibilityRole="button"
-      accessibilityLabel={t('ascent.tus.barra', { musculo: nombreDelMusculo(m.musculo), puntaje: m.puntaje, estado: estado.toLowerCase(), series: series(m.series) })}
+      accessibilityState={{ selected: elegido }}
+      accessibilityLabel={t('ascent.tus.barra', { musculo: nombreDelMusculo(m.musculo), series: series(m.series), estado: estado.toLowerCase() })}
     >
-      <Text style={st.filaNombre} numberOfLines={1}>{nombreDelMusculo(m.musculo)}</Text>
-      <View style={st.crece}><BarraDePuntaje p={m.puntaje} estado={m.estado} /></View>
-      <Text style={[st.filaNumero, m.estado === 'mucho' && { color: C.ambar }]}>{m.puntaje}</Text>
+      <View style={st.filaCab}>
+        <Text style={st.filaNombre} numberOfLines={1}>{nombreDelMusculo(m.musculo)}</Text>
+        {m.dias > 0 && <View style={st.filaFatiga} />}
+        <Text style={[st.filaEstado, m.estado === 'mucho' && { color: C.ambar }]} numberOfLines={1}>{estado}</Text>
+        <Text style={[st.filaNumero, m.estado === 'mucho' && { color: C.ambar }]}>{series(m.series)}</Text>
+      </View>
+      <BarraDeSeries n={m.series} estado={m.estado} />
     </Pressable>
   );
 }
 
-/** Lo de un músculo: su barra, cómo está, sus partes y sus ejercicios de la semana con la próxima sesión. */
-function DetalleDelMusculo({ m, tm, alVolver }: { m: MusculoDeLaSemana; tm: DeTusMusculos; alVolver: () => void }) {
+/** «listo mañana», «listo pasado mañana» o «listo el sábado». */
+function cuandoVuelve(f: { dias: number; listo: ClaveDia }): string {
+  if (f.dias <= 2) return t('ascent.fatigados.vuelve', { cuando: cuandoDe(f.dias === 1 ? 'manana' : 'pasadoManana') });
+  return t('ascent.fatigados.vuelveEl', { dia: lista('fecha.dias')[diaDeLaSemana(f.listo)] });
+}
+
+/** Un músculo: de cerca con sus partes (si tiene), sus series contra lo ideal, qué hacer, cuándo está listo y sus ejercicios. */
+function DetalleDelMusculo({ m, tm, alCerrar }: { m: MusculoDeLaSemana; tm: DeTusMusculos; alCerrar: () => void }) {
+  const a = useAcento();
   const fuerte = (x: EjercicioDeLaSemana) => x.principal.includes(m.musculo);
   const ejercicios = tm.ejercicios.filter((x) => fuerte(x) || x.ayudan.includes(m.musculo)).sort((x, y) => Number(fuerte(y)) - Number(fuerte(x)));
-  const fatiga = m.listo ? { fatiga: m.fatiga, dias: m.dias, listo: m.listo } : null;
+  const fatigado = tm.fatigados.find((x) => x.musculo === m.musculo) ?? null;
   const parte = m.musculo === 'pecho' ? 'pechoAlto' : m.musculo === 'triceps' ? 'tricepsLarga' : null;
   const enParte = parte ? (m.partes[parte] ?? 0) : 0;
   return (
     <View>
       <View style={st.detCab}>
         <Text style={st.detNombre}>{nombreDelMusculo(m.musculo)}</Text>
-        <Text style={[st.detNumero, m.estado === 'mucho' && { color: C.ambar }]}>{m.puntaje}</Text>
+        <Pressable onPress={alCerrar} hitSlop={10} accessibilityRole="button"><Text style={st.cerrar}>{t('ascent.tus.cerrar')}</Text></Pressable>
       </View>
-      <BarraDePuntaje p={m.puntaje} estado={m.estado} alta={10} />
-      <Text style={st.detLinea}>{`${tx(`ascent.tus.estados.${m.estado}`)} · ${t('ascent.tus.series', { n: series(m.series) })}`}</Text>
-      {fatiga && (
-        <Text style={[st.detLinea, { color: C.lejos }]}>
-          {`${tx(`ascent.cuerpo.estados.${fatiga.fatiga}`)} · ${cuandoVuelve(fatiga)}`}
-        </Text>
+      <Text style={st.detSeries}>{t('ascent.tus.seriesCorto', { n: series(m.series) })}</Text>
+      <BarraDeSeries n={m.series} estado={m.estado} alta={8} />
+      <Text style={[st.detAccion, m.estado === 'mucho' && { color: C.ambar }]}>{m.estado === 'sinEntrenar' ? t('ascent.tus.acciones.sinEntrenar') : `${tx(`ascent.tus.estados.${m.estado}`)}: ${tx(`ascent.tus.acciones.${m.estado}`)}`}</Text>
+      {fatigado && (
+        <View style={st.detFatiga}>
+          <Reloj tam={22} hecho={1 - fatigado.dias / fatigado.total} color={C.lejos} etiqueta={cuandoVuelve(fatigado)} />
+          <Text style={st.detFatigaTexto}>{`${t('ascent.tus.estados.fatigado')} · ${cuandoVuelve(fatigado)}`}<Text style={st.estimado}>{` · ${t('ascent.fatigados.estimado')}`}</Text></Text>
+        </View>
       )}
       {parte && (
         <View style={st.partes}>
-          <Etiqueta>{t('ascent.tus.partes.titulo')}</Etiqueta>
-          {([[parte, enParte], [`${m.musculo}Resto`, Math.max(0, m.series - enParte)]] as const).map(([k, n]) => (
-            <View key={k} style={st.parte}>
-              <Text style={st.parteNombre}>{tx(`ascent.tus.partes.${k}`)}</Text>
-              <Text style={st.parteValor}>{series(n)}</Text>
-            </View>
-          ))}
+          <ParteDeCerca musculo={m.musculo as 'pecho' | 'triceps'} ancho={120} alto={96} parte={enParte > 0 ? 'enSuPunto' : null} resto={m.series - enParte > 0 ? 'poco' : null} etiqueta={t('ascent.tus.partes.titulo')} />
+          <View style={st.crece}>
+            {([[parte, enParte], [`${m.musculo}Resto`, Math.max(0, m.series - enParte)]] as const).map(([k, n], i) => (
+              <View key={k} style={st.parteFila}>
+                <View style={[st.parteMarca, { backgroundColor: a.claro }, i === 1 && st.parteMarcaResto]} />
+                <Text style={st.parteNombre}>{t('ascent.tus.partes.linea', { parte: tx(`ascent.tus.partes.${k}`), n: series(n) })}</Text>
+              </View>
+            ))}
+            <Text style={st.parteNota}>{tx(`ascent.tus.partes.como.${m.musculo}`)}</Text>
+          </View>
         </View>
       )}
       <Etiqueta style={st.ejsEtq}>{t('ascent.tus.ejercicios')}</Etiqueta>
       {!ejercicios.length ? (
-        <Text style={st.detLinea}>{t('ascent.tus.sinEjercicios')}</Text>
+        <Text style={st.ninguno}>{t('ascent.tus.sinEjercicios')}</Text>
       ) : (
-        ejercicios.map((x) => <FilaDelEjercicio key={nombreDelEjercicio(x.e)} x={x} ayuda={!fuerte(x)} />)
+        ejercicios.map((x) => <FilaDelEjercicio key={nombreDelEjercicio(x.e)} x={x} musculo={m.musculo} ayuda={!fuerte(x)} />)
       )}
-      <Enlace texto={t('ascent.tus.lista')} alTocar={alVolver} />
     </View>
   );
 }
 
-function FilaDelEjercicio({ x, ayuda }: { x: EjercicioDeLaSemana; ayuda: boolean }) {
+function FilaDelEjercicio({ x, musculo, ayuda }: { x: EjercicioDeLaSemana; musculo: Musculo; ayuda: boolean }) {
   const a = useAcento();
-  const datos = [t('ascent.tus.duras', { n: x.duras })];
-  if (x.alFallo) datos.push(t('ascent.tus.alFallo', { n: x.alFallo }));
-  if (x.rir.length) {
-    const de = Math.min(...x.rir), hasta = Math.max(...x.rir);
-    datos.push(de === hasta ? t('ascent.tus.rirUno', { n: de }) : t('ascent.tus.rir', { de, a: hasta }));
-  }
-  if (ayuda) datos.push(t('ascent.tus.ayuda'));
   const p = x.proxima;
-  const proxima = p.decision === 'subir' ? t('ascent.tus.proxima.subir') : p.decision === 'noSeSabe' ? t('ascent.tus.proxima.pocasSesiones') : tx(`ascent.tus.proxima.${p.razon}`, { tope: x.tope ?? '' });
+  const siguiente = pesoSiguiente(x.peso);
+  const peso = x.peso > 0 ? `${numero(x.peso, x.peso % 1 ? 1 : 0)} kg` : t('ascent.tus.mismoPeso');
+  const proxima = p.decision === 'subir'
+    ? (siguiente === null ? t('ascent.tus.proxima.subirSinPeso') : t('ascent.tus.proxima.subirA', { kg: numero(siguiente, siguiente % 1 ? 1 : 0) }))
+    : p.decision === 'noSeSabe' ? t('ascent.tus.proxima.pocasSesiones', { peso }) : tx(`ascent.tus.proxima.${p.razon}`, { tope: x.tope ?? '', peso });
   return (
     <View style={st.ej}>
-      <Text style={st.ejNombre}>{nombreDelEjercicio(x.e)}</Text>
-      <Text style={st.ejDatos}>{datos.join(' · ')}</Text>
-      {!ayuda && (
+      <View style={st.ejCab}>
+        <Text style={st.ejNombre}>{nombreDelEjercicio(x.e)}</Text>
+        <Text style={st.ejSeries}>{t('ascent.tus.duras', { n: x.duras })}</Text>
+      </View>
+      {ayuda ? (
+        <Text style={st.ejDatos}>{t('ascent.tus.ayuda', { musculo: nombreDelMusculo(musculo).toLowerCase() })}</Text>
+      ) : (
         <View style={st.ejProxima}>
-          <View style={[st.ejPunto, { backgroundColor: p.decision === 'subir' ? a.claro : 'transparent', borderColor: p.decision === 'subir' ? a.claro : C.apagado }]} />
+          <Text style={[st.ejFlecha, { color: p.decision === 'subir' ? a.claro : C.sub }]}>{p.decision === 'subir' ? '↑' : '='}</Text>
           <Text style={st.ejProximaTexto}>{proxima}</Text>
         </View>
       )}
@@ -260,17 +348,15 @@ function FilaDelEjercicio({ x, ayuda }: { x: EjercicioDeLaSemana; ayuda: boolean
   );
 }
 
-/** La nota de tu rutina de Ascent y lo que la mejoraría. */
+/** La nota de tu rutina de Ascent y lo que la mejoraría (más arriba, aparte). */
 function Rutina({ nota }: { nota: DeTusMusculos['nota'] }) {
   const a = useAcento();
   return (
-    <View style={st.rutina}>
-      <View style={st.rutinaCab}>
-        <Etiqueta>{t('ascent.tus.rutina.titulo')}</Etiqueta>
-        {nota && <Text style={[st.rutinaNota, { color: nota.nota === 'mejorable' ? C.lejos : a.claro }]}>{tx(`ascent.tus.rutina.nota.${nota.nota}`)}</Text>}
-      </View>
+    <Parte titulo={t('ascent.tus.rutina.titulo')} derecha={nota ? <Text style={[st.rutinaNota, { color: nota.nota === 'mejorable' ? C.lejos : a.claro }]}>{tx(`ascent.tus.rutina.nota.${nota.nota}`)}</Text> : undefined}>
       {!nota ? (
-        <Text style={st.detLinea}>{t('ascent.tus.rutina.sinRutina')}</Text>
+        <Text style={st.ninguno}>{t('ascent.tus.rutina.sinRutina')}</Text>
+      ) : !nota.mejoras.length ? (
+        <Text style={st.mejora}>{t('ascent.tus.rutina.bien')}</Text>
       ) : (
         nota.mejoras.map((x) => (
           <Text key={x.musculo} style={st.mejora}>
@@ -278,17 +364,11 @@ function Rutina({ nota }: { nota: DeTusMusculos['nota'] }) {
           </Text>
         ))
       )}
-    </View>
+    </Parte>
   );
 }
 
 // ------------------------------------------------------------ músculos fatigados
-/** «vuelve mañana», «vuelve pasado mañana» o «vuelve el sábado». */
-function cuandoVuelve(f: { dias: number; listo: ClaveDia }): string {
-  if (f.dias <= 2) return t('ascent.fatigados.vuelve', { cuando: cuandoDe(f.dias === 1 ? 'manana' : 'pasadoManana') });
-  return t('ascent.fatigados.vuelveEl', { dia: lista('fecha.dias')[diaDeLaSemana(f.listo)] });
-}
-
 function Fatigados({ tm }: { tm: DeTusMusculos }) {
   return (
     <Parte titulo={t('ascent.fatigados.titulo')}>
@@ -299,12 +379,12 @@ function Fatigados({ tm }: { tm: DeTusMusculos }) {
         <View style={st.fatigados}>
           {tm.fatigados.map((m, i) => (
             <View key={m.musculo} style={[st.fatigado, i === 0 && st.sinBorde]}>
-              <View style={[st.fatigadoMarca, m.fatiga === 'cargado' && { backgroundColor: 'rgba(203, 133, 105, 0.25)' }]} />
+              <Reloj tam={24} hecho={1 - m.dias / m.total} color={C.lejos} />
               <Text style={st.fatigadoNombre}>{nombreDelMusculo(m.musculo)}</Text>
-              <Text style={st.fatigadoEstado}>{tx(`ascent.cuerpo.estados.${m.fatiga}`)}</Text>
               <Text style={st.fatigadoCuando}>{cuandoVuelve(m)}</Text>
             </View>
           ))}
+          <Text style={st.parteNota}>{t('ascent.fatigados.comoSeCalcula')}</Text>
         </View>
       )}
       <EnQueSeBasa de="fatigados" />
@@ -448,6 +528,7 @@ function Metas({ todo, tm }: { todo: Todo; tm: DeTusMusculos }) {
         <NuevaMeta todo={todo} alTerminar={() => setNueva(false)} />
       </Desplegable>
       {!nueva && <Enlace texto={t('ascent.metas.nueva')} alTocar={() => setNueva(true)} />}
+      {todo.proteina !== null && todo.metas.some((x) => x.proyeccion.estado !== 'lograda') && <Text style={st.metaHacer}>{t('ascent.metas.comer', { g: todo.proteina })}</Text>}
       <EnQueSeBasa de="metas" />
     </Parte>
   );
@@ -462,25 +543,28 @@ function FilaDeMeta({ x, todo, tm, primera }: { x: MetaConProyeccion; todo: Todo
     : t(`ascent.metas.${p.estado}`);
   const ej = tm.ejercicios.find((y) => y.e.id === x.meta.ejercicio);
   const proxima = ej?.proxima;
-  const queHacer = !proxima ? null : proxima.decision === 'subir' ? t('ascent.tus.proxima.subir') : proxima.decision === 'noSeSabe' ? null : tx(`ascent.tus.proxima.${proxima.razon}`, { tope: ej?.tope ?? '' });
+  const siguiente = ej ? pesoSiguiente(ej.peso) : null;
+  const peso = ej && ej.peso > 0 ? `${numero(ej.peso, ej.peso % 1 ? 1 : 0)} kg` : t('ascent.tus.mismoPeso');
+  const queHacer = !proxima || proxima.decision === 'noSeSabe' ? null
+    : proxima.decision === 'subir' ? (siguiente === null ? t('ascent.tus.proxima.subirSinPeso') : t('ascent.tus.proxima.subirA', { kg: numero(siguiente, siguiente % 1 ? 1 : 0) }))
+    : tx(`ascent.tus.proxima.${proxima.razon}`, { tope: ej?.tope ?? '', peso });
   const kg = numero(x.meta.kilos, x.meta.kilos % 1 ? 1 : 0);
   return (
     <View style={[st.meta, primera && st.sinBorde]}>
       <View style={st.metaCab}>
         <Text style={st.metaNombre}>{nombreDelEjercicio(x.e)}</Text>
-        <Text style={st.metaObjetivo}>{t('ascent.metas.objetivo', { kg, reps: x.meta.reps })}</Text>
+        <Text style={st.metaObjetivo}>{x.meta.reps === 1 ? t('ascent.metas.objetivoUna', { kg }) : t('ascent.metas.objetivoVarias', { kg, reps: x.meta.reps })}</Text>
       </View>
       {parte !== null && (
         <>
           <View style={st.metaPista}><View style={[st.metaLleno, { width: `${parte * 100}%`, backgroundColor: a.claro }]} /></View>
-          <Text style={st.metaNivel}>{t('ascent.metas.nivel', { n: Math.floor(parte * 100) })}</Text>
+          <Text style={st.metaNivel}>{t('ascent.metas.nivelKg', { kg: numero(aDosYMedio(x.meta.reps === 1 ? x.nivel! : x.nivel! / (1 + x.meta.reps / 30)), 1) })}</Text>
         </>
       )}
       <Text style={st.metaLinea}>{linea}</Text>
       {p.estado !== 'lograda' && (
         <>
           {queHacer && <Text style={st.metaHacer}>{queHacer}</Text>}
-          {todo.proteina !== null && <Text style={st.metaHacer}>{t('ascent.metas.comer', { g: todo.proteina })}</Text>}
           {todo.alejan.map((y) => (
             <Text key={y.que} style={[st.metaHacer, { color: C.lejos }]}>
               {y.que === 'sueno' ? t('ascent.metas.alejaSueno', { h: horasDe(y.minutos) }) : t('ascent.metas.alejaProteina', { g: numero(y.gPorKg, 1) })}
@@ -692,53 +776,76 @@ const st = StyleSheet.create({
   baseCuerpo: { paddingTop: 8 },
   baseParrafo: { marginBottom: 10, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 18, color: C.sub },
   baseNegrita: { fontFamily: letras.textoMedio, color: C.tinta },
+  // Para hoy
+  paraHoy: { marginTop: 26, paddingTop: 16, borderTopWidth: 1, borderTopColor: C.lineaSuave, gap: 14 },
+  sugerencia: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  sugerenciaPunto: { width: 7, height: 7, borderRadius: 3.5, marginTop: 6 },
+  sugerenciaTipo: { fontFamily: letras.textoMedio, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: C.sub },
+  sugerenciaTexto: { marginTop: 3, fontFamily: letras.texto, fontSize: 15, lineHeight: 21, color: C.tinta },
+  sugerenciaEnlace: { marginTop: 6 },
   // Tus músculos
   tus: { marginTop: 2 },
-  tusEtq: { fontFamily: letras.textoMedio, fontSize: 10.5, lineHeight: 13, letterSpacing: 2, textTransform: 'uppercase', color: C.sub },
-  cuerpo: { alignItems: 'center', marginTop: 16 },
-  leyenda: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', columnGap: 14, rowGap: 6, marginTop: 6 },
+  paraQue: { marginTop: 6, fontFamily: letras.texto, fontSize: 15, lineHeight: 20.5, color: C.tinta },
+  semanaEtq: { marginTop: 20 },
+  semanaTexto: { marginTop: 6, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: C.sub },
+  lados: { flexDirection: 'row', gap: 6, marginTop: 14 },
+  ladoBoton: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: C.lineaFuerte },
+  ladoElegido: { backgroundColor: C.tinta, borderColor: C.tinta },
+  ladoTexto: { fontFamily: letras.texto, fontSize: 12.5, color: C.sub },
+  ladoTextoElegido: { color: C.fondo },
+  cuerpoYLista: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginTop: 14 },
+  listaDelLado: { flex: 1, minWidth: 0, gap: 2 },
+  leyenda: { marginTop: 16, gap: 8 },
   leyendaItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  leyendaCuadro: { width: 9, height: 9, borderRadius: 1.5, alignItems: 'center', justifyContent: 'center' },
+  leyendaFila: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  leyendaCuadro: { width: 10, height: 10, borderRadius: 2, marginTop: 4 },
   leyendaFatigado: { borderWidth: 1.2, borderStyle: 'dashed', borderColor: C.lejos },
-  leyendaTexto: { fontFamily: letras.texto, fontSize: 11, color: C.sub },
-  debajo: { marginTop: 20 },
-  barras: { gap: 4 },
-  fila: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 5 },
-  filaNombre: { width: 92, fontFamily: letras.texto, fontSize: 13.5, color: C.tinta },
-  filaNumero: { width: 30, textAlign: 'right', fontFamily: letras.numero, fontSize: 12.5, color: C.sub, fontVariant: ['tabular-nums'] },
+  leyendaTexto: { flex: 1, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: C.sub },
+  leyendaEstado: { fontFamily: letras.textoMedio, color: C.tinta },
+  debajo: { marginTop: 18 },
+  fila: { paddingVertical: 6, paddingHorizontal: 6, marginHorizontal: -6, borderRadius: 8, gap: 5 },
+  filaElegida: { backgroundColor: 'rgba(170, 178, 196, 0.1)' },
+  filaCab: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  filaNombre: { flex: 1, fontFamily: letras.texto, fontSize: 13.5, color: C.tinta },
+  filaEstado: { fontFamily: letras.texto, fontSize: 11, color: C.sub },
+  filaFatiga: { width: 8, height: 8, borderRadius: 2, borderWidth: 1.2, borderStyle: 'dashed', borderColor: C.lejos },
+  filaNumero: { minWidth: 20, textAlign: 'right', fontFamily: letras.numero, fontSize: 13, color: C.sub, fontVariant: ['tabular-nums'] },
   pista: { backgroundColor: 'rgba(170, 178, 196, 0.1)', overflow: 'hidden' },
   zona: { position: 'absolute', top: 0, bottom: 0, backgroundColor: 'rgba(170, 178, 196, 0.14)' },
-  // Los bordes de la franja van encima de lo lleno: se ven siempre.
   bordes: { position: 'absolute', top: 0, bottom: 0, borderLeftWidth: 1, borderRightWidth: 1, borderColor: 'rgba(232, 236, 246, 0.55)' },
   lleno: { position: 'absolute', left: 0, top: 0, bottom: 0 },
-  franja: { marginTop: 12, fontFamily: letras.texto, fontSize: 11.5, lineHeight: 15, color: C.apagado },
-  toca: { marginTop: 4, fontFamily: letras.texto, fontSize: 11.5, lineHeight: 15, color: C.apagado },
-  detCab: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 },
+  toca: { marginTop: 4, fontFamily: letras.texto, fontSize: 12, lineHeight: 16, color: C.apagado },
+  detCab: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 },
   detNombre: { fontFamily: letras.texto, fontSize: 20, lineHeight: 24, color: C.tinta },
-  detNumero: { fontFamily: letras.numeroLiviano, fontSize: 22, color: C.tinta, fontVariant: ['tabular-nums'] },
-  detLinea: { marginTop: 8, fontFamily: letras.texto, fontSize: 13, lineHeight: 17.5, color: C.sub },
-  partes: { marginTop: 18, gap: 8 },
-  parte: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  parteNombre: { fontFamily: letras.texto, fontSize: 14, color: C.tinta },
-  parteValor: { fontFamily: letras.numero, fontSize: 13, color: C.sub, fontVariant: ['tabular-nums'] },
+  cerrar: { fontFamily: letras.texto, fontSize: 13, color: C.sub, textDecorationLine: 'underline' },
+  detSeries: { marginBottom: 8, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 18, color: C.tinta },
+  detAccion: { marginTop: 10, fontFamily: letras.texto, fontSize: 14.5, lineHeight: 20, color: C.tinta },
+  detFatiga: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 },
+  detFatigaTexto: { flex: 1, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 18, color: C.lejos },
+  estimado: { color: C.apagado },
+  partes: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 16 },
+  parteFila: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
+  parteMarca: { width: 10, height: 10, borderRadius: 2 },
+  // Las partes no tienen su propio rango: la destacada va llena y el resto, tenue, para distinguirlas.
+  parteMarcaResto: { opacity: 0.4 },
+  parteNombre: { flex: 1, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 18, color: C.tinta },
+  parteNota: { marginTop: 8, fontFamily: letras.texto, fontSize: 12, lineHeight: 16.5, color: C.apagado },
   ejsEtq: { marginTop: 20 },
-  ej: { paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: C.lineaSuave },
-  ejNombre: { fontFamily: letras.texto, fontSize: 15, lineHeight: 19, color: C.tinta },
-  ejDatos: { marginTop: 3, fontFamily: letras.texto, fontSize: 12, lineHeight: 16, color: C.sub, fontVariant: ['tabular-nums'] },
-  ejProxima: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 7 },
-  ejPunto: { width: 8, height: 8, borderRadius: 4, borderWidth: 1.3, marginTop: 5 },
-  ejProximaTexto: { flex: 1, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 18.5, color: C.tinta },
-  rutina: { marginTop: 24, paddingTop: 14, borderTopWidth: 1, borderTopColor: C.lineaSuave },
-  rutinaCab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  rutinaNota: { fontFamily: letras.texto, fontSize: 16 },
+  ej: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.lineaSuave },
+  ejCab: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 },
+  ejNombre: { flexShrink: 1, fontFamily: letras.texto, fontSize: 15, lineHeight: 19, color: C.tinta },
+  ejSeries: { fontFamily: letras.texto, fontSize: 12.5, color: C.sub },
+  ejDatos: { marginTop: 4, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17, color: C.sub },
+  ejProxima: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 5 },
+  ejFlecha: { width: 12, fontFamily: letras.textoMedio, fontSize: 14, lineHeight: 19 },
+  ejProximaTexto: { flex: 1, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 19, color: C.tinta },
+  rutinaNota: { fontFamily: letras.texto, fontSize: 15 },
   mejora: { marginTop: 8, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 18.5, color: C.tinta },
   anotas: { marginTop: 18 },
   // Fatigados
   fatigados: { marginTop: 10 },
   fatigado: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.lineaSuave },
-  fatigadoMarca: { width: 10, height: 10, borderRadius: 2, borderWidth: 1.2, borderStyle: 'dashed', borderColor: C.lejos },
   fatigadoNombre: { flex: 1, fontFamily: letras.texto, fontSize: 15, color: C.tinta },
-  fatigadoEstado: { fontFamily: letras.texto, fontSize: 12.5, color: C.sub },
   fatigadoCuando: { minWidth: 104, textAlign: 'right', fontFamily: letras.texto, fontSize: 12.5, color: C.tinta },
   // Estancados y por qué
   estancEj: { paddingTop: 14, paddingBottom: 8, borderTopWidth: 1, borderTopColor: C.lineaSuave },

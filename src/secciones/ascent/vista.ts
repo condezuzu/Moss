@@ -343,8 +343,11 @@ export type EjercicioDeLaSemana = {
   tope: number | null;
   /** Las series duras de la semana, las que fueron al fallo y el RIR de las que lo anotaron. */
   duras: number; alFallo: number; rir: number[]; proxima: Proxima;
+  /** El peso más alto de la última sesión con el ejercicio (0, con el del cuerpo). */
+  peso: number;
 };
-export type Fatigado = { musculo: Musculo; dias: number; listo: ClaveDia; fatiga: EstadoDeFatiga };
+/** `total`: los días desde su última sesión hasta que esté listo (para el reloj). */
+export type Fatigado = { musculo: Musculo; dias: number; listo: ClaveDia; total: number; fatiga: EstadoDeFatiga };
 export type TusMusculos = {
   musculos: MusculoDeLaSemana[];
   ejercicios: EjercicioDeLaSemana[];
@@ -447,9 +450,12 @@ export function calcularTusMusculos(h: Hoy): TusMusculos {
   const deHoy = new Set(h.sesion?.como === 'prevista' ? (h.sesion.bloques ?? []).map(claveDelEjercicio) : []);
   const ejercicios = [...juntos.entries()].map(([k, { b, x, duras, alFallo, rir }]): EjercicioDeLaSemana => {
     const sesiones = h.sesiones.map((s) => ({ series: s.bloques.filter((y) => claveDelEjercicio(y) === k).flatMap((y) => hechoDe(y)?.series ?? []) })).filter((s) => s.series.length);
+    const ultima = [...h.sesiones].reverse().find((s) => s.bloques.some((y) => claveDelEjercicio(y) === k));
+    const peso = Math.max(0, ...(ultima?.bloques.filter((y) => claveDelEjercicio(y) === k).flatMap((y) => y.series.map((z) => z.peso)) ?? []));
+    const fatigadoHoy = deHoy.has(k) && x.principal.some((m) => (musculos.find((y) => y.musculo === m)?.dias ?? 0) > 0);
     return {
       e: { id: b.id, ejercicio: b.ejercicio }, principal: x.principal as Musculo[], ayudan: x.ayuda as Musculo[], parte: (x.parte as Parte | undefined) ?? null, tope: x.objetivo ?? null,
-      duras, alFallo, rir, proxima: proximaSesion({ sesiones, tope: x.objetivo ?? null, nocheCortaHoy: nocheCorta && deHoy.has(k) }),
+      duras, alFallo, rir, peso, proxima: proximaSesion({ sesiones, tope: x.objetivo ?? null, nocheCortaHoy: nocheCorta && deHoy.has(k), fatigadoHoy }),
     };
   });
 
@@ -461,7 +467,10 @@ export function calcularTusMusculos(h: Hoy): TusMusculos {
 
   return {
     musculos, ejercicios, nota,
-    fatigados: musculos.flatMap(({ musculo, dias, listo, fatiga }) => (listo ? [{ musculo, dias, listo, fatiga }] : [])).sort((a, b) => b.dias - a.dias),
+    fatigados: musculos.flatMap(({ musculo, dias, listo, fatiga }) => {
+      const ultima = porSesion.get(musculo)?.at(-1)?.fecha;
+      return listo && ultima ? [{ musculo, dias, listo, total: Math.max(dias, diasEntre(ultima, listo)), fatiga }] : [];
+    }).sort((a, b) => b.dias - a.dias),
     conDatos: h.sesiones.some((s) => s.fecha >= sumarDias(h.hoy, -DIAS_DE_LA_REFERENCIA)),
   };
 }

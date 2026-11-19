@@ -3730,7 +3730,7 @@
     },
     "estancados": {
       "titulo": "Reasons for plateaus",
-      "texto": "No clear rise in 8 weeks or more, past your Ascent threshold ({n} weeks without a PR).",
+      "texto": "Exercises that haven't improved in 8 weeks or more.",
       "ninguno": "No exercise has plateaued: over 12 weeks, they're all going up or it's too early to tell.",
       "dato": "{n} weeks without a best · {marca}",
       "sinCausa": "No clear cause in your sets, your food or your sleep.",
@@ -3933,36 +3933,43 @@
       "titulo": "Your muscles",
       "estados": {
         "sinEntrenar": "Not trained",
-        "poco": "Low",
-        "enSuPunto": "On target",
-        "mucho": "A lot",
-        "fatigado": "Fatigued"
+        "poco": "Needs more",
+        "enSuPunto": "On track",
+        "mucho": "Too much",
+        "fatigado": "Recovering"
       },
-      "barra": "{musculo}: {puntaje} of 200, {estado}. {series} hard sets in 7 days.",
+      "barra": "{musculo}: {series} hard sets in 7 days, {estado}.",
       "franja": "The band is “on target”: 10 to 20 hard sets in the last 7 days.",
-      "toca": "Tap a muscle to see its exercises.",
+      "toca": "Tap a muscle to see your exercises and when to add weight.",
       "lista": "Back to the list",
-      "series": "{n} hard sets in 7 days",
+      "series": "{n} hard sets in 7 days · ideal: 10 to 20",
       "partes": {
         "titulo": "Its parts",
         "pechoAlto": "Upper chest",
         "pechoResto": "Middle and lower",
         "tricepsLarga": "Long head",
-        "tricepsResto": "Lateral and medial"
+        "tricepsResto": "The rest",
+        "linea": "{parte}: {n} sets",
+        "como": {
+          "pecho": "The upper chest grows more with the incline press.",
+          "triceps": "The long head grows more with overhead extensions."
+        }
       },
       "ejercicios": "Your exercises this week",
       "sinEjercicios": "You haven't trained it in the last 7 days.",
-      "ayuda": "assists: counts half",
-      "duras": "{n} hard sets",
+      "ayuda": "It also works your {musculo}: each set counts as half.",
+      "duras": "{n} sets",
       "alFallo": "{n} to failure",
       "rir": "{de} to {a} left in the tank",
       "rirUno": "{n} left in the tank",
       "proxima": {
-        "subir": "Next time: add weight.",
-        "faltaElTope": "Next time: keep the weight until you do {tope} reps with 2 to spare.",
-        "sueno": "Today, keep the weight: you slept little. If it goes with your usual reps in reserve, add weight next time.",
-        "sinObjetivo": "Next time: keep the weight. Set target reps in your routine to know when to add weight.",
-        "pocasSesiones": "One more session and you'll know whether to add weight."
+        "faltaElTope": "Next time: {peso}, until you do {tope} and feel you could do 2 more.",
+        "sueno": "Today: {peso}, no increase, because you slept little.",
+        "sinObjetivo": "Next time: {peso}.",
+        "pocasSesiones": "Next time: {peso}. One more session and you'll know whether to add.",
+        "subirA": "Next time: go up to {kg} kg.",
+        "subirSinPeso": "Next time: do one more rep in each set.",
+        "fatiga": "Today: {peso}, no increase: it's still recovering."
       },
       "rutina": {
         "titulo": "Your routine",
@@ -3974,17 +3981,33 @@
         "pocasSeries": "Add sets for {musculo}: your routine has {n}, and 10 to 20 is recommended.",
         "muchasSeries": "{musculo} has {n} sets in your routine: more than 20 adds little and tires you more.",
         "frecuencia": "Train {musculo} twice a week or more.",
-        "sinRutina": "Set up your routine in Ascent and you'll see its score here."
+        "sinRutina": "Set up your routine in Ascent and you'll see its score here.",
+        "bien": "Each large muscle gets two sessions a week and 10 to 20 sets."
       },
       "anotas": "It's calculated from what you log in Ascent and Moss: the better you log, the more accurate it is.",
-      "sinDatos": "No workouts from the last few weeks in Ascent yet."
+      "sinDatos": "No workouts from the last few weeks in Ascent yet.",
+      "paraQue": "Check it before training: it tells you what to do today with each muscle.",
+      "semana": "This week",
+      "semanaTexto": "Hard sets for each muscle in the last 7 days. Ideal: 10 to 20.",
+      "acciones": {
+        "sinEntrenar": "You haven't trained it in the last 7 days: add sets this week.",
+        "poco": "add sets this week.",
+        "enSuPunto": "keep your routine, no need to add more.",
+        "mucho": "don't add more this week: past 20 barely helps and tires you.",
+        "fatigado": "still recovering. Better not to train it hard today."
+      },
+      "cerrar": "Close",
+      "seriesCorto": "{n} hard sets in the last 7 days",
+      "mismoPeso": "the same weight"
     },
     "fatigados": {
       "titulo": "Fatigued muscles",
-      "texto": "Let them rest today: they're still recovering.",
+      "texto": "What's still recovering from your last workout.",
       "ninguno": "No fatigued muscles.",
-      "vuelve": "back {cuando}",
-      "vuelveEl": "back on {dia}"
+      "vuelve": "ready {cuando}",
+      "vuelveEl": "ready on {dia}",
+      "estimado": "estimate",
+      "comoSeCalcula": "It's an estimate based on how close to failure you got (when another rep won't come): it can be off by a day."
     },
     "porQue": {
       "titulo": "Why you might be stuck",
@@ -4040,39 +4063,42 @@
       "pasos": {
         "color": {
           "titulo": "Your muscles",
-          "texto": "The color shows how much you trained each one in the last 7 days."
+          "texto": "Each muscle is colored by how much you trained it in the last 7 days."
         },
         "barra": {
-          "titulo": "The bar",
-          "texto": "100 is the middle of what studies recommend; the band, from 70 to 130, is “on target”."
+          "titulo": "Sets and reps",
+          "texto": "Rep: lifting the weight once. Set: several in a row. A hard set is one you finish barely able to do another."
         },
         "toca": {
           "titulo": "Tap a muscle",
-          "texto": "You'll see its parts, your exercises and when to add weight."
+          "texto": "Tap a muscle to see your exercises and whether to add weight next time."
         },
         "fatigados": {
           "titulo": "Fatigued",
-          "texto": "The dotted outline marks the ones still recovering, and below it says when they'll be back."
+          "texto": "The dotted outline marks what's still recovering. The circle fills up until it's ready."
         },
         "anotas": {
           "titulo": "From what you log",
           "texto": "It uses your sets in Ascent and your sleep and food in Moss: the better you log, the better it gets."
         }
+      },
+      "fuentes": {
+        "ascent": "Ascent: your sets",
+        "sueno": "Moss: your sleep",
+        "comida": "Moss: your food"
       }
     },
     "metas": {
       "titulo": "Goals",
       "ninguna": "Set a strength goal: it tells you whether it's realistic, what to do and when you'll get there.",
       "nueva": "New goal",
-      "objetivo": "{kg} kg × {reps}",
-      "nivel": "You're at {n}% today",
       "lograda": "You're there: today's level passes the goal.",
       "noSeSabe": "After 6 sessions of this exercise, it can estimate when you'll get there.",
       "noSube": "Not at this pace: it hasn't clearly gone up in 12 weeks. See “Why you might be stuck”.",
       "enCamino": "At the pace of your last 12 weeks, in {de} to {a} weeks.",
       "enCaminoAbierto": "At the pace of your last 12 weeks, in {de} weeks or more.",
       "lejana": "It's a distant goal: set an intermediate one.",
-      "comer": "Eat about {g} g of protein a day.",
+      "comer": "To get there: eat about {g} g of protein a day.",
       "alejaSueno": "It could slip: you sleep {h} on average.",
       "alejaProteina": "It could slip: you eat {g} g of protein per kilo, and 1.6 is recommended.",
       "borrar": "Delete",
@@ -4081,7 +4107,46 @@
       "reps": "Reps",
       "guardar": "Save goal",
       "cancelar": "Cancel",
-      "error": "Couldn't save. Check your connection."
+      "error": "Couldn't save. Check your connection.",
+      "objetivoUna": "Lift {kg} kg once",
+      "objetivoVarias": "Lift {kg} kg {reps} times",
+      "nivelKg": "Today you could lift about {kg} kg (estimate)"
+    },
+    "sugerencias": {
+      "titulo": "For today",
+      "tipos": {
+        "entreno": "Training",
+        "comida": "Food",
+        "sueno": "Sleep"
+      },
+      "masEnSueno": "More in Sleep",
+      "entreno": {
+        "descanso": "Rest day. Walking or moving gently is fine: it doesn't take from your recovery.",
+        "hecha": "You already trained today. What's next: eat well and sleep at your usual time.",
+        "entrenar": "Today: {musculos}. Sets of {reps} reps; stop when you feel you could do {reserva} more.",
+        "nocheCorta": "Today: {musculos}. You slept little: keep the weight and don't go to failure.",
+        "conFatiga": "Today: {musculos}. {fatigados} is still recovering: today, one set fewer and not to failure.",
+        "conFatigaVarios": "Today: {musculos}. {fatigados} are still recovering: today, one set fewer and not to failure."
+      },
+      "comida": {
+        "cuidado": "Eat as usual, at your usual times.",
+        "faltoProteina": "Protein fell short yesterday. No need to make it up: today, about {gramos} g each meal.",
+        "comioMenos": "You ate less yesterday. Today, as usual: no need to make up for it.",
+        "carbos": "Since you'll train over 45 minutes today, carbs beforehand (bread, fruit, rice) can help.",
+        "ayerBien": "You hit your targets yesterday. Same today: protein at each meal.",
+        "normal": "Today, your usual meals, with protein in each one.",
+        "sinDatos": "Log what you eat and I'll tell you what to prioritize here."
+      },
+      "sueno": {
+        "dormistePoco": "You slept little. Tonight, bed around {hora}.",
+        "dormistePocoSinHora": "You slept little. If you can, a 30-minute nap before 4 pm.",
+        "deuda": "You've been short on sleep: several nights at your time bring it down. Tonight, around {hora}.",
+        "deudaSinHora": "You've been short on sleep: several nights in a row at the same time bring it down.",
+        "bien": "You slept well. Keep your time: bed around {hora}.",
+        "bienSinHora": "You slept well. Keep going to bed at the same time.",
+        "soloHora": "Tonight, bed around {hora}.",
+        "sinDatos": "Once Moss has your nights, it tells you here when to go to bed."
+      }
     }
   },
   "habitos": {
