@@ -10,6 +10,11 @@ Galería (versión 54): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 Apple aprobó la 1.0 (build 6). Pediste subir todo lo que va por aire y armar la 1.1 para revisión.
 
 Hecho:
+- **La sección de músculos, igual en Moss y en Ascent (19/11):** publicada por aire en las dos builds de Moss
+  (huellas fc0d415b y 13eb29e0, production y preview) y en las de Ascent. Migraciones 0016 (metas de fuerza y RIR)
+  y 0017 (cuánto bajas y tu experiencia) aplicadas; la privacidad publicada al día. **Te toca:** cerrar y abrir Moss
+  vinculada dos veces (para que tome la OTA y suba el resumen), prender «Registrar RIR» en los Ajustes de Ascent si
+  quieres que «sube el peso» use las repeticiones de sobra, y mirarla en el iPhone: no se probó en uno de verdad.
 - Migraciones 0010, 0011 y 0012 aplicadas en la base real (14/11); los permisos de las funciones nuevas, revisados
   en solo lectura. La prueba de borrado en producción (`herramientas/probar-borrado-en-produccion.sql`) no se
   corrió: escribe y deshace, y el CLI pide tu sí con `--yes`.
