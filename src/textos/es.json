@@ -3730,7 +3730,7 @@
     },
     "estancados": {
       "titulo": "Razones de estancamiento",
-      "texto": "Los ejercicios sin subida clara en 8 semanas o más, ya pasado el umbral que elegiste en Ascent ({n} semanas sin marca).",
+      "texto": "Sin subida clara en 8 semanas o más, pasado tu umbral de Ascent ({n} semanas sin marca).",
       "ninguno": "Ningún ejercicio está estancado: con 12 semanas, todos suben o todavía no se sabe.",
       "dato": "{n} semanas sin marca · {marca}",
       "sinCausa": "Sin una causa clara en tus series, tu comida ni tu sueño.",
@@ -3993,25 +3993,43 @@
     "enQueSeBasa": "En qué se basa",
     "baseDe": {
       "musculos": [
-        "Las series duras: cuentan las que terminas con 3 repeticiones de sobra o menos. El músculo principal suma una serie y el que ayuda, media: es el conteo que mejor explicó el crecimiento (Pelland 2026).",
-        "El rango: de 10 a 20 series duras por semana es donde se junta la mayor parte de la evidencia. Es una convención, no la cifra de un estudio: en personas entrenadas, 9, 18 o 27 series dieron el mismo crecimiento (Heaselgrave 2019).",
-        "Las partes: solo donde hay ensayos de crecimiento. El press inclinado hace crecer más el pecho alto (Chaves 2020; Albarello 2022) y la extensión por encima de la cabeza, la cabeza larga del tríceps (Maeo 2023).",
-        "Subir el peso: cuando todas las series llegan al tope con 2 repeticiones de sobra, dos sesiones seguidas. Cuántas quedaban se estima con un error de una para arriba o para abajo (Halperin 2021), por eso nunca se decide por una serie. La comida no frena: comer menos de lo que gastas no le quita fuerza a lo ganado (Murphy y Koehler 2022). El día de una noche de 6 horas o menos, las repeticiones cuestan cerca de un 10 % más (Craven 2022): ese día no se sube.",
-        "Tu rutina: cada músculo grande dos veces por semana o más (Schoenfeld 2016) y de 10 a 20 series. El equilibrio entre empujar y tirar no entra: no tiene respaldo."
+        "Cuenta la serie que terminas con 3 repeticiones de sobra o menos.",
+        "El músculo principal suma 1 serie y el que ayuda, media (Pelland 2026).",
+        "En su punto: de 10 a 20 series duras por semana, donde se junta la evidencia.",
+        "Es una convención: en entrenados, 9, 18 o 27 series dieron lo mismo (Heaselgrave 2019).",
+        "Partes, solo con ensayos: el press inclinado, el pecho alto (Chaves 2020; Albarello 2022).",
+        "La extensión sobre la cabeza, la cabeza larga del tríceps (Maeo 2023).",
+        "Sube el peso con todas las series al tope y 2 de sobra, dos sesiones seguidas.",
+        "Lo que sobra se estima con error de una repetición (Halperin 2021): nunca por una serie.",
+        "La comida no frena: el déficit no le quita fuerza a lo ganado (Murphy y Koehler 2022).",
+        "Tras dormir 6 h o menos, las repeticiones cuestan ~10 % más (Craven 2022): ese día, no sube.",
+        "Tu rutina: cada músculo grande 2 veces por semana o más (Schoenfeld 2016).",
+        "Empujar y tirar parejos no entra en la nota: no tiene respaldo."
       ],
       "fatigados": [
-        "Cuánto tarda: lo que más lo alarga es llegar cerca del fallo, más que la cantidad de series. Con 2 repeticiones de sobra o más en todas las series, vuelve al día siguiente; con 1, o sin anotarlo, en 2 días; al fallo, en 2 días, o en 3 con sentadilla, peso muerto u otro ejercicio grande de piernas. Un ejercicio que no hacías hace 26 semanas suma un día.",
-        "Se dice en días porque el cálculo erra en alrededor de un día: cada persona se recupera distinto. El dolor no cuenta: la fuerza vuelve antes de que se vaya."
+        "Lo que más alarga la recuperación es llegar cerca del fallo, más que las series.",
+        "Con 2 de sobra o más en todas, vuelve al día siguiente; con 1 o sin anotar, en 2 días.",
+        "Al fallo, en 2 días; en 3 si fue un multiarticular de piernas.",
+        "Se dice en días: el cálculo erra en un día, cada uno se recupera distinto.",
+        "El dolor no cuenta: la fuerza vuelve antes de que se vaya."
       ],
       "estancados": [
-        "Un ejercicio está estancado si su tendencia de 12 semanas no sube con claridad, con 8 semanas de datos o más y pasado tu umbral de Ascent. Con menos, el ruido de un día a otro, de un 3 % (Grgic 2020), lo confunde con un estancamiento."
+        "Estancado: su tendencia de 12 semanas no sube con claridad.",
+        "Hacen falta 8 semanas de datos y pasar tu umbral de Ascent.",
+        "Con menos, el ruido de un día a otro, un 3 % (Grgic 2020), parece estancamiento."
       ],
       "porQue": [
-        "Las razones van de la más sólida a la menos: primero cuánto entrenas (las series, la frecuencia y la carga pesada: Pelland 2026), después bajar rápido de peso, la proteína contra 1,6 g por kilo (Morton 2018) y el sueño. Siempre es una causa probable, no segura."
+        "Van de la más sólida a la menos sólida.",
+        "Primero cuánto entrenas: las series, la frecuencia y la carga pesada (Pelland 2026).",
+        "Después, bajar rápido de peso, la proteína contra 1,6 g por kilo (Morton 2018) y el sueño.",
+        "Siempre es una causa probable, no segura."
       ],
       "metas": [
-        "Cuándo llegas: con la tendencia de tus últimas 12 semanas y su rango, del ritmo más rápido al más lento, porque cada persona sube distinto (Latella 2020; Swinton 2024). Con menos de 6 sesiones del ejercicio no se calcula. Es realista si al ritmo más lento llegas en un año o menos.",
-        "Lo que la puede alejar: dormir menos de 6 horas en promedio o comer menos de 1,6 g de proteína por kilo, que frena lo que ganas en semanas (Morton 2018). Lo que comiste ayer no cambia la sesión de hoy."
+        "Cuándo llegas sale de tu tendencia de 12 semanas, del ritmo más rápido al más lento.",
+        "Es un rango porque cada uno sube distinto (Latella 2020; Swinton 2024).",
+        "Con menos de 6 sesiones del ejercicio no se calcula.",
+        "La alejan dormir menos de 6 h o comer menos de 1,6 g de proteína por kilo (Morton 2018).",
+        "Lo que comiste ayer no cambia la sesión de hoy."
       ]
     },
     "tutorial": {
@@ -4038,7 +4056,7 @@
         },
         "anotas": {
           "titulo": "Con lo que anotas",
-          "texto": "Se calcula con tus series en Ascent y tu sueño y tu comida en Moss: cuanto mejor anotas, más acierta."
+          "texto": "Usa tus series en Ascent y tu sueño y comida en Moss: cuanto mejor anotas, más acierta."
         }
       }
     },
