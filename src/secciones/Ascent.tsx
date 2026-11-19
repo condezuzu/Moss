@@ -27,6 +27,7 @@ import { HojaDeVincular } from './ascent/HojaDeVincular';
 import { Accion, Candado, Escala, Parte, Pildoras, st as p, Una, useTitulares } from './ascent/piezas';
 import { CuerpoDeFondo } from './ascent/Polvo';
 import { useAhora, useHoyEnAscent } from './ascent/titularDeHoy';
+import { useResumenParaAscent } from './ascent/resumenParaAscent';
 import { CabezaDelDia, DecideFila, MapaDelAnio, RestoVinculada, type IrA } from './ascent/Vinculada';
 import { vincularDesdeMoss } from './ascent/vincularDesdeMoss';
 import { Icono } from './comida/comunes';
@@ -56,6 +57,7 @@ export function Ascent({ subida, abierta, abajo, alCerrar, alIr }: Props) {
   const { height: alto } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { vinculo } = useAscent();
+  useResumenParaAscent();
   const [hoja, setHoja] = useState(false);
   const [vez, setVez] = useState(0);
   const [como, setComo] = useState(false);

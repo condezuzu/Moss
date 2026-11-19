@@ -163,6 +163,22 @@ export async function vincular(tokenDeAscent: string): Promise<{ ok: true; nombr
  * Un código de un uso para vincular sin la sesión de Ascent en el llavero (supabase/moss/0014_codigo_de_vinculo.sql):
  * vence a los 5 minutos y lo usa Ascent, con su sesión. null sin Supabase o sin sesión; sin conexión, se rechaza.
  */
+/** Un día del resumen que lee Ascent (0015_moss_para_ascent.sql): lo que se calcula en el teléfono. */
+export type ResumenParaAscent = {
+  fecha: ClaveDia;
+  dormido: number | null;
+  necesidad: number;
+  meta: { kcal: number; proteina: number; carbohidratos: number; grasas: number } | null;
+  deuda?: number | null;
+  deuda_palabra?: 'sinDeuda' | 'baja' | 'media' | 'alta' | null;
+  energia?: 'baja' | 'suficiente' | 'alta' | null;
+};
+
+/** Sube el resumen de unos días. false sin vínculo (la base no lo guarda), sin Supabase o sin sesión. */
+export async function guardarResumenes(dias: ResumenParaAscent[]): Promise<boolean> {
+  return (await llamar('guardar_resumenes', { p_dias: dias })) === true;
+}
+
 export async function crearCodigoDeVinculo(): Promise<string | null> {
   const codigo = await llamar('crear_codigo_de_vinculo');
   if (codigo === null) return null;
