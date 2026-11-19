@@ -3921,6 +3921,58 @@
       "texto": "Moss and Ascent now share your data. If this wasn't you, undo it now.",
       "noFuiYo": "It wasn't me",
       "deshecho": "Done: the link with Ascent was undone."
+    },
+    "semana": {
+      "titulo": "Your week",
+      "rango": "Hard sets this week. The marked zone is 10 to 20; the dot shows if the muscle is ready.",
+      "estados": {
+        "poco": "Low",
+        "enCamino": "On track",
+        "enRango": "In range",
+        "mucho": "High"
+      },
+      "listo": "Ready",
+      "barra": "{musculo}: {n} hard sets this week, {estado}. {listo}",
+      "sinDatos": "Once you log your first workout in Ascent, you'll see each muscle's load here.",
+      "verTodos": "See all",
+      "verMenos": "See less",
+      "dia": {
+        "hecho": "trained",
+        "previsto": "planned",
+        "descanso": "rest"
+      },
+      "linea": {
+        "dale": "Today, push {musculo} harder: you're at {n} of 10 sets.",
+        "daleDos": "Today, push {a} and {b} harder: you're at {n} and {m} of 10 sets.",
+        "retomar": "{musculo} is short on sets: you'll hit it again on {dia}.",
+        "proxima": "{musculo} came up short and doesn't come back this week: start next week there.",
+        "mucho": "{musculo} is already past 20 sets: go lighter the rest of the week.",
+        "enRango": "Your week is in range.",
+        "daleNuevo": "Today is {musculos}: you haven't trained them yet this week."
+      }
+    },
+    "momento": {
+      "antes": "Before you train",
+      "sinAnotar": "Log what you ate today and I'll tell you how you're showing up.",
+      "deMeta": "{n} of {meta} g",
+      "esperar": {
+        "ayunas": "It's been hours since you ate: something light now will give you energy.",
+        "pocosCarbohidratos": "Few carbs today: the last sets may feel harder.",
+        "grasaCerca": "You ate a fair amount of fat recently: you may feel heavy.",
+        "pocaProteina": "Little protein so far: after training, add about 30 g.",
+        "bien": "What you ate is enough to train on."
+      },
+      "hecha": "You trained today",
+      "hechaTexto": "{sesion}: {n} hard sets.",
+      "descanso": "Rest day",
+      "seRecuperan": "Still recovering:",
+      "recuperado": "Everything is recovered."
+    },
+    "tuNoche": {
+      "titulo": "Your night",
+      "deuda": "Debt: {palabra}",
+      "sinNoche": "I don't know how you slept yet.",
+      "ver": "See in Sleep"
     }
   },
   "habitos": {
