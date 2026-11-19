@@ -3366,9 +3366,8 @@
       "vincular": "Link",
       "ahoraNo": "Not now",
       "sinSesion": {
-        "titulo": "Open Ascent and come back",
-        "texto": "Ascent is on this iPhone but signed out: once you sign in, it leaves the session for Moss.",
-        "boton": "Open Ascent"
+        "titulo": "Sign in with your Ascent account",
+        "texto": "Enter the email and password you use in Ascent. Moss doesn't keep them."
       },
       "sinAscent": {
         "titulo": "Ascent isn’t on this iPhone",
