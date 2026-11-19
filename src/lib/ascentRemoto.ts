@@ -172,6 +172,9 @@ export type ResumenParaAscent = {
   deuda?: number | null;
   deuda_palabra?: 'sinDeuda' | 'baja' | 'media' | 'alta' | null;
   energia?: 'baja' | 'suficiente' | 'alta' | null;
+  /** Lo que bajas por semana, en % del peso (positivo es bajar), y tu experiencia (0017_baja_y_experiencia.sql). */
+  baja_semanal?: number | null;
+  experiencia?: 'principiante' | 'intermedio' | 'avanzado' | null;
 };
 
 /** Sube el resumen de unos días. false sin vínculo (la base no lo guarda), sin Supabase o sin sesión. */
