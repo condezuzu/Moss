@@ -238,6 +238,11 @@ La regla de hoy (`src/dominio/estancados.ts`): 8 semanas de tendencia, con el um
 - **Moss:** el sueño, la deuda, la energía, las metas de comida y lo comido de cada día. Ya sube con la
   0015 mientras está vinculada.
 
+- **Diferencia conocida (19/11):** en «Por qué», Ascent aproxima `bajaSemanal` con los pesos de cada semana de
+  `moss_semanas` y los años con su primer día anotado; Moss usa la tendencia de tu peso y tu respuesta del
+  cuestionario. Para que den igual, la 0017 propuesta sube `baja_semanal` y `experiencia` en el resumen de hoy y
+  `moss_objetivo()` los devuelve (con tu sí).
+
 ## 6. Cómo se mantiene igual
 
 - **Las cuentas, en dos archivos puros, sin importar nada, copiados tal cual en las dos apps:**
