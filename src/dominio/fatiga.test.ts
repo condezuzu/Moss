@@ -82,7 +82,7 @@ describe('en palabras y en días, nunca en horas ni en %', () => {
 
   it('todos los músculos, para el cuerpo dibujado: los que ya están, también', () => {
     const todos = todosLosMusculos({ sesiones: [sesion(24, ['sentadilla', 6])], en: EN });
-    expect(todos.length).toBe(13);
+    expect(todos.length).toBe(14);
     expect(todos.find((m) => m.musculo === 'pecho')).toMatchObject({ estado: 'recuperado', cuando: 'ya' });
   });
 });

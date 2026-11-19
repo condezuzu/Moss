@@ -1,48 +1,38 @@
-// Lo que muestra la sección de Ascent vinculada (spec/ascent.md, «Ascent en Progreso»), como la galería
-// (galeria/src/ascent.js, calcularHoy y calcularDia), con lo que llega de Ascent y lo de Moss. Las cuentas son las
-// del dominio (recuperado.ts, diagnostico.ts, fatiga.ts, estancados.ts, musculos.ts, rendimiento.ts y conAscent.ts);
-// acá solo se juntan los datos.
-// Con la rutina de Ascent (moss.ascent_rutina), la sesión de hoy es la de la rutina, con el peso de la última vez;
-// «Tu fuerza» sigue los multiarticulares de la rutina y está «Tu semana en Ascent». Sin la rutina (la base sin
-// 0013_ascent_rutina.sql, o sin rutina activa) no se inventa: la sesión de hoy sale de tu horario de Perfil ›
-// Entrenamiento con la última de ese día de la semana, «Tu fuerza» mira los ejercicios de las últimas cuatro semanas
-// y «Tu semana en Ascent» no está. El umbral de estancamiento es el de sus Ajustes o, sin ellos, el de fábrica.
+// Lo que muestra la sección de Ascent vinculada (spec/musculos-compartido.md, la misma en Moss y en Ascent), con lo que
+// llega de Ascent y lo de Moss: lo de hoy (calcularHoy, que también usan Inicio y Sueño), tus músculos de la semana con
+// las cuentas compartidas (calcularTusMusculos) y, más arriba, los estancados con sus razones y tu año (calcularTodo).
+// Las cuentas son las del dominio (puntajeMuscular.ts, fatiga.ts, estancados.ts, musculos.ts, rendimiento.ts y
+// conAscent.ts); acá solo se juntan los datos. Con la rutina de Ascent (moss.ascent_rutina), la sesión de hoy es la
+// de la rutina y los estancados siguen sus multiarticulares; sin ella, los de las últimas cuatro semanas.
 
 import type { Estado } from '@/almacen/almacen';
-import { metaVigente } from '@/almacen/almacen';
 import type { DeAscent } from '@/almacen/ascent';
-import type { Contexto } from '@/dominio/alrededorDelEntreno';
 import {
-  bloquesDeLaRutina, diasDeEntrenar, diasDeLaRutina, entrenadoSegunAscent, grupoDe, grupoDelAnio, gruposDelDia, gruposDeLaSesion, metaDelDiaConAscent,
-  sesionesConBloques, tuAnio,
-  type GrupoDelAnio, type MarcaDeAscent, type MetaConAscent, type RutinaDeAscent, type TuAnio,
+  bloquesDeLaRutina, diasDeEntrenar, diasDeLaRutina, entrenadoSegunAscent, grupoDe, gruposDelDia, gruposDeLaSesion, sesionesConBloques, tuAnio, type MarcaDeAscent, type RutinaDeAscent, type TuAnio,
 } from '@/dominio/conAscent';
-import { cargaDeLaSemana, enLaSemana, lineaDeLaSemana, type CargaDelMusculo, type DiaQueQueda, type LineaDeLaSemana } from '@/dominio/cargaSemanal';
-import { ultimoDiaDeControl } from '@/dominio/control';
-import { diagnostico, focoDeHoy, ordenarMarcas, buenDiaParaLaMarca, type Diagnostico, type Foco } from '@/dominio/diagnostico';
+import {
+  grupoDelAnio, type GrupoDelAnio, estaEstancado, razonesDeEstancamiento, UMBRAL_DE_ASCENT, type RazonesDeEstancamiento, type SemanaDeEntreno, tendenciaDeFuerza, type TendenciaDeFuerza,
+} from '@/dominio/progresoCompartido';
 import { calidadParaRecuperar } from '@/dominio/entrenamiento';
+import { puntosDelEjercicio, semanaDeEntreno, semanasParaLasRazones } from '@/dominio/estancados';
+import { fatigaMuscular, musculosParaLaFatiga } from '@/dominio/fatiga';
+import { diaDeLaSemana, diasEntre, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import {
-  estaEstancado, puntosDelEjercicio, razonesDeEstancamiento, semanaDeEntreno, semanasParaLasRazones, UMBRAL_DE_ASCENT,
-  type RazonesDeEstancamiento, type SemanaDeEntreno,
-} from '@/dominio/estancados';
-import { fatigaMuscular, fatigaPorDia, musculosParaLaFatiga, todosLosMusculos, type FatigaDelDia, type MusculoAhora } from '@/dominio/fatiga';
-import { diaDeLaSemana, diasEntre, minutosEnElDia, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
-import { queEsperar, type QueEsperar } from '@/dominio/llegarAEntrenar';
-import type { Macros } from '@/dominio/metas';
-import {
-  CATALOGO, claveDelEjercicio, dosisDeLaSesion, esfuerzoDeSerie, grupoDelEjercicio, mejorE1rm, musculosDe, musculosTrabajados, peorEstado, residual, unRmDeAscent, estadoDe,
-  type Bloque, type Musculo, type SesionConBloques, type UnoRMDe,
+  CATALOGO, claveDelEjercicio, esfuerzoDeSerie, grupoDelEjercicio, mejorE1rm, MUSCULOS, musculosDe, musculosTrabajados, PARTES,
+  type Bloque, type Musculo, type Parte, type SesionConBloques, type UnoRMDe,
 } from '@/dominio/musculos';
+import {
+  DE_PIERNAS, DIAS_DEL_E1RM, dentroDeLaSemana, diasHastaListo, esDeTrabajo, esDura, estadoDeFatiga, estadoDelPuntaje, listoEl, mejorE1rm as mejorDeLasSeries, notaDeLaRutina,
+  proximaSesion, puntaje, seriesPorMusculo as seriesDurasPorMusculo,
+  type EjercicioHecho, type EstadoDeFatiga, type EstadoDelPuntaje, type MusculoEnLaSesion, type NotaDeLaRutina, type Proxima,
+} from '@/dominio/puntajeMuscular';
 import { titularDeHoy, type Titular } from '@/dominio/recuperado';
 import {
-  cercaDeLaMarca, condicionesDeLaMarca, estadoDeLaNoche, frecuenciaDeMarcas, nochesCortasSeguidas, tendenciaDeFuerza,
-  type CercaDeLaMarca, type CondicionesDeLaMarca, type EstadoDeLaNoche, type Noche as NocheDelRendimiento, type TendenciaDeFuerza,
+  DESPERTO_ANTES, estadoDeLaNoche, NOCHE_CORTA, nochesCortasSeguidas, type EstadoDeLaNoche, type Noche as NocheDelRendimiento,
 } from '@/dominio/rendimiento';
 import { totalDelDia, vigentes } from '@/dominio/registros';
 import { habitualDe } from '@/dominio/sinReloj';
 import { calidadDeNoche, deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
-import { contextoDeHoy } from '../comida/entreno';
-import { metaDelDia } from '../comida/datos';
 import type { Persona, Sueno } from '../persona';
 import { nombreDeSesion } from './nombres';
 
@@ -200,67 +190,26 @@ function ultimaCon(previas: readonly SesionConFecha[], musculos: readonly Muscul
 // ------------------------------------------------------------ todo lo demás
 
 export type DeLaFuerza = { e: Pick<Bloque, 'id' | 'ejercicio'>; t: TendenciaDeFuerza; puntos: { t: number; e1rm: number }[] };
-export type DeLaMarca = { bloque: Bloque; pr: MarcaDeAscent; t: TendenciaDeFuerza; cerca: CercaDeLaMarca; condiciones: CondicionesDeLaMarca; frecuencia: { marcas: number; de: number }; fechas: ClaveDia[]; conMarca: Set<ClaveDia> };
 export type Estancado = { e: Pick<Bloque, 'id' | 'ejercicio'>; ultima: MarcaDeAscent; sinMarca: number; musculo: Musculo; antes: SemanaDeEntreno[]; ahora: SemanaDeEntreno[]; r: RazonesDeEstancamiento };
 export type DiaDelAnio = { fecha: ClaveDia; grupo: GrupoDelAnio | null; marca: boolean };
-/** Un día de la tira de la semana, de lunes a domingo. */
-export type DiaDeLaTira = { fecha: ClaveDia; dia: DiaSemana; clase: 'hecho' | 'previsto' | 'descanso'; hoy: boolean };
-export type TuSemana = { tira: DiaDeLaTira[]; carga: CargaDelMusculo[]; linea: LineaDeLaSemana; conDatos: boolean; ahora: Partial<Record<Musculo, MusculoAhora>> };
-/** Antes de entrenar: lo comido hoy contra la meta y qué esperar. */
-export type ComoLlegas = { total: Macros; meta: Macros | null; anotado: boolean; esperar: QueEsperar[] };
 
 export type Todo = {
-  diag: Diagnostico | null;
-  foco: Foco[];
-  comida: { dias: number; gPorKg: number | null; ayer: { p: number; meta: number } | null };
-  todos: MusculoAhora[];
-  /** Tu semana en Ascent: cada día de la rutina, desde hoy, con sus músculos como están ahora. Sin rutina, vacía. */
-  semana: FatigaDelDia[];
-  fuerza: DeLaFuerza[];
-  marcas: DeLaMarca[];
   /** Las semanas sin marca que eligió en los Ajustes de Ascent (sin ellos, las de fábrica). */
   umbral: number;
   estancados: Estancado[];
   anio: { dias: DiaDelAnio[]; ultimas: (MarcaDeAscent & { grupo: GrupoDelAnio })[]; datos: TuAnio };
-  comparten: { peso: { kg: number; fecha: ClaveDia } | null; conA: MetaConAscent | null };
-  pesoKg: number | null;
-  llegas: ComoLlegas | null;
 };
 
 /** El mismo ejercicio: por el id de Ascent si los dos lo tienen; si no, por el nombre. */
 const mismo = (a: { id?: string; ejercicio: string }, b: { id?: string; ejercicio: string }) =>
   a.id && b.id ? a.id === b.id : claveDelEjercicio({ ejercicio: a.ejercicio }) === claveDelEjercicio({ ejercicio: b.ejercicio });
 
-/** La meta de hoy con Ascent, con todo lo de la semana del control (para «Lo que comparten las dos»). */
-function semanaConAscent(e: Estado, d: DeAscent): MetaConAscent | null {
-  if (!e.perfil || !e.metas.length) return null;
-  const vigente = metaVigente(e, e.hoy);
-  const pesoKg = e.pesos[e.pesos.length - 1]?.kg;
-  if (!vigente || pesoKg === undefined) return null;
-  const inicio = ultimoDiaDeControl(e.hoy, e.perfil.diaDelControl ?? diaDeLaSemana(e.metas[0].desde));
-  const meta = { kcal: vigente.kcal, proteina: vigente.proteina, carbohidratos: vigente.carbohidratos, grasas: vigente.grasas };
-  return metaDelDiaConAscent({ meta, inicio, dia: e.hoy, hoy: e.hoy, sesiones: d.sesiones, pesoKg, sexo: e.perfil.sexo });
-}
-
-/**
- * El contexto de la comida de hoy sin las sesiones (las pone la sección, con la de Ascent): se le pide a la
- * Comida con un horario que incluye hoy, y las suyas se descartan.
- */
-function contextoSinSesiones(e: Estado, ahora: Date): Omit<Contexto, 'sesiones'> | null {
-  const entreno = { dias: [diaDeLaSemana(e.hoy)], hora: HORA_DE_FABRICA, minutos: 60, tipo: 'fuerza' as const };
-  const c = contextoDeHoy({ ...e, entreno }, ahora);
-  if (!c) return null;
-  const { sesiones: _s, ...resto } = c;
-  return resto;
-}
-
-/** `enFrase`: el nombre de un ejercicio en el medio de una frase («buen día para intentar marca en sentadilla»). */
-export function calcularTodo(h: Hoy, { e, d, sueno, persona, ahora }: Entradas, enFrase: (b: Pick<Bloque, 'id' | 'ejercicio'>) => string): Todo {
+/** Lo de más arriba: los estancados con sus razones y tu año. */
+export function calcularTodo(h: Hoy, { e, d, sueno, persona }: Entradas): Todo {
   const hoy = h.hoy;
   const pesoKg = e.pesos[e.pesos.length - 1]?.kg ?? null;
   const delAnio = new Set(d.marcas.map((m) => m.fecha));
   const marcasDe = (b: Pick<Bloque, 'id' | 'ejercicio'>) => d.marcas.filter((m) => mismo(m, b));
-  const mejorMarca = (b: Pick<Bloque, 'id' | 'ejercicio'>) => marcasDe(b).reduce<MarcaDeAscent | null>((a, m) => (!a || unRmDeAscent(m) > unRmDeAscent(a) ? m : a), null);
   const ultimaMarca = (b: Pick<Bloque, 'id' | 'ejercicio'>) => marcasDe(b).reduce<MarcaDeAscent | null>((a, m) => (!a || m.fecha > a.fecha ? m : a), null);
 
   /** La tendencia de un ejercicio con lo de antes de hoy (ya hecha, con la de hoy). */
@@ -270,8 +219,7 @@ export function calcularTodo(h: Hoy, { e, d, sueno, persona, ahora }: Entradas, 
     return { t: tendenciaDeFuerza(puntos, { hoy: 0, entrenado: h.entrenado }), puntos };
   };
 
-  // Tu fuerza: los multiarticulares con marca en Ascent de la rutina (sin ella, de las últimas 4 semanas), en el orden
-  // en que vuelven en la semana.
+  // Los que se miran: los multiarticulares con marca en Ascent de la rutina (sin ella, de las últimas 4 semanas).
   const desdeHoy = (dia: number) => (dia - diaDeLaSemana(hoy) + 7) % 7;
   const vistos = new Set<string>();
   const ejercicios: Pick<Bloque, 'id' | 'ejercicio'>[] = [];
@@ -288,81 +236,9 @@ export function calcularTodo(h: Hoy, { e, d, sueno, persona, ahora }: Entradas, 
     [...h.sesiones].filter((s) => s.fecha >= sumarDias(hoy, -DIAS_DE_LA_REFERENCIA)).reverse()
       .sort((a, b) => desdeHoy(diaDeLaSemana(a.fecha)) - desdeHoy(diaDeLaSemana(b.fecha))).forEach((s) => s.bloques.forEach(seguir));
   }
-  const fuerza = ejercicios.map((x) => ({ e: x, ...tendenciaDe(x) }));
+  const fuerza: DeLaFuerza[] = ejercicios.map((x) => ({ e: x, ...tendenciaDe(x) }));
 
-  // Marcas: los ejercicios de la sesión de hoy, antes de entrenar.
-  const seriesDe = (musculos: readonly Musculo[], desde: number, hasta: number, unoRM: UnoRMDe) =>
-    h.sesiones.filter((x) => x.inicio >= desde && x.inicio < hasta).reduce((t, x) => {
-      const dosis = dosisDeLaSesion(x, unoRM);
-      return t + musculos.reduce((s, m) => s + (dosis.get(m)?.series ?? 0), 0);
-    }, 0);
-  const marcas: DeLaMarca[] = [];
-  if (h.sesion?.como === 'prevista' && h.sesion.bloques) {
-    const unoRM = h.unoRMEn(h.en);
-    const previas = h.sesiones.filter((s) => s.inicio < h.en);
-    const vistosHoy = new Set<string>();
-    for (const bloque of h.sesion.bloques) {
-      const k = claveDelEjercicio(bloque);
-      const pr = mejorMarca(bloque);
-      const musc = musculosDe(bloque);
-      if (!pr || !musc || vistosHoy.has(k)) continue;
-      vistosHoy.add(k);
-      const { t } = tendenciaDe(bloque);
-      const peor = peorEstado(musc.principal.map((m) => estadoDe(residual(m, previas, h.en, { unoRM, novato: !h.entrenado }))));
-      const semana = seriesDe(musc.principal, h.en - 7 * DIA, h.en, unoRM);
-      const mes = seriesDe(musc.principal, h.en - 35 * DIA, h.en - 7 * DIA, unoRM) / 4;
-      const fechas = h.sesiones.filter((s) => s.fecha < hoy && s.bloques.some((b) => mismo(b, bloque))).map((s) => s.fecha);
-      const conMarcaDe = new Set(marcasDe(bloque).map((m) => m.fecha));
-      marcas.push({
-        bloque, pr, t,
-        cerca: cercaDeLaMarca({ marca: unRmDeAscent(pr), nivel: t.nivel, sigma: t.sigma }),
-        condiciones: condicionesDeLaMarca({ noche: h.noche, ultimas3: h.ultimas3, musculos: peor, seriesSemanaSobreMes: mes ? semana / mes : null }),
-        frecuencia: frecuenciaDeMarcas(fechas, [...conMarcaDe]),
-        fechas: [...new Set(fechas)].slice(-20),
-        conMarca: conMarcaDe,
-      });
-    }
-  }
-  const ordenadas = ordenarMarcas(marcas);
-
-  // Hoy, concéntrate en: el diagnóstico con la sesión de hoy y la comida.
-  const c = contextoSinSesiones(e, ahora);
-  let diag: Diagnostico | null = null;
-  let foco: Foco[] = [];
-  if (c) {
-    const buena = h.noche ? ordenadas.find((m) => buenDiaParaLaMarca(m)) : undefined;
-    const x = {
-      contexto: c,
-      sesion: h.sesion ? { inicio: h.sesion.inicio, minutos: h.sesion.minutos, tipo: 'fuerza' as const, hecha: h.sesion.como === 'hecha' } : null,
-      sabeCuandoEntrena: h.sabeCuandoEntrena,
-      noche: h.noche ? { dormido: h.noche.dormido, necesidad: h.noche.necesidad, siesta: h.noche.siesta, despertoAntes: h.noche.despertoAntes } : null,
-      ultimas3: h.ultimas3,
-      deuda: h.deuda,
-      marca: buena ? enFrase(buena.bloque) : null,
-    };
-    diag = diagnostico(x);
-    foco = focoDeHoy({ ...x, titular: h.noche ? h.titular : null, acostarse: c.acostarse ?? null });
-  }
-
-  // La comida de la semana: la proteína por kilo de los días anotados y la de ayer.
-  const comidos = Array.from({ length: 7 }, (_, i) => totalDelDia(e.registros.values(), sumarDias(hoy, -1 - i), false)).filter((x) => x.kcal > 0);
-  const comidoAyer = totalDelDia(e.registros.values(), sumarDias(hoy, -1), false);
-  const metaAyer = metaDelDia(e, sumarDias(hoy, -1));
-  const comida = {
-    dias: comidos.length,
-    gPorKg: comidos.length >= 3 && pesoKg ? comidos.reduce((s, x) => s + x.proteina, 0) / comidos.length / pesoKg : null,
-    ayer: comidoAyer.kcal > 0 && metaAyer ? { p: Math.round(comidoAyer.proteina), meta: metaAyer.proteina } : null,
-  };
-
-  // Tus músculos, ahora, y tu semana en Ascent: cada día de la rutina con sus músculos como están ahora.
-  const opcionesAhora = { unoRM: h.unoRMEn(h.ahora), novato: !h.entrenado, minuto: h.minuto(h.ahora) };
-  const todos = todosLosMusculos({ sesiones: h.sesiones, en: h.ahora, ...opcionesAhora });
-  const semana = h.rutina ? fatigaPorDia({
-    rutina: h.rutina.dias.map((x) => ({ dia: x.dia, nombre: nombreDeSesion(gruposDelDia(x)), ejercicios: x.ejercicios.map((y) => ({ id: y.id, ejercicio: y.nombre, grupo: grupoDe(y) })) })),
-    hoy: diaDeLaSemana(hoy), sesiones: h.sesiones, en: h.ahora, ...opcionesAhora,
-  }) : [];
-
-  // Razones de estancamiento: los de «Tu fuerza» sin subida clara, ya pasado el umbral de Ascent.
+  // Los estancados y sus razones: sin subida clara y ya pasado el umbral de Ascent.
   const umbral = d.ajustes?.umbral ?? UMBRAL_DE_ASCENT;
   const pasadas = h.sesiones.filter((s) => s.fecha < hoy);
   const conSesion = (lunes: ClaveDia) => pasadas.some((s) => s.fecha >= lunes && s.fecha < sumarDias(lunes, 7));
@@ -405,7 +281,7 @@ export function calcularTodo(h: Hoy, { e, d, sueno, persona, ahora }: Entradas, 
   const grupoDelDia = new Map<ClaveDia, GrupoDelAnio | null>();
   for (const s of d.sesiones) if (s.fecha.startsWith(`${anio}-`)) grupoDelDia.set(s.fecha, grupoDelDia.get(s.fecha) ?? grupoDelAnio(gruposDeLaSesion(s)));
   const dias: DiaDelAnio[] = [...grupoDelDia].map(([fecha, grupo]) => ({ fecha, grupo, marca: delAnio.has(fecha) }));
-  const ultimas = (['piernas', 'pecho', 'espalda'] as const).flatMap((grupo) => {
+  const ultimas = (['piernas', 'pecho', 'espalda', 'brazos'] as const).flatMap((grupo) => {
     const de = d.marcas.filter((m) => {
       const g = grupoDelEjercicio({ id: m.id });
       return g && grupoDelAnio([g]) === grupo;
@@ -416,71 +292,141 @@ export function calcularTodo(h: Hoy, { e, d, sueno, persona, ahora }: Entradas, 
   for (const r of vigentes(e.registros.values())) if (!r.planificado) comidas.add(r.dia);
   const datos = tuAnio({ anio, sesiones: d.sesiones, marcas: d.marcas, dias: e.dias.values(), noches, diasConComida: comidas });
 
-  const peso = e.pesos[e.pesos.length - 1];
-  return {
-    llegas: comoLlegas(h, e, pesoKg),
-    diag, foco, comida, todos, semana, fuerza, marcas: ordenadas, umbral, estancados,
-    anio: { dias, ultimas, datos },
-    comparten: { peso: peso ? { kg: peso.kg, fecha: peso.fecha } : null, conA: semanaConAscent(e, d) },
-    pesoKg,
+  return { umbral, estancados, anio: { dias, ultimas, datos } };
+}
+
+// ------------------------------------------------------------ tus músculos (spec/musculos-compartido.md)
+
+export type MusculoDeLaSemana = {
+  musculo: Musculo; series: number; puntaje: number; estado: EstadoDelPuntaje; partes: Partial<Record<Parte, number>>;
+  /** Los días que faltan para que esté listo (0, ya está), qué día y cómo está. */
+  dias: number; listo: ClaveDia | null; fatiga: EstadoDeFatiga;
+};
+export type EjercicioDeLaSemana = {
+  e: Pick<Bloque, 'id' | 'ejercicio'>; principal: Musculo[]; ayudan: Musculo[]; parte: Parte | null;
+  /** Las repeticiones del objetivo en la rutina; sin ellas, null. */
+  tope: number | null;
+  /** Las series duras de la semana, las que fueron al fallo y el RIR de las que lo anotaron. */
+  duras: number; alFallo: number; rir: number[]; proxima: Proxima;
+};
+export type Fatigado = { musculo: Musculo; dias: number; listo: ClaveDia; fatiga: EstadoDeFatiga };
+export type TusMusculos = {
+  musculos: MusculoDeLaSemana[];
+  ejercicios: EjercicioDeLaSemana[];
+  /** La nota de la rutina de Ascent; sin rutina, null. */
+  nota: NotaDeLaRutina | null;
+  /** Los que todavía no están listos, del que más tarda al que menos. */
+  fatigados: Fatigado[];
+  conDatos: boolean;
+};
+
+/** La fatiga mira las sesiones de 2 semanas para atrás (lo más que tarda un músculo son 4 días, más uno por sesión seguida). */
+const DIAS_DE_LA_FATIGA = 14;
+/** Un ejercicio es nuevo si no estuvo en las 26 semanas anteriores. */
+const DIAS_DE_NUEVO = 182;
+
+/** Tus músculos de la semana con las cuentas compartidas con Ascent (puntajeMuscular.ts), la nota de tu rutina y los fatigados. */
+export function calcularTusMusculos(h: Hoy): TusMusculos {
+  // El 1RM de referencia de cada ejercicio: el mejor de sus series de los últimos 126 días (como en Ascent).
+  const previas = h.sesiones.filter((s) => s.inicio < h.ahora && s.inicio >= h.ahora - DIAS_DEL_E1RM * DIA);
+  const vistos = new Map<string, number | null>();
+  const unoRM = (b: Bloque) => {
+    const k = claveDelEjercicio(b);
+    if (!vistos.has(k)) vistos.set(k, mejorDeLasSeries(previas.flatMap((s) => s.bloques.filter((y) => claveDelEjercicio(y) === k).flatMap((y) => y.series))));
+    return vistos.get(k)!;
   };
-}
+  const topeDe = new Map<string, number>();
+  for (const d of h.rutina?.dias ?? []) for (const y of d.ejercicios) if (y.reps) topeDe.set(y.id, y.reps);
+  /** Un ejercicio con sus series de trabajo (la entrada en calor no cuenta), como lo reciben las cuentas compartidas. */
+  const hechoDe = (b: Bloque): EjercicioHecho | null => {
+    const m = musculosDe(b);
+    if (!m) return null;
+    const uno = unoRM(b);
+    const parte = b.id ? PARTES[b.id] : undefined;
+    return {
+      principal: m.principal, ayuda: m.ayudan, ...(parte ? { parte } : {}), objetivo: (b.id && topeDe.get(b.id)) || null,
+      series: b.series.filter((x) => esDeTrabajo(x, uno)).map((x) => ({ reps: x.reps, rir: x.rir ?? null })),
+    };
+  };
+  const hechos = h.sesiones.filter((s) => dentroDeLaSemana(s.fecha, h.hoy)).flatMap((s) => s.bloques.flatMap((b) => {
+    const x = hechoDe(b);
+    return x ? [{ b, x }] : [];
+  }));
+  const porMusculo = seriesDurasPorMusculo(hechos.map((y) => y.x));
 
-// ------------------------------------------------------------ tu semana y cómo llegas
-
-/** Las series de cada músculo principal en unos ejercicios con sus series. */
-function seriesPorMusculo(ejercicios: { ref: Parameters<typeof musculosDe>[0]; series: number }[]): Partial<Record<Musculo, number>> {
-  const r: Partial<Record<Musculo, number>> = {};
-  for (const x of ejercicios) for (const m of musculosDe(x.ref)?.principal ?? []) r[m] = (r[m] ?? 0) + x.series;
-  return r;
-}
-
-/** La semana de lunes a domingo: la tira, las series duras de cada músculo contra el rango y su línea. */
-export function calcularTuSemana(h: Hoy, e: Estado): TuSemana {
-  const hoyDia = diaDeLaSemana(h.hoy);
-  const lunes = sumarDias(h.hoy, -enLaSemana(hoyDia));
-  const unoRM = h.unoRMEn(h.ahora);
-  const hechas = new Map<Musculo, number>();
+  // La fatiga, en días: cada sesión de las últimas 2 semanas, por cada músculo principal.
+  const primera = h.sesiones[0]?.fecha;
+  const nuevoEl = (b: Bloque, fecha: ClaveDia) => {
+    const desde = sumarDias(fecha, -DIAS_DE_NUEVO);
+    // Sin 26 semanas de datos no se puede saber: no se suma el día.
+    if (!primera || primera > desde) return false;
+    const k = claveDelEjercicio(b);
+    return !h.sesiones.some((s) => s.fecha >= desde && s.fecha < fecha && s.bloques.some((y) => claveDelEjercicio(y) === k));
+  };
+  const porSesion = new Map<Musculo, MusculoEnLaSesion[]>();
   for (const s of h.sesiones) {
-    if (s.fecha < lunes || s.fecha > h.hoy) continue;
-    for (const [m, x] of dosisDeLaSesion(s, unoRM)) hechas.set(m, (hechas.get(m) ?? 0) + x.series);
+    if (s.inicio > h.ahora || diasEntre(s.fecha, h.hoy) > DIAS_DE_LA_FATIGA) continue;
+    const delDia = new Map<Musculo, MusculoEnLaSesion>();
+    for (const b of s.bloques) {
+      const m = musculosDe(b);
+      const x = hechoDe(b);
+      if (!m || !x || !x.series.length) continue;
+      const rirs = x.series.flatMap((y) => (y.rir != null ? [y.rir] : []));
+      const multi = !!(b.id && CATALOGO[b.id]?.multiarticular);
+      for (const musculo of m.principal) {
+        const antes = delDia.get(musculo);
+        const rirMinimo = rirs.length ? Math.min(...rirs, ...(antes?.rirMinimo != null ? [antes.rirMinimo] : [])) : (antes?.rirMinimo ?? null);
+        delDia.set(musculo, {
+          fecha: s.fecha,
+          series: (antes?.series ?? 0) + x.series.length,
+          rirMinimo,
+          multiarticularDePiernas: (antes?.multiarticularDePiernas ?? false) || (multi && (DE_PIERNAS as readonly string[]).includes(musculo)),
+          nuevo: (antes?.nuevo ?? false) || nuevoEl(b, s.fecha),
+        });
+      }
+    }
+    for (const [musculo, x] of delDia) porSesion.set(musculo, [...(porSesion.get(musculo) ?? []), x]);
   }
-  // Lo que queda: los días de la rutina después de hoy y hoy, si todavía no entrenaste.
-  const quedan: DiaQueQueda[] = [];
-  if (h.sesion?.como === 'prevista' && h.sesion.bloques) {
-    quedan.push({ dia: hoyDia, series: seriesPorMusculo(h.sesion.bloques.map((b) => ({ ref: b, series: b.series.length }))) });
-  }
-  for (const d of h.rutina?.dias ?? []) {
-    if (d.descanso || enLaSemana(d.dia) <= enLaSemana(hoyDia)) continue;
-    quedan.push({ dia: d.dia, series: seriesPorMusculo(d.ejercicios.map((y) => ({ ref: { id: y.id, grupo: grupoDe(y) }, series: y.series }))) });
-  }
-  const carga = cargaDeLaSemana(hechas, quedan);
-  const deHoy = h.sesion?.como === 'prevista' ? h.musculosHoy : null;
-  const diasDeEntrenar = h.rutina ? diasDeLaRutina(h.rutina) : (e.entreno?.dias ?? []);
-  const conSesion = new Set(h.sesiones.map((s) => s.fecha));
-  const tira = Array.from({ length: 7 }, (_, i): DiaDeLaTira => {
-    const fecha = sumarDias(lunes, i);
-    const dia = diaDeLaSemana(fecha);
-    const clase = conSesion.has(fecha) ? 'hecho' : fecha >= h.hoy && diasDeEntrenar.includes(dia) ? 'previsto' : 'descanso';
-    return { fecha, dia, clase, hoy: fecha === h.hoy };
-  });
-  const todos = todosLosMusculos({ sesiones: h.sesiones, en: h.ahora, unoRM, novato: !h.entrenado, minuto: h.minuto(h.ahora) });
-  return {
-    tira, carga, linea: lineaDeLaSemana({ carga, deHoy, hoy: hoyDia, quedan }), ahora: Object.fromEntries(todos.map((m) => [m.musculo, m])),
-    conDatos: h.sesiones.some((s) => s.fecha >= sumarDias(h.hoy, -DIAS_DE_LA_REFERENCIA)),
-  };
-}
+  const listoDe = (m: Musculo) => listoEl(porSesion.get(m) ?? []);
 
-/** Antes de entrenar: lo comido hoy hasta ahora, contra la meta del día, y qué esperar en la sesión. */
-function comoLlegas(h: Hoy, e: Estado, pesoKg: number | null): ComoLlegas | null {
-  if (h.sesion?.como !== 'prevista') return null;
-  const deHoy = vigentes(e.registros.values()).filter((r) => r.dia === h.hoy && !r.planificado);
-  const comido = deHoy.map((r) => ({ momento: minutosEnElDia(new Date(r.momento), h.hoy), carbohidratos: r.valores.carbohidratos, proteina: r.valores.proteina, grasas: r.valores.grasas }));
-  const t = totalDelDia(e.registros.values(), h.hoy, false);
+  const musculos = MUSCULOS.map((musculo): MusculoDeLaSemana => {
+    const x = porMusculo.get(musculo);
+    const p = puntaje(x?.series ?? 0);
+    const listo = listoDe(musculo);
+    const dias = diasHastaListo(listo, h.hoy);
+    return { musculo, series: x?.series ?? 0, puntaje: p, estado: estadoDelPuntaje(p), partes: (x?.partes ?? {}) as Partial<Record<Parte, number>>, dias, listo: dias ? listo : null, fatiga: estadoDeFatiga(dias) };
+  });
+
+  // Cada ejercicio de la semana una vez, con la próxima sesión: la doble progresión con sus últimas sesiones. El día de
+  // una noche corta, lo que toca hoy no sube.
+  const juntos = new Map<string, { b: Bloque; x: EjercicioHecho; duras: number; alFallo: number; rir: number[] }>();
+  for (const { b, x } of hechos) {
+    const k = claveDelEjercicio(b);
+    const g = juntos.get(k) ?? { b, x, duras: 0, alFallo: 0, rir: [] };
+    g.duras += x.series.filter((s) => esDura(s, x.objetivo)).length;
+    g.alFallo += x.series.filter((s) => s.rir === 0).length;
+    g.rir.push(...x.series.flatMap((s) => (s.rir != null ? [s.rir] : [])));
+    juntos.set(k, g);
+  }
+  const nocheCorta = !!h.noche && (h.noche.dormido <= NOCHE_CORTA || (h.noche.despertoAntes ?? 0) >= DESPERTO_ANTES);
+  const deHoy = new Set(h.sesion?.como === 'prevista' ? (h.sesion.bloques ?? []).map(claveDelEjercicio) : []);
+  const ejercicios = [...juntos.entries()].map(([k, { b, x, duras, alFallo, rir }]): EjercicioDeLaSemana => {
+    const sesiones = h.sesiones.map((s) => ({ series: s.bloques.filter((y) => claveDelEjercicio(y) === k).flatMap((y) => hechoDe(y)?.series ?? []) })).filter((s) => s.series.length);
+    return {
+      e: { id: b.id, ejercicio: b.ejercicio }, principal: x.principal as Musculo[], ayudan: x.ayuda as Musculo[], parte: (x.parte as Parte | undefined) ?? null, tope: x.objetivo ?? null,
+      duras, alFallo, rir, proxima: proximaSesion({ sesiones, tope: x.objetivo ?? null, nocheCortaHoy: nocheCorta && deHoy.has(k) }),
+    };
+  });
+
+  // La nota de la rutina: lo que dice cada día, con sus series (sin RIR: cuentan todas).
+  const nota = h.rutina ? notaDeLaRutina(h.rutina.dias.filter((d) => !d.descanso).map((d) => d.ejercicios.flatMap((y) => {
+    const m = musculosDe({ id: y.id, grupo: grupoDe(y) });
+    return m ? [{ principal: m.principal, ayuda: m.ayudan, series: Array.from({ length: y.series }, () => ({ reps: null })) }] : [];
+  }))) : null;
+
   return {
-    total: { kcal: t.kcal, proteina: t.proteina, carbohidratos: t.carbohidratos, grasas: t.grasas },
-    meta: metaDelDia(e, h.hoy),
-    anotado: deHoy.length > 0,
-    esperar: queEsperar({ comido, inicio: h.sesion.inicio, pesoKg }),
+    musculos, ejercicios, nota,
+    fatigados: musculos.flatMap(({ musculo, dias, listo, fatiga }) => (listo ? [{ musculo, dias, listo, fatiga }] : [])).sort((a, b) => b.dias - a.dias),
+    conDatos: h.sesiones.some((s) => s.fecha >= sumarDias(h.hoy, -DIAS_DE_LA_REFERENCIA)),
   };
 }

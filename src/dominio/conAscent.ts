@@ -14,7 +14,8 @@ import { diasEntre, lunesDe, sumarDias, type ClaveDia, type DiaSemana } from './
 import type { Macros, Sexo } from './metas';
 import { claveDelEjercicio, grupoDelEjercicio, unRmDeAscent, type Bloque, type GrupoDeAscent, type SesionConBloques } from './musculos';
 
-export type SerieDeAscent = { kilos: number | null; reps: number | null };
+/** `rir`: las repeticiones que quedaban, si se anotaron en Ascent («al fallo» es 0). */
+export type SerieDeAscent = { kilos: number | null; reps: number | null; rir?: number | null };
 /** Un ejercicio de una sesión: el nombre de Ascent, su grupo (uno solo), sus series y su id ('sentadilla', o 'propio_…'). */
 export type EjercicioDeAscent = { nombre: string; musculos: string[]; series: SerieDeAscent[]; id?: string };
 /** Un día de gimnasio en Ascent; sin cronómetro llega con 0 series, 0 kilos, 0 minutos y sin ejercicios. */
@@ -131,7 +132,7 @@ export function sesionesConBloques(sesiones: readonly SesionDeAscent[], inicioDe
   return sesiones.filter((s) => s.ejercicios.length).map((s) => ({
     fecha: s.fecha,
     inicio: inicioDe(s),
-    bloques: s.ejercicios.map((e) => ({ ejercicio: e.nombre, ...(e.id ? { id: e.id } : {}), grupo: grupoDe(e), series: e.series.map((x) => ({ peso: x.kilos ?? 0, reps: x.reps })) })),
+    bloques: s.ejercicios.map((e) => ({ ejercicio: e.nombre, ...(e.id ? { id: e.id } : {}), grupo: grupoDe(e), series: e.series.map((x) => ({ peso: x.kilos ?? 0, reps: x.reps, ...(x.rir != null ? { rir: x.rir } : {}) })) })),
   }));
 }
 
@@ -358,21 +359,6 @@ export function tuAnio(p: {
     sueno: noches.length ? noches.reduce((s, m) => s + m, 0) / noches.length : null,
     diasConComida: new Set([...p.diasConComida].filter(delAnio)).size,
   };
-}
-
-export type GrupoDelAnio = 'pecho' | 'piernas' | 'espalda';
-const DEL_ANIO: Partial<Record<GrupoDeAscent, GrupoDelAnio>> = { pecho: 'pecho', hombros: 'pecho', piernas: 'piernas', espalda: 'espalda' };
-
-/**
- * El color de un día en «Tu año»: el grupo de lo que más trabajó (gruposDeLaSesion) en tres, el empuje con el
- * pecho; los brazos, el core y el cardio solos no dicen de qué día se trata, y se mira el que sigue. Sin ninguno, null.
- */
-export function grupoDelAnio(grupos: readonly GrupoDeAscent[]): GrupoDelAnio | null {
-  for (const g of grupos) {
-    const delAnio = DEL_ANIO[g];
-    if (delAnio) return delAnio;
-  }
-  return null;
 }
 
 /** Desde qué semana del año (lunes) hay sesiones para mirar, para no pedir de más. */

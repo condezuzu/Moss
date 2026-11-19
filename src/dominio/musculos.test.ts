@@ -2,10 +2,12 @@ import { describe, expect, it } from '@jest/globals';
 
 import es from '../textos/es.json';
 import en from '../textos/en.json';
+import compartido from './catalogoMuscular.json';
 import {
-  caidaInicial, CATALOGO, cuandoListo, dosisDeLaSesion, e1rm, esfuerzoDeSerie, estadoDe, grupoDelEjercicio, listoEn, mejorE1rm, MUSCULOS, musculosDe, musculosTrabajados, peorEstado,
-  porLasSeries, residual, unRmDeAscent, type GrupoDeAscent, type SesionConBloques,
+  caidaInicial, CATALOGO, cuandoListo, dosisDeLaSesion, esfuerzoDeSerie, estadoDe, grupoDelEjercicio, listoEn, mejorE1rm, MUSCULOS, musculosDe, musculosTrabajados, peorEstado,
+  PARTES, porLasSeries, residual, unRmDeAscent, type GrupoDeAscent, type SesionConBloques,
 } from './musculos';
+import { e1rm } from './puntajeMuscular';
 
 // El catálogo de Ascent a la versión 96 de su esquema, por id y con su grupo, como está en sus migraciones
 // (008_fuerza, 029_catalogo_100, 056_crunch_declinado, 076_ejercicios_propios_y_cardio y 096_press_en_smith).
@@ -42,6 +44,15 @@ const DE_ASCENT: Record<GrupoDeAscent, string[]> = {
 const IDS = Object.values(DE_ASCENT).flat();
 
 describe('las mismas listas que Ascent', () => {
+  // catalogoMuscular.json es el de Ascent (nucleo/catalogoMuscular.json) copiado tal cual: los dos cuentan igual.
+  it('cada ejercicio de fuerza tiene los músculos y la parte del catálogo compartido', () => {
+    const deFuerza = Object.keys(CATALOGO).filter((id) => CATALOGO[id].grupo !== 'cardio').sort();
+    expect(Object.keys(compartido).sort()).toEqual(deFuerza);
+    for (const [id, x] of Object.entries(compartido as Record<string, { principal: string[]; ayuda: string[]; parte?: string }>)) {
+      expect([id, CATALOGO[id].principal, CATALOGO[id].ayudan, PARTES[id] ?? null]).toEqual([id, x.principal, x.ayuda, x.parte ?? null]);
+    }
+  });
+
   it('Moss cubre los 112 ejercicios del catálogo de Ascent, cada uno con el grupo que le da Ascent, y ninguno de más', () => {
     expect(IDS.length).toBe(112);
     const cubiertos = IDS.filter((id) => CATALOGO[id]);
@@ -72,10 +83,10 @@ describe('las mismas listas que Ascent', () => {
   });
 
   it('por su id, con lo que importa de cada uno: el peso muerto, de espalda en Ascent, carga las piernas', () => {
-    expect(musculosDe({ id: 'peso_muerto' })!.principal).toEqual(['isquios', 'gluteos', 'espaldaBaja']);
-    expect(musculosDe({ id: 'peso_muerto_rumano' })!.principal).toEqual(['isquios', 'gluteos']);
-    expect(musculosDe({ id: 'press_banca' })!.ayudan).toEqual(['triceps', 'hombros']);
-    expect(musculosDe({ id: 'encogimientos' })!.principal).toEqual(['espaldaAlta']);
+    expect([...musculosDe({ id: 'peso_muerto' })!.principal].sort()).toEqual(['espaldaBaja', 'gluteos', 'isquios']);
+    expect([...musculosDe({ id: 'peso_muerto_rumano' })!.principal].sort()).toEqual(['gluteos', 'isquios']);
+    expect([...musculosDe({ id: 'press_banca' })!.ayudan].sort()).toEqual(['hombros', 'triceps']);
+    expect(musculosDe({ id: 'encogimientos' })!.principal).toEqual(['trapecio']);
     expect(musculosDe({ id: 'abductores' })!.principal).toEqual(['gluteos']);
     expect(grupoDelEjercicio({ id: 'peso_muerto' })).toBe('espalda');
   });

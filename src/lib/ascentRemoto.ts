@@ -19,7 +19,7 @@ export type { AjustesDeAscent, RutinaDeAscent };
  * vez; el lastre sin el peso del cuerpo), y las repeticiones. null lo que no se anotó; con el peso
  * del cuerpo, los kilos son null.
  */
-export type SerieDeAscent = { kilos: number | null; reps: number | null };
+export type SerieDeAscent = { kilos: number | null; reps: number | null; rir?: number | null };
 
 /**
  * Un ejercicio de la sesión, en orden: su nombre en Ascent (el del catálogo, en español, o el que le
@@ -201,6 +201,12 @@ export async function sesionesDeAscent(desde: ClaveDia): Promise<SesionDeAscent[
   });
 }
 
+/** Una serie; el RIR llega desde 0016_metas_de_fuerza.sql, entero de 0 a 10, y sin él no se guarda. */
+function serieDe(x: Objeto): SerieDeAscent {
+  const rir = numero(x.rir);
+  return { kilos: numero(x.kilos), reps: numero(x.reps), ...(rir !== null && Number.isInteger(rir) && rir >= 0 && rir <= 10 ? { rir } : {}) };
+}
+
 function ejercicioDe(e: Objeto): EjercicioDeAscent[] {
   const nombre = texto(e.nombre);
   if (!nombre) return [];
@@ -208,7 +214,7 @@ function ejercicioDe(e: Objeto): EjercicioDeAscent[] {
   return [{
     nombre,
     musculos: Array.isArray(e.musculos) ? e.musculos.filter((m): m is string => typeof m === 'string') : [],
-    series: lista(e.series).map((x) => ({ kilos: numero(x.kilos), reps: numero(x.reps) })),
+    series: lista(e.series).map(serieDe),
     ...(id ? { id } : {}),
   }];
 }

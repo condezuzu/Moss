@@ -511,26 +511,13 @@ Ascent (la recuperación) hacen la misma cuenta.
 
 ### Ascent en Progreso (para aprobar, lo pediste el 2/11/2026; revisada con la evidencia el 5/11/2026)
 
-**Rehecha el 18/11/2026, directo a la app, sin pasar por la galería (lo pediste así).** Tenía mucho texto y lo
-importante quedaba arriba. Ahora funciona como Sueño: cada parte es un dibujo con una línea, y lo demás se abre.
-Ascent hace lo mismo con la parte de Moss, con el estilo de Moss y la misma información.
-- **Abajo, donde llegas, va «Tu semana»** (`CabezaDelDia` en `Vinculada.tsx`, `calcularTuSemana` en `vista.ts`):
-  - la sesión de hoy;
-  - la tira de lunes a domingo: entrenado, previsto por la rutina o descanso;
-  - el cuerpo pintado según la carga de la semana;
-  - una línea de qué hacer;
-  - cinco músculos, cada uno en una línea: lo hecho, lo previsto, la zona de 10 a 20 series duras y si está listo.
-- **La carga** (`src/dominio/cargaSemanal.ts`):
-  - cuenta las series duras de lunes a domingo, solo las de músculo principal;
-  - el rango es de 10 a 20 por semana, una convención con Pelland 2026;
-  - los estados son poco, en camino, en rango y mucho;
-  - la línea dice, según el caso, a qué darle más hoy, cuándo se retoma lo corto, que la semana que viene empiece por ahí o que vaya más liviano.
-- **Subiendo, «Hoy, según el momento»:**
-  - antes de entrenar: lo comido hoy contra la meta, en tres barras, y qué esperar (`src/dominio/llegarAEntrenar.ts`: muchas horas sin comer, pocos carbohidratos, grasa cerca y poca proteína; son convenciones prudentes), la comida de antes y «¿Cómo te sientes?»;
-  - después de entrenar: lo entrenado en el cuerpo y la comida de después;
-  - en descanso: lo que todavía se recupera.
-- **Más arriba:** tu noche en corto, tu fuerza, las marcas (solo antes de entrenar), el estancamiento, tu año, lo que comparten y en qué se basa.
-- **Salieron** «Lo que decide hoy», «Hoy, concéntrate en», «De qué sale» y «Tus músculos, toca uno».
+**Rehecha otra vez el 19/11/2026, igual en las dos apps** (lo pediste por voz en el chat de Ascent; directo a la app,
+sin galería): la especificación compartida es [`musculos-compartido.md`](musculos-compartido.md), y las cuentas,
+`src/dominio/puntajeMuscular.ts`, idéntico en Ascent. De donde llegas para arriba: tus músculos (el cuerpo con el
+color de los últimos 7 días, la barra de 0 a 200 de cada uno y, al tocar uno, sus partes, sus ejercicios y cuándo subir
+el peso; la nota de tu rutina), los músculos fatigados, tu año (con los brazos), los estancados y por qué puedes estar
+estancado; las metas, con la 0016. El «!» abre el tutorial. Salieron «Tu semana» de lunes a domingo, «Hoy, según el
+momento», «Tu noche», tu fuerza, las marcas, «Lo que comparten» y «En qué se basa» entero: ahora va debajo de cada bloque.
 - **El cuerpo de tu rango** es el de Ascent, pasado a SkSL (`rangos.sksl.ts` y `rangosDeAscent.ts`, de `compartido/motor` de Ascent).
 
 **Revisión del 5/11/2026.** Pediste que fuera «lo más confiable posible», más

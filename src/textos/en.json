@@ -3326,7 +3326,8 @@
         "aductores": "Adductors",
         "pantorrillas": "Calves",
         "pecho": "Chest",
-        "espaldaAlta": "Upper back",
+        "dorsales": "Lats",
+        "trapecio": "Traps",
         "hombros": "Shoulders",
         "biceps": "Biceps",
         "triceps": "Triceps",
@@ -3771,7 +3772,8 @@
         "sinAntes": "{ahora} a night. It may play a part: what's known is about days, not months."
       },
       "comunes": "These weeks, for all of them",
-      "soloComunes": "Nothing else specific to this exercise: see above."
+      "soloComunes": "Nothing else specific to this exercise: see above.",
+      "lista": "Stalled"
     },
     "base": {
       "titulo": "What it's based on",
@@ -3793,7 +3795,11 @@
       "fuerza": "Whether each exercise is going up, with its range, or if it's too early to tell.",
       "marcas": "How close you are to your personal best, without probabilities.",
       "estancamiento": "Exercises that aren't going up and their reasons, from most to least solid.",
-      "anio": "Each day you trained and each best, colored by what you worked."
+      "anio": "Each day you trained and each best, colored by what you worked.",
+      "porQue": "What may be holding back each exercise, from most to least solid.",
+      "estancados": "The exercises that haven't gone up in weeks.",
+      "fatigados": "The muscles still recovering and when they'll be back.",
+      "musculos": "Each muscle colored by how much you trained it this week, with its bar."
     },
     "linea": {
       "suenoCorto": "You slept little: maximal strength barely changes; reps may feel harder."
@@ -3922,57 +3928,114 @@
       "noFuiYo": "It wasn't me",
       "deshecho": "Done: the link with Ascent was undone."
     },
-    "semana": {
-      "titulo": "Your week",
-      "rango": "Hard sets this week. The marked zone is 10 to 20; the dot shows if the muscle is ready.",
+    "tus": {
+      "titulo": "Your muscles",
       "estados": {
+        "sinEntrenar": "Not trained",
         "poco": "Low",
-        "enCamino": "On track",
-        "enRango": "In range",
-        "mucho": "High"
+        "enSuPunto": "On target",
+        "mucho": "A lot",
+        "fatigado": "Fatigued"
       },
-      "listo": "Ready",
-      "barra": "{musculo}: {n} hard sets this week, {estado}. {listo}",
-      "sinDatos": "Once you log your first workout in Ascent, you'll see each muscle's load here.",
-      "verTodos": "See all",
-      "verMenos": "See less",
-      "dia": {
-        "hecho": "trained",
-        "previsto": "planned",
-        "descanso": "rest"
+      "barra": "{musculo}: {puntaje} of 200, {estado}. {series} hard sets in 7 days.",
+      "franja": "The band is “on target”: 10 to 20 hard sets in the last 7 days.",
+      "toca": "Tap a muscle to see its exercises.",
+      "lista": "Back to the list",
+      "series": "{n} hard sets in 7 days",
+      "partes": {
+        "titulo": "Its parts",
+        "pechoAlto": "Upper chest",
+        "pechoResto": "Middle and lower",
+        "tricepsLarga": "Long head",
+        "tricepsResto": "Lateral and medial"
       },
-      "linea": {
-        "dale": "Today, push {musculo} harder: you're at {n} of 10 sets.",
-        "daleDos": "Today, push {a} and {b} harder: you're at {n} and {m} of 10 sets.",
-        "retomar": "{musculo} is short on sets: you'll hit it again on {dia}.",
-        "proxima": "{musculo} came up short and doesn't come back this week: start next week there.",
-        "mucho": "{musculo} is already past 20 sets: go lighter the rest of the week.",
-        "enRango": "Your week is in range.",
-        "daleNuevo": "Today is {musculos}: you haven't trained them yet this week."
+      "ejercicios": "Your exercises this week",
+      "sinEjercicios": "You haven't trained it in the last 7 days.",
+      "ayuda": "assists: counts half",
+      "duras": "{n} hard sets",
+      "alFallo": "{n} to failure",
+      "rir": "{de} to {a} left in the tank",
+      "rirUno": "{n} left in the tank",
+      "proxima": {
+        "subir": "Next time: add weight.",
+        "faltaElTope": "Next time: keep the weight until you do {tope} reps with 2 to spare.",
+        "sueno": "Today, keep the weight: you slept little. If it goes with your usual reps in reserve, add weight next time.",
+        "sinObjetivo": "Next time: keep the weight. Set target reps in your routine to know when to add weight.",
+        "pocasSesiones": "One more session and you'll know whether to add weight."
+      },
+      "rutina": {
+        "titulo": "Your routine",
+        "nota": {
+          "muyBuena": "Very good",
+          "buena": "Good",
+          "mejorable": "Could be better"
+        },
+        "pocasSeries": "Add sets for {musculo}: your routine has {n}, and 10 to 20 is recommended.",
+        "muchasSeries": "{musculo} has {n} sets in your routine: more than 20 adds little and tires you more.",
+        "frecuencia": "Train {musculo} twice a week or more.",
+        "sinRutina": "Set up your routine in Ascent and you'll see its score here."
+      },
+      "anotas": "It's calculated from what you log in Ascent and Moss: the better you log, the more accurate it is.",
+      "sinDatos": "No workouts from the last few weeks in Ascent yet."
+    },
+    "fatigados": {
+      "titulo": "Fatigued muscles",
+      "texto": "Let them rest today: they're still recovering.",
+      "ninguno": "No fatigued muscles.",
+      "vuelve": "back {cuando}",
+      "vuelveEl": "back on {dia}"
+    },
+    "porQue": {
+      "titulo": "Why you might be stuck",
+      "ninguno": "No stalled exercises, so nothing to explain."
+    },
+    "enQueSeBasa": "What it's based on",
+    "baseDe": {
+      "musculos": [
+        "Hard sets: the ones you finish with 3 reps or fewer to spare count. The main muscle adds one set and an assisting muscle adds half: that count explained growth best (Pelland 2026).",
+        "The range: 10 to 20 hard sets a week is where most of the evidence lands. It's a convention, not one study's number: in trained people, 9, 18 or 27 sets led to the same growth (Heaselgrave 2019).",
+        "The parts: only where there are growth trials. The incline press grows the upper chest more (Chaves 2020; Albarello 2022), and overhead extensions grow the triceps long head more (Maeo 2023).",
+        "Adding weight: when every set reaches the top of the range with 2 reps to spare, two sessions in a row. Reps left are estimated with an error of about one either way (Halperin 2021), so it's never decided by a single set. Food doesn't hold it back: eating below what you burn doesn't take away the strength you've gained (Murphy and Koehler 2022). After a night of 6 hours or less, reps cost about 10% more (Craven 2022): that day you don't add weight.",
+        "Your routine: each large muscle twice a week or more (Schoenfeld 2016), with 10 to 20 sets. The push–pull balance isn't scored: there's no evidence behind it."
+      ],
+      "fatigados": [
+        "How long it takes: what lengthens it most is getting close to failure, more than the number of sets. With 2 or more reps to spare on every set, it's back the next day; with 1, or if you didn't log it, in 2 days; to failure, in 2 days, or 3 with squats, deadlifts or another big leg exercise. An exercise you hadn't done in 26 weeks adds a day.",
+        "It's given in days because the estimate is off by about a day: everyone recovers differently. Soreness doesn't count: strength comes back before it goes away."
+      ],
+      "estancados": [
+        "An exercise is stalled if its 12-week trend isn't clearly going up, with at least 8 weeks of data and past your Ascent threshold. With less, day-to-day noise of about 3% (Grgic 2020) looks like a plateau."
+      ],
+      "porQue": [
+        "The reasons go from most to least solid: first how much you train (sets, frequency and heavy loads: Pelland 2026), then losing weight fast, protein against 1.6 g per kilo (Morton 2018), and sleep. It's always a likely cause, never a sure one."
+      ]
+    },
+    "tutorial": {
+      "abrir": "How to read it",
+      "paso": "Step {n} of {de}",
+      "siguiente": "Next",
+      "listo": "Got it",
+      "pasos": {
+        "color": {
+          "titulo": "Your muscles",
+          "texto": "The color shows how much you trained each one in the last 7 days."
+        },
+        "barra": {
+          "titulo": "The bar",
+          "texto": "100 is the middle of what studies recommend; the band, from 70 to 130, is “on target”."
+        },
+        "toca": {
+          "titulo": "Tap a muscle",
+          "texto": "You'll see its parts, your exercises and when to add weight."
+        },
+        "fatigados": {
+          "titulo": "Fatigued",
+          "texto": "The dotted outline marks the ones still recovering, and below it says when they'll be back."
+        },
+        "anotas": {
+          "titulo": "From what you log",
+          "texto": "It uses your sets in Ascent and your sleep and food in Moss: the better you log, the more accurate it is."
+        }
       }
-    },
-    "momento": {
-      "antes": "Before you train",
-      "sinAnotar": "Log what you ate today and I'll tell you how you're showing up.",
-      "deMeta": "{n} of {meta} g",
-      "esperar": {
-        "ayunas": "It's been hours since you ate: something light now will give you energy.",
-        "pocosCarbohidratos": "Few carbs today: the last sets may feel harder.",
-        "grasaCerca": "You ate a fair amount of fat recently: you may feel heavy.",
-        "pocaProteina": "Little protein so far: after training, add about 30 g.",
-        "bien": "What you ate is enough to train on."
-      },
-      "hecha": "You trained today",
-      "hechaTexto": "{sesion}: {n} hard sets.",
-      "descanso": "Rest day",
-      "seRecuperan": "Still recovering:",
-      "recuperado": "Everything is recovered."
-    },
-    "tuNoche": {
-      "titulo": "Your night",
-      "deuda": "Debt: {palabra}",
-      "sinNoche": "I don't know how you slept yet.",
-      "ver": "See in Sleep"
     }
   },
   "habitos": {

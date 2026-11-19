@@ -1,9 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  aDosYMedio, buenDiaParaMarca, categoriaDe, cercaDeLaMarca, condicionesDeLaMarca, frecuenciaDeMarcas, nivelEn, normalAcumulada, porElSueno, porLaComida, porLaDescarga, porLasNoches,
-  probabilidadTuya, rendimientoEsperado, seguridadDeMarcas, sigmaTuyo, tendenciaDeFuerza, type EntradasDelRendimiento, type PuntoDeFuerza,
+  aDosYMedio, buenDiaParaMarca, categoriaDe, cercaDeLaMarca, condicionesDeLaMarca, frecuenciaDeMarcas, normalAcumulada, porElSueno, porLaComida, porLaDescarga, porLasNoches, probabilidadTuya, rendimientoEsperado, seguridadDeMarcas, type EntradasDelRendimiento,
 } from './rendimiento';
+import { nivelEn, sigmaTuyo, tendenciaDeFuerza, type PuntoDeFuerza } from './progresoCompartido';
 
 /** Un día cualquiera: durmió bien, comió, nada cargado. */
 const NORMAL: EntradasDelRendimiento = {

@@ -1,10 +1,10 @@
 import { describe, expect, it } from '@jest/globals';
 
+import { puntosDelEjercicio, semanaDeEntreno, semanasParaLasRazones } from './estancados';
 import {
-  bajoDeVerdad, estaEstancado, MAXIMO_DE_RAZONES, puntosDelEjercicio, razonesDeEstancamiento, semanaDeEntreno, semanasParaLasRazones, type SemanaDeEntreno,
-} from './estancados';
+  bajoDeVerdad, estaEstancado, MAXIMO_DE_RAZONES, razonesDeEstancamiento, type SemanaDeEntreno, tendenciaDeFuerza,
+} from './progresoCompartido';
 import type { SesionConBloques } from './musculos';
-import { tendenciaDeFuerza } from './rendimiento';
 
 const semana = (series: number, veces = 1, pesadas = 4, conReps = 10): SemanaDeEntreno => ({ lunes: '2026-09-07', series, veces, pesadas, conReps });
 // Cuando subía: unas 12 series duras por semana del músculo, una sesión por semana con el ejercicio, con la carga pesada.
