@@ -29,7 +29,7 @@
 //   que lee: quién lo ve y quién lo escribe, vincular y volver a vincular, desvincular, que lo de
 //   Ascent llega como lo cuenta Ascent y nunca lo de un tercero, el peso de las dos apps, la rutina y
 //   los ajustes de Ascent (0013_ascent_rutina.sql), vincular desde Moss con un código de un uso
-//   (0014_codigo_de_vinculo.sql), lo de Moss que lee Ascent (0015_moss_para_ascent.sql), las metas de fuerza y el RIR (0016_metas_de_fuerza.sql), y la app (src/lib/ascentRemoto.ts) vinculando por la función
+//   (0014_codigo_de_vinculo.sql), lo de Moss que lee Ascent (0015_moss_para_ascent.sql), las metas de fuerza y el RIR (0016_metas_de_fuerza.sql), cuánto bajas y tu experiencia (0017_baja_y_experiencia.sql), y la app (src/lib/ascentRemoto.ts) vinculando por la función
 //   moss-vincular de verdad y pidiendo el código;
 // - y las dos cuentas (D29), con moss-vincular y moss-borrar-cuenta de verdad: vincular con el mismo
 //   correo y con correos distintos, borrar en Moss (solo de Moss, o la misma cuenta que Ascent),
@@ -80,6 +80,8 @@ function nombresLocales(sql) {
   sumar(/\b([a-z_]\w*)\s+as\s+(?:not\s+)?(?:materialized\s+)?\(/gi);
   sumar(/\)\s+(?:with\s+ordinality\s+)?(?:as\s+)?([a-z_]\w*)/gi);
   sumar(/\bfunction\s+[a-z_]\w*\.([a-z_]\w*)\s*\(/gi);
+  // El alias de la tabla de un upsert: «insert into moss.x as r».
+  sumar(/\binto\s+[a-z_][\w.]*\s+as\s+([a-z_]\w*)/gi);
   return nombres;
 }
 for (const archivo of migraciones) {
@@ -1229,6 +1231,20 @@ await vincularConLaClave(MOSS, ASCENT, 'moss');
 // Lo de esta prueba se va: lo que sigue cuenta las sesiones de esta cuenta.
 await db.query('delete from public.sesiones where log_id = $1', [dia26]);
 await db.query('delete from public.logs where id = $1', [dia26]);
+
+// Cuánto bajas y tu experiencia (0017_baja_y_experiencia.sql): Moss los sube con el resumen de hoy y moss_objetivo() los
+// devuelve, del último día que los tenga; si un día no vienen, quedan los de antes.
+const objetivo17De = async () => (await como(ASCENT, 'select moss.moss_objetivo() as r')).rows[0].r;
+const subido17 = await guardar(MOSS, [{ fecha: '2026-11-04', baja_semanal: 0.83, experiencia: 'intermedio' }]);
+await guardar(MOSS, [{ fecha: '2026-11-05', dormido: 400 }]);
+const objetivo17 = await objetivo17De();
+comprobar(
+  subido17 === true && Number(objetivo17.baja_semanal) === 0.83 && objetivo17.experiencia === 'intermedio'
+    && await falla(MOSS, `select moss.guardar_resumenes('[{"fecha":"2026-11-06","experiencia":"experto"}]')`)
+    && await falla(MOSS, `select moss.guardar_resumenes('[{"fecha":"2026-11-06","baja_semanal":40}]')`),
+  `baja y experiencia: Moss los sube con el resumen y Ascent los lee en moss_objetivo (${JSON.stringify(objetivo17)})`,
+);
+await db.query('delete from moss.resumenes_para_ascent where usuario = $1', [MOSS]);
 
 // La app (src/lib/ascentRemoto.ts) y la función moss-vincular, contra esta base: Auth de mentira (cada
 // token es de una cuenta) y PostgREST como lo llama la función, con la clave de servicio.
