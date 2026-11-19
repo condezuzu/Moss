@@ -4132,7 +4132,7 @@
         "cuidado": "Eat as usual, at your usual times.",
         "faltoProteina": "Protein fell short yesterday. No need to make it up: today, about {gramos} g each meal.",
         "comioMenos": "You ate less yesterday. Today, as usual: no need to make up for it.",
-        "carbos": "Since you'll train over 45 minutes today, carbs beforehand (bread, fruit, rice) can help.",
+        "carbos": "Since you train over 45 minutes, carbs beforehand (bread, fruit, rice) can help.",
         "ayerBien": "You hit your targets yesterday. Same today: protein at each meal.",
         "normal": "Today, your usual meals, with protein in each one.",
         "sinDatos": "Log what you eat and I'll tell you what to prioritize here."
