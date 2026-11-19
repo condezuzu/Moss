@@ -29,7 +29,15 @@ type Respuesta = { ok: true; nombre: string } | { error: CodigoDeError };
 type Servidor = { url: string; clave: string };
 type Sesion = { id: string } | 'invalida' | 'caido';
 
-const responder = (estado: number, cuerpo: Respuesta) => Response.json(cuerpo, { status: estado });
+// CORS (18/11, para las pruebas de Ascent en su vista web): en el iPhone no hay preflight. Abrirla a cualquier
+// origen no da nada: sin las dos sesiones vivas no se vincula.
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
+const responder = (estado: number, cuerpo: Respuesta) => Response.json(cuerpo, { status: estado, headers: CORS });
 
 // En los logs van el paso, el estado y el código de error: nunca un token ni un mensaje de error,
 // que podría traer parte de una respuesta.
@@ -51,6 +59,7 @@ export default {
 };
 
 async function vincular(pedido: Request): Promise<Response> {
+  if (pedido.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   if (pedido.method !== 'POST') return responder(405, { error: 'metodo' });
   const jwt = /^Bearer\s+(\S+)$/i.exec(pedido.headers.get('Authorization') ?? '')?.[1];
   if (!jwt) return responder(401, { error: 'sin_sesion' });
