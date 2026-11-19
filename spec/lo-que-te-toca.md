@@ -3,7 +3,7 @@
 Todo lo que no puedo hacer yo: aprobar, decidir, entrar con tus cuentas, tocar el iPhone y lo de Ascent.
 Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar hecho: no lo puedo ver desde acá.
 
-Galería (versión 50): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
+Galería (versión 54): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 
 ## 0. El lanzamiento y la 1.1 (desde el 14/11/2026): dónde quedé
 
@@ -86,6 +86,9 @@ Hecho:
     (`visual-ota` 06c4b94). Queda `moss.recuperacion`, para cuando Ascent la lea.
   - La «caña» es el único alimento sin marca que dice en qué países va (España), para que salga con 200 ml de entrada sin
     quitarle «caña» al destilado en Uruguay. ¿Así, o como un nombre más de la cerveza (con la lata de 355 ml de entrada)?
+
+- Ascent en Progreso, rehecha como Sueño (19/11, directo a la app, por aire en las dos builds: `visual-ota` 43c408d): tu semana con la carga de cada músculo, antes y después de entrenar, tu noche en corto, y el cuerpo de tu rango igual al de Ascent. Probala en el iPhone.
+- La 0015 (19/11, lo aprobaste): Ascent lee de Moss el día, las semanas, el objetivo y el año. Moss sube el sueño, la deuda, la energía y las metas solo vinculada; al desvincular se borran. La privacidad publicada lo dice (`condezuzu/moss-app`, 19/11). Aplicada y por aire en las dos builds (`visual-ota` 808c654).
 
 Falta (vos):
 1. Business: la cuenta del banco y los formularios de impuestos (W-8BEN; lo de Uruguay con tu contador), hasta que
