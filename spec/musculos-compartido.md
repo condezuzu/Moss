@@ -20,15 +20,16 @@ propios toman el grupo que eligió la persona como principal, sin ayuda.
 Lo pediste mirándola como alguien que entra por primera vez; un agente que hizo de persona nueva, sin saber nada de
 fitness ni de la app, la leyó dos veces y marcó lo que no se entendía. Lo que cambió:
 - **Para hoy**, donde estaba «Tu rutina» (lo primero que se ve al llegar): una sugerencia de entrenamiento, una de comida
-  y una de sueño, todos los días, con las reglas de  en   (tercer archivo compartido, con sus casos). No compensa la comida de ayer; el descanso activo «está bien», no «te
+  y una de sueño, todos los días, con las reglas de `spec/estudio/sugerencias-de-hoy.md` en `sugerenciasDeHoy.ts`
+  (tercer archivo compartido, con sus casos). No compensa la comida de ayer; el descanso activo «está bien», no «te
   recupera»; con un músculo que se recupera, «una serie menos y sin llegar al fallo».
 - **Esta semana**: el cuerpo de frente o de espalda con la lista de ese lado. Se muestran las series duras (redondeadas),
   no el puntaje de 0 a 200: sin unidad no se entendía. La barra va de 0 a 30 con la franja de 10 a 20.
 - **Qué hacer en cada franja**: «Le faltan: súmale series esta semana», «Va bien: sigue con tu rutina, no hace falta
   agregar más», «De más: esta semana no le sumes», «Recuperándose: mejor no entrenarlo fuerte hoy».
 - **Al tocar un músculo**: lo demás se pone gris; el pecho y el tríceps se ven de cerca, partidos en sus dos partes; los
-  ejercicios en una línea con los kilos de la próxima vez (). Un ejercicio de hoy con un músculo que
-  se recupera no dice «sube» (, razón ).
+  ejercicios en una línea con los kilos de la próxima vez (`pesoSiguiente`). Un ejercicio de hoy con un músculo que
+  se recupera no dice «sube» (`proximaSesion`, razón `fatiga`).
 - **El reloj**: un círculo que se llena hasta que el músculo está listo, «estimado».
 - **Tu rutina** subió a su propio bloque; **Por qué** aparece solo con algo estancado; el tutorial explica serie y
   repetición; «Cómo se lee» al lado del «!».
