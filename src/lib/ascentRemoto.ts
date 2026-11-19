@@ -9,6 +9,7 @@
 
 import { leerAjustesDeAscent, leerRutinaDeAscent, type AjustesDeAscent, type RutinaDeAscent } from '@/dominio/conAscent';
 import type { ClaveDia } from '@/dominio/fechas';
+import { esCodigoDeVinculo } from '@/lib/codigoDeVinculo';
 import { haySupabase, supabase } from '@/lib/supabase';
 
 export type { AjustesDeAscent, RutinaDeAscent };
@@ -156,6 +157,17 @@ export async function vincular(tokenDeAscent: string): Promise<{ ok: true; nombr
   const cuerpo: unknown = await response.json().catch(() => null);
   const codigo = esObjeto(cuerpo) ? cuerpo.error : null;
   return codigo === 'sin_sesion' || codigo === 'vencida' || codigo === 'sin_ascent' ? { ok: false, error: codigo } : { ok: false, error: 'servidor' };
+}
+
+/**
+ * Un código de un uso para vincular sin la sesión de Ascent en el llavero (supabase/moss/0014_codigo_de_vinculo.sql):
+ * vence a los 5 minutos y lo usa Ascent, con su sesión. null sin Supabase o sin sesión; sin conexión, se rechaza.
+ */
+export async function crearCodigoDeVinculo(): Promise<string | null> {
+  const codigo = await llamar('crear_codigo_de_vinculo');
+  if (codigo === null) return null;
+  if (!esCodigoDeVinculo(codigo)) throw new Error('moss.crear_codigo_de_vinculo: respuesta inesperada');
+  return codigo;
 }
 
 /** Borra el vínculo de esta cuenta, sea el lado de Moss o el de Ascent. Los datos quedan en cada app. */

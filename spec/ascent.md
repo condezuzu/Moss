@@ -133,8 +133,9 @@ guarda sueño y comida, y Apple pide consentimiento para compartir datos de salu
   - `moss.estado_del_vinculo()` devuelve si está vinculada, el usuario de Ascent
     y desde cuándo.
   - `moss.desvincular()`.
-  - Vincular no es una función que llame la app: pasa por `moss-vincular`, que
-    revisa las dos sesiones (ver «Vincular en menos de 10 segundos»).
+  - Vincular pasa por `moss-vincular`, que revisa las dos sesiones, o, desde Moss
+    sin la sesión de Ascent, por un código de un uso que usa Ascent (ver «Vincular
+    en menos de 10 segundos» y «Con un código»).
 - **El botón «Vincular»** está en la sección de Ascent, en Perfil y en la
   invitación de Inicio (ver «Que se encuentre»), y sigue el flujo de D27 (más
   abajo). El de antes, que pedía entrar a la otra app «con
@@ -248,6 +249,59 @@ mismo al revés, con la sesión de Moss en el llavero.
   - `node herramientas/probar-vincular.mjs`: la función contra Auth y PostgREST
     de mentira.
 
+### Con un código (18/11/2026, lo aceptaste; acordado con la sesión de Ascent)
+
+Las cuentas de Moss del iPhone se crean con Apple y no tienen contraseña, y las
+builds de Ascent de la tienda no dejan su sesión en el llavero. Sin esa sesión,
+vincular desde Moss pedía el correo y la contraseña de Ascent. Ahora se arranca
+desde Moss con un código de un uso, sin contraseña y sin build nueva (va por aire).
+
+**Desde Moss** (el botón de la sección de Ascent sin vincular y el de la invitación
+de Inicio, `src/secciones/ascent/vincularDesdeMoss.ts`):
+- Con la sesión de Ascent en el llavero (`sesionDeAscent()` y `vigente`), la hoja
+  de siempre: dos toques.
+- Sin ella, Moss pide un código a `moss.crear_codigo_de_vinculo()` y abre
+  `https://ascent-blush-seven.vercel.app/vincular/<código>`
+  (`src/lib/codigoDeVinculo.ts`). Con Ascent instalada, iOS lo abre en Ascent
+  (enlace universal); si no, la web ofrece la App Store. Ascent, con su sesión,
+  llama a `moss.vincular_con_codigo(código)` y queda vinculada desde Ascent.
+- Sin cuenta de Moss, la hoja, que dice que hace falta entrar. Si no se puede pedir
+  el código (sin conexión), un aviso corto («Sin conexión…») y nada más.
+- **La confirmación** (la pediste): el almacén de Ascent revisa el vínculo cada vez
+  que Moss vuelve a primer plano. Si pasa a vinculada hasta 10 minutos después de
+  pedir el código, Moss pregunta una vez «Vinculada con @usuario», con «Listo» y
+  «No fui yo»; «No fui yo» desvincula (`moss.desvincular()`) y dice que se deshizo.
+  Abrir la hoja de vincular olvida el código: lo que se vincule ahí no se confirma.
+  El código pendiente vive en la memoria de Moss: si iOS la cierra mientras estás en
+  Ascent, se vincula igual, sin la pregunta.
+- La hoja que llega por `moss://vincular` (desde Ascent) no cambia: pide el correo y
+  la contraseña de Ascent.
+
+**En el servidor** ([`0014_codigo_de_vinculo.sql`](../supabase/moss/0014_codigo_de_vinculo.sql)):
+- `moss.codigos_de_vinculo`: el sha256 del código (nunca el código), la cuenta de
+  Moss, cuándo vence (a los 5 minutos) y cuándo se usó. RLS prendida, sin
+  políticas ni permisos para la app: la tocan solo las dos funciones.
+- `moss.crear_codigo_de_vinculo()` → text: la llama la cuenta de Moss. 32 bytes al
+  azar (`extensions.gen_random_bytes`, pgcrypto como viene en Supabase) en base64url
+  sin relleno (43 caracteres). Cada código nuevo borra los anteriores sin usar de
+  esa cuenta, y los vencidos de todos. Sin sesión, error.
+- `moss.vincular_con_codigo(p_codigo)` → jsonb: la llama la cuenta de Ascent.
+  Devuelve `{ ok: true, nombre }` o `{ ok: false, error }` con `sin_ascent` (sin
+  nombre de usuario: tampoco prueba códigos), `no_existe`, `usado` o `vencido`.
+  Usarlo es un solo `update … where usado is null and vence > now() returning`:
+  con dos llamadas a la vez, la segunda espera la fila y ya la encuentra usada.
+  Vincula con `moss.vincular_cuentas(…, 'ascent')` por dentro (sigue cerrada para
+  la app), así que borra los vínculos anteriores de las dos cuentas, como
+  `moss-vincular`.
+- Las dos, `security definer` con `search_path` vacío; `execute` solo para
+  `authenticated`. Las prueba `npm run supabase:verificar` (sección 8: crear,
+  usar, usado, vencido, no existe, sin nombre de usuario, dos a la vez, que anon no
+  pueda, que el código no quede en claro y que borre los vínculos anteriores; y la
+  app pidiendo el código).
+- Aplicarla en la base real es tuyo (`npm run migraciones -- --aplicar`). Hasta
+  entonces, pedir el código falla como sin conexión: el botón dice «Sin conexión…»
+  cuando no está la sesión de Ascent en el llavero.
+
 ## Qué lee cada app de la otra (con el vínculo)
 
 Las cinco primeras están escritas: las tres primeras en
@@ -262,6 +316,8 @@ todavía sin aplicar en la base real); las demás, todavía no.
 | `moss.pesos_compartidos(desde, app)` | `moss.pesos` y `public.weights` juntos | Moss (tendencia) y Ascent (DOTS, Stats › Peso) |
 | `moss.ascent_rutina()` | `public.rutinas` (la activa) y `public.ejercicios` | Moss: «Tu semana en Ascent», la sesión de hoy y «Tu fuerza» |
 | `moss.ascent_ajustes()` | `public.profiles` (`umbral_estancamiento` y `racha_actual`) | Moss: el umbral de estancamiento y el color y el cuerpo de tu rango |
+| `moss.crear_codigo_de_vinculo()` | `moss.codigos_de_vinculo` (escribe el sha256 del código nuevo) | Moss: vincular sin la sesión de Ascent en el llavero (ver «Con un código»; 0014, 18/11/2026, todavía sin aplicar) |
+| `moss.vincular_con_codigo(p_codigo)` | `moss.codigos_de_vinculo` y `public.profiles` (`username`); escribe `moss.vinculo` | Ascent: usar el código que le abre Moss |
 | `moss.recuperacion(fecha)` | sueño y comida de Moss, más entrenamiento de Ascent | las dos. **Pendiente** (18/11/2026): no se escribe hasta que Ascent la lea; repetiría en SQL la cuenta del titular (`titularDeHoy.ts`), y mientras solo la usa Moss, que la hace en el teléfono |
 | `moss.semanas_para_ascent(desde)` | por semana: sueño promedio, proteína promedio por día y balance por día | las dos: «Por qué no subís» |
 | `moss.objetivo()` | objetivo y ritmo de Moss | Ascent: qué espera de la fuerza |

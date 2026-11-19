@@ -9,6 +9,12 @@ sesiones con Supabase y guarda el vínculo con `moss.vincular_cuentas`
 clave de servicio. Sin las dos sesiones vivas no se vincula: así nadie vincula
 algo ajeno.
 
+Desde Moss sin la sesión de Ascent en el llavero no se usa esta función: Moss pide
+un código de un uso y Ascent lo usa con `moss.vincular_con_codigo`
+([`0014_codigo_de_vinculo.sql`](../../moss/0014_codigo_de_vinculo.sql), «Con un
+código» en `spec/ascent.md`), que guarda el vínculo con la misma
+`moss.vincular_cuentas`.
+
 No usa paquetes ni toca `public`: el perfil de Ascent lo lee la función de la
 base. No necesita secretos propios: `SUPABASE_URL` y las claves las pone la
 plataforma. Usa la secreta nueva (`SUPABASE_SECRET_KEYS`) y, si no está, la

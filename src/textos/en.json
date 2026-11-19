@@ -3915,6 +3915,12 @@
     "pronto": {
       "valor": "Soon",
       "globo": "Soon: your Ascent training and your food, together."
+    },
+    "codigo": {
+      "titulo": "Linked with {usuario}",
+      "texto": "Moss and Ascent now share your data. If this wasn't you, undo it now.",
+      "noFuiYo": "It wasn't me",
+      "deshecho": "Done: the link with Ascent was undone."
     }
   },
   "habitos": {

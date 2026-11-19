@@ -28,6 +28,7 @@ import { C } from './colores';
 import { Marca } from './Dibujos';
 import { Accion, Octogono } from './piezas';
 import { vincularConCorreo, type ErrorDeEntrar } from './cuentaDeAscent';
+import { olvidarElCodigo } from './vincularDesdeMoss';
 
 type DelIphone = 'mirando' | 'sesion' | 'sinSesion' | 'sinAscent';
 type Error = { de: 'llavero' | 'correo'; cual: ErrorDeEntrar };
@@ -68,7 +69,10 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
   const hoja = useBajarParaCerrar({ alCerrar: () => alCerrar(false), activo: !vinculando, conScroll: abierta });
   const { reiniciar } = hoja;
   useEffect(() => {
-    if (abierta) reiniciar();
+    if (!abierta) return;
+    reiniciar();
+    // Lo que se vincule desde la hoja no se confirma como si fuera del código.
+    olvidarElCodigo();
   }, [abierta, reiniciar]);
   // El correo y la clave van al final: con el teclado, el scroll los trae.
   useCampoALaVista(hoja.scroll, hoja.scrollY);

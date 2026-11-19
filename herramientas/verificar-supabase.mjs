@@ -28,8 +28,9 @@
 // - el vínculo con Ascent (0008_vinculo.sql), contra tablas de Ascent de mentira con las columnas
 //   que lee: quién lo ve y quién lo escribe, vincular y volver a vincular, desvincular, que lo de
 //   Ascent llega como lo cuenta Ascent y nunca lo de un tercero, el peso de las dos apps, la rutina y
-//   los ajustes de Ascent (0013_ascent_rutina.sql), y la app
-//   (src/lib/ascentRemoto.ts) vinculando por la función moss-vincular de verdad;
+//   los ajustes de Ascent (0013_ascent_rutina.sql), vincular desde Moss con un código de un uso
+//   (0014_codigo_de_vinculo.sql), y la app (src/lib/ascentRemoto.ts) vinculando por la función
+//   moss-vincular de verdad y pidiendo el código;
 // - y las dos cuentas (D29), con moss-vincular y moss-borrar-cuenta de verdad: vincular con el mismo
 //   correo y con correos distintos, borrar en Moss (solo de Moss, o la misma cuenta que Ascent),
 //   borrar en Ascent (dos usuarios, o el mismo) y desvincular;
@@ -43,7 +44,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { registerHooks } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createHash } from 'node:crypto';
 import { PGlite } from '@electric-sql/pglite';
+import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
 const carpeta = join(raiz, 'supabase/moss');
@@ -88,14 +91,16 @@ for (const archivo of migraciones) {
   for (const m of sql.matchAll(/\b([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)\b/gi)) {
     const [esquema, nombre] = [m[1].toLowerCase(), m[2].toLowerCase()];
     // new, old y excluded son la fila que llega, la que estaba y la propuesta en un upsert.
-    if (esquema === 'moss' || ['new', 'old', 'excluded'].includes(esquema) || (esquema === 'auth' && ['users', 'uid'].includes(nombre))) continue;
+    // extensions.gen_random_bytes es pgcrypto, como viene en Supabase (0014_codigo_de_vinculo.sql).
+    if (esquema === 'moss' || ['new', 'old', 'excluded'].includes(esquema) || (esquema === 'auth' && ['users', 'uid'].includes(nombre))
+      || (esquema === 'extensions' && nombre === 'gen_random_bytes')) continue;
     if (esquema === 'public') {
       if (!definer.some((f) => m.index >= f.desde && m.index < f.hasta)) publicAfuera.push(m[0]);
       continue;
     }
     if (OTROS_ESQUEMAS.includes(esquema) || !locales.has(esquema)) ajenos.push(m[0]);
   }
-  comprobar(!ajenos.length, `${archivo}: solo nombra objetos de moss (y auth.users, auth.uid)${ajenos.length ? ': ' + [...new Set(ajenos)].join(', ') : ''}`);
+  comprobar(!ajenos.length, `${archivo}: solo nombra objetos de moss (y auth.users, auth.uid, extensions.gen_random_bytes)${ajenos.length ? ': ' + [...new Set(ajenos)].join(', ') : ''}`);
   const escriben = definer.filter((f) => /\bpublic\./i.test(f.cuerpo)
     && (/\b(?:insert\s+into|update|delete\s+from|truncate(?:\s+table)?|merge\s+into|alter\s+\w+|drop\s+\w+|create\s+(?:or\s+replace\s+)?\w+|lock(?:\s+table)?)\s+(?:only\s+)?public\./i.test(f.cuerpo)
       || /\bpublic\.\w+\s*\(/i.test(f.cuerpo) || /\bfor\s+(?:no\s+key\s+)?(?:update|share)\b/i.test(f.cuerpo)));
@@ -106,8 +111,11 @@ for (const archivo of migraciones) {
 }
 
 // ------------------------------------------------------------ 2. Lo mínimo de Supabase
-const db = new PGlite();
+// pgcrypto en el esquema extensions, como en Supabase.
+const db = new PGlite({ extensions: { pgcrypto } });
 await db.exec(`
+  create schema extensions;
+  create extension pgcrypto schema extensions;
   create role anon nologin;
   create role authenticated nologin;
   create role service_role nologin bypassrls;
@@ -1060,6 +1068,66 @@ comprobar(
   'vínculo: «borrar mis datos de Moss» borra lo de Moss y no toca Ascent ni el vínculo (se quita desde Perfil)',
 );
 
+// Vincular desde Moss con un código de un uso (0014_codigo_de_vinculo.sql): lo pide la cuenta de Moss y lo usa la
+// de Ascent. Antes, MOSS vinculada con TERCERO y SOLA con ASCENT, para ver que vincular borra los anteriores.
+const codigoDe = async (u) => (await como(u, 'select moss.crear_codigo_de_vinculo() as r')).rows[0].r;
+const usarCodigo = async (u, codigo) => (await como(u, 'select moss.vincular_con_codigo($1) as r', [codigo])).rows[0].r;
+const enUnaPalabra = (r) => (r.ok ? `ok:${r.nombre}` : r.error);
+const huellaDe = (codigo) => createHash('sha256').update(codigo).digest('hex');
+const codigosDe = async (u) => (await db.query(`select encode(hash, 'hex') as hash, usado is not null as usado, to_jsonb(c)::text as fila
+  from moss.codigos_de_vinculo c where moss = $1 order by vence`, [u])).rows;
+const hayCodigo = async (codigo) => (await db.query(`select 1 from moss.codigos_de_vinculo where encode(hash, 'hex') = $1`, [huellaDe(codigo)])).rows.length === 1;
+await como(MOSS, 'select moss.desvincular()');
+await vincularConLaClave(MOSS, TERCERO, 'moss');
+await vincularConLaClave(SOLA, ASCENT, 'moss');
+comprobar(
+  await falla('anon', 'select moss.crear_codigo_de_vinculo()') && await falla('anon', `select moss.vincular_con_codigo('x')`)
+    && await falla(MOSS, 'select * from moss.codigos_de_vinculo') && await falla(MOSS, `insert into moss.codigos_de_vinculo (hash, moss, vence) values ('\x00', '${MOSS}', now())`)
+    && await falla(MOSS, 'delete from moss.codigos_de_vinculo') && await falla(MOSS, 'update moss.codigos_de_vinculo set usado = null'),
+  'código de vínculo: sin sesión no se pide ni se usa, y la tabla no se lee ni se escribe desde la app',
+);
+const primerCodigo = await codigoDe(MOSS);
+const codigo = await codigoDe(MOSS);
+const guardados = await codigosDe(MOSS);
+comprobar(
+  /^[A-Za-z0-9_-]{43}$/.test(codigo) && codigo !== primerCodigo && guardados.length === 1 && guardados[0].hash === huellaDe(codigo) && !guardados[0].usado
+    && !guardados[0].fila.includes(codigo) && !guardados[0].fila.includes(primerCodigo) && !(await hayCodigo(primerCodigo)),
+  'código de vínculo: 32 bytes al azar en base64url; se guarda solo su sha256, y uno nuevo borra el anterior sin usar',
+);
+comprobar(
+  (await usarCodigo(OTRA, codigo)).error === 'sin_ascent' && !(await codigosDe(MOSS))[0].usado
+    && enUnaPalabra(await usarCodigo(ASCENT, primerCodigo)) === 'no_existe' && enUnaPalabra(await usarCodigo(ASCENT, 'A'.repeat(43))) === 'no_existe'
+    && enUnaPalabra(await usarCodigo(ASCENT, 'corto')) === 'no_existe' && enUnaPalabra(await usarCodigo(ASCENT, null)) === 'no_existe'
+    && (await vinculos()) === 'e1-e5-moss,e4-e2-moss',
+  'código de vínculo: una cuenta sin nombre de usuario de Ascent no lo usa (sin_ascent, y el código sigue), y uno que no existe no vincula nada',
+);
+const conCodigo = await usarCodigo(ASCENT, codigo);
+comprobar(
+  JSON.stringify(conCodigo) === JSON.stringify({ ok: true, nombre: 'agus' }) && (await vinculos()) === 'e1-e2-ascent' && (await estadoDe(MOSS)).nombre === 'agus'
+    && !(await estadoDe(TERCERO)).vinculada && !(await estadoDe(SOLA)).vinculada && (await codigosDe(MOSS))[0].usado,
+  'código de vínculo: la cuenta de Ascent lo usa y vincula, desde Ascent, borrando los vínculos anteriores de las dos cuentas',
+);
+comprobar(
+  enUnaPalabra(await usarCodigo(ASCENT, codigo)) === 'usado' && enUnaPalabra(await usarCodigo(TERCERO, codigo)) === 'usado' && (await vinculos()) === 'e1-e2-ascent',
+  'código de vínculo: se usa una sola vez',
+);
+const vencido = await codigoDe(MOSS);
+await db.query(`update moss.codigos_de_vinculo set vence = now() - interval '1 second' where moss = $1 and usado is null`, [MOSS]);
+const sinVencer = await db.query(`select vence > now() + interval '4 minutes' and vence <= now() + interval '5 minutes' as bien from moss.codigos_de_vinculo where moss = $1 and usado is not null`, [MOSS]);
+comprobar(
+  enUnaPalabra(await usarCodigo(TERCERO, vencido)) === 'vencido' && (await vinculos()) === 'e1-e2-ascent' && sinVencer.rows[0]?.bien === true,
+  'código de vínculo: vence a los 5 minutos y vencido no vincula',
+);
+const aLaVez = await codigoDe(MOSS);
+// PGlite tiene una sola conexión: las dos van en orden, cada una en su transacción. Que no se cuelen depende del
+// update con «usado is null» (ver 0014): la segunda vuelve a mirar la fila y ya está usada.
+const dos = await Promise.all([usarCodigo(TERCERO, aLaVez), usarCodigo(ASCENT, aLaVez)]);
+comprobar(
+  !(await hayCodigo(vencido)) && dos.map(enUnaPalabra).sort().join() === 'ok:tercero,usado' && (await vinculos()) === 'e1-e5-ascent',
+  `código de vínculo: con dos a la vez, solo una lo usa (${dos.map(enUnaPalabra).join(', ')}); pedir otro borra los vencidos`,
+);
+await vincularConLaClave(MOSS, ASCENT, 'moss');
+
 // La app (src/lib/ascentRemoto.ts) y la función moss-vincular, contra esta base: Auth de mentira (cada
 // token es de una cuenta) y PostgREST como lo llama la función, con la clave de servicio.
 const SECRETA = 'sb_secret_de_prueba';
@@ -1147,18 +1215,25 @@ const desdeAscent = await funcionVincular.fetch(new Request('https://proyecto.su
 comprobar(desdeAscent.status === 200 && (await desdeAscent.json()).nombre === 'agus' && (await vinculos()) === 'e1-e2-ascent', 'app: desde Ascent se vincula igual, con las cuentas al revés');
 await ascentRemoto.desvincular();
 comprobar(!(await ascentRemoto.estadoDelVinculo()).vinculada && !(await ascentRemoto.sesionesDeAscent('2026-10-01')).length && !(await vinculos()), 'app: desvincular desde Moss');
+const codigoDeLaApp = await ascentRemoto.crearCodigoDeVinculo();
+const conElDeLaApp = codigoDeLaApp ? await usarCodigo(ASCENT, codigoDeLaApp) : null;
+comprobar(
+  /^[A-Za-z0-9_-]{43}$/.test(codigoDeLaApp ?? '') && conElDeLaApp?.ok === true && (await ascentRemoto.estadoDelVinculo()).nombre === 'agus' && (await vinculos()) === 'e1-e2-ascent',
+  'app: Moss pide el código de un uso y, cuando Ascent lo usa, queda vinculada',
+);
+await ascentRemoto.desvincular();
 ascentRemoto.probarCon(() => null);
 const sinSupabase = [await ascentRemoto.estadoDelVinculo(), await ascentRemoto.sesionesDeAscent('2026-10-01'), await ascentRemoto.marcasDeAscent('2026-10-01'),
   await ascentRemoto.pesosCompartidos('2026-10-01'), await ascentRemoto.vincular(tokenDe(ASCENT)), await ascentRemoto.desvincular(),
-  await ascentRemoto.rutinaDeAscent(), await ascentRemoto.ajustesDeAscent()];
+  await ascentRemoto.rutinaDeAscent(), await ascentRemoto.ajustesDeAscent(), await ascentRemoto.crearCodigoDeVinculo()];
 ascentRemoto.probarCon(() => ({ ...conSesion(MOSS), rpc: async () => ({ data: null, error: { message: 'Failed to fetch' } }), functions: { invoke: async () => ({ data: null, error: new Error('FunctionsFetchError') }) } }));
 const rechaza = (promesa) => promesa.then(() => 'resolvió', () => 'rechazó');
 const sinConexion = [await rechaza(ascentRemoto.sesionesDeAscent('2026-10-01')), await rechaza(ascentRemoto.estadoDelVinculo()), (await ascentRemoto.vincular(tokenDe(ASCENT))).error,
-  await rechaza(ascentRemoto.rutinaDeAscent()), await rechaza(ascentRemoto.ajustesDeAscent())];
+  await rechaza(ascentRemoto.rutinaDeAscent()), await rechaza(ascentRemoto.ajustesDeAscent()), await rechaza(ascentRemoto.crearCodigoDeVinculo())];
 comprobar(
-  JSON.stringify(sinSupabase) === JSON.stringify([{ vinculada: false, nombre: null, desde: null }, [], [], [], { ok: false, error: 'sin_sesion' }, null, null, null])
-    && sinConexion.join() === 'rechazó,rechazó,red,rechazó,rechazó',
-  'app: sin Supabase no hay vínculo ni nada que leer; sin conexión las lecturas se rechazan (queda lo que había) y vincular dice «red»',
+  JSON.stringify(sinSupabase) === JSON.stringify([{ vinculada: false, nombre: null, desde: null }, [], [], [], { ok: false, error: 'sin_sesion' }, null, null, null, null])
+    && sinConexion.join() === 'rechazó,rechazó,red,rechazó,rechazó,rechazó',
+  'app: sin Supabase no hay vínculo, nada que leer ni código; sin conexión las lecturas y el código se rechazan (queda lo que había) y vincular dice «red»',
 );
 // La OTA puede llegar antes que 0013_ascent_rutina.sql: PostgREST contesta PGRST202 (no está la función). La lectura
 // se rechaza como sin conexión, y el teléfono se queda con lo que tenía (src/almacen/ascent.ts lo prueba).

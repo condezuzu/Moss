@@ -3915,6 +3915,12 @@
     "pronto": {
       "valor": "Pronto",
       "globo": "Pronto: tu entrenamiento de Ascent y tu comida, juntos."
+    },
+    "codigo": {
+      "titulo": "Vinculada con {usuario}",
+      "texto": "Moss y Ascent ya comparten tus datos. Si no fuiste tú, deshazlo ahora.",
+      "noFuiYo": "No fui yo",
+      "deshecho": "Listo: se deshizo el vínculo con Ascent."
     }
   },
   "habitos": {

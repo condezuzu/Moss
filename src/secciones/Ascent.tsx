@@ -28,6 +28,7 @@ import { Accion, Candado, Escala, Parte, Pildoras, st as p, Una, useTitulares } 
 import { CuerpoDeFondo } from './ascent/Polvo';
 import { useAhora, useHoyEnAscent } from './ascent/titularDeHoy';
 import { CabezaDelDia, DecideFila, MapaDelAnio, RestoVinculada, type IrA } from './ascent/Vinculada';
+import { vincularDesdeMoss } from './ascent/vincularDesdeMoss';
 import { Icono } from './comida/comunes';
 import { useEstado } from './comida/datos';
 import { entre, subirOBajar, UMBRAL, VELOCIDAD_MINIMA } from './movimiento';
@@ -206,7 +207,7 @@ export function Ascent({ subida, abierta, abajo, alCerrar, alIr }: Props) {
                   <SinVincular />
                 )}
                 <Principal vinculada={vinculada}>
-                  {vinculada && h ? <CabezaDelDia h={h} alVerComo={verComo} /> : <CabezaSinVincular alVincular={abrirHoja} />}
+                  {vinculada && h ? <CabezaDelDia h={h} alVerComo={verComo} /> : <CabezaSinVincular alVincular={() => vincularDesdeMoss(abrirHoja).catch(() => {})} />}
                 </Principal>
                 <Pie vinculada={vinculada} alVolver={alCerrar} activo={aLaVista} />
               </Animated.View>
