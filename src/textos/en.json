@@ -3730,7 +3730,7 @@
     },
     "estancados": {
       "titulo": "Reasons for plateaus",
-      "texto": "Exercises with no clear increase in 8 weeks or more, past the threshold you chose in Ascent ({n} weeks without a best).",
+      "texto": "No clear rise in 8 weeks or more, past your Ascent threshold ({n} weeks without a PR).",
       "ninguno": "No exercise has plateaued: over 12 weeks, they're all going up or it's too early to tell.",
       "dato": "{n} weeks without a best · {marca}",
       "sinCausa": "No clear cause in your sets, your food or your sleep.",
@@ -3993,25 +3993,43 @@
     "enQueSeBasa": "What it's based on",
     "baseDe": {
       "musculos": [
-        "Hard sets: the ones you finish with 3 reps or fewer to spare count. The main muscle adds one set and an assisting muscle adds half: that count explained growth best (Pelland 2026).",
-        "The range: 10 to 20 hard sets a week is where most of the evidence lands. It's a convention, not one study's number: in trained people, 9, 18 or 27 sets led to the same growth (Heaselgrave 2019).",
-        "The parts: only where there are growth trials. The incline press grows the upper chest more (Chaves 2020; Albarello 2022), and overhead extensions grow the triceps long head more (Maeo 2023).",
-        "Adding weight: when every set reaches the top of the range with 2 reps to spare, two sessions in a row. Reps left are estimated with an error of about one either way (Halperin 2021), so it's never decided by a single set. Food doesn't hold it back: eating below what you burn doesn't take away the strength you've gained (Murphy and Koehler 2022). After a night of 6 hours or less, reps cost about 10% more (Craven 2022): that day you don't add weight.",
-        "Your routine: each large muscle twice a week or more (Schoenfeld 2016), with 10 to 20 sets. The push–pull balance isn't scored: there's no evidence behind it."
+        "A set counts if you finish it with 3 reps or fewer to spare.",
+        "The main muscle adds 1 set and an assisting one adds half (Pelland 2026).",
+        "On target: 10 to 20 hard sets a week, where the evidence lands.",
+        "It's a convention: in trained people, 9, 18 or 27 sets did the same (Heaselgrave 2019).",
+        "Parts, only with trials: incline press for the upper chest (Chaves 2020; Albarello 2022).",
+        "Overhead extensions for the triceps long head (Maeo 2023).",
+        "Add weight when every set hits the top with 2 to spare, two sessions in a row.",
+        "Reps left are estimated within one rep (Halperin 2021): never decided by one set.",
+        "Food doesn't hold it back: a deficit doesn't take strength you've gained (Murphy and Koehler 2022).",
+        "After 6 h of sleep or less, reps cost ~10% more (Craven 2022): that day, no added weight.",
+        "Your routine: each large muscle twice a week or more (Schoenfeld 2016).",
+        "Push–pull balance isn't scored: there's no evidence behind it."
       ],
       "fatigados": [
-        "How long it takes: what lengthens it most is getting close to failure, more than the number of sets. With 2 or more reps to spare on every set, it's back the next day; with 1, or if you didn't log it, in 2 days; to failure, in 2 days, or 3 with squats, deadlifts or another big leg exercise. An exercise you hadn't done in 26 weeks adds a day.",
-        "It's given in days because the estimate is off by about a day: everyone recovers differently. Soreness doesn't count: strength comes back before it goes away."
+        "What lengthens recovery most is getting close to failure, more than the sets.",
+        "With 2 or more to spare on all sets, back the next day; with 1 or unlogged, in 2 days.",
+        "To failure, in 2 days; in 3 after a big leg exercise.",
+        "It's given in days: the estimate is off by a day, and everyone recovers differently.",
+        "Soreness doesn't count: strength comes back before it goes away."
       ],
       "estancados": [
-        "An exercise is stalled if its 12-week trend isn't clearly going up, with at least 8 weeks of data and past your Ascent threshold. With less, day-to-day noise of about 3% (Grgic 2020) looks like a plateau."
+        "Stalled: its 12-week trend isn't clearly going up.",
+        "It takes 8 weeks of data and passing your Ascent threshold.",
+        "With less, day-to-day noise of about 3% (Grgic 2020) looks like a plateau."
       ],
       "porQue": [
-        "The reasons go from most to least solid: first how much you train (sets, frequency and heavy loads: Pelland 2026), then losing weight fast, protein against 1.6 g per kilo (Morton 2018), and sleep. It's always a likely cause, never a sure one."
+        "They go from most to least solid.",
+        "First how much you train: sets, frequency and heavy loads (Pelland 2026).",
+        "Then losing weight fast, protein against 1.6 g per kilo (Morton 2018), and sleep.",
+        "It's always a likely cause, never a sure one."
       ],
       "metas": [
-        "When you'll get there: from the trend of your last 12 weeks and its range, from the fastest pace to the slowest, because everyone progresses differently (Latella 2020; Swinton 2024). With fewer than 6 sessions of the exercise it isn't estimated. It's realistic if you'd get there within a year at the slowest pace.",
-        "What could make it slip: sleeping under 6 hours on average or eating under 1.6 g of protein per kilo, which slows what you gain over weeks (Morton 2018). What you ate yesterday doesn't change today's session."
+        "When you'll get there comes from your 12-week trend, from the fastest pace to the slowest.",
+        "It's a range because everyone progresses differently (Latella 2020; Swinton 2024).",
+        "With fewer than 6 sessions of the exercise, it isn't estimated.",
+        "Sleeping under 6 h or eating under 1.6 g of protein per kilo can push it back (Morton 2018).",
+        "What you ate yesterday doesn't change today's session."
       ]
     },
     "tutorial": {
@@ -4038,7 +4056,7 @@
         },
         "anotas": {
           "titulo": "From what you log",
-          "texto": "It uses your sets in Ascent and your sleep and food in Moss: the better you log, the more accurate it is."
+          "texto": "It uses your sets in Ascent and your sleep and food in Moss: the better you log, the better it gets."
         }
       }
     },
