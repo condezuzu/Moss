@@ -52,6 +52,10 @@ API › *Exposed schemas* (ver «Lo que tenés que hacer vos» en
 `interno` y el log dice `vincular_cuentas respondió 404 PGRST202`; sin exponer
 `moss`, `406 PGRST106`.
 
+Contesta CORS a cualquier origen (desde el 18/11/2026, para las pruebas de Ascent en su vista web): un
+`OPTIONS` da 200, y todas las respuestas, también las de error, llevan los encabezados. En el iPhone no hay
+preflight. No abre nada: sin las dos sesiones vivas no se vincula.
+
 ## Desplegar
 
 Desde la raíz del repo, después de `npx supabase login`:
