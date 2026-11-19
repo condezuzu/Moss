@@ -12,7 +12,7 @@ import {
   useAnimatedReaction, useDerivedValue, useFrameCallback, useReducedMotion, useSharedValue, withTiming, type SharedValue,
 } from 'react-native-reanimated';
 
-import { nivelEn, SEMANAS_DE_LA_TENDENCIA, type TendenciaDeFuerza } from '@/dominio/rendimiento';
+import { nivelEn, SEMANAS_DE_LA_TENDENCIA, type TendenciaDeFuerza } from '@/dominio/progresoCompartido';
 import type { Musculo } from '@/dominio/musculos';
 import type { cuerpoDeAscent } from '@/dominio/rangoDeAscent';
 import { t } from '@/textos';
@@ -75,11 +75,14 @@ export function MarcaSkia({ tam, unida = false }: PropsDeMarca) {
 }
 
 // ------------------------------------------------------------ el cuerpo
-export type EstadoDibujado = 'recuperandose' | 'cargado' | 'trabajado';
+/** Cuánto entrenaste el músculo en la semana (spec/musculos-compartido.md, 2.1); sin entrenar, no está. */
+export type EstadoDibujado = 'poco' | 'enSuPunto' | 'mucho';
 export type PropsDelCuerpo = {
   ancho: number;
-  /** El estado de cada músculo; los que no están, descansados. */
+  /** El estado de cada músculo; los que no están, sin entrenar. */
   clases: Partial<Record<Musculo, EstadoDibujado>>;
+  /** Los que todavía se recuperan: un borde punteado en terracota, encima del color. */
+  fatigados?: readonly Musculo[];
   elegido?: Musculo | null;
   /** «De frente» y «De espalda» debajo. */
   rotulos?: boolean;
@@ -94,7 +97,7 @@ const ALTO_DEL_CUERPO = 188;
 const LADOS: Lado[] = ['frente', 'espalda'];
 /** El relleno de cada estado, con el acento de tu rango. */
 const relleno = (claro: string): Record<EstadoDibujado | 'nada', [string, number]> => ({
-  nada: ['rgba(170, 178, 196, 0.2)', 1], recuperandose: [claro, 0.6], cargado: [C.lejos, 1], trabajado: [claro, 0.85],
+  nada: ['rgba(170, 178, 196, 0.2)', 1], poco: [claro, 0.38], enSuPunto: [claro, 0.92], mucho: [C.ambar, 0.85],
 });
 
 type FormaDelCuerpo = { musculo: Musculo; path: SkPath };
@@ -117,7 +120,7 @@ function trazos() {
 
 const ESPEJO = [{ translateX: 100 }, { scaleX: -1 }];
 
-export function CuerpoSkia({ ancho, clases, elegido = null, rotulos = false, apagado = false, alTocar, etiqueta }: PropsDelCuerpo) {
+export function CuerpoSkia({ ancho, clases, fatigados = [], elegido = null, rotulos = false, apagado = false, alTocar, etiqueta }: PropsDelCuerpo) {
   const { formas: f, lineas: l, silueta: s } = trazos();
   const RELLENO = relleno(useAcento().claro);
   const k = ancho / ANCHO_DEL_CUERPO;
@@ -134,10 +137,16 @@ export function CuerpoSkia({ ancho, clases, elegido = null, rotulos = false, apa
     const musculos = f[lado].map(({ musculo, path }, i) => {
       const [color, op] = apagado ? ['rgba(170, 178, 196, 0.1)', 1] : RELLENO[clases[musculo] ?? 'nada'];
       const marcado = musculo === elegido;
+      const fatigado = !apagado && fatigados.includes(musculo);
       return [false, true].map((espejo) => (
         <Group key={`${i}${espejo}`} transform={espejo ? ESPEJO : []}>
           <Path path={path} color={color} opacity={op} />
           <Path path={path} style="stroke" strokeWidth={marcado ? 1.3 : 0.9} color={marcado ? C.tinta : '#07080d'} />
+          {fatigado && (
+            <Path path={path} style="stroke" strokeWidth={marcado ? 1.1 : 0.8} color={C.lejos}>
+              <DashPathEffect intervals={[1.8, 1.2]} />
+            </Path>
+          )}
         </Group>
       ));
     });

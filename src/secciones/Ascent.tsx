@@ -5,7 +5,7 @@
 // rango, como las estrellas. Volver es bajar: abajo de todo, empujar para arriba, «Volver a Progreso» o tocar
 // Progreso. El cielo sigue detrás, apenas oscurecido para leer.
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import { GestureDetector, ScrollView, usePanGesture } from 'react-native-gesture-handler';
 import Animated, {
@@ -16,19 +16,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { useAscent } from '@/almacen/ascent';
-import { NOCHE_CORTA } from '@/dominio/rendimiento';
-import { PROTEINA_POR_KG } from '@/dominio/estancados';
 import { irALaAppStore } from '@/lib/ascent';
 import { t } from '@/textos';
 import { letras } from '@/tema';
 import { C, useAcento } from './ascent/colores';
 import { Cuerpo, Marca } from './ascent/Dibujos';
 import { HojaDeVincular } from './ascent/HojaDeVincular';
-import { Accion, Candado, Escala, Parte, Pildoras, st as p, Una, useTitulares } from './ascent/piezas';
+import { Accion, Candado, Parte, st as p, Una, useTitulares } from './ascent/piezas';
 import { CuerpoDeFondo } from './ascent/Polvo';
 import { useAhora, useHoyEnAscent } from './ascent/titularDeHoy';
 import { useResumenParaAscent } from './ascent/resumenParaAscent';
-import { CabezaDelDia, DecideFila, MapaDelAnio, RestoVinculada, type IrA } from './ascent/Vinculada';
+import { BotonDelTutorial, Tutorial, useTutorialVisto } from './ascent/Tutorial';
+import { MapaDelAnio, RestoVinculada, TusMusculos, useTusMusculos } from './ascent/Vinculada';
 import { vincularDesdeMoss } from './ascent/vincularDesdeMoss';
 import { Icono } from './comida/comunes';
 import { useEstado } from './comida/datos';
@@ -49,22 +48,37 @@ type Props = {
   abierta: boolean;
   abajo: number;
   alCerrar: () => void;
-  /** Lo que falta se anota en su sección: la noche en Sueño. */
-  alIr: (a: IrA) => void;
 };
 
-export function Ascent({ subida, abierta, abajo, alCerrar, alIr }: Props) {
+export function Ascent({ subida, abierta, abajo, alCerrar }: Props) {
   const { height: alto } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { vinculo } = useAscent();
   useResumenParaAscent();
   const [hoja, setHoja] = useState(false);
   const [vez, setVez] = useState(0);
-  const [como, setComo] = useState(false);
   // La luna entra en la órbita cuando la hoja termina de bajar.
   const vinculada = vinculo.vinculada && !hoja;
   const ahora = useAhora();
   const h = useHoyEnAscent(ahora);
+  const tm = useTusMusculos(vinculada ? h : null);
+  const tutorial = useTutorialVisto(vinculo.desde);
+  const [verTutorial, setVerTutorial] = useState(false);
+  // Recién cuando la sección terminó de bajar: si aparece en el medio, la deja a mitad de camino.
+  const [bajo, setBajo] = useState(false);
+  const alBajar = (ya: boolean) => {
+    // En la web, al cerrarse el tutorial el foco vuelve a la entrada de Progreso y el navegador corre la página hasta
+    // ella: sin foco, no se mueve nada.
+    if (ya && Platform.OS === 'web') (globalThis.document?.activeElement as { blur?: () => void } | null)?.blur?.();
+    setBajo(ya);
+  };
+  useAnimatedReaction(
+    () => subida.get() > 0.995,
+    (ya, antes) => {
+      if (ya !== antes) scheduleOnRN(alBajar, ya);
+    },
+  );
+  const [vezDelTutorial, setVezDelTutorial] = useState(0);
 
   // El scroll: se llega abajo de todo y, al volver a pintar, se queda donde estaba contando desde abajo (-1: abajo de todo).
   const scroll = useAnimatedRef<ScrollView>();
@@ -73,7 +87,6 @@ export function Ascent({ subida, abierta, abajo, alCerrar, alIr }: Props) {
   const altoVisible = useSharedValue(0);
   const desdeAbajo = useSharedValue(-1);
   const alFondo = useDerivedValue(() => scrollY.get() >= altoDelContenido.get() - altoVisible.get() - 2);
-  const yDeComo = useRef(0);
 
   // Las cuentas de la sección se hacen cuando empieza a bajar, no con cada toque. Al cerrarse, lo desplegado se
   // pliega y la próxima vez se llega abajo de todo otra vez.
@@ -82,7 +95,6 @@ export function Ascent({ subida, abierta, abajo, alCerrar, alIr }: Props) {
     setALaVista(visible);
     if (visible) return;
     desdeAbajo.set(-1);
-    setComo(false);
     scroll.current?.scrollToEnd({ animated: false });
   };
   useAnimatedReaction(
@@ -156,14 +168,11 @@ export function Ascent({ subida, abierta, abajo, alCerrar, alIr }: Props) {
       alPedirVincular.delete(pedir);
     };
   }, [vinculo.vinculada]);
-  const verComo = () => {
-    setComo(true);
-    // Que se vea el título de «En qué se basa», con un poco de aire arriba.
-    setTimeout(() => scroll.current?.scrollTo({ y: Math.max(0, yDeComo.current - 60), animated: true }), 60);
-  };
-  const ir = (a: IrA) => {
-    alCerrar();
-    alIr(a);
+  // La primera vez que se sube a la sección después de vincular, el tutorial aparece solo, ya abierta del todo.
+  const tutorialAbierto = verTutorial || (abierta && bajo && vinculada && !!tm && tutorial.visto === false);
+  const abrirTutorial = () => {
+    setVezDelTutorial((v) => v + 1);
+    setVerTutorial(true);
   };
 
   return (
@@ -203,13 +212,13 @@ export function Ascent({ subida, abierta, abajo, alCerrar, alIr }: Props) {
               {/* Lo que sobra va arriba: así lo principal queda pegado abajo aunque haya poco. */}
               <View style={st.lleno} />
               <Animated.View style={[st.sinAchicar, estiloCambio]}>
-                {vinculada && h ? (
-                  <RestoVinculada h={h} preparada={aLaVista} como={como} alComo={setComo} alMedirComo={(y) => (yDeComo.current = y)} alIr={ir} />
+                {vinculada && h && tm ? (
+                  <RestoVinculada h={h} tm={tm} preparada={aLaVista} />
                 ) : (
                   <SinVincular />
                 )}
-                <Principal vinculada={vinculada}>
-                  {vinculada && h ? <CabezaDelDia h={h} alVerComo={verComo} /> : <CabezaSinVincular alVincular={() => vincularDesdeMoss(abrirHoja).catch(() => {})} />}
+                <Principal vinculada={vinculada} ayuda={vinculada && tm ? <BotonDelTutorial alTocar={abrirTutorial} /> : null}>
+                  {vinculada && tm ? <TusMusculos tm={tm} /> : <CabezaSinVincular alVincular={() => vincularDesdeMoss(abrirHoja).catch(() => {})} />}
                 </Principal>
                 <Pie vinculada={vinculada} alVolver={alCerrar} activo={aLaVista} />
               </Animated.View>
@@ -218,12 +227,13 @@ export function Ascent({ subida, abierta, abajo, alCerrar, alIr }: Props) {
         </GestureDetector>
       </Animated.View>
       <HojaDeVincular key={vez} abierta={hoja} alCerrar={() => setHoja(false)} />
+      <Tutorial abierto={tutorialAbierto} vez={vezDelTutorial} alTerminar={() => { setVerTutorial(false); tutorial.marcar(); }} />
     </>
   );
 }
 
 /** Lo principal, abajo: con la marca arriba a la derecha y una línea de pelo que lo separa de lo que sigue arriba. */
-function Principal({ vinculada, children }: { vinculada: boolean; children: ReactNode }) {
+function Principal({ vinculada, ayuda, children }: { vinculada: boolean; ayuda?: ReactNode; children: ReactNode }) {
   const reducido = useReducedMotion();
   const a = useAcento();
   const u = useSharedValue(vinculada ? 1 : 0);
@@ -237,6 +247,8 @@ function Principal({ vinculada, children }: { vinculada: boolean; children: Reac
       <Animated.View style={[st.marca, marca]} pointerEvents="none">
         <Marca tam={76} unida={vinculada} />
       </Animated.View>
+      {/* El «!» del tutorial, a la izquierda de la marca. */}
+      {ayuda && <View style={st.ayuda}>{ayuda}</View>}
       {vinculada && <Text style={[p.etq, st.nombre, { color: a.claro }]}>{t('ascent.titulo')}</Text>}
       {children}
     </View>
@@ -258,7 +270,7 @@ function CabezaSinVincular({ alVincular }: { alVincular: () => void }) {
   );
 }
 
-/** Sin vincular, cada parte vacía con su candado, mostrando lo que va a mostrar. */
+/** Sin vincular, cada parte vacía con su candado, mostrando lo que va a mostrar, en el mismo orden que vinculada. */
 function SinVincular() {
   const hoy = useEstado().hoy;
   const vacia = (titulo: string, texto: string, dibujo: ReactNode, primera = false) => (
@@ -267,50 +279,14 @@ function SinVincular() {
       {dibujo}
     </Parte>
   );
-  const fila = (nombre: string, contenido: ReactNode, primera = false) => (
-    <View style={[st.filaVacia, primera && { borderTopWidth: 0, paddingTop: 10 }]}>
-      <View style={st.filaVaciaCab}>
-        <Text style={st.filaVaciaNombre}>{nombre}</Text>
-        <Text style={st.filaVaciaValor}>—</Text>
-      </View>
-      {contenido}
-    </View>
-  );
   return (
     <>
       <Text style={[p.etq, st.grupo]}>{t('ascent.soloConLasDos')}</Text>
-      {vacia(t('ascent.anio.titulo'), t('ascent.vacio.anio'), <MapaDelAnio hoy={hoy} dias={[]} vacio />, true)}
-      {vacia(t('ascent.estancados.titulo'), t('ascent.vacio.estancamiento'), null)}
-      {vacia(t('ascent.marcas.titulo'), t('ascent.vacio.marcas'), null)}
-      {vacia(t('ascent.fuerza.titulo'), t('ascent.vacio.fuerza'), (
-        <View style={st.fuerzaVacia}>
-          {(['sentadilla', 'press_banca', 'peso_muerto'] as const).map((id, i) => (
-            <View key={id} style={[st.fuerzaVaciaEj, i === 0 && { borderTopWidth: 0 }]}>
-              <View style={{ flex: 1 }}>
-                <Text style={st.fuerzaVaciaNombre}>{t(`ascent.ejercicios.${id}`)}</Text>
-                <Text style={st.fuerzaVaciaRaya}>—</Text>
-              </View>
-              {/* La tendencia vacía: una raya punteada (sin un lienzo más). */}
-              <View style={st.tendenciaVacia} />
-            </View>
-          ))}
-        </View>
-      ))}
-      {vacia(t('ascent.cuerpo.titulo'), t('ascent.vacio.cuerpo'), <View style={st.cuerpoVacio}><Cuerpo ancho={290} clases={{}} rotulos apagado etiqueta={t('ascent.cuerpo.titulo')} /></View>)}
-      {vacia(t('ascent.filas.titulo'), t('ascent.vacio.filas'), (
-        <View>
-          {fila(t('ascent.filas.sueno.nombre'), <Escala valor={null} tope={10 * 60} rayas={[[NOCHE_CORTA, t('ascent.filas.sueno.seis')], [8 * 60, t('ascent.filas.sueno.tuyo', { horas: '8 h' })]]} zona={NOCHE_CORTA} />, true)}
-          {fila(t('ascent.filas.musculos.nombre'), <Pildoras apagadas items={(['cuadriceps', 'gluteos', 'pecho', 'espaldaAlta'] as const).map((m) => ({ clave: m, texto: t(`ascent.musculos.nombres.${m}`), estado: 'recuperado' as const }))} />)}
-          {fila(t('ascent.filas.comida.nombre'), <Escala valor={null} tope={2.6} rayas={[[PROTEINA_POR_KG, t('ascent.filas.comida.raya')]]} />)}
-        </View>
-      ))}
-      {vacia(t('ascent.vacio.titular'), t('ascent.vacio.titularTexto'), (
-        <DecideFila vacio items={[
-          ['noche', 'moon', t('ascent.decide.noche'), '—', false],
-          ['musculos', 'dumbbell', t('ascent.decide.musculos'), '—', false],
-          ['siente', 'heart', t('ascent.decide.siente'), '—', false],
-        ]} />
-      ))}
+      {vacia(t('ascent.porQue.titulo'), t('ascent.vacio.porQue'), null, true)}
+      {vacia(t('ascent.estancados.lista'), t('ascent.vacio.estancados'), null)}
+      {vacia(t('ascent.anio.titulo'), t('ascent.vacio.anio'), <MapaDelAnio hoy={hoy} dias={[]} vacio />)}
+      {vacia(t('ascent.fatigados.titulo'), t('ascent.vacio.fatigados'), null)}
+      {vacia(t('ascent.tus.titulo'), t('ascent.vacio.musculos'), <View style={st.cuerpoVacio}><Cuerpo ancho={290} clases={{}} rotulos apagado etiqueta={t('ascent.tus.titulo')} /></View>)}
     </>
   );
 }
@@ -350,6 +326,7 @@ const st = StyleSheet.create({
   base: { marginTop: 30, paddingTop: 14, marginHorizontal: -22, paddingHorizontal: 22, borderTopWidth: 1, borderTopColor: C.linea },
   // 6 puntos adentro del margen de la derecha.
   marca: { position: 'absolute', right: 16, top: 20, width: 76, height: 76, transformOrigin: 'top right' },
+  ayuda: { position: 'absolute', right: 74, top: 18, zIndex: 1 },
   nombre: { marginTop: 4, marginBottom: 12, color: C.claro },
   cab: { marginTop: 10, paddingRight: 78 },
   titulo: { marginTop: 8, fontSize: 46, lineHeight: 50, letterSpacing: -0.9, color: C.claro },

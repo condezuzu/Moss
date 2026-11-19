@@ -7,6 +7,7 @@
 import { useMemo } from 'react';
 
 import { useAscent } from '@/almacen/ascent';
+import { COLORES_DEL_ANIO } from '@/dominio/progresoCompartido';
 import { cuerpoDeAscent } from '@/dominio/rangoDeAscent';
 
 export const C = {
@@ -15,8 +16,8 @@ export const C = {
   lejos: '#cb8569', ambar: '#f0c48a',
 } as const;
 
-/** Los grupos de «Tu año»: tres tonos apagados que se distinguen también con daltonismo. */
-export const GRUPOS_DEL_ANIO = { pecho: '#419ec6', piernas: '#a77e33', espalda: '#765190' } as const;
+/** Los grupos de «Tu año», los de progresoCompartido.ts (los mismos en Ascent). */
+export const GRUPOS_DEL_ANIO = COLORES_DEL_ANIO;
 
 /**
  * Tu rango en Ascent: su cuerpo y su paleta, con la racha que llega por el vínculo (moss.ascent_ajustes). Sin

@@ -221,12 +221,6 @@ export default function Secciones() {
     setAscentAbierta(true);
   };
   useEffect(() => alAbrirAscent(abrirAscent));
-  // Lo que falta en Ascent se anota en su sección: la noche, en Sueño.
-  const irDesdeAscent = () => {
-    setAscentAbierta(false);
-    subida.set(0);
-    ir(PESTANAS.indexOf('sueno'), false);
-  };
   const ascentArriba = useMemo(
     () => (CON_ASCENT ? { subida, abierta: ascentAbierta, alAbrir: abrirAscent, alSoltar: setAscentAbierta } : undefined),
     [subida, ascentAbierta], // eslint-disable-line react-hooks/exhaustive-deps
@@ -468,7 +462,7 @@ export default function Secciones() {
                     </View>
                   ))}
                 </Animated.View>
-                {CON_ASCENT && <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} alIr={irDesdeAscent} />}
+                {CON_ASCENT && <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} />}
               </Animated.View>
             )}
           </Animated.View>

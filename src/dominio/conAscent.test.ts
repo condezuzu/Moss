@@ -1,10 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  bloquesDeLaRutina, cargaAntesDe, diasDeLaRutina, entrenadoSegunAscent, entrenoEl, estancamiento, grupoDelAnio, gruposDelDia, gruposDeLaSesion, horasSinComer, leerAjustesDeAscent, leerRutinaDeAscent, metaDelDiaConAscent, pesoUnico, SEMANAS_SIN_SUBIR, semanaDesde, semanasParaComparar,
-  sesionesConBloques, tuAnio,
-  type MarcaDeAscent, type SesionDeAscent,
+  bloquesDeLaRutina, cargaAntesDe, diasDeLaRutina, entrenadoSegunAscent, entrenoEl, estancamiento, gruposDelDia, gruposDeLaSesion, horasSinComer, leerAjustesDeAscent, leerRutinaDeAscent, metaDelDiaConAscent, pesoUnico, SEMANAS_SIN_SUBIR, semanaDesde, semanasParaComparar, sesionesConBloques, tuAnio, type MarcaDeAscent, type SesionDeAscent,
 } from './conAscent';
+import { grupoDelAnio } from './progresoCompartido';
 import type { Peso } from './control';
 import { sumarDias } from './fechas';
 import type { Macros } from './metas';
@@ -128,8 +127,8 @@ describe('lo demás', () => {
   it('el color de un día de tu año: lo que más trabajó, el empuje con el pecho; los brazos solos no cuentan', () => {
     expect(grupoDelAnio(['piernas', 'core'])).toBe('piernas');
     expect(grupoDelAnio(['hombros', 'brazos'])).toBe('pecho');
-    expect(grupoDelAnio(['brazos', 'espalda'])).toBe('espalda');
-    expect(grupoDelAnio(['brazos', 'cardio'])).toBeNull();
+    expect(grupoDelAnio(['brazos', 'espalda'])).toBe('brazos');
+    expect(grupoDelAnio(['core', 'cardio'])).toBeNull();
     expect(grupoDelAnio([])).toBeNull();
   });
 

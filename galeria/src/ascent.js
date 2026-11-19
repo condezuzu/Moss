@@ -11,7 +11,7 @@
 // recuperación ni probabilidades de marca. Vinculada: el titular del día, con lo que decide hoy
 // (Recuperado.titularDeHoy) y cómo te sientes, en qué concentrarte (Diagnostico.focoDeHoy), de qué sale (el
 // sueño, los músculos de hoy y la comida, con sus datos), tus músculos en un cuerpo dibujado (Fatiga), tu
-// fuerza con la tendencia de cada ejercicio y su rango (Rendimiento.tendenciaDeFuerza), las marcas sin
+// fuerza con la tendencia de cada ejercicio y su rango (ProgresoCompartido.tendenciaDeFuerza), las marcas sin
 // probabilidad, el estancamiento con sus razones (Estancados), tu año, lo que comparten las dos y en qué se
 // basa. Sin vincular, cada cosa se ve vacía, con su candado. La invitación de Inicio sale de SenalDeAscent.
 
@@ -1002,7 +1002,7 @@ const SeccionAscent = (() => {
       const hasta = d.sesion === 'hecha' ? Fechas.sumarDias(Datos.HOY, 1) : Datos.HOY;
       const sesiones = sesionesDe(d).filter((s) => s.fecha < hasta);
       const puntos = Estancados.puntosDelEjercicio(sesiones, e, Datos.HOY);
-      return { t: Rendimiento.tendenciaDeFuerza(puntos, { hoy: 0, entrenado }), puntos };
+      return { t: ProgresoCompartido.tendenciaDeFuerza(puntos, { hoy: 0, entrenado }), puntos };
     }
     const marcasDe = (id) => A.marcas.filter((m) => m.id === id);
     const unRmDe = (m) => Musculos.unRmDeAscent({ kilos: m.peso, reps: m.reps });
@@ -1058,7 +1058,7 @@ const SeccionAscent = (() => {
       return fuerza.flatMap(({ e, t }) => {
         const ultima = ultimaMarca(e.id);
         const sinMarca = ultima ? Math.floor(Fechas.diasEntre(ultima.fecha, Datos.HOY) / 7) : 0;
-        if (!Estancados.estaEstancado(t, sinMarca, A.umbral)) return [];
+        if (!ProgresoCompartido.estaEstancado(t, sinMarca, A.umbral)) return [];
         const musculo = Musculos.musculosDe(e).principal[0];
         // Las semanas sin ninguna sesión (las vacaciones) no cuentan para comparar lo que se entrenaba.
         const s = Estancados.semanasParaLasRazones(ultima.fecha, Datos.HOY);
@@ -1067,7 +1067,7 @@ const SeccionAscent = (() => {
         const ahora = s.ahora.filter(conSesion).map(semana);
         const moss = s.ahora.map(mossDeLaSemana);
         const nochesAntes = s.antes.flatMap((l) => mossDeLaSemana(l).noches);
-        const r = Estancados.razonesDeEstancamiento({
+        const r = ProgresoCompartido.razonesDeEstancamiento({
           antes, ahora, objetivo: persona.perfil.objetivo, sinDeficit: sinDeficit(), bajaSemanal: baja,
           // «Juntando información» (el panel de la galería): todavía sin semanas de comida completas.
           comida: opciones.pocasSemanas() ? moss.map((x) => ({ dias: Math.min(2, x.comida.dias), proteina: x.comida.proteina })) : moss.map((x) => x.comida),
@@ -1609,7 +1609,7 @@ const SeccionAscent = (() => {
     const FORMAS = {
       frente: {
         // El trapecio asoma de frente entre el cuello y el hombro.
-        espaldaAlta: [[[45.2, 27.8], [42.6, 29.6], [38.8, 31], [35.4, 32], [39.6, 32.8], [43, 33.2], [45.4, 33.2]]],
+        trapecio: [[[45.2, 27.8], [42.6, 29.6], [38.8, 31], [35.4, 32], [39.6, 32.8], [43, 33.2], [45.4, 33.2]]],
         hombros: [[[34.2, 33.6], [30.6, 32.8], [27.4, 33.8], [25.2, 36.6], [24.2, 40.6], [24.1, 45], [24.8, 49.2], [26.2, 52.6], [27.8, 54.2], [29.4, 51], [30.8, 47.2], [32, 43.4], [33.2, 39.2]]],
         pecho: [[[49.2, 35.4], [45.2, 34.4], [40.6, 34.2], [36.6, 34.8], [34.4, 36.6], [33.2, 39.6], [32.6, 43.2], [32.4, 46.6], [34.4, 50], [37.8, 52.6], [42, 54], [45.8, 54.2], [49.2, 53.2], [49.2, 47], [49.2, 41]]],
         biceps: [[[30.6, 53.4], [28.4, 53.2], [26.2, 54.4], [24.8, 57.2], [24.2, 61], [24.4, 64.6], [25.4, 67.4], [27, 68.4], [28.4, 67.4], [29.6, 64.4], [30.4, 60.6], [30.8, 56.8]]],
@@ -1630,9 +1630,11 @@ const SeccionAscent = (() => {
         ],
       },
       espalda: {
-        espaldaAlta: [
-          // El trapecio, del cuello al medio de la espalda; arriba del omóplato; y el dorsal, como un ala.
+        // El trapecio, del cuello al medio de la espalda; los dorsales, arriba del omóplato y como un ala.
+        trapecio: [
           'M50 23.8 L50 58.6 C48.3 54.4 46.5 50.4 44.8 46.6 C42.6 42.6 40 39 36.8 36 C35.6 35 34.6 34.2 33.8 33.6 C37.2 32.6 40.8 31.2 43.6 29.6 C45.6 28.2 47.2 26 48 24 Z',
+        ],
+        dorsales: [
           'M34.2 37.6 C37.4 39 40.4 41.8 42.2 45.6 C40.2 46.6 37.2 46.2 34.6 44.4 C33.9 42.2 33.9 39.8 34.2 37.6 Z',
           'M32.6 45.2 C33.6 51 35 57 36.2 62.8 C37.4 67.8 38.6 72.6 40.2 76.8 C42.9 73.4 45.3 69.4 46.9 65.2 C45.7 60.8 44.1 56.3 42.5 52.3 C40.1 47.8 36.9 45.3 32.6 45.2 Z',
         ],
@@ -1959,7 +1961,7 @@ const SeccionAscent = (() => {
         return f;
       }
       if (conNumeros()) {
-        f.appendChild(escala(c.gPorKg, PROTEINA_TOPE, [[Estancados.PROTEINA_POR_KG, tx('ascent.filas.comida.raya')]], { etiqueta: tx('ascent.filas.comida.texto', { g: numero(c.gPorKg, 1), n: c.dias }) }));
+        f.appendChild(escala(c.gPorKg, PROTEINA_TOPE, [[ProgresoCompartido.PROTEINA_POR_KG, tx('ascent.filas.comida.raya')]], { etiqueta: tx('ascent.filas.comida.texto', { g: numero(c.gPorKg, 1), n: c.dias }) }));
         f.appendChild(linea('as-fila-texto', tx('ascent.filas.comida.texto', { g: numero(c.gPorKg, 1), n: c.dias }) + (c.ayer ? ' ' + tx('ascent.filas.comida.ayer', { p: numero(c.ayer.p), meta: numero(c.ayer.meta) }) : '')));
       } else f.appendChild(linea('as-fila-texto', tx('ascent.filas.comida.sinNumeros')));
       f.appendChild(linea('as-nota', tx('ascent.filas.comida.nota')));
@@ -2024,9 +2026,9 @@ const SeccionAscent = (() => {
     function chispa(t, puntos) {
       const W = 128, H = 48, M = 4;
       if (!puntos.length) return `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><path class="as-spark-vacio" d="M${M} ${H / 2} H${W - M}"/></svg>`;
-      const desde = -Rendimiento.SEMANAS_DE_LA_TENDENCIA, hasta = 0;
+      const desde = -ProgresoCompartido.SEMANAS_DE_LA_TENDENCIA, hasta = 0;
       const enVentana = puntos.filter((p) => p.t > desde);
-      const banda = t.ajuste ? Array.from({ length: 13 }, (_, i) => desde + (i * (hasta - desde)) / 12).filter((x) => x >= Math.min(...enVentana.map((p) => p.t))).map((x) => [x, Rendimiento.nivelEn(t.ajuste, x)]) : [];
+      const banda = t.ajuste ? Array.from({ length: 13 }, (_, i) => desde + (i * (hasta - desde)) / 12).filter((x) => x >= Math.min(...enVentana.map((p) => p.t))).map((x) => [x, ProgresoCompartido.nivelEn(t.ajuste, x)]) : [];
       const valores = [...enVentana.map((p) => p.e1rm), ...banda.flatMap(([, b]) => [b.abajo, b.arriba])];
       const lo = Math.min(...valores), hi = Math.max(...valores);
       const pad = (hi - lo) * 0.12 || 1;
@@ -2046,7 +2048,7 @@ const SeccionAscent = (() => {
     function veredicto(t) {
       if (t.estado === 'sube') return [tx('ascent.fuerza.sube', { n: conSigno1(t.porMes) }), tx('ascent.fuerza.rango', { a: conSigno1(t.rango[0]), b: conSigno1(t.rango[1]) }) + ' · ' + u.plural('ascent.fuerza.sesiones', t.sesiones)];
       if (t.estado === 'sinSubidaClara') return [tx('ascent.fuerza.sinSubidaClara'), tx('ascent.fuerza.enSemanas', { n: Math.round(t.semanas) }) + ' · ' + u.plural('ascent.fuerza.sesiones', t.sesiones)];
-      return [tx('ascent.fuerza.noSeSabe'), t.sesiones < Rendimiento.SESIONES_MINIMAS ? u.plural('ascent.fuerza.faltanSesiones', t.sesiones) : tx('ascent.fuerza.faltanSemanas', { n: Math.round(t.semanas) })];
+      return [tx('ascent.fuerza.noSeSabe'), t.sesiones < ProgresoCompartido.SESIONES_MINIMAS ? u.plural('ascent.fuerza.faltanSesiones', t.sesiones) : tx('ascent.fuerza.faltanSemanas', { n: Math.round(t.semanas) })];
     }
     function parteFuerza(d, k) {
       const c = parte('as-fuerza', tx('ascent.fuerza.titulo'), el('span', 'as-derecha', tx('ascent.fuerza.semanas')));
@@ -2182,7 +2184,7 @@ const SeccionAscent = (() => {
       }
       if (x.que === 'pesadas') {
         cab.append(el('b', null, tx('ascent.estancados.pesadas.titulo')), el('span', null, `${x.pesadas} / ${x.de}`));
-        li.append(cab, escala(x.pesadas / x.de, 1, [[Estancados.POCAS_PESADAS, tx('ascent.estancados.pesadas.raya')]], { etiqueta: tx('ascent.estancados.pesadas.texto', { n: x.pesadas, de: x.de }) }), linea(null, tx('ascent.estancados.pesadas.texto', { n: x.pesadas, de: x.de })));
+        li.append(cab, escala(x.pesadas / x.de, 1, [[ProgresoCompartido.POCAS_PESADAS, tx('ascent.estancados.pesadas.raya')]], { etiqueta: tx('ascent.estancados.pesadas.texto', { n: x.pesadas, de: x.de }) }), linea(null, tx('ascent.estancados.pesadas.texto', { n: x.pesadas, de: x.de })));
         return li;
       }
       if (x.que === 'bajando') {
@@ -2197,7 +2199,7 @@ const SeccionAscent = (() => {
       }
       if (x.que === 'proteina') {
         cab.append(el('b', null, tx('ascent.estancados.proteina.titulo')), el('span', null, tx('ascent.filas.comida.valor', { g: numero(x.gPorKg, 1) })));
-        li.append(cab, escala(x.gPorKg, PROTEINA_TOPE, [[Estancados.PROTEINA_POR_KG, tx('ascent.filas.comida.raya')]], { limita: true, etiqueta: tx('ascent.estancados.proteina.texto', { g: numero(x.gPorKg, 1) }) }), linea(null, tx('ascent.estancados.proteina.texto', { g: numero(x.gPorKg, 1) })));
+        li.append(cab, escala(x.gPorKg, PROTEINA_TOPE, [[ProgresoCompartido.PROTEINA_POR_KG, tx('ascent.filas.comida.raya')]], { limita: true, etiqueta: tx('ascent.estancados.proteina.texto', { g: numero(x.gPorKg, 1) }) }), linea(null, tx('ascent.estancados.proteina.texto', { g: numero(x.gPorKg, 1) })));
         return li;
       }
       cab.append(el('b', null, tx('ascent.estancados.sueno.titulo')), el('span', null, horasDe(x.ahora)));
@@ -2409,9 +2411,9 @@ const SeccionAscent = (() => {
       const sueno = fila('as-fila-sueno', tx('ascent.filas.sueno.nombre'), '—', '', false);
       sueno.appendChild(escala(null, SUENO_TOPE, [[Rendimiento.NOCHE_CORTA, tx('ascent.filas.sueno.seis')], [necesidad, tx('ascent.filas.sueno.tuyo', { horas: u.duracion(necesidad) })]], { zona: Rendimiento.NOCHE_CORTA }));
       const musculos = fila('as-fila-musculos', tx('ascent.filas.musculos.nombre'), '—', '', false);
-      musculos.appendChild(chips(['cuadriceps', 'gluteos', 'pecho', 'espaldaAlta'].map((m) => ({ musculo: m, estado: 'recuperado', cuando: 'ya' }))));
+      musculos.appendChild(chips(['cuadriceps', 'gluteos', 'pecho', 'dorsales'].map((m) => ({ musculo: m, estado: 'recuperado', cuando: 'ya' }))));
       const comida = fila('as-fila-comida', tx('ascent.filas.comida.nombre'), '—', '', false);
-      comida.appendChild(escala(null, PROTEINA_TOPE, [[Estancados.PROTEINA_POR_KG, tx('ascent.filas.comida.raya')]]));
+      comida.appendChild(escala(null, PROTEINA_TOPE, [[ProgresoCompartido.PROTEINA_POR_KG, tx('ascent.filas.comida.raya')]]));
       caja.append(sueno, musculos, comida);
       return caja;
     }

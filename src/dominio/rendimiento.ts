@@ -11,6 +11,7 @@
 //   probabilidad de antes no estaba calibrada: cuando decía 49 %, la marca salía el 15 % de las veces.
 
 import type { EstadoMuscular } from './musculos';
+import { SIGMA } from './progresoCompartido';
 
 const limitar = (x: number, a: number, b: number) => Math.min(b, Math.max(a, x));
 
@@ -54,86 +55,6 @@ export const suenoCorto = (noche: Noche | null, ultimas3: readonly number[]) =>
  * y sin categorías: los multiplicadores de antes salían de subgrupos con intervalos que cruzan el cero.
  */
 export const lineaDelRendimiento = (noche: Noche | null, ultimas3: readonly number[]): 'suenoCorto' | null => (suenoCorto(noche, ultimas3) ? 'suenoCorto' : null);
-
-// ------------------------------------------------------------ la fuerza: la tendencia de cada ejercicio
-
-/** Una sesión con el ejercicio: cuándo (en semanas, desde cualquier día fijo) y el 1RM estimado de su mejor serie. */
-export type PuntoDeFuerza = { t: number; e1rm: number };
-export type EstadoDeLaFuerza = 'sube' | 'sinSubidaClara' | 'noSeSabe';
-/** La recta de la tendencia, en logaritmos: lo que hace falta para dibujarla con su rango. */
-export type Ajuste = { tMedio: number; yMedio: number; b: number; s: number; n: number; sxx: number };
-export type TendenciaDeFuerza = {
-  estado: EstadoDeLaFuerza;
-  /** Las sesiones de la ventana y cuántas semanas van de la primera a la última. */
-  sesiones: number;
-  semanas: number;
-  /** Lo que sube por mes, en %, con su rango del 80 % (null si no se sabe). */
-  porMes: number | null;
-  rango: [number, number] | null;
-  /** Tu ruido de un día a otro, en %, acercado al de los estudios (sigmaTuyo). */
-  sigma: number;
-  /** Tu nivel de hoy, en kg de 1RM estimado: el de la tendencia (null con menos de 3 sesiones). */
-  nivel: number | null;
-  ajuste: Ajuste | null;
-  puntos: PuntoDeFuerza[];
-};
-
-/** La ventana: las últimas 12 semanas. */
-export const SEMANAS_DE_LA_TENDENCIA = 12;
-/** Para decir algo: 6 sesiones o más, y por lo menos 6 semanas de la primera a la última. */
-export const SESIONES_MINIMAS = 6;
-export const SEMANAS_MINIMAS_DE_HISTORIA = 6;
-/** «Sin subida clara»: ni el borde de arriba del rango llega a +0,3 % por semana. */
-export const SIN_SUBIDA_POR_SEMANA = 0.3;
-/** El rango del 80 %. */
-export const Z_80 = 1.2816;
-/** Semanas por mes (52,2 / 12). */
-const SEMANAS_POR_MES = 4.35;
-
-const porMesDe = (b: number) => (Math.exp(SEMANAS_POR_MES * b) - 1) * 100;
-
-/**
- * La tendencia de la fuerza en un ejercicio: con las sesiones de las últimas 12 semanas, la recta de
- * mínimos cuadrados de ln(e1RM) contra el tiempo, con su rango del 80 % (b ± 1,2816 · EE(b)).
- * - «sube» si el borde de abajo pasa 0; «sin subida clara» si el de arriba no llega a +0,3 % por semana;
- *   si no, o con menos de 6 sesiones o 6 semanas, «todavía no se sabe».
- * - Con una sesión por semana y un ruido de 3,3 %: si subes un 1 % por mes, dice «sin subida clara» el
- *   15 % de las veces (la regla de las 3 semanas, el 63 %); si no subes, «sube» el 12 %.
- * - Tu ruido sale de lo que se aparta cada sesión de la recta (el error típico de Hopkins 2000), acercado
- *   al de los estudios con el peso de 10 sesiones.
- */
-export function tendenciaDeFuerza(todos: readonly PuntoDeFuerza[], o: { hoy: number; entrenado: boolean }): TendenciaDeFuerza {
-  const puntos = todos.filter((p) => p.t <= o.hoy && p.t > o.hoy - SEMANAS_DE_LA_TENDENCIA && p.e1rm > 0).sort((a, b) => a.t - b.t);
-  const n = puntos.length;
-  const semanas = n ? puntos[n - 1].t - puntos[0].t : 0;
-  const base = o.entrenado ? SIGMA.entrenado : SIGMA.novato;
-  const vacia: TendenciaDeFuerza = { estado: 'noSeSabe', sesiones: n, semanas, porMes: null, rango: null, sigma: base, nivel: null, ajuste: null, puntos };
-  if (n < 3 || semanas <= 0) return vacia;
-  const ys = puntos.map((p) => Math.log(p.e1rm));
-  const tMedio = puntos.reduce((s, p) => s + p.t, 0) / n;
-  const yMedio = ys.reduce((s, y) => s + y, 0) / n;
-  let sxx = 0, sxy = 0;
-  puntos.forEach((p, i) => { sxx += (p.t - tMedio) ** 2; sxy += (p.t - tMedio) * (ys[i] - yMedio); });
-  const b = sxy / sxx;
-  const residuos = puntos.map((p, i) => ys[i] - yMedio - b * (p.t - tMedio));
-  const sse = residuos.reduce((s, r) => s + r * r, 0);
-  const s = Math.sqrt(sse / Math.max(1, n - 2));
-  const ee = s / Math.sqrt(sxx);
-  const ajuste: Ajuste = { tMedio, yMedio, b, s, n, sxx };
-  const sigma = sigmaTuyo(residuos.map((r) => r * 100), o.entrenado);
-  const nivel = Math.exp(yMedio + b * (o.hoy - tMedio));
-  if (n < SESIONES_MINIMAS || semanas < SEMANAS_MINIMAS_DE_HISTORIA) return { ...vacia, sigma, nivel, ajuste };
-  const abajo = 100 * (b - Z_80 * ee), arriba = 100 * (b + Z_80 * ee);
-  const estado: EstadoDeLaFuerza = abajo > 0 ? 'sube' : arriba < SIN_SUBIDA_POR_SEMANA ? 'sinSubidaClara' : 'noSeSabe';
-  return { estado, sesiones: n, semanas, porMes: porMesDe(b), rango: [porMesDe(b - Z_80 * ee), porMesDe(b + Z_80 * ee)], sigma, nivel, ajuste, puntos };
-}
-
-/** La tendencia en un momento, en kg, con su rango del 80 % (para dibujarla). */
-export function nivelEn(a: Ajuste, t: number): { nivel: number; abajo: number; arriba: number } {
-  const y = a.yMedio + a.b * (t - a.tMedio);
-  const ee = a.s * Math.sqrt(1 / a.n + (t - a.tMedio) ** 2 / a.sxx);
-  return { nivel: Math.exp(y), abajo: Math.exp(y - Z_80 * ee), arriba: Math.exp(y + Z_80 * ee) };
-}
 
 /** El 1RM estimado se dice redondeado a 2,5 kg y con «aprox.»: Epley y Brzycki difieren más que el ruido de un día. */
 export const aDosYMedio = (kg: number) => Math.round(kg / 2.5) * 2.5;
@@ -181,8 +102,6 @@ export function frecuenciaDeMarcas(sesiones: readonly string[], marcas: readonly
 
 // ------------------------------------------------------------ lo de antes (la app, hasta que se programe lo nuevo)
 
-/** El ruido de un día a otro en el 1RM (Grgic 2020): 3,3 % en entrenados, 5,5 % con menos de 6 meses. */
-export const SIGMA = { entrenado: 3.3, novato: 5.5 };
 /** Con el sueño estimado por el teléfono (sin reloj), el margen crece. */
 export const SIGMA_SIN_RELOJ = 1.25;
 
@@ -417,13 +336,3 @@ export function probabilidadTuya(general: number, marcasEnParecidos: number, par
   return { p: recortar(media), intervalo: [recortar(media - 1.2816 * desvio), recortar(media + 1.2816 * desvio)] };
 }
 
-/**
- * Tu σ: el desvío de tu mejor serie de cada sesión contra su tendencia (en %), que se acerca al de
- * los estudios con el peso de 10 sesiones (derivado).
- */
-export function sigmaTuyo(desvios: number[], entrenado: boolean): number {
-  const base = entrenado ? SIGMA.entrenado : SIGMA.novato;
-  if (!desvios.length) return base;
-  const varianza = desvios.reduce((s, d) => s + d * d, 0) / desvios.length;
-  return Math.sqrt((desvios.length * varianza + 10 * base * base) / (desvios.length + 10));
-}

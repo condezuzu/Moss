@@ -3,7 +3,10 @@
 // Cada músculo llena su zona y unas líneas finas lo definen por dentro; se dibuja la mitad izquierda y la derecha
 // va en espejo.
 
-import type { Musculo } from '@/dominio/musculos';
+// El tipo va adentro: el archivo es el mismo en Ascent, que lo copia tal cual (solo cambia cómo se dibuja).
+type Musculo =
+  | 'pecho' | 'dorsales' | 'trapecio' | 'hombros' | 'biceps' | 'triceps' | 'antebrazos' | 'abdomen'
+  | 'espaldaBaja' | 'cuadriceps' | 'gluteos' | 'isquios' | 'aductores' | 'pantorrillas';
 
 export type Punto = [number, number];
 export type Lado = 'frente' | 'espalda';
@@ -35,7 +38,7 @@ export const SILUETA = curvaCerrada([...MITAD, ...MITAD.slice(0, -1).reverse().m
 export const FORMAS: Record<Lado, Partial<Record<Musculo, (string | Punto[])[]>>> = {
   frente: {
     // El trapecio asoma de frente entre el cuello y el hombro.
-    espaldaAlta: [[[45.2, 27.8], [42.6, 29.6], [38.8, 31], [35.4, 32], [39.6, 32.8], [43, 33.2], [45.4, 33.2]]],
+    trapecio: [[[45.2, 27.8], [42.6, 29.6], [38.8, 31], [35.4, 32], [39.6, 32.8], [43, 33.2], [45.4, 33.2]]],
     hombros: [[[34.2, 33.6], [30.6, 32.8], [27.4, 33.8], [25.2, 36.6], [24.2, 40.6], [24.1, 45], [24.8, 49.2], [26.2, 52.6], [27.8, 54.2], [29.4, 51], [30.8, 47.2], [32, 43.4], [33.2, 39.2]]],
     pecho: [[[49.2, 35.4], [45.2, 34.4], [40.6, 34.2], [36.6, 34.8], [34.4, 36.6], [33.2, 39.6], [32.6, 43.2], [32.4, 46.6], [34.4, 50], [37.8, 52.6], [42, 54], [45.8, 54.2], [49.2, 53.2], [49.2, 47], [49.2, 41]]],
     biceps: [[[30.6, 53.4], [28.4, 53.2], [26.2, 54.4], [24.8, 57.2], [24.2, 61], [24.4, 64.6], [25.4, 67.4], [27, 68.4], [28.4, 67.4], [29.6, 64.4], [30.4, 60.6], [30.8, 56.8]]],
@@ -56,9 +59,11 @@ export const FORMAS: Record<Lado, Partial<Record<Musculo, (string | Punto[])[]>>
     ],
   },
   espalda: {
-    espaldaAlta: [
-      // El trapecio, del cuello al medio de la espalda; arriba del omóplato; y el dorsal, como un ala.
+    // El trapecio, del cuello al medio de la espalda; los dorsales, arriba del omóplato y como un ala.
+    trapecio: [
       'M50 23.8 L50 58.6 C48.3 54.4 46.5 50.4 44.8 46.6 C42.6 42.6 40 39 36.8 36 C35.6 35 34.6 34.2 33.8 33.6 C37.2 32.6 40.8 31.2 43.6 29.6 C45.6 28.2 47.2 26 48 24 Z',
+    ],
+    dorsales: [
       'M34.2 37.6 C37.4 39 40.4 41.8 42.2 45.6 C40.2 46.6 37.2 46.2 34.6 44.4 C33.9 42.2 33.9 39.8 34.2 37.6 Z',
       'M32.6 45.2 C33.6 51 35 57 36.2 62.8 C37.4 67.8 38.6 72.6 40.2 76.8 C42.9 73.4 45.3 69.4 46.9 65.2 C45.7 60.8 44.1 56.3 42.5 52.3 C40.1 47.8 36.9 45.3 32.6 45.2 Z',
     ],
