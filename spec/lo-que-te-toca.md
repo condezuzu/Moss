@@ -10,6 +10,10 @@ Galería (versión 54): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 Apple aprobó la 1.0 (build 6). Pediste subir todo lo que va por aire y armar la 1.1 para revisión.
 
 Hecho:
+- **La sección de músculos rehecha para quien entra por primera vez (19/11, publicada en Moss):** Para hoy, el
+  cuerpo de frente o de espalda con su lista, qué hacer en cada franja, los kilos de la próxima vez y el reloj. Ascent
+  la está copiando. **Te toca:** mirarla en el iPhone y decir si se entiende; queda para más adelante preguntar si buscas
+  músculo o fuerza (cambia las repeticiones).
 - **La sección de músculos, igual en Moss y en Ascent (19/11):** publicada por aire en las dos builds de Moss
   (huellas fc0d415b y 13eb29e0, production y preview) y en las de Ascent. Migraciones 0016 (metas de fuerza y RIR)
   y 0017 (cuánto bajas y tu experiencia) aplicadas; la privacidad publicada al día. **Te toca:** cerrar y abrir Moss
