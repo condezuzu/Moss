@@ -29,7 +29,7 @@
 //   que lee: quién lo ve y quién lo escribe, vincular y volver a vincular, desvincular, que lo de
 //   Ascent llega como lo cuenta Ascent y nunca lo de un tercero, el peso de las dos apps, la rutina y
 //   los ajustes de Ascent (0013_ascent_rutina.sql), vincular desde Moss con un código de un uso
-//   (0014_codigo_de_vinculo.sql), y la app (src/lib/ascentRemoto.ts) vinculando por la función
+//   (0014_codigo_de_vinculo.sql), lo de Moss que lee Ascent (0015_moss_para_ascent.sql), y la app (src/lib/ascentRemoto.ts) vinculando por la función
 //   moss-vincular de verdad y pidiendo el código;
 // - y las dos cuentas (D29), con moss-vincular y moss-borrar-cuenta de verdad: vincular con el mismo
 //   correo y con correos distintos, borrar en Moss (solo de Moss, o la misma cuenta que Ascent),
@@ -1126,6 +1126,68 @@ comprobar(
   !(await hayCodigo(vencido)) && dos.map(enUnaPalabra).sort().join() === 'ok:tercero,usado' && (await vinculos()) === 'e1-e5-ascent',
   `código de vínculo: con dos a la vez, solo una lo usa (${dos.map(enUnaPalabra).join(', ')}); pedir otro borra los vencidos`,
 );
+await vincularConLaClave(MOSS, ASCENT, 'moss');
+// Lo de Moss que lee Ascent (0015_moss_para_ascent.sql): Moss sube el resumen de cada día solo con el vínculo, Ascent
+// lee el día, las semanas, el objetivo y el año de la cuenta de Moss del vínculo, nadie más, y al desvincular se borra.
+await como(MOSS, `insert into moss.perfiles (nacimiento, sexo, altura_cm, actividad, objetivo, ritmo, peso_meta) values (1990, 'm', 178, 'algo', 'bajar', 'recomendado', 75)
+  on conflict (usuario) do update set objetivo = 'bajar', ritmo = 'recomendado', peso_meta = 75, sin_deficit = false`);
+await como(MOSS, `insert into moss.metas (desde, kcal, proteina, carbohidratos, grasas, gasto, motivo, momento) values ('2026-11-02', 2200, 160, 230, 70, 2700, 'inicial', '2026-11-02T08:00:00Z')`);
+await como(MOSS, `insert into moss.pesos (fecha, kg, origen, momento) values ('2026-11-03', 80, 'manual', '2026-11-03T07:00:00Z') on conflict do nothing`);
+await como(MOSS, `insert into moss.noches (fecha, cara) values ('2026-11-04', 4)`);
+for (const [id, momento, comida, k, p, c, g, plan] of [
+  ['p1', '2026-11-04T08:00:00Z', 'desayuno', 400, 30, 50, 10, false], ['p2', '2026-11-04T08:00:00Z', 'desayuno', 100, 5, 10, 4, false],
+  ['p3', '2026-11-04T13:00:00Z', 'almuerzo', 800, 50, 90, 25, false], ['p4', '2026-11-04T20:00:00Z', 'cena', 700, 40, 60, 20, true],
+]) {
+  await como(MOSS, `insert into moss.registros (id, dia, comida, momento, fuente, nombre, kcal, proteina, carbohidratos, grasas, planificado) values ($1, '2026-11-04', $2, $3, 'rapida', 'X', $4, $5, $6, $7, $8)`,
+    [id, comida, momento, k, p, c, g, plan]);
+}
+const resumenDeHoy = { fecha: '2026-11-04', dormido: 412, necesidad: 480, deuda: 290, deuda_palabra: 'baja', energia: 'suficiente', meta: { kcal: 2200, proteina: 160, carbohidratos: 230, grasas: 70 } };
+const guardar = async (u, dias) => (await como(u, 'select moss.guardar_resumenes($1::jsonb) as r', [JSON.stringify(dias)])).rows[0].r;
+const hoyDe = async (u, fecha = '2026-11-04') => (await como(u, 'select moss.moss_hoy($1) as r', [fecha])).rows[0].r;
+comprobar(
+  await guardar(MOSS, [resumenDeHoy]) === true && await guardar(ASCENT, [resumenDeHoy]) === false && await guardar(SOLA, [resumenDeHoy]) === false
+    && await falla(MOSS, 'select * from moss.resumenes_para_ascent') && await falla(MOSS, `delete from moss.resumenes_para_ascent`)
+    && await falla('anon', `select moss.moss_hoy('2026-11-04')`) && await falla('anon', `select moss.guardar_resumenes('[]')`)
+    && await falla(MOSS, `select moss.guardar_resumenes('[{"fecha":"ayer"}]')`),
+  'Moss para Ascent: el resumen lo sube solo la cuenta de Moss con el vínculo, nadie lo lee directo y anon no llama nada',
+);
+// Un día que no es hoy llega sin energía ni deuda: quedan las de antes.
+await guardar(MOSS, [{ ...resumenDeHoy, energia: undefined, deuda: undefined, deuda_palabra: undefined, dormido: 420 }]);
+const dia = await hoyDe(ASCENT);
+comprobar(
+  dia.noche.dormido === 420 && dia.noche.cara === 4 && dia.noche.deuda === 290 && dia.noche.deuda_palabra === 'baja' && dia.energia === 'suficiente'
+    && JSON.stringify(dia.comida.total) === JSON.stringify({ kcal: 1300, grasas: 39, proteina: 85, carbohidratos: 150 })
+    && dia.comida.meta.kcal === 2200 && dia.comida.comidas.length === 2 && dia.comida.comidas[0].kcal === 500 && dia.comida.comidas[1].comida === 'almuerzo'
+    && dia.sin_deficit === false,
+  `Moss para Ascent: el día con la noche, la energía, lo comido sin lo planificado y cada comida con su hora (${JSON.stringify(dia.comida.total)})`,
+);
+const semanas = (await como(ASCENT, `select moss.moss_semanas('2026-11-04') as r`)).rows[0].r;
+const objetivo = (await como(ASCENT, 'select moss.moss_objetivo() as r')).rows[0].r;
+const anio = (await como(ASCENT, 'select moss.moss_anio(2026) as r')).rows[0].r;
+comprobar(
+  semanas[0].lunes === '2026-11-02' && semanas[0].dias_con_comida === 1 && semanas[0].balance === 1300 - 2700 && Number(semanas[0].proteina_g_kg) === 1.06
+    && semanas[0].noches === 1 && semanas[0].dormido === 420 && Number(semanas[0].peso) === 80
+    && objetivo.objetivo === 'bajar' && Number(objetivo.peso_meta) === 75 && anio.noches >= 1 && anio.dias_con_comida >= 1,
+  `Moss para Ascent: las semanas, el objetivo y el año (${JSON.stringify(semanas[0])})`,
+);
+await como(MOSS, `update moss.perfiles set sin_deficit = true`);
+comprobar(
+  (await hoyDe(ASCENT)).comida.meta === null && (await como(ASCENT, `select moss.moss_semanas('2026-11-04') as r`)).rows[0].r[0].balance === null,
+  'Moss para Ascent: sin déficit, ni la meta ni el balance',
+);
+await como(MOSS, `update moss.perfiles set sin_deficit = false`);
+comprobar(
+  await hoyDe(MOSS) === null && await hoyDe(TERCERO) === null && (await como(TERCERO, 'select moss.moss_objetivo() as r')).rows[0].r === null
+    && (await como(TERCERO, `select moss.moss_semanas('2026-11-04') as r`)).rows[0].r === null,
+  'Moss para Ascent: lo lee solo la cuenta de Ascent del vínculo; desde Moss o un tercero, null',
+);
+await como(ASCENT, 'select moss.desvincular()');
+comprobar(
+  (await db.query('select count(*)::int as n from moss.resumenes_para_ascent where usuario = $1', [MOSS])).rows[0].n === 0 && await hoyDe(ASCENT) === null,
+  'Moss para Ascent: al desvincular, el resumen se borra y Ascent ya no lee nada',
+);
+// Lo de esta prueba se va: lo que sigue cuenta los pesos y lo comido de esta cuenta.
+await db.query(`delete from moss.pesos where usuario = $1 and fecha = '2026-11-03'`, [MOSS]);
 await vincularConLaClave(MOSS, ASCENT, 'moss');
 
 // La app (src/lib/ascentRemoto.ts) y la función moss-vincular, contra esta base: Auth de mentira (cada

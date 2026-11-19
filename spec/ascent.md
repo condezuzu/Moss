@@ -319,9 +319,11 @@ todavía sin aplicar en la base real); las demás, todavía no.
 | `moss.crear_codigo_de_vinculo()` | `moss.codigos_de_vinculo` (escribe el sha256 del código nuevo) | Moss: vincular sin la sesión de Ascent en el llavero (ver «Con un código»; 0014, 18/11/2026, todavía sin aplicar) |
 | `moss.vincular_con_codigo(p_codigo)` | `moss.codigos_de_vinculo` y `public.profiles` (`username`); escribe `moss.vinculo` | Ascent: usar el código que le abre Moss |
 | `moss.recuperacion(fecha)` | sueño y comida de Moss, más entrenamiento de Ascent | las dos. **Pendiente** (18/11/2026): no se escribe hasta que Ascent la lea; repetiría en SQL la cuenta del titular (`titularDeHoy.ts`), y mientras solo la usa Moss, que la hace en el teléfono |
-| `moss.semanas_para_ascent(desde)` | por semana: sueño promedio, proteína promedio por día y balance por día | las dos: «Por qué no subís» |
-| `moss.objetivo()` | objetivo y ritmo de Moss | Ascent: qué espera de la fuerza |
-| `moss.anio(anio)` y `moss.ascent_anio(anio)` | totales del año de cada app | el resumen anual, en las dos |
+| `moss.guardar_resumenes(p_dias)` | lo que Moss calcula en el teléfono (el sueño de Salud, la necesidad, la deuda, la energía de hoy y la meta de cada día), solo con el vínculo, en `moss.resumenes_para_ascent`; al desvincular se borra (0015, 19/11/2026) | Moss, mientras está vinculada (`src/secciones/ascent/resumenParaAscent.ts`) |
+| `moss.moss_hoy(p_fecha)` | la noche (dormido, necesidad, cara, deuda y su palabra), la energía y lo comido: el total, la meta y cada comida con su hora | Ascent: su parte de Moss y «qué esperar» |
+| `moss.moss_semanas(p_desde)` | por semana de lunes a domingo: noches y dormido promedio, días con comida, proteína g/kg por día, balance por día y peso | Ascent: la semana y su rutina automática |
+| `moss.moss_objetivo()` | objetivo, ritmo, peso meta, peso y desde cuándo | Ascent: qué espera de la fuerza |
+| `moss.moss_anio(p_anio)` (y `moss.ascent_anio(anio)`, pendiente) | lo del año: días con comida, días completos, noches, dormido promedio y el peso del principio y de ahora | el resumen anual, en las dos |
 
 ### Lo que devuelven las escritas
 
