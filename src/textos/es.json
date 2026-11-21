@@ -2410,6 +2410,10 @@
       "listo": "Listo",
       "queda": "Queda en tu teléfono.",
       "lleno": "Hasta {n}: es una lista corta."
+    },
+    "esperaAparato": {
+      "estimada": "Tu noche de {aparato} todavía no llegó: llega cuando se sincroniza (en muchos anillos, al abrir su app). Mientras, esta es la estimada con tu teléfono.",
+      "sinEstimar": "Tu noche de {aparato} todavía no llegó: llega cuando se sincroniza (en muchos anillos, al abrir su app). El teléfono tampoco tiene lo suficiente para estimarla."
     }
   },
   "perfil": {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  aceptadaSinCambios, actividadDeLosPasos, actividadDelMovimiento, conNochesDeMoss, deLasSenales, despertarAnclado, estadoDelCargador, estimarNoche, habitualDe, instanteDe, MARGEN, MARGENES, margenParaDormirte, nocheDeMoss,
+  aceptadaSinCambios, actividadDeLosPasos, actividadDelMovimiento, aparatoQueFalta, conNochesDeMoss, deLasSenales, despertarAnclado, estadoDelCargador, estimarNoche, habitualDe, instanteDe, MARGEN, MARGENES, margenParaDormirte, nocheDeMoss,
   quePreguntar, sinLasRestas,
   type Actividad, type Estimacion, type Habitual, type Senal,
 } from './sinReloj';
@@ -560,6 +560,26 @@ describe('las noches de Moss junto a las de Salud', () => {
     expect(conNochesDeMoss(delAnillo, [propia('2026-10-22', 'confirmada')], UY)[0].fuente.id).toBe(anillo.id);
     // Donde Salud no tiene nada, la de Moss.
     expect(conNochesDeMoss([], [propia('2026-10-22', 'estimada')], UY).map((n) => n.clave)).toEqual(['2026-10-22']);
+  });
+
+  it('mientras la noche del anillo no llega, se sabe de cuál se espera; si ya llegó una de ese día o después, no se espera', () => {
+    const anillo: Fuente = { id: 'com.moyoung.darings', nombre: 'Da Rings', tipo: 'otra' };
+    const iphone: Fuente = { id: 'iphone', nombre: 'iPhone', tipo: 'telefono' };
+    const del = (f: Fuente, dia: string, aMano?: true) => armarNoches([{ etapa: 'dormido', desde: hora(`${dia} 00:00`), hasta: hora(`${dia} 07:00`), fuente: f.id, zona: UY, ...(aMano ? { aMano } : {}) }], [f]);
+    const hasta20 = [...del(anillo, '2026-10-19'), ...del(anillo, '2026-10-20')];
+    const conMoss = (salud: ReturnType<typeof armarNoches>) => conNochesDeMoss(salud, [propia('2026-10-22', 'estimada')], UY);
+    // Anoche (la del 22) no llegó: se espera la de Da Rings, también para la del 21.
+    expect(aparatoQueFalta(conMoss(hasta20), '2026-10-22')).toEqual(anillo);
+    expect(aparatoQueFalta(hasta20, '2026-10-21')).toEqual(anillo);
+    // Llegó la del 22: ya no se espera, ni la del 21, que no va a llegar.
+    const conLa22 = [...hasta20, ...del(anillo, '2026-10-22')];
+    expect(aparatoQueFalta(conLa22, '2026-10-22')).toBeNull();
+    expect(aparatoQueFalta(conLa22, '2026-10-21')).toBeNull();
+    // Sin noches del anillo en las dos semanas de antes, o solo del teléfono o anotadas a mano, no se espera nada.
+    expect(aparatoQueFalta(hasta20, '2026-11-03')).toEqual(anillo);
+    expect(aparatoQueFalta(hasta20, '2026-11-04')).toBeNull();
+    expect(aparatoQueFalta(del(iphone, '2026-10-20'), '2026-10-22')).toBeNull();
+    expect(aparatoQueFalta(del(anillo, '2026-10-20', true), '2026-10-22')).toBeNull();
   });
 
   it('cada hora en la zona de su momento: un cambio de hora no corre las noches de antes ni la del cambio', () => {

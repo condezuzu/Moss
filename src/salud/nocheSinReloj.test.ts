@@ -5,7 +5,7 @@ import { repositorioEnMemoria } from '../almacen/repositorio';
 import type { Constelacion } from '../datos/catalogo';
 import datos from '../datos/constelaciones.json';
 import type { Movimiento } from '../dominio/sinReloj';
-import type { NochePropia } from '../dominio/sueno';
+import { armarNoches, type Fuente, type NochePropia } from '../dominio/sueno';
 import { estimarAnoche, nocheDeAhora, rehacerLasNoches } from './nocheSinReloj';
 
 // Sin los Atajos (no hay módulo en los tests): la noche sale de cuándo se usó Moss y del movimiento de mentira.
@@ -40,6 +40,32 @@ describe('la noche de anoche, sin reloj', () => {
     // Todo el rato quieto menos el margen de 15 minutos: de 23:25 a 4:50.
     expect([hora?.dormirse, hora?.despertar]).toEqual([iso(21, 23, 25), iso(22, 4, 50)]);
     expect(a.estado().noches.has('2026-10-21')).toBe(false);
+  });
+
+  it('con un anillo, estima igual desde temprano, sin esperar a las 14 (lo pediste el 21/11/2026); si ya llegó la del anillo, no estima', async () => {
+    mockMovimiento = [];
+    const instante = el(22, 7, 30);
+    const anillo: Fuente = { id: 'com.moyoung.darings', nombre: 'Da Rings', tipo: 'otra' };
+    const zona = -instante.getTimezoneOffset();
+    const salud = (dias: number[]) => ({
+      dia: '2026-10-22', valores: {}, soloEnCama: new Map(), fuentes: [anillo], aparatos: [], pasosRecientes: [],
+      noches: armarNoches(dias.map((d) => ({ etapa: 'dormido' as const, desde: el(d, 0).getTime(), hasta: el(d, 7).getTime(), fuente: anillo.id, zona })), [anillo]),
+      lecturas: { frecuencia: [], variabilidad: [], respiracion: [], reposo: new Map() }, pesos: new Map(),
+    });
+    const conAnillo = async (dias: number[]) => {
+      const a = almacenCon(() => instante);
+      await a.iniciar();
+      a.ponerSalud(salud(dias));
+      a.anotarUso('abrir', el(21, 23, 0).getTime());
+      a.anotarUso('cerrar', el(21, 23, 10).getTime());
+      a.anotarUso('abrir', el(22, 7, 20).getTime());
+      await estimarAnoche(a, instante);
+      return a.estado().noches.get('2026-10-22')?.hora;
+    };
+    // Da Rings todavía no mandó la de anoche: a las 7:30 ya hay una, la estimada.
+    expect((await conAnillo([20, 21]))?.origen).toBe('estimada');
+    // Ya la mandó: la noche es la suya.
+    expect(await conAnillo([20, 21, 22])).toBeUndefined();
   });
 });
 

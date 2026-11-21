@@ -3,13 +3,18 @@
 Todo lo que no puedo hacer yo: aprobar, decidir, entrar con tus cuentas, tocar el iPhone y lo de Ascent.
 Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar hecho: no lo puedo ver desde acá.
 
-Galería (versión 54): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
+Galería (versión 55): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 
 ## 0. El lanzamiento y la 1.1 (desde el 14/11/2026): dónde quedé
 
 Apple aprobó la 1.0 (build 6). Pediste subir todo lo que va por aire y armar la 1.1 para revisión.
 
 Hecho:
+- **La noche de tu anillo (21/11, para aprobar en la galería 55):** siempre hay una noche. Con un reloj o un anillo, Moss
+  ya no espera hasta las 14 sin nada: estima con el teléfono desde temprano y, cuando la del aparato llega a Salud (con
+  Da Rings, al sincronizar su app), se queda con esa. La lógica está en mejoras-1.1, sin publicar. **Te toca:** mirar
+  «La noche de tu anillo» en la galería; con tu sí se pasa a la app la línea que dice de cuál se espera, sin la pregunta
+  de la hora, y sale por aire.
 - **La sección de músculos rehecha para quien entra por primera vez (19/11, publicada en Moss):** Para hoy, el
   cuerpo de frente o de espalda con su lista, qué hacer en cada franja, los kilos de la próxima vez y el reloj.
   **Te toca:** mirarla en el iPhone y decir si se entiende; queda para más adelante preguntar si buscas
@@ -102,8 +107,8 @@ Hecho:
 - La 0015 (19/11, lo aprobaste): Ascent lee de Moss el día, las semanas, el objetivo y el año. Moss sube el sueño, la deuda, la energía y las metas solo vinculada; al desvincular se borran. La privacidad publicada lo dice (`condezuzu/moss-app`, 19/11). Aplicada y por aire en las dos builds (`visual-ota` 808c654).
 
 Falta (vos):
-1. Business: la cuenta del banco y los formularios de impuestos (W-8BEN; lo de Uruguay con tu contador), hasta que
-   el Paid Apps Agreement quede *Active*; y el Small Business Program (15 % en vez de 30 %).
+1. Business: hecho el 21/11 (el Paid Apps Agreement, la cuenta del Itaú, el W-8BEN y el certificado de residencia
+   extranjera, todo *Active*). Falta, si no lo hiciste, el Small Business Program (15 % en vez de 30 %). Confirmá.
 2. Probar la compra con una cuenta de sandbox en la build `telefono` (hace falta una build `telefono` nueva de la 1.1:
    `npx eas-cli@latest build --profile telefono --platform ios`; la de ahora es de la 1.0) (spec/suscripcion.md, 7).
 3. En la página de la 1.1: *In-App Purchases and Subscriptions* › sumar los dos productos, y *Add for Review*.
@@ -308,8 +313,7 @@ revisión) en vez de sacarla: volver a mandarla la pone al final de la fila.
   declararte comerciante, con tu dirección, teléfono y correo a la vista en la ficha de la UE.
 - **El dispositivo médico regulado** (App Information › App Store Regulations & Permits): está declarado (sin eso
   no se puede mandar), pero la API no lo muestra. Mirá que diga «No» en la UE, el Reino Unido y EE. UU. Confirmá.
-- **El Paid Apps Agreement**, en Business › Agreements, hasta que quede *Active* (solo el Account Holder).
-- **La cuenta donde cobrar** y **los formularios de impuestos** (el W-8BEN; lo de Uruguay, con tu contador).
+- **El Paid Apps Agreement**, **la cuenta donde cobrar** y **los formularios de impuestos**: hechos, *Active* el 21/11.
 - **El Small Business Program**, antes de la primera venta: 15 % en vez de 30 %.
 - **El grupo «Moss» y sus dos productos** (`uy.moss.suscripcion.anual` a 39,99 y `.mensual` a 9,99, Family Sharing apagado, la prueba de 7 días). Los cargás vos o me pedís que los cargue por la API.
 - **Los precios locales** en *View all Subscription pricing*.

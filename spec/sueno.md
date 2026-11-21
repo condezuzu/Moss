@@ -135,7 +135,9 @@ cual con cuatro semanas de mentira.
    - no es un cero, no se rellena y no entra en los promedios ni en la deuda;
    - si solo está el «en cama» del iPhone, se muestra aparte y no cuenta para nada;
    - los hábitos de sueño de ese día quedan pendientes y se pueden marcar a mano;
-   - hasta las 14, la de anoche dice «esperando al reloj» (el reloj escribe al despertarte).
+   - con un reloj o un anillo, mientras su noche no llega a Salud, se muestra la estimada con el teléfono y de cuál
+     aparato se espera (`aparatoQueFalta`); al llegar, gana la del aparato. Lo pediste el 21/11/2026 («siempre debería
+     tener información»): Da Rings la escribe recién al sincronizar su app, y antes Moss esperaba hasta las 14 sin nada.
 7. **La noche cortada** se pregunta: menos de la mitad de lo que solés dormir y
    despertarte más de dos horas antes que siempre. ¿Se quedó sin batería? Se
    puede dejar fuera; no se descarta sola.

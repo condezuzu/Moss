@@ -2410,6 +2410,10 @@
       "listo": "Done",
       "queda": "It stays on your phone.",
       "lleno": "Up to {n}: it is a short list."
+    },
+    "esperaAparato": {
+      "estimada": "Your night from {aparato} hasn't arrived yet: it comes when it syncs (with many rings, when you open its app). Until then, this is the estimate from your phone.",
+      "sinEstimar": "Your night from {aparato} hasn't arrived yet: it comes when it syncs (with many rings, when you open its app). Your phone doesn't have enough to estimate it either."
     }
   },
   "perfil": {

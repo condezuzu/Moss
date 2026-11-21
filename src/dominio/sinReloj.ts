@@ -510,6 +510,23 @@ export function conNochesDeMoss(noches: Noche[], propias: NochePropia[], zona: Z
   return [...porClave.values()].sort((a, b) => (a.clave < b.clave ? -1 : 1));
 }
 
+/**
+ * El reloj o el anillo cuya noche de `clave` todavía puede llegar, o null. Muchos la escriben en Salud recién cuando
+ * se sincroniza su app (Da Rings, al abrirla): mientras, Moss muestra la estimada con el teléfono, y al llegar la
+ * reemplaza (conNochesDeMoss). Es el que escribió alguna de las dos semanas anteriores; si ya llegó una noche suya de
+ * ese día o de después, ya se sincronizó y esa no va a llegar.
+ */
+export function aparatoQueFalta(noches: readonly Noche[], clave: ClaveDia): Fuente | null {
+  const desde = sumarDias(clave, -14);
+  let ultima: Noche | null = null;
+  for (const n of noches) {
+    if (n.moss || n.aMano || (n.fuente.tipo !== 'reloj' && n.fuente.tipo !== 'otra')) continue;
+    if (n.clave >= clave) return null;
+    if (n.clave >= desde && (!ultima || n.clave > ultima.clave)) ultima = n;
+  }
+  return ultima?.fuente ?? null;
+}
+
 /** Un cambio del historial de movimiento del iPhone (CMMotionActivity): desde cuándo y qué, con su confianza (0 a 2). */
 export type Movimiento = { en: number; quieto: boolean; caminando: boolean; corriendo: boolean; auto: boolean; bici: boolean; confianza: 0 | 1 | 2 };
 
