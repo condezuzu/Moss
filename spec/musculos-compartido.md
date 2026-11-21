@@ -30,6 +30,11 @@ fitness ni de la app, la leyó dos veces y marcó lo que no se entendía. Lo que
 - **Al tocar un músculo**: lo demás se pone gris; el pecho y el tríceps se ven de cerca, partidos en sus dos partes; los
   ejercicios en una línea con los kilos de la próxima vez (`pesoSiguiente`). Un ejercicio de hoy con un músculo que
   se recupera no dice «sube» (`proximaSesion`, razón `fatiga`).
+- **La misma regla, también al entrenar en Ascent (21/11/2026, lo eligió el dueño):** la pantalla de entrenamiento de
+  Ascent usa `proximaSesion` y `pesoSiguiente` para avisar «↑ Puedes subir a 62,5 kg» (`nucleo/semanaMuscular.ts`,
+  `subirHoy`, en su `main` f951a8a), con las repeticiones de la rutina como tope y la noche corta de `moss.moss_hoy`,
+  que ahora lee al empezar cada entrenamiento (sin vínculo, devuelve null). Sus reglas de antes se borraron. **Cambiar
+  esas dos funciones cambia también ese aviso**, en la próxima copia de Ascent.
 - **El reloj**: un círculo que se llena hasta que el músculo está listo, «estimado».
 - **Tu rutina** subió a su propio bloque; **Por qué** aparece solo con algo estancado; el tutorial explica serie y
   repetición; «Cómo se lee» al lado del «!».
