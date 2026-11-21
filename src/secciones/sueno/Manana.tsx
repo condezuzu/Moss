@@ -10,7 +10,7 @@ import Animated, { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated
 
 import { elAlmacen } from '@/almacen';
 import type { ClaveDia } from '@/dominio/fechas';
-import { deLasSenales, despertarAnclado, habitualDe, instanteDe, quePreguntar } from '@/dominio/sinReloj';
+import { aparatoQueFalta, deLasSenales, despertarAnclado, habitualDe, instanteDe, quePreguntar } from '@/dominio/sinReloj';
 import type { Cara, Noche, NochePropia, OrigenDeNoche } from '@/dominio/sueno';
 import { useSenales } from '@/salud/anclas';
 import { DESDE_LAS } from '@/salud/nocheSinReloj';
@@ -146,7 +146,8 @@ export function LaManana({ hoy, noche, propia, noches, ancho, desde }: {
   // Antes de las 4 la noche de hoy todavía no pasó: lo que se conteste sería de la que viene.
   const oculta = ocultas.has(hoy) || new Date().getHours() < DESDE_LAS;
   const cara = propia?.cara ?? null;
-  const modo = !oculta && noche?.moss?.origen === 'estimada' ? quePreguntar(hoy, noche.moss.confianza, desde) : null;
+  // Con un reloj o un anillo cuya noche todavía no llegó, no se pregunta la hora: la suya la va a corregir sola.
+  const modo = !oculta && noche?.moss?.origen === 'estimada' && !aparatoQueFalta(noches, hoy) ? quePreguntar(hoy, noche.moss.confianza, desde) : null;
   // Con la alarma parada (o «Me desperté»), la hora de despertar ya se sabe: se pregunta solo la de dormirte.
   const senales = useSenales(15);
   const soloDormirse = !!noche && !!senales?.length

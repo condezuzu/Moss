@@ -20,6 +20,7 @@ import { sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { periodoDeMelatonina, seVeElPeriodo } from '@/dominio/melatonina';
 import { edadDe } from '@/dominio/metas';
 import { segunElDeporte, textoDelDeporte } from '@/dominio/segunElDeporte';
+import { aparatoQueFalta } from '@/dominio/sinReloj';
 import { deudaDeSueno, pocoSuenoSostenido, ultimasNoches, type Noche } from '@/dominio/sueno';
 import { pedirEntrenamientos, saludPedida } from '@/salud/salud';
 import { plural, t, type Clave } from '@/textos';
@@ -311,15 +312,16 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
             </CartaDeSueno>
           </Aparece>
         )}
-        {/* Elegir otra noche no cambia todo de golpe: lo de esa noche entra con un fundido. */}
+        {/* Elegir otra noche no cambia todo de golpe: lo de esa noche entra con un fundido. También cuando llega la del
+            reloj o el anillo y reemplaza a la estimada. */}
         {conNoches && (
-          <Aparece key={`noche-${clave}`}>
+          <Aparece key={`noche-${clave}-${noche ? noche.fuente.id : ''}`}>
             {noche?.moss ? (
-              <LaNocheDeMoss n={noche} hoy={e.hoy} propia={e.noches.get(noche.clave)} ancho={interior} lista={ultimasNoches(s.noches, clave, DIAS)} animar={animar} />
+              <LaNocheDeMoss n={noche} hoy={e.hoy} propia={e.noches.get(noche.clave)} ancho={interior} lista={ultimasNoches(s.noches, clave, DIAS)} animar={animar} aparato={aparatoQueFalta(reales, clave)} />
             ) : noche ? (
               <LaNoche n={noche} hoy={e.hoy} ancho={interior} anteriores={anterioresA(noche.clave)} lista={ultimasNoches(s.noches, clave, DIAS)} animar={animar} />
             ) : (
-              <SinNoche clave={clave} hoy={e.hoy} cama={s.soloEnCama.get(clave)} ancho={interior} />
+              <SinNoche clave={clave} hoy={e.hoy} cama={s.soloEnCama.get(clave)} ancho={interior} aparato={aparatoQueFalta(reales, clave)} />
             )}
             {noche?.moss && <ElMovimiento />}
           </Aparece>

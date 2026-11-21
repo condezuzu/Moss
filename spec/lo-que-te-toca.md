@@ -10,11 +10,11 @@ Galería (versión 55): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 Apple aprobó la 1.0 (build 6). Pediste subir todo lo que va por aire y armar la 1.1 para revisión.
 
 Hecho:
-- **La noche de tu anillo (21/11, para aprobar en la galería 55):** siempre hay una noche. Con un reloj o un anillo, Moss
-  ya no espera hasta las 14 sin nada: estima con el teléfono desde temprano y, cuando la del aparato llega a Salud (con
-  Da Rings, al sincronizar su app), se queda con esa. La lógica está en mejoras-1.1, sin publicar. **Te toca:** mirar
-  «La noche de tu anillo» en la galería; con tu sí se pasa a la app la línea que dice de cuál se espera, sin la pregunta
-  de la hora, y sale por aire.
+- **La noche de tu anillo (21/11, aprobada en la galería 55 y por aire en las dos builds):** siempre hay una noche. Con
+  un reloj o un anillo, Moss ya no espera hasta las 14 sin nada: estima con el teléfono desde temprano, dice de cuál
+  aparato espera la suya (sin la pregunta de la hora) y, cuando la del aparato llega a Salud (con Da Rings, al
+  sincronizar su app), se queda con esa. **Te toca:** mañana a la mañana, sin abrir Da Rings, mirar Sueño; después abrir
+  Da Rings, volver a Moss y ver que la noche cambia a la del anillo.
 - **La sección de músculos rehecha para quien entra por primera vez (19/11, publicada en Moss):** Para hoy, el
   cuerpo de frente o de espalda con su lista, qué hacer en cada franja, los kilos de la próxima vez y el reloj.
   **Te toca:** mirarla en el iPhone y decir si se entiende; queda para más adelante preguntar si buscas
