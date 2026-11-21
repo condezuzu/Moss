@@ -13,7 +13,8 @@ Hecho:
 - **La sección de músculos rehecha para quien entra por primera vez (19/11, publicada en Moss):** Para hoy, el
   cuerpo de frente o de espalda con su lista, qué hacer en cada franja, los kilos de la próxima vez y el reloj. Ascent
   la está copiando. **Te toca:** mirarla en el iPhone y decir si se entiende; queda para más adelante preguntar si buscas
-  músculo o fuerza (cambia las repeticiones).
+  músculo o fuerza (cambia las repeticiones). El 20/11 salió por aire en las dos builds el texto de los carbohidratos,
+  el mismo que usa Ascent. La copia de Ascent espera tu sí en su chat.
 - **La sección de músculos, igual en Moss y en Ascent (19/11):** publicada por aire en las dos builds de Moss
   (huellas fc0d415b y 13eb29e0, production y preview) y en las de Ascent. Migraciones 0016 (metas de fuerza y RIR)
   y 0017 (cuánto bajas y tu experiencia) aplicadas; la privacidad publicada al día. **Te toca:** cerrar y abrir Moss
