@@ -854,6 +854,25 @@ const pasos = {
     await pagina.evaluate(() => window.__aparato('reloj'));
     await sueno('noche', 0);
   },
+  // La noche de tu anillo (21/11, para aprobar): todavía no llegó, con la estimada o sin lo suficiente para estimarla,
+  // y ya llegó; la estimada también en inglés.
+  async anillo() {
+    await pagina.evaluate(() => window.__aparato('reloj'));
+    await pestana(3);
+    const ver = async (modo, nombre) => {
+      await sueno('anillo', modo);
+      await sueno('bajar', '.sn-heroe');
+      await pagina.waitForTimeout(900);
+      await foto(nombre);
+    };
+    await ver('estimada', 'anillo-estimada');
+    await ver('sinEstimar', 'anillo-sin-estimar');
+    await ver(null, 'anillo-llego');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await ver('estimada', 'anillo-estimada-en');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await sueno('anillo', null);
+  },
   // Sueño sin noches: la invitación, el ejemplo y los puntos de cada tarjeta; con una y dos noches, lo
   // que ya hay y lo que falta; la deuda ya pagada, y lo mismo en inglés.
   async 'sueno-vacio'() {

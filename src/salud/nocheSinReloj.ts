@@ -1,7 +1,9 @@
 // Sin reloj, cada mañana (spec/sueno.md, «Sin reloj»): arma la noche de anoche con lo que guardó el
 // teléfono (los pasos de Salud, el movimiento, cuándo usaste Moss y lo que avisaron los Atajos y el
 // despertador) y la guarda como estimada, con tu margen para dormirte (src/dominio/sinReloj.ts). No pisa
-// lo que confirmaste ni la noche de un reloj o un anillo, y nunca escribe en Salud.
+// lo que confirmaste ni la noche de un reloj o un anillo, y nunca escribe en Salud. Con un reloj o un anillo
+// también, desde temprano (lo pediste el 21/11/2026: siempre hay una noche): muchos escriben la suya recién al
+// sincronizar su app, y cuando llega, gana (conNochesDeMoss).
 
 import { useSyncExternalStore } from 'react';
 
@@ -16,9 +18,8 @@ import { leerMovimiento } from '../../modules/movimiento';
 import { leerSenales } from './anclas';
 import type { LoDeSalud } from './convertir';
 
-/** Desde las 4 hay noche para estimar; con un reloj o un anillo, se espera su noche hasta las 14. */
+/** Desde las 4 hay noche para estimar. */
 export const DESDE_LAS = 4;
-const ESPERAR_AL_RELOJ_HASTA = 14;
 /**
  * iOS guarda siete días del movimiento del teléfono: las noches de los últimos seis días todavía tienen entera su
  * tarde anterior, y se pueden estimar de nuevo con sus señales.
@@ -80,8 +81,6 @@ export async function estimarAnoche(a: Almacen, ahora = new Date()): Promise<voi
   const clave = nocheDeAhora(ahora);
   const deSalud = e.salud?.noches ?? [];
   if (deSalud.some((n) => n.clave === clave)) return;
-  const conAparato = deSalud.some((n) => n.clave >= sumarDias(clave, -14) && (n.fuente.tipo === 'reloj' || n.fuente.tipo === 'otra'));
-  if (conAparato && ahora.getHours() < ESPERAR_AL_RELOJ_HASTA) return;
   const antes = e.noches.get(clave);
   if (antes?.hora && antes.hora.origen !== 'estimada') return;
 

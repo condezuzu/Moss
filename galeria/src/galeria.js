@@ -1159,6 +1159,10 @@
     // El sueño rehecho, tanda 2 (17/11, para aprobar): la deuda con su palabra y tu periodo de melatonina, la hoja
     // «¿Qué es?», solo con el teléfono, los avisos reescritos, la nota de lo pendiente, su lista en Inicio y la guía
     // para conectar un reloj o un anillo.
+    // La noche de tu anillo (21/11, para aprobar): todavía no llegó (con la estimada o sin ella) y ya llegó.
+    anilloEstimada: () => { cerrarHojas(); ponerAparato(false); pestanas.ir(3); sueno.ponerEstado('datos'); sueno.esperarAnillo('estimada'); },
+    anilloSinEstimar: () => { cerrarHojas(); ponerAparato(false); pestanas.ir(3); sueno.ponerEstado('datos'); sueno.esperarAnillo('sinEstimar'); },
+    anilloLlego: () => { cerrarHojas(); ponerAparato(false); pestanas.ir(3); sueno.ponerEstado('datos'); sueno.esperarAnillo(null); },
     melatonina: () => { cerrarHojas(); ponerAparato(false); pestanas.ir(3); sueno.ponerEstado('datos'); sueno.verNoche(0); },
     melatoninaHoja: () => { accionesSeccion.melatonina(); setTimeout(() => sueno.periodo('hoja'), 420); },
     melatoninaTelefono: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.ponerEstado('datos'); sueno.verNoche(0); },
@@ -1565,6 +1569,7 @@
       porque: () => sueno.porque(arg),
       cargador: () => sueno.cargador(arg),
       estado: () => sueno.ponerEstado(arg),
+      anillo: () => sueno.esperarAnillo(arg),
     };
     pasos[accion]();
   };

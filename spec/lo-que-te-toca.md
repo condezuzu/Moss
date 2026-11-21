@@ -3,13 +3,29 @@
 Todo lo que no puedo hacer yo: aprobar, decidir, entrar con tus cuentas, tocar el iPhone y lo de Ascent.
 Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar hecho: no lo puedo ver desde acá.
 
-Galería (versión 48): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
+Galería (versión 55): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 
 ## 0. El lanzamiento y la 1.1 (desde el 14/11/2026): dónde quedé
 
 Apple aprobó la 1.0 (build 6). Pediste subir todo lo que va por aire y armar la 1.1 para revisión.
 
 Hecho:
+- **La noche de tu anillo (21/11, para aprobar en la galería 55):** siempre hay una noche. Con un reloj o un anillo, Moss
+  ya no espera hasta las 14 sin nada: estima con el teléfono desde temprano y, cuando la del aparato llega a Salud (con
+  Da Rings, al sincronizar su app), se queda con esa. La lógica está en mejoras-1.1, sin publicar. **Te toca:** mirar
+  «La noche de tu anillo» en la galería; con tu sí se pasa a la app la línea que dice de cuál se espera, sin la pregunta
+  de la hora, y sale por aire.
+- **La sección de músculos rehecha para quien entra por primera vez (19/11, publicada en Moss):** Para hoy, el
+  cuerpo de frente o de espalda con su lista, qué hacer en cada franja, los kilos de la próxima vez y el reloj.
+  **Te toca:** mirarla en el iPhone y decir si se entiende; queda para más adelante preguntar si buscas
+  músculo o fuerza (cambia las repeticiones). El 20/11 salió por aire en las dos builds el texto de los carbohidratos,
+  el mismo que usa Ascent. Ascent publicó su copia el 20/11, con tu sí en su chat (por aire en sus builds 7 y 10).
+  Lo único distinto: Ascent no muestra la hora de acostarte; para eso hace falta una migración de Moss y tu sí.
+- **La sección de músculos, igual en Moss y en Ascent (19/11):** publicada por aire en las dos builds de Moss
+  (huellas fc0d415b y 13eb29e0, production y preview) y en las de Ascent. Migraciones 0016 (metas de fuerza y RIR)
+  y 0017 (cuánto bajas y tu experiencia) aplicadas; la privacidad publicada al día. **Te toca:** cerrar y abrir Moss
+  vinculada dos veces (para que tome la OTA y suba el resumen), prender «Registrar RIR» en los Ajustes de Ascent si
+  quieres que «sube el peso» use las repeticiones de sobra, y mirarla en el iPhone: no se probó en uno de verdad.
 - Migraciones 0010, 0011 y 0012 aplicadas en la base real (14/11); los permisos de las funciones nuevas, revisados
   en solo lectura. La prueba de borrado en producción (`herramientas/probar-borrado-en-produccion.sql`) no se
   corrió: escribe y deshace, y el CLI pide tu sí con `--yes`.
@@ -17,14 +33,87 @@ Hecho:
   La suscripción sigue apagada (`EXPO_PUBLIC_PREMIUM_SALE` no está en EAS) y Ascent también.
 - La privacidad publicada (`condezuzu/moss-app`, 2c4980f) ya tiene el párrafo de la comunidad.
 
-Falta, en este orden (lo que dice «vos» espera por ti):
-1. Vos: entrar a Apple en una pestaña de Terminal (`node C:\Users\agusc\asc3\entrar.cjs`: contraseña y código).
-   La sesión que deja EAS venció el 14/11.
-2. Yo, con esa sesión: App Privacy, «Customer Support» pasa a vinculado; crear el grupo «Moss» y los dos
-   productos (spec/suscripcion.md); la versión 1.1 en App Store Connect con su ficha y las notas.
-3. Yo: la 1.1 en el código (versión, widgets nuevos, lo nativo de los detalles) y la build `store`
-   (la primera con la extensión pide entrar a Apple: vos).
-4. Vos: «Release This Version» de la 1.0 cuando la pruebes en tu iPhone con la OTA.
+- La 1.1 en el código (4d3a85e): versión 1.1.0, los widgets nuevos, `mailto` y `x-apple-health`, `expo-asset` y los
+  parches de Expo (expo-doctor 20 de 20). Cambia la huella: lo que vaya por aire a la build 6 sale de la rama
+  `ota-build6` (b6eedba). Build de simulador para probar lo nativo: https://expo.dev/accounts/condeag/projects/moss/builds/88c13371-bd59-4fb0-838a-c0a456726ba2
+
+- App Privacy: «Customer Support» vinculado y publicado (14/11).
+- La suscripción en App Store Connect: grupo «Moss» (22579299), `uy.moss.suscripcion.anual` (6834829982) y
+  `.mensual` (6834829839), sin Family Sharing, textos en en-US, es-MX y es-ES, precio en los 174 países de la app
+  (los equivalentes de Apple a 39,99 y 9,99 USD) y la prueba gratis de una semana en cada país. Scripts en
+  `C:Usersaguscasc3` (`suscripcion-a.cjs` y `suscripcion-b.cjs`, que se pueden volver a correr). Falta la captura
+  de la pantalla de pago para cada producto (Review Information).
+- El corte de la suscripción: `EXPO_PUBLIC_PREMIUM_SALE=2026-11-14` en EAS (production y preview): las cuentas
+  creadas antes del 14/11 quedan gratis. Se cambia por OTA a la 1.1. Una OTA a la build 6 con esa variable no
+  muestra la pantalla de pago (no tiene StoreKit) y Moss sigue abierta.
+- La build de simulador de la 1.1 compiló bien. La build `store` 1.1.0 (7) está subida a App Store Connect (14/11).
+- La versión 1.1.0 en App Store Connect: novedades en los tres idiomas, la descripción y el texto promocional de pago
+  (spec/revision.md «d»), las notas para quien revisa de «f» sin nombrar Ascent y las seis capturas de tú
+  (capturas/tienda/1320x2868) en es-MX, es-ES y en-US. Scripts: `version-11.cjs`, `ficha-11.cjs` y `capturas-11.cjs`.
+
+- La build 7 asignada a la versión 1.1, y la captura de la pantalla de pago (la de la galería, en inglés, a
+  1320×2868) en los dos productos (`revision-11.cjs`). Los productos siguen en *Missing Metadata* al 14/11 aunque
+  tienen textos, precios, prueba, países y captura: o Apple recalcula más tarde o espera el Paid Apps Agreement.
+  Mirá qué dice la página de cada producto.
+
+- Lo visual de la galería, por aire a la build 6 (16/11, rama `visual-ota`, juntada con `mejoras-1.1`): Inicio, Progreso,
+  Sueño, el «+», el cuestionario con Cuidados y «Tus respuestas», Perfil, la foto de la comida y los avisos que siguen
+  tu despertar (aprobados en la galería 49). Detalle y lo que quedó afuera en spec/ota-visual.md. Lo que vaya por aire a la
+  build 6 sale de `visual-ota`; la build 7 (1.1) no lo tiene adentro: le llega por OTA de `mejoras-1.1` cuando salga.
+
+- El sueño, rehecho (17/11, lo pediste porque Moss te daba 16 h 30 de deuda y Rise 4 h): la tanda 1 está publicada por
+  aire en la build 6 (`visual-ota`, 5f3958f) y en la build 7 (`mejoras-1.1`, huella 13eb29e0): la noche sin reloj con un solo
+  margen de 15 min, el final de la noche, las noches largas, la deuda con pesos como los de Rise, las últimas cuatro semanas
+  rehechas, la tarjeta con el número y Baja / Media / Alta, la necesidad editable, y los textos en español neutro y sin
+  «a la cama». La investigación está en spec/estudio (rise.md, deuda-y-melatonina.md, auditoria-del-sueno.md).
+- La tanda 2 del sueño, aprobada en la galería 50 y publicada por aire en las dos builds (17/11; `visual-ota` cc423b4): tu
+  periodo de melatonina en Sueño con «¿Qué es?», los avisos con el título que dice qué hacer y una sola cuenta de la
+  noche, «Lo que hay que hacer hoy» (la nota, el aviso de la mañana y la lista en Inicio), la guía para conectar relojes
+  y anillos, y el máximo de avisos que sube solo con los extras. Solo en el iPhone se puede probar: los botones del
+  aviso, que el aviso de la noche abra la nota con Moss cerrada y que la lista llegue sin abrir Moss.
+- Para comprobar el sueño: pasame de Rise la hora de dormirte y despertarte de 3 o 4 noches y tu necesidad, y lo comparo.
+  Desde la tanda 3, Sueño › Deuda › «Más» muestra la deuda noche por noche: con eso se compara directo.
+- La tanda 3 (17/11, a la noche; lo pediste porque veías la app «vieja»): todo lo que faltaba y no pide build, por aire a
+  las dos builds (`visual-ota` 3fe40d4, `mejoras-1.1` bc263a3). Las actualizaciones ahora se buscan al abrir y al volver
+  (`src/lib/actualizaciones.ts`); la primera vez hay que cerrar y abrir Moss dos veces. Qué entró, qué no y por qué:
+  spec/ota-visual.md, «Tanda 3». Para decidir:
+  - Elegir un ritmo o una fecha en Progreso cambia la meta desde hoy (con topes). ¿Así, o solo guardarlo?
+  - Las lunitas de la semana en Comida van con el aro grueso de la galería (parece un accidente de su CSS).
+  - «Copiar el día» sigue en Comida (la galería lo hace desde mantener apretado).
+  - Los márgenes de toda la app (20 a los lados y el título 16 pt más abajo que la galería) y el peso sin decimal fijo
+    fuera de Progreso («75 kg» y no «75,0 kg»).
+  - Separar «avisarme a esa hora» de «mis horas de comer»: cinco preguntas en spec/ota-visual.md.
+- La tanda 4 (18/11): publicada en las dos builds (`visual-ota` 9da8f89, `mejoras-1.1` 64508a1) y la galería 53: la noche en dos
+  tramos, el periodo desde las 19, los entrenamientos de Salud, los avisos como sugerencias (el café según el periodo),
+  decir varias comidas, 11 cadenas nuevas, las figuras de la grasa, «Cuando llegues» con cinco opciones y Moss que lo
+  aplica solo al llegar. Para decidir:
+  - Ascent: PRENDIDA por aire el 18/11 en las dos builds (`visual-ota` 78da627, `mejoras-1.1` f348af5), con la sección de abajo de
+    Hábitos; la nueva, arriba de Progreso, sigue para aprobar. La privacidad y los términos publicados ya nombran a Ascent
+    (18/11, `condezuzu/moss-app` 7a8d1c2; sin la suscripción). App Privacy, revisado el 18/11 (`asc3/privacidad-leer.cjs`):
+    ya cubre lo de Ascent (Fitness, Health, User ID, Name y Email, vinculados y para la app) y no cambia.
+- La tanda 5 (18/11, tarde; aprobaste el plan): publicada en las dos builds (`visual-ota` 70f191c, `mejoras-1.1` 362e07f) y la
+  galería 54. Qué entró: spec/ota-visual.md, «Tanda 5». Decidido: el café sube el máximo uno; una sola lista de horas de comer
+  (responde las cinco preguntas de la tanda 3); la base en España; las lunitas, «Copiar el día», el peso y los márgenes; la
+  calidad del sueño queda como está (ya es el criterio de la National Sleep Foundation, Ohayon 2017); el ritmo o la fecha
+  siguen moviendo la meta. Para decidir:
+  - Ascent arriba de Progreso: APROBADA el 18/11 y publicada por aire en las dos builds (`visual-ota` 7f72585). Probala en el
+    iPhone (el gesto, el fondo, vinculada). La rutina, el umbral de estancamiento y la racha para el rango llegan desde el
+    18/11: migración 0013 (`moss.ascent_rutina`, `moss.ascent_ajustes`) aplicada con tu sí y publicada en las dos builds
+    (`visual-ota` 06c4b94). Queda `moss.recuperacion`, para cuando Ascent la lea.
+  - La «caña» es el único alimento sin marca que dice en qué países va (España), para que salga con 200 ml de entrada sin
+    quitarle «caña» al destilado en Uruguay. ¿Así, o como un nombre más de la cerveza (con la lata de 355 ml de entrada)?
+
+- Ascent en Progreso, rehecha como Sueño (19/11, directo a la app, por aire en las dos builds: `visual-ota` 43c408d): tu semana con la carga de cada músculo, antes y después de entrenar, tu noche en corto, y el cuerpo de tu rango igual al de Ascent. Probala en el iPhone.
+- La 0015 (19/11, lo aprobaste): Ascent lee de Moss el día, las semanas, el objetivo y el año. Moss sube el sueño, la deuda, la energía y las metas solo vinculada; al desvincular se borran. La privacidad publicada lo dice (`condezuzu/moss-app`, 19/11). Aplicada y por aire en las dos builds (`visual-ota` 808c654).
+
+Falta (vos):
+1. Business: hecho el 21/11 (el Paid Apps Agreement, la cuenta del Itaú, el W-8BEN y el certificado de residencia
+   extranjera, todo *Active*). Falta, si no lo hiciste, el Small Business Program (15 % en vez de 30 %). Confirmá.
+2. Probar la compra con una cuenta de sandbox en la build `telefono` (hace falta una build `telefono` nueva de la 1.1:
+   `npx eas-cli@latest build --profile telefono --platform ios`; la de ahora es de la 1.0) (spec/suscripcion.md, 7).
+3. En la página de la 1.1: *In-App Purchases and Subscriptions* › sumar los dos productos, y *Add for Review*.
+4. Si querés regalarle Moss a todos los que se anoten durante la 1.0: cuando Apple apruebe la 1.1, una OTA con el
+   corte (`EXPO_PUBLIC_PREMIUM_SALE`) en el día que la publiques. Antes no: quien revisa tiene que ver la pantalla de pago.
 
 ## 1. Ahora (no espera a nada)
 
@@ -224,8 +313,7 @@ revisión) en vez de sacarla: volver a mandarla la pone al final de la fila.
   declararte comerciante, con tu dirección, teléfono y correo a la vista en la ficha de la UE.
 - **El dispositivo médico regulado** (App Information › App Store Regulations & Permits): está declarado (sin eso
   no se puede mandar), pero la API no lo muestra. Mirá que diga «No» en la UE, el Reino Unido y EE. UU. Confirmá.
-- **El Paid Apps Agreement**, en Business › Agreements, hasta que quede *Active* (solo el Account Holder).
-- **La cuenta donde cobrar** y **los formularios de impuestos** (el W-8BEN; lo de Uruguay, con tu contador).
+- **El Paid Apps Agreement**, **la cuenta donde cobrar** y **los formularios de impuestos**: hechos, *Active* el 21/11.
 - **El Small Business Program**, antes de la primera venta: 15 % en vez de 30 %.
 - **El grupo «Moss» y sus dos productos** (`uy.moss.suscripcion.anual` a 39,99 y `.mensual` a 9,99, Family Sharing apagado, la prueba de 7 días). Los cargás vos o me pedís que los cargue por la API.
 - **Los precios locales** en *View all Subscription pricing*.

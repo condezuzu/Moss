@@ -353,7 +353,7 @@ const SeccionSueno = (() => {
     const { tx, numero, el, boton, icono } = u;
     const quieto = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     // `estado`, para mirar la propuesta: con datos, con una o dos noches, sin noches, sin deuda o con mucha.
-    const s = { clave: Datos.HOY, abierto: null, cambiando: false, editandoHora: false, editando: null, forzarHora: null, estado: 'datos', lectura: {}, dibujada: null, conIphone: false };
+    const s = { clave: Datos.HOY, abierto: null, cambiando: false, editandoHora: false, editando: null, forzarHora: null, estado: 'datos', lectura: {}, dibujada: null, conIphone: false, anillo: null };
     // Lo que contestó cada mañana, de 1 a 5, por noche: queda en este navegador, como quedaría en el
     // teléfono. «Ahora no» la esconde solo por hoy.
     const GUARDADO_CARAS = 'moss-galeria-caras';
@@ -413,9 +413,17 @@ const SeccionSueno = (() => {
     const sinReloj = () => !!(opciones.sinReloj && opciones.sinReloj());
     // El margen para dormirte: el elegido (en Afinar o en Perfil › Avisos) o el de fábrica (SinReloj.margenParaDormirte).
     const margenDeHoy = () => SinReloj.margenParaDormirte(opciones.margenElegido ? opciones.margenElegido() : null);
-    const propias = () => (sinReloj() ? Datos.PROPIAS_SIN_RELOJ.map((p) => (horas[p.fecha] ? Object.assign({}, p, { hora: horas[p.fecha] }) : p)) : []);
+    // Con un anillo cuya noche de hoy todavía no llegó (21/11/2026, para aprobar): sus noches de antes y, hoy, la estimada
+    // con el teléfono (`estimada`) o, si el teléfono no tiene lo suficiente, ninguna (`sinEstimar`).
+    const ANILLO = { id: 'com.moyoung.darings', nombre: 'Da Rings', tipo: 'otra' };
+    const deSalud = () => (s.anillo ? opciones.noches().filter((n) => n.clave !== Datos.HOY).map((n) => Object.assign({}, n, { fuente: ANILLO })) : opciones.noches());
+    const conHoras = (p) => (horas[p.fecha] ? Object.assign({}, p, { hora: horas[p.fecha] }) : p);
+    const propias = () => {
+      if (s.anillo) return s.anillo === 'estimada' ? Datos.PROPIAS_SIN_RELOJ.filter((p) => p.fecha === Datos.HOY).map(conHoras) : [];
+      return sinReloj() ? Datos.PROPIAS_SIN_RELOJ.map(conHoras) : [];
+    };
     // Las de Salud y, donde Salud no tiene nada, las de Moss: como en la app (src/secciones/persona.ts).
-    const todasLasNoches = () => SinReloj.conNochesDeMoss(opciones.noches(), propias(), Datos.ZONA);
+    const todasLasNoches = () => SinReloj.conNochesDeMoss(deSalud(), propias(), Datos.ZONA);
     // Las que ve esta sección: elegir «una noche» o «sin noches» no cambia Inicio ni Ascent.
     const noches = () => {
       if (s.estado === 'vacio') return [];
@@ -660,7 +668,7 @@ const SeccionSueno = (() => {
     function pintar() {
       const arriba = cont.scrollTop;
       cont.innerHTML = '';
-      const huella = `${s.clave}|${s.estado}|${sinReloj()}`;
+      const huella = `${s.clave}|${s.estado}|${sinReloj()}|${s.anillo}`;
       animar = huella !== s.dibujada && !quieto();
       s.dibujada = huella;
       // Con un día de ejemplo de «Según el deporte», es ese día (deporte.js).
@@ -846,7 +854,7 @@ const SeccionSueno = (() => {
       // Las dos semanas que terminan hoy o, si la noche elegida es más vieja, las de alrededor.
       const fin = s.clave > Fechas.sumarDias(Datos.HOY, -DIAS) ? Datos.HOY : Fechas.sumarDias(s.clave, 6);
       // Elegir otra noche de las mismas catorce no vuelve a hacer crecer las barras.
-      const firma = `${fin}|${s.estado}|${sinReloj()}`;
+      const firma = `${fin}|${s.estado}|${sinReloj()}|${s.anillo}`;
       const nueva = firma !== s.tiraDibujada && !quieto();
       s.tiraDibujada = firma;
       const caja = el('div', 'sn-noches' + (nueva ? ' sn-entra sn-animar' : ''));
@@ -1108,10 +1116,13 @@ const SeccionSueno = (() => {
       arco.setAttribute('role', 'img');
       arco.setAttribute('aria-label', tx('sueno.horas', { desde: reloj(n.dormirse), hasta: reloj(n.despertar) }));
       c.append(arco, horasDelArco(reloj(n.dormirse), reloj(n.despertar)));
+      // Con un reloj o un anillo cuya noche todavía no llegó: de cuál se espera, en vez de cómo se mide sin reloj.
+      const aparato = SinReloj.aparatoQueFalta(noches(), n.clave);
+      if (aparato) c.appendChild(el('p', 'pg-aviso', tx('sueno.esperaAparato.estimada', { aparato: aparato.nombre })));
       if (r) c.appendChild(el('p', 'pg-texto sn-rango-texto', `${tx('sueno.rango', { a: reloj(r.dormirse[0]), b: reloj(r.dormirse[1]), c: reloj(r.despertar[0]), d: reloj(r.despertar[1]) })} ${tx('sueno.seguridad.' + m.confianza)}.`));
-      if (m.origen === 'estimada') c.appendChild(el('p', 'sn-nota', tx('sueno.estimadaTexto', { margen: margenDeHoy() })));
+      if (m.origen === 'estimada' && !aparato) c.appendChild(el('p', 'sn-nota', tx('sueno.estimadaTexto', { margen: margenDeHoy() })));
       if (n.despierto > 0) c.appendChild(el('p', 'sn-nota', tx('sueno.sinRelojDespierto', { n: Math.round(n.despierto) })));
-      c.appendChild(el('p', 'sn-nota', tx('sueno.sinRelojEtapas')));
+      if (!aparato) c.appendChild(el('p', 'sn-nota', tx('sueno.sinRelojEtapas')));
       // Cambiar la hora de cualquier noche de Moss, ahí mismo.
       if (s.editando === n.clave) {
         const ed = editorDeHora(n.dormirse, n.despertar, (x, y, cambiadas) => {
@@ -1131,7 +1142,8 @@ const SeccionSueno = (() => {
       const c = carta('sn-heroe sn-sin', titulo(clave));
       const cama = soloEnCama(clave);
       c.appendChild(arcoDe(null, { centro: [tx('sueno.sinDatos')], chico: true }));
-      c.appendChild(el('p', 'pg-texto', tx(cama ? 'sueno.sinRelojTexto' : 'sueno.sinNadaTexto')));
+      const aparato = cama ? null : SinReloj.aparatoQueFalta(noches(), clave);
+      c.appendChild(el('p', 'pg-texto', aparato ? tx('sueno.esperaAparato.sinEstimar', { aparato: aparato.nombre }) : tx(cama ? 'sueno.sinRelojTexto' : 'sueno.sinNadaTexto')));
       if (cama) {
         const datos = el('div', 'sn-datos');
         const d = el('div', 'sn-dato');
@@ -1971,6 +1983,8 @@ const SeccionSueno = (() => {
       },
       // Para mirar la propuesta: `datos`, `dos`, `una`, `vacio`, `pagada` o `mucha`.
       ponerEstado,
+      // La noche del anillo que todavía no llegó (21/11/2026): `estimada`, `sinEstimar` o null.
+      esperarAnillo(modo) { s.anillo = modo || null; s.clave = Datos.HOY; s.editando = null; pintar(); cont.scrollTop = 0; },
       get estado() { return s.estado; },
       // Para las capturas y los botones de la galería: `k` días antes de hoy, o una clave.
       verNoche(k) { s.clave = typeof k === 'number' ? Fechas.sumarDias(Datos.HOY, k) : k; s.editando = null; pintar(); cont.scrollTop = 0; },
