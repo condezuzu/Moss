@@ -106,24 +106,29 @@ Hecho:
 - Ascent en Progreso, rehecha como Sueño (19/11, directo a la app, por aire en las dos builds: `visual-ota` 43c408d): tu semana con la carga de cada músculo, antes y después de entrenar, tu noche en corto, y el cuerpo de tu rango igual al de Ascent. Probala en el iPhone.
 - La 0015 (19/11, lo aprobaste): Ascent lee de Moss el día, las semanas, el objetivo y el año. Moss sube el sueño, la deuda, la energía y las metas solo vinculada; al desvincular se borran. La privacidad publicada lo dice (`condezuzu/moss-app`, 19/11). Aplicada y por aire en las dos builds (`visual-ota` 808c654).
 
-La suscripción, al 21/11 (pediste mandarla a revisión sin build de prueba):
-- **La build 8 (1.1.0)** está subida y elegida en la versión 1.1 de App Store Connect. Trae adentro todo lo de
-  `mejoras-1.1` (la 7 traía la app del 14/11 y recién se actualizaba al segundo arranque) y los paquetes de Expo al día.
-  Huella nueva: `27c0c152`. Las OTA de la 1.1 salen de `mejoras-1.1` para esa huella; las de la build 6, de `visual-ota`.
-- **Los dos productos** tenían todo menos el precio de China continental, que Apple exige aunque no se venda ahí: ya
-  está (spec/suscripcion.md, 3). Siguen en *Missing Metadata* y Apple no deja sumarlos a la versión por la API.
-- **El borrador del envío** está armado con la versión 1.1 adentro, **sin mandar** (Apple aceptó la versión).
+La suscripción: **mandada a revisión el 21/11/2026** (lo pediste, sin build de prueba).
+- **Qué se mandó:** la versión 1.1.0 con la build 8, las dos suscripciones (anual y mensual) y su grupo, todo en un
+  solo envío. Al 21/11 Apple los tiene en *Waiting for Review*. La publicación quedó **manual**.
+- **La build 8** trae adentro todo lo de `mejoras-1.1` (la 7 traía la app del 14/11 y recién se actualizaba al segundo
+  arranque) y los paquetes de Expo al día. Huella nueva: `27c0c152`. Las OTA de la 1.1 salen de `mejoras-1.1` para
+  esa huella; las de la build 6, de `visual-ota`. La build 7 nunca salió y ya no recibe nada.
+- **Los términos y la privacidad con la suscripción** están publicados (`condezuzu/moss-app`, 21/11), y también los
+  datos de Open Food Facts que enlaza Créditos, que faltaban en el sitio.
+- **A los dos productos les faltaba el precio de China continental**, que Apple exige aunque no se venda ahí: ya está
+  (spec/suscripcion.md, 3 y «Cómo se mandó»).
 - **El Small Business Program ya está:** Apple se queda el 15 % (de 39,99 te quedan 33,99 en EE. UU.).
-- La compra de verdad con Apple no la probó nadie: tu cuenta es de antes del corte y no ve la pantalla de pago
-  (spec/suscripcion.md, 7). La pantalla de pago se probó en la web, con la tienda de mentira.
+- **Sin probar:** la compra de verdad con Apple no la probó nadie. Tu cuenta es de antes del corte y no ve la pantalla
+  de pago (spec/suscripcion.md, 7); la pantalla se probó en la web, con la tienda de mentira. Si algo falla, lo
+  encuentra quien revisa.
 
-Falta:
-1. **Vos:** mirar en App Store Connect › Moss › Subscriptions › Moss anual qué dice el cartel de *Missing Metadata*
-   (o sumar los dos productos desde la página de la 1.1, *In-App Purchases and Subscriptions*). Con eso sigo.
-2. Yo, cuando los productos estén sumados: publicar los términos y la privacidad con la suscripción (`docs/`, con la
-   fecha de ese día) y mandar el envío a revisión.
-3. Si querés regalarle Moss a todos los que se anoten durante la 1.0: cuando Apple apruebe la 1.1, una OTA con el
-   corte (`EXPO_PUBLIC_PREMIUM_SALE`) en el día que la publiques. Antes no: quien revisa tiene que ver la pantalla de pago.
+Falta (vos):
+1. Esperar a Apple. Si la rechaza, pasame lo que diga el Resolution Center.
+2. Cuando la apruebe: decidir el corte. Hoy es el 14/11: quien se haya anotado después, con la 1.0, vería la pantalla
+   de pago al actualizar. Si querés regalarle Moss a todos los que se anotaron durante la 1.0, se cambia
+   `EXPO_PUBLIC_PREMIUM_SALE` al día en que la publiques y sale una OTA. Antes de la aprobación no: quien revisa
+   tiene que ver la pantalla de pago.
+3. Tocar «Release This Version» en App Store Connect.
+4. Conviene que un abogado mire los términos de la suscripción (Uruguay y la UE, el derecho a arrepentirse).
 
 ## 1. Ahora (no espera a nada)
 

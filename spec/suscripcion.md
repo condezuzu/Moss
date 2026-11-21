@@ -268,6 +268,27 @@ para las suscripciones y el derecho a arrepentirse.
 5. Probar con la cuenta de sandbox (el paso 7).
 6. Publicar `docs/` con la fecha de ese día, y mandar la versión con los dos productos.
 
+## Cómo se mandó (21/11/2026)
+
+La 1.1.0 (build 8) fue a revisión el 21/11/2026 con las dos suscripciones y su grupo, por la API de la web de App
+Store Connect (iris), con la sesión del dueño. Lo que no estaba escrito en ningún lado:
+
+- **La primera suscripción va con una versión de la app, en el mismo envío.** Pedirla sola
+  (`POST subscriptionSubmissions`) contesta `FIRST_SUBSCRIPTION_MUST_BE_SUBMITTED_ON_VERSION`.
+- **El envío es uno, con cuatro ítems:** `POST reviewSubmissions` (plataforma iOS y la app) crea el borrador, y cada
+  ítem es un `POST reviewSubmissionItems` con el borrador y una de estas relaciones: `appStoreVersion` (la 1.1),
+  `subscriptionVersion` (la «versión» de cada suscripción: `subscriptions/{id}/versions`) y
+  `subscriptionGroupVersion` (`subscriptionGroups/{id}/versions`). Así lo hace la web de Apple. Se manda con
+  `PATCH reviewSubmissions/{id}` y `submitted: true`.
+- **El estado *Missing Metadata* de la suscripción no dice qué falta ni cambia hasta mandarla:** con todo cargado
+  siguió así, y pasó a *Waiting for Review* recién con el envío. Lo que sí faltaba lo dijo Apple al intentar
+  mandarla: el precio en China continental (arriba, en «Los dos productos»).
+- **Antes de mandar:** los términos y la privacidad publicados con la fecha de ese día, y la build nueva elegida en
+  la versión (`PATCH appStoreVersions/{id}/relationships/build`).
+
+Los scripts quedaron en `C:\Users\agusc\asc3` (`asc-borrador-de-revision.cjs`, `asc-probar-items.cjs`,
+`asc-mandar.cjs` y los de solo lectura).
+
 ## Para más adelante: la publicidad (lo pediste el 31/10/2026)
 
 Una **animación de Moss** para publicidad, con un **código de oferta de Apple de dos
