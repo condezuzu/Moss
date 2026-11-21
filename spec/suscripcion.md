@@ -150,6 +150,10 @@ Adentro del grupo, **Create** y después **+**:
   importen, en *View all Subscription pricing*. La pantalla los toma de Apple, con su moneda y sus
   decimales: el ahorro y el precio por mes se recalculan solos.
 - **Niveles** (*Edit Order*): los dos en el **mismo nivel**. Es lo mismo con distinta duración.
+- **El precio va en los 175 países, también donde no se vende (21/11/2026):** los cargué por la API solo en los
+  174 de la app, y al querer mandarlos Apple contestó `IAP_SUBMISSION_NOT_ALLOWED_MISSING_PRICING_DATA`: «missing
+  pricing for the following territories: (CHN)». Se les puso el equivalente de Apple en China continental (298 y
+  68 CNY); la disponibilidad sigue en los 174. Cargados desde la web, Apple los pone solos.
 
 ### 4. La prueba de 7 días, en cada producto
 
@@ -208,6 +212,14 @@ Cuando le falte nada, el estado de cada uno pasa a **Ready to Submit**.
    dejarla vencer y restaurar. En sandbox el tiempo corre mucho más rápido: una prueba de una semana dura
    unos minutos, así que sirve para ver la pantalla de cuando vence, y **el aviso del día 5 no se puede ver
    ahí**: suena a los dos días antes de la fecha que da Apple, y en sandbox esa fecha ya pasó.
+
+**La cuenta del dueño no ve la pantalla de pago (21/11/2026):** Moss entra solo con Apple, y su cuenta es de
+antes del corte (`EXPO_PUBLIC_PREMIUM_SALE=2026-11-14`): es de regalo en cualquier build, también en TestFlight.
+Para probar la compra con su iPhone hace falta que el corte sea anterior a su cuenta **solo en `preview`** (por
+ejemplo `2026-01-01`, en las variables de EAS de `preview`, con su sí), una build `telefono` de la 1.1 y la
+cuenta de sandbox. `production` no se toca: ahí el corte sigue en el 14/11. Al terminar la prueba, `preview`
+vuelve al 14/11 y se publica de nuevo por aire. Quien revisa en Apple entra con su propio Apple ID, que es una
+cuenta nueva, y sí la ve.
 
 **No hace falta** la clave de In-App Purchase ni las App Store Server Notifications: el teléfono le
 pregunta a Apple directo, con StoreKit 2. Hacen falta recién si algún día un servidor tiene que saber

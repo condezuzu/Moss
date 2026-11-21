@@ -106,13 +106,23 @@ Hecho:
 - Ascent en Progreso, rehecha como Sueño (19/11, directo a la app, por aire en las dos builds: `visual-ota` 43c408d): tu semana con la carga de cada músculo, antes y después de entrenar, tu noche en corto, y el cuerpo de tu rango igual al de Ascent. Probala en el iPhone.
 - La 0015 (19/11, lo aprobaste): Ascent lee de Moss el día, las semanas, el objetivo y el año. Moss sube el sueño, la deuda, la energía y las metas solo vinculada; al desvincular se borran. La privacidad publicada lo dice (`condezuzu/moss-app`, 19/11). Aplicada y por aire en las dos builds (`visual-ota` 808c654).
 
-Falta (vos):
-1. Business: hecho el 21/11 (el Paid Apps Agreement, la cuenta del Itaú, el W-8BEN y el certificado de residencia
-   extranjera, todo *Active*). Falta, si no lo hiciste, el Small Business Program (15 % en vez de 30 %). Confirmá.
-2. Probar la compra con una cuenta de sandbox en la build `telefono` (hace falta una build `telefono` nueva de la 1.1:
-   `npx eas-cli@latest build --profile telefono --platform ios`; la de ahora es de la 1.0) (spec/suscripcion.md, 7).
-3. En la página de la 1.1: *In-App Purchases and Subscriptions* › sumar los dos productos, y *Add for Review*.
-4. Si querés regalarle Moss a todos los que se anoten durante la 1.0: cuando Apple apruebe la 1.1, una OTA con el
+La suscripción, al 21/11 (pediste mandarla a revisión sin build de prueba):
+- **La build 8 (1.1.0)** está subida y elegida en la versión 1.1 de App Store Connect. Trae adentro todo lo de
+  `mejoras-1.1` (la 7 traía la app del 14/11 y recién se actualizaba al segundo arranque) y los paquetes de Expo al día.
+  Huella nueva: `27c0c152`. Las OTA de la 1.1 salen de `mejoras-1.1` para esa huella; las de la build 6, de `visual-ota`.
+- **Los dos productos** tenían todo menos el precio de China continental, que Apple exige aunque no se venda ahí: ya
+  está (spec/suscripcion.md, 3). Siguen en *Missing Metadata* y Apple no deja sumarlos a la versión por la API.
+- **El borrador del envío** está armado con la versión 1.1 adentro, **sin mandar** (Apple aceptó la versión).
+- **El Small Business Program ya está:** Apple se queda el 15 % (de 39,99 te quedan 33,99 en EE. UU.).
+- La compra de verdad con Apple no la probó nadie: tu cuenta es de antes del corte y no ve la pantalla de pago
+  (spec/suscripcion.md, 7). La pantalla de pago se probó en la web, con la tienda de mentira.
+
+Falta:
+1. **Vos:** mirar en App Store Connect › Moss › Subscriptions › Moss anual qué dice el cartel de *Missing Metadata*
+   (o sumar los dos productos desde la página de la 1.1, *In-App Purchases and Subscriptions*). Con eso sigo.
+2. Yo, cuando los productos estén sumados: publicar los términos y la privacidad con la suscripción (`docs/`, con la
+   fecha de ese día) y mandar el envío a revisión.
+3. Si querés regalarle Moss a todos los que se anoten durante la 1.0: cuando Apple apruebe la 1.1, una OTA con el
    corte (`EXPO_PUBLIC_PREMIUM_SALE`) en el día que la publiques. Antes no: quien revisa tiene que ver la pantalla de pago.
 
 ## 1. Ahora (no espera a nada)
