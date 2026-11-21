@@ -145,8 +145,13 @@ export function LaNoche({ n, hoy, ancho, anteriores, lista: noches, animar }: { 
 }
 
 // ------------------------------------------------------------ la noche sin reloj
-/** Cuánto y cuándo, de dónde sale la hora y, si es estimada, el rango con los bordes esfumados. */
-export function LaNocheDeMoss({ n, hoy, propia, ancho, lista: noches, animar }: { n: Noche; hoy: ClaveDia; propia: NochePropia | undefined; ancho: number; lista: (Noche | null)[]; animar: boolean }) {
+/**
+ * Cuánto y cuándo, de dónde sale la hora y, si es estimada, el rango con los bordes esfumados. Con `aparato`, el reloj
+ * o el anillo cuya noche todavía no llegó (aparatoQueFalta): lo dice, en vez de cómo se mide sin reloj.
+ */
+export function LaNocheDeMoss({ n, hoy, propia, ancho, lista: noches, animar, aparato }: {
+  n: Noche; hoy: ClaveDia; propia: NochePropia | undefined; ancho: number; lista: (Noche | null)[]; animar: boolean; aparato: Fuente | null;
+}) {
   const [editando, setEditando] = useState(false);
   // Cómo se mide: todo el rato que el teléfono estuvo quieto, menos tu margen para dormirte.
   const margen = margenParaDormirte(useEstado().latencia);
@@ -156,10 +161,11 @@ export function LaNocheDeMoss({ n, hoy, propia, ancho, lista: noches, animar }: 
     <CartaDeSueno tipo="heroe" titulo={tituloDe(n.clave, hoy)} derecha={<DeOrigen origen={m.origen} />}>
       <ArcoDeLaNoche n={n} lista={noches} rango={r} centro={[duracion(Math.round(n.dormido)), t('sueno.dormidoAprox')]} ancho={ancho} animar={animar} />
       <HorasDelArco n={n} />
+      {aparato && <Text style={tarjeta.recuadro}>{t('sueno.esperaAparato.estimada', { aparato: aparato.nombre })}</Text>}
       {r && <Texto>{`${t('sueno.rango', { a: reloj(r.dormirse[0]), b: reloj(r.dormirse[1]), c: reloj(r.despertar[0]), d: reloj(r.despertar[1]) })} ${t(`sueno.seguridad.${m.confianza}`)}.`}</Texto>}
-      {m.origen === 'estimada' && <Nota>{t('sueno.estimadaTexto', { margen })}</Nota>}
+      {m.origen === 'estimada' && !aparato && <Nota>{t('sueno.estimadaTexto', { margen })}</Nota>}
       {n.despierto > 0 && <Nota>{t('sueno.sinRelojDespierto', { n: Math.round(n.despierto) })}</Nota>}
-      <Nota>{t('sueno.sinRelojEtapas')}</Nota>
+      {!aparato && <Nota>{t('sueno.sinRelojEtapas')}</Nota>}
       {editando ? (
         <Aparece style={st.editorNoche}>
           <EditorDeHora
@@ -184,11 +190,12 @@ export function LaNocheDeMoss({ n, hoy, propia, ancho, lista: noches, animar }: 
   );
 }
 
-export function SinNoche({ clave, hoy, cama, ancho }: { clave: ClaveDia; hoy: ClaveDia; cama?: { minutos: number; fuente: Fuente }; ancho: number }) {
+/** Sin noche. Con `aparato`, el reloj o el anillo cuya noche todavía puede llegar, y el teléfono no alcanzó para estimarla. */
+export function SinNoche({ clave, hoy, cama, ancho, aparato }: { clave: ClaveDia; hoy: ClaveDia; cama?: { minutos: number; fuente: Fuente }; ancho: number; aparato: Fuente | null }) {
   return (
     <CartaDeSueno tipo="heroe" titulo={tituloDe(clave, hoy)}>
       <ArcoDeLaNoche n={null} lista={[]} centro={[t('sueno.sinDatos')]} ancho={ancho} animar={false} />
-      <Texto>{t(cama ? 'sueno.sinRelojTexto' : 'sueno.sinNadaTexto')}</Texto>
+      <Texto>{aparato && !cama ? t('sueno.esperaAparato.sinEstimar', { aparato: aparato.nombre }) : t(cama ? 'sueno.sinRelojTexto' : 'sueno.sinNadaTexto')}</Texto>
       {cama && (
         <View style={st.datos}>
           <Dato nombre={t('sueno.enCama')} valor={`${duracion(cama.minutos)} · ${cama.fuente.nombre}`} nivel="baja" />
