@@ -7,6 +7,77 @@
 // Las cuentas del precio son las de la app (src/dominio/premium.ts). La hoja de Apple es un dibujo.
 
 const Suscripcion = (() => {
+  // Los textos de la bienvenida y del pase, hasta que pasen a src/textos (22/11/2026, para aprobar).
+  const TEXTOS_NUEVOS = {
+    es: {
+      suscripcion: {
+        bienvenida: {
+          titulo: '¡Felicidades!',
+          antes: 'Usaste Moss mientras se hacía. Por eso tienes ',
+          meses: '{n} meses completamente gratis',
+          despuesDeMeses: '.',
+          hoy: 'Hoy',
+          fecha: '{num} de {mes}',
+          despues: 'Después, si quieres seguir, eliges un plan. Moss te avisa unos días antes.',
+          verLoNuevo: 'Mira lo nuevo',
+          ahoraNo: 'Ahora no',
+        },
+        novedades: {
+          titulo: 'Lo nuevo',
+          cuenta: '{n} de {total}',
+          siguiente: 'Siguiente',
+          empezar: 'Empezar',
+          widgets: { titulo: 'Widgets nuevos', texto: 'Hoy, Anotar y Agua: lo que te queda y anotar, sin abrir Moss.' },
+          comida: { titulo: 'Copia, mueve o borra con un gesto', texto: 'Mantén apretado un alimento para copiarlo o moverlo, y deslízalo para borrarlo.' },
+          buscar: { titulo: 'Más fácil de encontrar', texto: 'Primero sale lo que se vende en tu país, y lo que carga la comunidad queda para todos.' },
+          sueno: { titulo: 'Tu sueño, más claro', texto: 'Tu deuda en una palabra y tu periodo de melatonina: el rato en que más fácil te duermes.' },
+          energia: { titulo: 'Tu energía del día', texto: 'Con tu sueño y lo que comes, Moss te dice cómo vienes hoy y cuál es tu mejor momento.' },
+          musculos: { titulo: 'Con Ascent, tus músculos', texto: 'Si entrenas con Ascent, ves qué músculo necesita más y qué hacer hoy.' },
+        },
+        perfil: { regaloHasta: 'Regalo hasta el {fecha}' },
+        hoja: { regaloHasta: 'Usaste Moss mientras se hacía: la tienes gratis hasta el {fecha}. Después, si quieres seguir, eliges un plan. Moss te avisa unos días antes.' },
+      },
+    },
+    en: {
+      suscripcion: {
+        bienvenida: {
+          titulo: 'Congratulations!',
+          antes: 'You used Moss while it was being built. That’s why you get ',
+          meses: '{n} months completely free',
+          despuesDeMeses: '.',
+          hoy: 'Today',
+          fecha: '{mes} {num}',
+          despues: 'After that, if you want to keep going, you pick a plan. Moss lets you know a few days before.',
+          verLoNuevo: 'See what’s new',
+          ahoraNo: 'Not now',
+        },
+        novedades: {
+          titulo: 'What’s new',
+          cuenta: '{n} of {total}',
+          siguiente: 'Next',
+          empezar: 'Start',
+          widgets: { titulo: 'New widgets', texto: 'Today, Log and Water: see what’s left and log it without opening Moss.' },
+          comida: { titulo: 'Copy, move or delete in one gesture', texto: 'Press and hold a food to copy or move it, and swipe it to delete it.' },
+          buscar: { titulo: 'Easier to find', texto: 'What’s sold in your country comes first, and what the community adds is there for everyone.' },
+          sueno: { titulo: 'Your sleep, clearer', texto: 'Your debt in one word, and your melatonin window: when you fall asleep most easily.' },
+          energia: { titulo: 'Your energy for the day', texto: 'From your sleep and what you eat, Moss tells you how you’re doing today and your best time.' },
+          musculos: { titulo: 'With Ascent, your muscles', texto: 'If you train with Ascent, see which muscle needs more and what to do today.' },
+        },
+        perfil: { regaloHasta: 'Gift until {fecha}' },
+        hoja: { regaloHasta: 'You used Moss while it was being built: it’s free for you until {fecha}. After that, if you want to keep going, you pick a plan. Moss lets you know a few days before.' },
+      },
+    },
+  };
+  function completar(destino, origen) {
+    Object.entries(origen).forEach(([k, v]) => {
+      if (v && typeof v === 'object' && !Array.isArray(v)) {
+        if (!destino[k] || typeof destino[k] !== 'object') destino[k] = {};
+        completar(destino[k], v);
+      } else if (destino[k] == null) destino[k] = v;
+    });
+  }
+  if (typeof TEXTOS !== 'undefined' && TEXTOS) ['es', 'en'].forEach((i) => { if (TEXTOS[i]) completar(TEXTOS[i], TEXTOS_NUEVOS[i]); });
+
   const CSS = `
 .tel .sb { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; color: var(--tinta); background: radial-gradient(120% 60% at 50% 0%, rgba(30, 42, 84, 0.95), rgba(9, 12, 26, 1) 70%), #090c1a; animation: sb-entra 0.42s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 .sb[hidden] { display: none; }
@@ -123,7 +194,60 @@ const Suscripcion = (() => {
 .sb-hoja-texto.chico { font-size: 12.5px; color: rgba(239, 230, 207, 0.62); }
 .sb-hoja-cuerpo .sb-principal { margin-top: 16px; }
 .sb-hoja-cuerpo .sb-enlaces { margin-top: 8px; }
+/* La bienvenida de quien ya tenía cuenta: tres meses de regalo (22/11/2026, para aprobar). */
+.sb-bienvenida { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: calc(var(--arriba) + 6px) 28px calc(var(--abajo) + 18px); text-align: center; overflow: hidden; }
+.sb-bv-cielo { position: absolute; inset: 0; pointer-events: none; }
+.sb-bv-cielo i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #f6e3a6; opacity: 0; animation: sb-bv-titila 3.2s ease-in-out infinite; }
+@keyframes sb-bv-titila { 0%, 100% { opacity: 0; transform: scale(0.6); } 50% { opacity: 0.8; transform: scale(1); } }
+.sb-bienvenida > :not(.sb-bv-cielo) { position: relative; }
+.sb-bv-estrella { display: block; width: 22px; height: 22px; background: var(--oro-claro); box-shadow: 0 0 18px rgba(246, 227, 166, 0.85), 0 0 56px rgba(246, 227, 166, 0.35); animation: sb-bv-nace 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.25) 0.15s both; }
+@keyframes sb-bv-nace { from { transform: rotate(-135deg) scale(0); opacity: 0; } to { transform: rotate(45deg) scale(1); opacity: 1; } }
+.sb-bv-sube { animation: sb-bv-sube 0.6s ease both; }
+@keyframes sb-bv-sube { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.sb-bienvenida h2 { margin: 16px 0 0; font: 500 34px/1.08 var(--titulos); text-wrap: balance; color: #fbf2d9; }
+.sb-bienvenida p { margin: 0; font: 300 15.5px/1.42 var(--texto); color: rgba(239, 230, 207, 0.86); text-wrap: pretty; }
+.sb-bienvenida p b { font-weight: 500; color: var(--oro-claro); }
+/* Los tres meses: una línea que se llena tramo a tramo, de hoy al último día. */
+.sb-bv-meses { width: 100%; max-width: 300px; margin: 14px 0 2px; display: grid; gap: 7px; }
+.sb-bv-linea { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+.sb-bv-linea i { height: 5px; border-radius: 3px; background: rgba(239, 230, 207, 0.14); overflow: hidden; }
+.sb-bv-linea i::after { content: ''; display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #e8c46a, #f6e3a6); transform: scaleX(0); transform-origin: left; animation: sb-bv-llena 0.4s ease forwards; }
+.sb-bv-linea i:nth-child(1)::after { animation-delay: 1.1s; }
+.sb-bv-linea i:nth-child(2)::after { animation-delay: 1.45s; }
+.sb-bv-linea i:nth-child(3)::after { animation-delay: 1.8s; }
+@keyframes sb-bv-llena { to { transform: scaleX(1); } }
+.sb-bv-extremos { display: flex; justify-content: space-between; font: 400 11.5px/1.2 var(--texto); color: rgba(239, 230, 207, 0.62); }
+.sb-bv-extremos b { font-weight: 500; color: var(--oro-claro); }
+.sb-bienvenida .sb-bv-chico { font: 400 12.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.62); }
+.sb-bienvenida .sb-principal { margin-top: 16px; }
+.sb-bv-no { appearance: none; cursor: pointer; padding: 10px 14px; border: 0; background: none; color: rgba(239, 230, 207, 0.7); font: 400 14px/1 var(--texto); }
+
+/* «Mira lo nuevo»: un pase de capturas, que se desliza de una a otra. */
+.sb-pase { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: calc(var(--arriba) + 4px) 0 calc(var(--abajo) + 12px); animation: sb-aparece 0.36s ease both; }
+.sb-pase-cab { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 14px 8px 20px; }
+.sb-pase-cab span { font: 400 10.5px/1.2 var(--texto); letter-spacing: 0.15em; text-transform: uppercase; color: var(--oro-claro); }
+.sb-pase-cab div { display: flex; align-items: center; gap: 4px; }
+.sb-pase-cab small { font: 400 12px/1 var(--texto); color: rgba(239, 230, 207, 0.55); font-variant-numeric: tabular-nums; }
+.sb-pase-x { appearance: none; cursor: pointer; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: rgba(239, 230, 207, 0.7); }
+.sb-pase-x svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.sb-pase-ventana { flex: 1; min-height: 0; overflow: hidden; touch-action: pan-y; cursor: pointer; }
+.sb-pase-tira { height: 100%; display: flex; transition: transform 0.46s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.sb-pase-hoja { flex: none; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 0 26px; }
+.sb-pase-foto { flex: 1; min-height: 0; aspect-ratio: 603 / 1311; max-width: 100%; border-radius: 22px; border: 1px solid rgba(239, 230, 207, 0.16); overflow: hidden; background: #03050c; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5); }
+.sb-pase-foto img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; -webkit-user-drag: none; user-select: none; }
+.sb-pase-textos { flex: none; display: grid; gap: 5px; align-content: start; min-height: 92px; text-align: center; }
+.sb-pase-textos h3 { margin: 0; font: 500 23px/1.12 var(--titulos); text-wrap: balance; color: #fbf2d9; }
+.sb-pase-textos p { margin: 0; font: 300 14px/1.38 var(--texto); color: rgba(239, 230, 207, 0.8); text-wrap: pretty; }
+.sb-pase-pie { flex: none; display: grid; gap: 12px; padding: 10px 20px 0; }
+.sb-pase-puntos { display: flex; justify-content: center; gap: 7px; }
+.sb-pase-puntos button { appearance: none; cursor: pointer; width: 7px; height: 7px; padding: 0; border: 0; border-radius: 50%; background: rgba(239, 230, 207, 0.25); transition: background 0.3s ease, transform 0.3s ease; }
+.sb-pase-puntos button[aria-current='true'] { background: var(--oro-claro); transform: scale(1.25); }
 @media (prefers-reduced-motion: reduce) {
+  .sb-bv-estrella { animation: none; transform: rotate(45deg); }
+  .sb-bv-cielo i { animation: none; opacity: 0.45; }
+  .sb-bv-sube { animation-duration: 0.01s; animation-delay: 0s !important; }
+  .sb-bv-linea i::after { animation: none; transform: none; }
+  .sb-pase, .sb-pase-tira { animation-duration: 0.01s; transition: none; }
   .tel .sb, .sb.saliendo, .sb-pago, .sb-nota, .sb-apple-fondo, .sb-apple-fondo.saliendo, .sb-apple, .sb-acciones-fondo, .sb-acciones-fondo.saliendo, .sb-acciones, .sb-listo, .sb-cambia { animation-duration: 0.01s; }
   .sb-giro { animation-duration: 2.4s; }
 }
@@ -209,7 +333,7 @@ const Suscripcion = (() => {
     const hoja = Util.hoja(tel, 'sb-hoja', () => opciones.alCambiar && opciones.alCambiar());
 
     // acceso: el de la app (Premium.acceso). `conAlgo`: si en esta cuenta de Apple hay algo para restaurar.
-    const s = { plan: 'anual', vista: 'pago', acceso: 'prueba', sinConexion: false, enCurso: false, nota: null, conAlgo: false, deLaPrueba: true, cancelada: false, sinAvisos: false, tengo: 'anual', despues: null, cierre: 0 };
+    const s = { plan: 'anual', vista: 'pago', acceso: 'prueba', sinConexion: false, enCurso: false, nota: null, conAlgo: false, deLaPrueba: true, cancelada: false, sinAvisos: false, tengo: 'anual', despues: null, cierre: 0, hoja: 0 };
 
     const usd = (v) => `USD ${numero(v, 2)}`;
     const precioDe = (plan) => usd(Premium.PRECIOS[plan]);
@@ -412,6 +536,99 @@ const Suscripcion = (() => {
       pintar();
     }
 
+    // ---------------------------------------------------------------- la bienvenida y lo nuevo (22/11/2026, para aprobar)
+    // Quien ya tenía cuenta tiene Moss de regalo tres meses desde el día en que pasó a ser de pago (en la galería,
+    // hoy). La cuenta va a src/dominio/premium.ts cuando se apruebe.
+    const MESES_DE_REGALO = 3;
+    const finDelRegalo = () => { const p = u.partes(Datos.HOY); return new Date(p.anio, p.mes + MESES_DE_REGALO, p.num); };
+    const diaDe = (f, corto) => tx(corto ? 'fecha.corta' : 'suscripcion.bienvenida.fecha', { num: f.getDate(), mes: tx((corto ? 'fecha.mesesCortos.' : 'fecha.meses.') + f.getMonth()) });
+    /** Las capturas del pase, en el orden en que se cuentan (assets/novedades, de la app de verdad). */
+    const NOVEDADES_ORDEN = ['widgets', 'comida', 'buscar', 'sueno', 'energia', 'musculos'];
+
+    function bienvenida() {
+      const c = el('div', 'sb-bienvenida');
+      const cielo = el('div', 'sb-bv-cielo');
+      [[12, 18, 0], [84, 12, 0.9], [22, 34, 1.7], [70, 30, 0.4], [8, 62, 2.3], [90, 58, 1.2], [30, 84, 2.8], [76, 80, 0.7], [50, 8, 2]].forEach(([x, y, d]) => {
+        const i = el('i');
+        Object.assign(i.style, { left: x + '%', top: y + '%', animationDelay: d + 's' });
+        cielo.appendChild(i);
+      });
+      // Cada cosa entra después de la anterior: la estrella, el título, el regalo y, al final, qué hacer.
+      const con = (nodo, demora) => { nodo.classList.add('sb-bv-sube'); nodo.style.animationDelay = demora + 's'; return nodo; };
+      const texto = el('p');
+      texto.append(tx('suscripcion.bienvenida.antes'), el('b', null, tx('suscripcion.bienvenida.meses', { n: MESES_DE_REGALO })), tx('suscripcion.bienvenida.despuesDeMeses'));
+      const meses = el('div', 'sb-bv-meses');
+      const linea = el('div', 'sb-bv-linea');
+      linea.append(el('i'), el('i'), el('i'));
+      const extremos = el('div', 'sb-bv-extremos');
+      extremos.append(el('span', null, tx('suscripcion.bienvenida.hoy')), el('b', null, diaDe(finDelRegalo())));
+      meses.append(linea, extremos);
+      c.append(
+        cielo, el('i', 'sb-bv-estrella'),
+        con(el('h2', null, tx('suscripcion.bienvenida.titulo')), 0.5),
+        con(texto, 0.75),
+        con(meses, 0.95),
+        con(el('p', 'sb-bv-chico', tx('suscripcion.bienvenida.despues')), 1.5),
+        con(boton('sb-principal', tx('suscripcion.bienvenida.verLoNuevo'), () => { s.vista = 'novedades'; s.hoja = 0; pintar(); }), 1.7),
+        con(boton('sb-bv-no', tx('suscripcion.bienvenida.ahoraNo'), terminar), 1.8),
+      );
+      return c;
+    }
+
+    function pase() {
+      const c = el('div', 'sb-pase');
+      const total = NOVEDADES_ORDEN.length;
+      const cab = el('header', 'sb-pase-cab');
+      const cuenta = el('small');
+      const derecha = el('div');
+      derecha.append(cuenta, boton('sb-pase-x', icono('cerrar'), terminar, tx('comida.cerrar')));
+      cab.append(el('span', null, tx('suscripcion.novedades.titulo')), derecha);
+      const ventana = el('div', 'sb-pase-ventana');
+      const tira = el('div', 'sb-pase-tira');
+      const fotos = (typeof NOVEDADES !== 'undefined' && NOVEDADES && NOVEDADES[u.idioma()]) || {};
+      NOVEDADES_ORDEN.forEach((clave) => {
+        const h = el('section', 'sb-pase-hoja');
+        const foto = el('div', 'sb-pase-foto');
+        if (fotos[clave]) {
+          const img = document.createElement('img');
+          img.src = fotos[clave];
+          img.alt = '';
+          img.draggable = false;
+          foto.appendChild(img);
+        }
+        const textos = el('div', 'sb-pase-textos');
+        textos.append(el('h3', null, tx('suscripcion.novedades.' + clave + '.titulo')), el('p', null, tx('suscripcion.novedades.' + clave + '.texto')));
+        h.append(foto, textos);
+        tira.appendChild(h);
+      });
+      ventana.appendChild(tira);
+      const puntos = el('div', 'sb-pase-puntos');
+      const principal = boton('sb-principal', '', () => (s.hoja < total - 1 ? ir(s.hoja + 1) : terminar()));
+      const ir = (n) => {
+        s.hoja = Math.max(0, Math.min(total - 1, n));
+        tira.style.transform = 'translateX(' + -100 * s.hoja + '%)';
+        cuenta.textContent = tx('suscripcion.novedades.cuenta', { n: s.hoja + 1, total });
+        [...puntos.children].forEach((p, i) => p.setAttribute('aria-current', String(i === s.hoja)));
+        principal.textContent = tx(s.hoja === total - 1 ? 'suscripcion.novedades.empezar' : 'suscripcion.novedades.siguiente');
+      };
+      NOVEDADES_ORDEN.forEach((clave, i) => puntos.appendChild(boton('sb-pase-punto', '', () => ir(i), tx('suscripcion.novedades.' + clave + '.titulo'))));
+      // Con el dedo: deslizar pasa a la de al lado; un toque en la mitad derecha avanza y en la izquierda vuelve.
+      let x0 = null;
+      ventana.addEventListener('pointerdown', (ev) => { x0 = ev.clientX; });
+      ventana.addEventListener('pointerup', (ev) => {
+        if (x0 === null) return;
+        const dx = ev.clientX - x0;
+        x0 = null;
+        const r = ventana.getBoundingClientRect();
+        ir(s.hoja + (Math.abs(dx) > 30 ? (dx < 0 ? 1 : -1) : ev.clientX - r.left > r.width / 2 ? 1 : -1));
+      });
+      const pie = el('div', 'sb-pase-pie');
+      pie.append(puntos, principal);
+      c.append(cab, ventana, pie);
+      ir(s.hoja || 0);
+      return c;
+    }
+
     function listo() {
       const c = el('div', 'sb-listo');
       const seguir = boton('sb-principal', tx('suscripcion.listo.seguir'), terminar);
@@ -420,8 +637,7 @@ const Suscripcion = (() => {
         if (nota) c.appendChild(el('p', 'sb-listo-nota', nota));
         c.appendChild(seguir);
       };
-      if (s.vista === 'regalo') con(tx('suscripcion.regalo.titulo'), tx('suscripcion.regalo.texto'));
-      else if (s.vista === 'restaurada') con(tx('suscripcion.restaurada.titulo'), tx('suscripcion.restaurada.texto'));
+      if (s.vista === 'restaurada') con(tx('suscripcion.restaurada.titulo'), tx('suscripcion.restaurada.texto'));
       else if (s.acceso === 'prueba') con(tx('suscripcion.listo.titulo', { n: dias }), tx('suscripcion.listo.texto', { fecha: fechaLarga(finDeLaPrueba()), precio: conPrecio(s.tengo) }), s.sinAvisos ? tx('suscripcion.listo.sinAvisos') : null);
       else con(tx('suscripcion.listo.tituloSinPrueba'), tx('suscripcion.listo.textoSinPrueba', { precio: conPrecio(s.tengo) }));
       return c;
@@ -429,7 +645,7 @@ const Suscripcion = (() => {
 
     function pintar() {
       raiz.innerHTML = '';
-      raiz.appendChild(s.vista === 'pago' ? pago() : listo());
+      raiz.appendChild(s.vista === 'pago' ? pago() : s.vista === 'novedades' ? pase() : s.vista === 'regalo' ? bienvenida() : listo());
     }
 
     function ponerAcceso(a) {
@@ -445,7 +661,7 @@ const Suscripcion = (() => {
     }
     function abrir({ despues, acceso, vista } = {}) {
       clearTimeout(s.cierre);
-      Object.assign(s, { plan: 'anual', vista: vista || 'pago', enCurso: false, nota: null, sinConexion: false, conAlgo: false, despues: despues || null });
+      Object.assign(s, { plan: 'anual', vista: vista || 'pago', enCurso: false, nota: null, sinConexion: false, conAlgo: false, despues: despues || null, hoja: 0 });
       if (acceso) ponerAcceso(acceso);
       raiz.hidden = false;
       raiz.classList.remove('saliendo');
@@ -459,7 +675,7 @@ const Suscripcion = (() => {
     // ---------------------------------------------------------------- Perfil
     /** Lo que dice la fila de Perfil. */
     function valorDeFila() {
-      if (s.acceso === 'regalo') return tx('suscripcion.perfil.regalo');
+      if (s.acceso === 'regalo') return tx('suscripcion.perfil.regaloHasta', { fecha: diaDe(finDelRegalo(), true) });
       if (s.acceso === 'prueba') return plural('suscripcion.perfil.prueba', dias - 2);
       if (s.acceso === 'activa') return tx('suscripcion.perfil.' + s.tengo);
       return tx('suscripcion.perfil.vencida');
@@ -476,7 +692,11 @@ const Suscripcion = (() => {
         f.append(el('span', null, titulo), el('b', null, valor));
         cuerpo.appendChild(f);
       };
-      if (s.acceso === 'regalo') cuerpo.appendChild(el('p', 'sb-hoja-texto', tx('suscripcion.hoja.regalo')));
+      if (s.acceso === 'regalo') {
+        cuerpo.appendChild(el('p', 'sb-hoja-texto', tx('suscripcion.hoja.regaloHasta', { fecha: diaDe(finDelRegalo()) })));
+        // Lo nuevo se puede volver a mirar desde acá.
+        cuerpo.appendChild(boton('sb-principal', tx('suscripcion.bienvenida.verLoNuevo'), () => { hoja.cerrar(); abrir({ vista: 'novedades' }); }));
+      }
       else {
         const fecha = s.acceso === 'prueba' ? Fechas.sumarDias(Datos.HOY, dias - 2) : Fechas.sumarDias(Datos.HOY, s.tengo === 'anual' ? 280 : 20);
         fila(tx('suscripcion.hoja.estado'), s.acceso === 'prueba' ? valorDeFila() : tx(s.acceso === 'activa' ? 'suscripcion.hoja.activa' : 'suscripcion.perfil.vencida'));
@@ -522,6 +742,8 @@ const Suscripcion = (() => {
       sinAvisos(si) { s.sinAvisos = si; },
       enCurso(si) { ponerEnCurso(si); },
       bajar() { const c = raiz.querySelector('.sb-scroll'); if (c) c.scrollTop = c.scrollHeight; },
+      /** Para las capturas: el pase de lo nuevo, en la captura `n` (desde 0). */
+      novedad(n) { s.vista = 'novedades'; s.hoja = n || 0; pintar(); },
     };
   }
   return { crear, ejemplo, NOCHE_CORTA };

@@ -3,7 +3,7 @@
 Todo lo que no puedo hacer yo: aprobar, decidir, entrar con tus cuentas, tocar el iPhone y lo de Ascent.
 Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar hecho: no lo puedo ver desde acá.
 
-Galería (versión 55): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
+Galería (versión 56): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 
 ## 0. El lanzamiento y la 1.1 (desde el 14/11/2026): dónde quedé
 
@@ -105,6 +105,12 @@ Hecho:
 
 - Ascent en Progreso, rehecha como Sueño (19/11, directo a la app, por aire en las dos builds: `visual-ota` 43c408d): tu semana con la carga de cada músculo, antes y después de entrenar, tu noche en corto, y el cuerpo de tu rango igual al de Ascent. Probala en el iPhone.
 - La 0015 (19/11, lo aprobaste): Ascent lee de Moss el día, las semanas, el objetivo y el año. Moss sube el sueño, la deuda, la energía y las metas solo vinculada; al desvincular se borran. La privacidad publicada lo dice (`condezuzu/moss-app`, 19/11). Aplicada y por aire en las dos builds (`visual-ota` 808c654).
+
+**El regalo pasa a ser de 3 meses (lo pediste el 22/11), para aprobar en la galería 56**, grupo «El regalo de 3 meses y la
+bienvenida»: quien ya tenía cuenta ve una vez «¡Felicidades!», con sus 3 meses gratis y hasta qué día, y «Mira lo nuevo»,
+un pase de seis capturas de la app de verdad (`assets/novedades`). En Perfil, «Regalo hasta el…». **Te toca:** mirarlo y
+decir si va. Con tu sí lo paso a la app (la regla, el aviso antes de que termine y los términos). Lo último, como pediste
+(camino A): sacar la 1.1 de revisión, corregir la ficha («sigue gratis» ya no es cierto), armar la build 9 y mandarla de nuevo.
 
 La suscripción: **mandada a revisión el 21/11/2026** (lo pediste, sin build de prueba).
 - **Qué se mandó:** la versión 1.1.0 con la build 8, las dos suscripciones (anual y mensual) y su grupo, todo en un

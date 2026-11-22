@@ -268,6 +268,21 @@ para las suscripciones y el derecho a arrepentirse.
 5. Probar con la cuenta de sandbox (el paso 7).
 6. Publicar `docs/` con la fecha de ese día, y mandar la versión con los dos productos.
 
+## El regalo pasa a ser de 3 meses (22/11/2026, para aprobar)
+
+Lo pediste: quien ya tenía cuenta no la tiene gratis para siempre, sino **3 meses** («son amigos nada más»), con una
+bienvenida que lo diga y un pase de lo nuevo. En la galería (escenario `bienvenida`), para aprobar:
+
+- **La regla:** el regalo dura 3 meses desde el día en que Moss pasa a ser de pago (`PREMIUM_SALE`), igual para todos.
+  Después aparece la pantalla de pago, con sus 7 días de prueba, y Moss avisa unos días antes.
+- **La bienvenida**, una sola vez: «¡Felicidades! Usaste Moss mientras se hacía. Por eso tienes 3 meses completamente
+  gratis», una línea que se llena de hoy al último día, y «Mira lo nuevo» o «Ahora no».
+- **«Mira lo nuevo»:** seis capturas de la app de verdad, en es y en (`assets/novedades`): los widgets nuevos, copiar y
+  mover en Comida, la búsqueda, el sueño, tu energía y tus músculos con Ascent. Se vuelve a abrir desde Perfil › Tu
+  suscripción.
+- **Lo que cambia afuera de la app:** la cláusula «Si ya tenías cuenta» de los términos, y la ficha de la 1.1, que
+  dice «sigue gratis»: por eso el camino A (sacarla de revisión, corregir, build 9 y reenviar), que va al final.
+
 ## Cómo se mandó (21/11/2026)
 
 La 1.1.0 (build 8) fue a revisión el 21/11/2026 con las dos suscripciones y su grupo, por la API de la web de App

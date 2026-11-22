@@ -854,6 +854,33 @@ const pasos = {
     await pagina.evaluate(() => window.__aparato('reloj'));
     await sueno('noche', 0);
   },
+  // El regalo de 3 meses (22/11, para aprobar): la bienvenida de quien ya tenía cuenta, el pase «Mira lo nuevo» con
+  // sus seis capturas, el regalo en Perfil, y la bienvenida y la primera captura en inglés.
+  async bienvenida() {
+    const sub = (accion, arg) => pagina.evaluate(([a, x]) => { window.__suscripcion(a, x); }, [accion, arg]);
+    await seccion('pagoRegalo');
+    await pagina.waitForTimeout(700);
+    await foto('bienvenida-entrando');
+    await pagina.waitForTimeout(2600);
+    await foto('bienvenida');
+    for (let n = 0; n < 6; n++) {
+      await sub('novedad', n);
+      await pagina.waitForTimeout(700);
+      await foto(`bienvenida-nuevo-${n + 1}`);
+    }
+    await seccion('perfilRegalo');
+    await pagina.waitForTimeout(900);
+    await foto('bienvenida-perfil');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await seccion('pagoRegalo');
+    await pagina.waitForTimeout(3200);
+    await foto('bienvenida-ingles');
+    await sub('novedad', 0);
+    await pagina.waitForTimeout(700);
+    await foto('bienvenida-nuevo-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await pagina.evaluate(() => window.__suscripcion('cerrar'));
+  },
   // La noche de tu anillo (21/11, para aprobar): todavía no llegó, con la estimada o sin lo suficiente para estimarla,
   // y ya llegó; la estimada también en inglés.
   async anillo() {

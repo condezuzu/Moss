@@ -1201,6 +1201,7 @@
     perfilPrueba: () => { cerrarHojas(); suscripcion.poner('prueba', { tengo: 'anual' }); pestanas.ir(5); perfilSec.pintar(); suscripcion.abrirHoja(); },
     perfilActiva: () => { cerrarHojas(); suscripcion.poner('activa', { tengo: 'mensual' }); pestanas.ir(5); perfilSec.pintar(); suscripcion.abrirHoja(); },
     perfilCancelada: () => { cerrarHojas(); suscripcion.poner('activa', { tengo: 'anual', cancelada: true }); pestanas.ir(5); perfilSec.pintar(); suscripcion.abrirHoja(); },
+    regaloNovedades: () => { cerrarHojas(); suscripcion.poner('regalo'); suscripcion.abrir({ vista: 'novedades' }); },
     perfilRegalo: () => { cerrarHojas(); suscripcion.poner('regalo'); pestanas.ir(5); perfilSec.pintar(); suscripcion.abrirHoja(); },
     // Los widgets nuevos (D43).
     widgetsComida: () => { cerrarHojas(); widgets.ir('n-comida'); },

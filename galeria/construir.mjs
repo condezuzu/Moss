@@ -128,6 +128,12 @@ function tienda() {
   }).filter((c) => c.es || c.en);
   return { icono: jpeg('icono.jpg'), iconoRecibido: jpeg('icono-recibido.jpg'), capturas };
 }
+// Las capturas del pase «Mira lo nuevo» de la bienvenida (assets/novedades, las mismas que usa la app).
+function novedades() {
+  const carpeta = join(raiz, 'assets/novedades');
+  const de = (idioma) => Object.fromEntries(['widgets', 'comida', 'buscar', 'sueno', 'energia', 'musculos'].map((n) => [n, existsSync(join(carpeta, `${idioma}-${n}.jpg`)) ? 'data:image/jpeg;base64,' + readFileSync(join(carpeta, `${idioma}-${n}.jpg`)).toString('base64') : null]));
+  return { es: de('es'), en: de('en') };
+}
 const datosDeTienda = tienda();
 if (!datosDeTienda) console.warn('Sin capturas/tienda/vista (npm run tienda:capturas): la sección «Tienda» queda vacía.');
 
@@ -156,6 +162,7 @@ const js = [
   `const TEXTOS = ${json(textos)};`,
   `const ALIMENTOS = ${json(alimentos)};`,
   `const TIENDA = ${json(datosDeTienda)};`,
+  `const NOVEDADES = ${json(novedades())};`,
   `const REVISION = ${json(datosDeRevision)};`,
   `const FONDOS_WIDGETS = ${json(fondosDeWidgets())};`,
   modulo('Buscar', 'src/comida/buscar.ts'),
