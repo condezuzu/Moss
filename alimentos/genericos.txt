@@ -923,7 +923,7 @@ Salsa de queso | Cheese sauce | fndds:Cheese sauce | ¼ taza / ¼ cup=60 |
 Salsa holandesa | Hollandaise sauce | fndds:Hollandaise sauce | 1 cucharada / 1 tbsp=16 |
 Salsa de carne | Beef gravy | fndds:Gravy, beef | ¼ taza / ¼ cup=60 | jugo de carne · gravy | ml
 Aderezo César | Caesar dressing | fndds:Caesar dressing | 1 cucharada / 1 tbsp=15 | salsa césar
-Vinagreta | Vinaigrette | sr:Salad dressing, home recipe, vinegar and oil | 1 cucharada / 1 tbsp=15 | aderezo italiano | ml
+Vinagreta | Vinaigrette | sr:Salad dressing, home recipe, vinegar and oil | 1 cucharada / 1 tbsp=15 | vinagreta casera | ml
 Aderezo ranch | Ranch dressing | fndds:Ranch dressing | 1 cucharada / 1 tbsp=15 | ranch
 Aderezo de mostaza y miel | Honey mustard dressing | fndds:Honey mustard dressing | 1 cucharada / 1 tbsp=15.6 | salsa de miel y mostaza · honey mustard
 Mole | Mole sauce | fndds:Mole sauce | ¼ taza / ¼ cup=60 | mole poblano
@@ -990,7 +990,7 @@ Papas fritas | French fries | fndds:Potato, french fries, restaurant | 1 porció
 Ensalada de papas | Potato salad | sr:Potato salad with egg | ½ taza / ½ cup=125 | ensalada rusa* (AR UY CL PY) · ensaladilla rusa* (ES)
 Ensalada mixta | Mixed salad | fndds:Lettuce, salad with assorted vegetables including tomatoes and/or carrots, no dressing | 1 taza / 1 cup=73 | ensalada verde · ensalada de lechuga y tomate
 Ensalada César | Caesar salad | fndds:Caesar salad, with romaine, no dressing | 1 taza / 1 cup=79 |
-Sopa de verduras | Vegetable soup | fndds:Soup, vegetable | 1 plato / 1 bowl=300 | sopa de vegetales · caldo de verduras | ml
+Sopa de verduras | Vegetable soup | fndds:Soup, vegetable | 1 plato / 1 bowl=300 | sopa de vegetales | ml
 Sopa de pollo con fideos | Chicken noodle soup | fndds:Soup, chicken noodle | 1 plato / 1 bowl=300 | sopa de pollo | ml
 Sopa de lentejas | Lentil soup | fndds:Soup, lentil | 1 plato / 1 bowl=300 | guiso de lentejas · lentejas guisadas | ml
 Arroz con frijoles | Rice and beans | fndds:Beans and white rice | 1 taza / 1 cup=170 | gallo pinto* (CR NI) · moros y cristianos* (CU) · arroz con habichuelas* (PR DO) · casamiento* (SV) · arroz con porotos (AR UY CL)

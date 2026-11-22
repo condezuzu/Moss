@@ -42,6 +42,10 @@ const NO_CIERRAN: Record<string, string> = {
   'Chicle sin azúcar': 'polioles, de 2,4 kcal por gramo',
   'Polvo de hornear': 'carbohidratos que son sales',
   Stevia: 'el relleno que USDA cuenta sin calorías',
+  'Cacao en polvo alcalinizado': 'fibra y el alcalinizado',
+  'Polvo de hornear bajo en sodio': 'carbohidratos que son sales',
+  'Harina de algarroba': 'fibra que USDA cuenta casi sin calorías',
+  'Edulcorante de fruta del monje': 'el relleno que USDA cuenta sin calorías',
 };
 
 describe('cada alimento de la base', () => {

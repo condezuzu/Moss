@@ -1,0 +1,135 @@
+// Platos combinados que faltaban (22/11/2026, lo pediste: «el máximo de comidas posibles»): lo mexicano y lo latino
+// (burritos, tacos, enchiladas, quesadillas, tamales, nachos, pupusas, hallacas, arroces), el chili, los guisos, los
+// pasteles de carne con masa (pot pie), lo asiático y lo indio con arroz, y las comidas congeladas sin marca. El formato
+// es el de genericos.txt. Son variantes: al buscar salen después de lo de siempre (el burrito, los tacos, las enchiladas,
+// el tamal, el chili con carne y los guisos de siempre siguen en genericos.txt y mundo.txt).
+@variantes
+
+# platos
+// Burritos. «Burrito» (de carne con queso), el de pollo y el de desayuno están en genericos.txt y mundo.txt.
+Burrito de carne con frijoles y arroz | Beef, bean and rice burrito | fndds:Burrito, beef, with beans and rice, cheese | 1 unidad / 1 burrito=220 · 1 grande / 1 large=330 · 1 mini / 1 miniature=110 | burrito de carne con porotos y arroz* (AR UY CL) · burrito de carne con caraotas y arroz* (VE) · burrito de carne con habichuelas y arroz* (PR DO) · burrito de res con frijoles y arroz
+Burrito de carne con frijoles | Beef and bean burrito | fndds:Burrito, beef, with beans, cheese | 1 unidad / 1 burrito=220 · 1 grande / 1 large=330 · 1 mini / 1 miniature=110 | burrito de carne con porotos* (AR UY CL) · burrito de carne con caraotas* (VE) · burrito de carne con habichuelas* (PR DO) · burrito de res con frijoles
+Burrito de pollo con frijoles y arroz | Chicken, bean and rice burrito | fndds:Burrito, chicken, with beans and rice, cheese | 1 unidad / 1 burrito=220 · 1 grande / 1 large=330 · 1 mini / 1 miniature=110 | burrito de pollo con porotos y arroz* (AR UY CL) · burrito de pollo con caraotas y arroz* (VE) · burrito de pollo con habichuelas y arroz* (PR DO)
+Burrito de pollo con frijoles | Chicken and bean burrito | fndds:Burrito, chicken, with beans, cheese | 1 unidad / 1 burrito=220 · 1 grande / 1 large=330 · 1 mini / 1 miniature=110 | burrito de pollo con porotos* (AR UY CL) · burrito de pollo con caraotas* (VE) · burrito de pollo con habichuelas* (PR DO)
+Burrito de cerdo | Pork burrito | fndds:Burrito, pork, cheese | 1 unidad / 1 burrito=190 · 1 grande / 1 large=285 · 1 mini / 1 miniature=95 | burrito de carnitas · burrito al pastor · burrito de puerco (MX) · burrito de chancho (CL PE)
+Burrito de frijoles con queso | Bean and cheese burrito | fndds:Burrito, with beans, cheese | 1 unidad / 1 burrito=190 · 1 grande / 1 large=285 · 1 mini / 1 miniature=95 | burrito de porotos con queso* (AR UY CL) · burrito de caraotas con queso* (VE) · burrito de habichuelas con queso* (PR DO) · burrito de frijol con queso
+Burrito de frijoles y arroz | Bean and rice burrito | fndds:Burrito, with beans and rice, cheese | 1 unidad / 1 burrito=220 · 1 grande / 1 large=330 · 1 mini / 1 miniature=110 | burrito de porotos y arroz* (AR UY CL) · burrito de caraotas y arroz* (VE) · burrito de habichuelas y arroz* (PR DO)
+Burrito de frijoles y queso congelado | Frozen bean and cheese burrito | sr:Burrito, bean and cheese, frozen | 1 unidad / 1 burrito=129 | burrito de porotos y queso congelado* (AR UY CL) · burrito de caraotas y queso congelado* (VE) · burrito de habichuelas y queso congelado* (PR DO)
+// El congelado de carne, como se come: calentado en el microondas.
+Burrito de carne y frijoles congelado | Frozen beef and bean burrito | sr:Burrito, beef and bean, microwaved | 1 unidad / 1 burrito=116 | burrito de carne y porotos congelado* (AR UY CL) · burrito de carne y caraotas congelado* (VE) · burrito de carne y habichuelas congelado* (PR DO)
+Burrito de huevo con tocino | Egg and bacon burrito | fndds:Egg burrito, with bacon | 1 unidad / 1 burrito=190 | burrito de huevo con panceta* (AR UY) · burrito de huevo con beicon* (ES) · burrito de huevo con tocineta* (CO VE) · burrito de desayuno con tocino
+Burrito de huevo con jamón | Egg and ham burrito | fndds:Egg burrito, with ham | 1 unidad / 1 burrito=190 | burrito de desayuno con jamón
+Burrito bowl de pollo | Chicken burrito bowl | fndds:Burrito bowl, chicken, with beans and rice | 1 plato / 1 bowl=315 · 1 taza / 1 cup=120 | bowl de burrito de pollo · bowl de pollo con arroz y frijoles
+Burrito bowl de carne | Beef burrito bowl | fndds:Burrito bowl, beef or pork, with beans and rice | 1 plato / 1 bowl=315 · 1 taza / 1 cup=120 | bowl de burrito de carne · burrito bowl de res · burrito bowl de carnitas
+Burrito bowl vegetariano | Vegetarian burrito bowl | fndds:Burrito bowl, with beans | 1 plato / 1 bowl=225 · 1 taza / 1 cup=120 | burrito bowl de frijoles · bowl de burrito vegetariano
+Chimichanga de carne | Beef chimichanga | fndds:Chimichanga, meat | 1 unidad / 1 chimichanga=190 · 1 taza / 1 cup=120 | chimichanga de res | aceite=incluido
+Chimichanga de pollo | Chicken chimichanga | fndds:Chimichanga, chicken | 1 unidad / 1 chimichanga=190 · 1 taza / 1 cup=120 |  | aceite=incluido
+Chimichanga de frijoles | Bean chimichanga | fndds:Chimichanga, with beans | 1 unidad / 1 chimichanga=190 · 1 taza / 1 cup=120 | chimichanga de porotos* (AR UY CL) · chimichanga de caraotas* (VE) · chimichanga de habichuelas* (PR DO) | aceite=incluido
+
+// Enchiladas, quesadillas y tacos. Las de pollo, la de queso, los de carne, pollo y pescado están en genericos.txt y mundo.txt.
+Enchiladas de carne | Beef enchiladas | fndds:Enchilada, beef | 1 unidad / 1 enchilada=150 · 1 taza / 1 cup=170 | enchiladas de res · enchilada de carne · enchiladas de carne molida
+Enchiladas sin carne | Meatless enchiladas | fndds:Enchilada, no meat | 1 unidad / 1 enchilada=150 · 1 taza / 1 cup=170 | enchiladas de queso · enchiladas vegetarianas · enchilada de queso
+Quesadilla de carne | Beef quesadilla | fndds:Quesadilla, beef or pork | 1 unidad / 1 quesadilla=140 · ½ unidad / ½ quesadilla=70 · 1 triángulo / 1 wedge=35 | quesadilla de res · quesadilla con carne
+Quesadilla de pollo con verduras | Chicken and vegetable quesadilla | fndds:Quesadilla, chicken, with vegetables | 1 unidad / 1 quesadilla=160 · ½ unidad / ½ quesadilla=80 · 1 triángulo / 1 wedge=40 | quesadilla de pollo y verduras · quesadilla de pollo con pimientos
+Quesadilla de verduras | Vegetable quesadilla | fndds:Quesadilla, with vegetables | 1 unidad / 1 quesadilla=140 · ½ unidad / ½ quesadilla=70 · 1 triángulo / 1 wedge=35 | quesadilla vegetariana · quesadilla con verduras
+Quesadilla de huevo | Egg quesadilla | fndds:Quesadilla, egg | 1 unidad / 1 quesadilla=140 · ½ unidad / ½ quesadilla=70 · 1 triángulo / 1 wedge=35 | quesadilla con huevo · quesadilla de desayuno
+Tacos de carne con frijoles | Beef and bean tacos | fndds:Taco, corn tortilla, beef, with beans, cheese | 1 unidad / 1 taco=105 · 1 grande / 1 large=160 · 1 mini / 1 miniature=50 | tacos de carne con porotos* (AR UY CL) · tacos de carne con caraotas* (VE) · tacos de carne con habichuelas* (PR DO) · taco de carne con frijoles
+Tacos de frijoles | Bean tacos | fndds:Taco, corn tortilla, with beans, cheese | 1 unidad / 1 taco=105 · 1 grande / 1 large=160 · 1 mini / 1 miniature=50 | tacos de porotos* (AR UY CL) · tacos de caraotas* (VE) · tacos de habichuelas* (PR DO) · tacos de frijoles con queso · taco de frijoles
+Tacos de carne con tortilla de harina | Beef tacos with flour tortillas | fndds:Taco, flour tortilla, beef, cheese | 1 unidad / 1 taco=105 · 1 grande / 1 large=160 · 1 mini / 1 miniature=50 | tacos de harina de carne · taco suave de carne
+Tacos de pollo con tortilla de harina | Chicken tacos with flour tortillas | fndds:Taco, flour tortilla, chicken, cheese | 1 unidad / 1 taco=105 · 1 grande / 1 large=160 · 1 mini / 1 miniature=50 | tacos de harina de pollo · taco suave de pollo
+Flautas de carne | Beef flautas | fndds:Taquito, beef or pork | 3 unidades / 3 flautas=210 · 1 unidad / 1 flauta=70 · 1 grande / 1 large=105 | taquitos de carne · tacos dorados de carne · taquitos dorados de res | aceite=incluido
+Fajitas de camarones | Shrimp fajitas | fndds:Fajita, shrimp | 1 unidad / 1 fajita=95 · 1 taza / 1 cup=120 | fajitas de gambas* (ES) · fajita de camarones
+Fajitas de verduras | Vegetable fajitas | fndds:Fajita, vegetable | 1 unidad / 1 fajita=95 · 1 taza / 1 cup=120 | fajitas vegetarianas · fajita de verduras
+Ensalada de taco con carne | Beef taco salad | fndds:Taco or tostada salad with meat | 1 mediana / 1 medium=315 · 1 chica / 1 small=237 · 1 grande / 1 large=393 · 1 taza / 1 cup=122 | taco salad de carne · ensalada tostada de carne
+Ensalada de taco con pollo | Chicken taco salad | fndds:Taco or tostada salad with chicken | 1 mediana / 1 medium=320 · 1 chica / 1 small=240 · 1 grande / 1 large=400 · 1 taza / 1 cup=122 | taco salad de pollo · ensalada tostada de pollo
+Ensalada de taco vegetariana | Meatless taco salad | fndds:Taco or tostada salad, meatless | 1 mediana / 1 medium=311 · 1 chica / 1 small=234 · 1 grande / 1 large=388 · 1 taza / 1 cup=122 | ensalada de taco sin carne · taco salad vegetariana
+
+// Tamales, nachos y otros. «Tamal» y los nachos con queso o carne están en genericos.txt y mundo.txt; USDA da el de pollo
+// y el de cerdo con los mismos valores que el tamal de siempre.
+Tamal de pollo | Chicken tamale | fndds:Tamale, chicken | 1 unidad / 1 tamale=140 · 1 taza / 1 cup=170 | tamales de pollo
+Tamal de cerdo | Pork tamale | fndds:Tamale, pork | 1 unidad / 1 tamale=140 · 1 taza / 1 cup=170 | tamales de cerdo · tamal de puerco (MX) · tamal de chancho (CL PE)
+Tamal sin carne | Meatless tamale | fndds:Tamale, no meat | 1 unidad / 1 tamale=140 · 1 taza / 1 cup=170 | tamal de rajas con queso · tamal de queso · tamal vegetariano
+Tamal dulce | Sweet tamale | fndds:Tamale, sweet | 1 unidad / 1 tamale=35 · 1 porción / 1 serving=70 | tamales dulces · tamal de dulce
+Pastel de tamal | Tamale pie | fndds:Tamale casserole with meat | 1 taza / 1 cup=250 | tamale pie · cazuela de tamal · tamal de cazuela
+Nachos con pollo | Chicken nachos | fndds:Nachos, chicken | 1 porción / 1 order=250 · 1 taza / 1 cup=135 | nachos de pollo
+Nachos con frijoles | Bean nachos | fndds:Nachos, with beans | 1 porción / 1 order=250 · 1 taza / 1 cup=135 | nachos con porotos* (AR UY CL) · nachos con caraotas* (VE) · nachos con habichuelas* (PR DO) · nachos con frijoles refritos
+Nachos con carne y frijoles | Nachos with beef and beans | fndds:Nachos, beef or pork, with beans | 1 porción / 1 order=250 · 1 taza / 1 cup=135 | nachos con carne y porotos* (AR UY CL) · nachos con carne y caraotas* (VE) · nachos con carne y habichuelas* (PR DO)
+Chiles rellenos de carne | Meat and cheese stuffed peppers | fndds:Chiles rellenos, filled with meat and cheese | 1 unidad / 1 pepper=143 · 1 taza / 1 cup=176 | chile relleno de carne · chiles rellenos de picadillo · chile poblano relleno de carne | aceite=incluido
+Relleno de tacos de carne | Beef taco filling | fndds:Beef taco filling: beef, cheese, tomato, taco sauce | 1 taza / 1 cup=204 · 1 porción / 1 serving=153 | carne para tacos · carne molida para tacos · carne picada para tacos
+Arroz rojo con carne molida | Tomato rice with ground beef | fndds:Spanish rice with ground beef | 1 taza / 1 cup=230 · 1 porción / 1 serving=173 | arroz rojo con carne picada* (AR UY ES PY) · arroz con tomate y carne molida
+Arroz rojo de restaurante | Restaurant tomato rice | fndds:Spanish rice, from restaurant | 1 taza / 1 cup=243 · 1 porción / 1 serving=182 | arroz con tomate de restaurante
+Pupusa de chicharrón | Pork pupusa | fndds:Pupusa, meat | 1 unidad / 1 pupusa=130 · 1 taza / 1 cup=170 | pupusa de carne · pupusa de chicharrón con queso
+Pupusa revuelta | Pork, bean and cheese pupusa | fndds:Pupusa, meat, with beans | 1 unidad / 1 pupusa=130 · 1 taza / 1 cup=170 | pupusa de chicharrón, frijol y queso · pupusa de carne y frijoles
+Empanada de carne con verduras | Beef and vegetable empanada | fndds:Empanada, beef, with vegetables | 1 unidad / 1 empanada=130 · 1 chica / 1 small=35 · 1 porción / 1 serving=105 | empanada de carne y papa · empanada de res con verduras
+Empanada de pollo con verduras | Chicken and vegetable empanada | fndds:Empanada, chicken, with vegetables | 1 unidad / 1 empanada=130 · 1 chica / 1 small=35 · 1 porción / 1 serving=105 | empanada de pollo y papa · empanada de pollo con papas
+
+// El Caribe: arroces y masas. Los de USDA que dicen «Puerto Rican style», con nombre neutro.
+Hallaca | Hallaca | fndds:Hayacas, Puerto Rican style | 1 unidad / 1 hallaca=95 | hallacas · hayaca · hayacas
+Pasteles en hoja | Plantain pasteles | fndds:Puerto Rican pasteles | 1 unidad / 1 pastel=149 | pastel en hoja · pasteles de masa · pasteles de plátano
+Bacalaítos | Salt cod fritters | fndds:Bacalaitos fritos | 1 unidad / 1 fritter=35 · 1 porción / 1 serving=85 | bacalaitos · frituras de bacalao · buñuelos de bacalao · tortitas de bacalao frito | aceite=incluido
+Arroz con chorizo | Rice with chorizo | fndds:Rice with Spanish sausage, Puerto Rican style | 1 taza / 1 cup=180 · 1 porción / 1 serving=112
+Arroz con calamares | Rice with squid | fndds:Rice with squid, Puerto Rican style | 1 taza / 1 cup=160 · 1 porción / 1 serving=120 | arroz con calamar
+Arroz con salchichas | Rice with Vienna sausages | fndds:Rice with vienna sausage, Puerto Rican style | 1 taza / 1 cup=180 · 1 porción / 1 serving=112 | arroz con vienesas* (UY CL) · arroz con salchichitas
+Arroz guisado con sofrito | Rice stewed with sofrito | fndds:Stewed rice, Puerto Rican style | 1 taza / 1 cup=170 · 1 porción / 1 serving=127 | arroz con sofrito
+Arroz con frijoles y carne | Rice and beans with meat | fndds:Beans and rice, with meat | 1 taza / 1 cup=170 | arroz con porotos y carne* (AR UY CL) · arroz con caraotas y carne* (VE) · arroz con habichuelas y carne* (PR DO)
+Frijoles con carne | Beans with meat | fndds:Beans with meat, NS as to type | 1 taza / 1 cup=260 · 1 porción / 1 serving=130 | porotos con carne* (AR UY CL) · caraotas con carne* (VE) · habichuelas con carne* (PR DO) · frijoles charros
+Frijoles con salchichas | Beans and franks | fndds:Beans and franks | 1 taza / 1 cup=260 · 1 porción / 1 serving=130 | porotos con salchichas* (AR UY CL) · caraotas con salchichas* (VE) · habichuelas con salchichas* (PR DO) · frijoles con salchicha
+
+// Chili. «Chili con carne» (en lata, con frijoles), el de pollo y el vegetariano están en genericos.txt y las familias.
+Chili con carne casero | Homemade chili con carne | fndds:Chili with meat and beans | 1 taza / 1 cup=255 | chili con carne y frijoles · chili con carne hecho en casa
+Chili con carne sin frijoles | Chili con carne without beans | fndds:Chili with meat | 1 taza / 1 cup=255 | chili con carne sin porotos* (AR UY CL) · chili con carne sin caraotas* (VE) · chili con carne sin habichuelas* (PR DO) · chili sin frijoles
+Chili con carne de restaurante | Restaurant chili con carne | fndds:Chili with meat, from restaurant | 1 taza / 1 cup=255 | chili de restaurante
+Chili sin frijoles en lata | Canned chili without beans | sr:Chili, no beans, canned entree | 1 taza / 1 cup=240 | chili sin porotos en lata* (AR UY CL) · chili sin caraotas en lata* (VE) · chili sin habichuelas en lata* (PR DO) · chili enlatado sin frijoles
+
+// Guisos. Los de carne, pollo, cerdo, cordero y verduras están en mundo.txt y las familias. Los «pot pie» son pasteles de
+// carne con tapa de masa, en una sola porción o en tajadas.
+Guiso de pescado | Fish stew | fndds:Stew, fish | 1 taza / 1 cup=255 | estofado de pescado* (ES CL PE) · guisado de pescado
+Pollo con bolitas de masa | Chicken and dumplings | fndds:Chicken or turkey with dumplings | 1 taza / 1 cup=244 | chicken and dumplings · pollo con dumplings · guiso de pollo con bolitas de masa
+Jambalaya | Jambalaya | fndds:Jambalaya with meat and rice | 1 taza / 1 cup=244 · 1 porción / 1 serving=305 | jambalaya de pollo y salchicha · arroz jambalaya
+Camarones a la criolla con arroz | Shrimp creole with rice | fndds:Shrimp creole, with rice | 1 taza / 1 cup=243 · 1 porción / 1 serving=304 | gambas a la criolla con arroz* (ES) · camarones en salsa criolla con arroz
+Pastel de pollo | Chicken pot pie | fndds:Pot pie, chicken | 1 pastel individual / 1 individual pie=250 · 1 porción / 1 slice=210 · 1 taza / 1 cup=200 | pot pie de pollo · pay de pollo · pastel de pollo con verduras
+Pastel de res | Beef pot pie | fndds:Pot pie, beef | 1 pastel individual / 1 individual pie=250 · 1 porción / 1 slice=210 · 1 taza / 1 cup=200 | pot pie de carne · pay de carne · pastel de carne y verduras
+Pastel de verduras | Vegetable pot pie | fndds:Pot pie, no meat | 1 pastel individual / 1 individual pie=250 · 1 porción / 1 slice=210 · 1 taza / 1 cup=200 | pot pie de verduras · pay de verduras · pastel vegetariano
+Pastel de pollo congelado | Frozen chicken pot pie | sr:Chicken pot pie, frozen entree, prepared | 1 unidad / 1 pie=302 | pot pie de pollo congelado · pay de pollo congelado
+Pastel de res congelado | Frozen beef pot pie | sr:Beef Pot Pie, frozen entree, prepared | 1 unidad / 1 pie=268 | pot pie de carne congelado · pay de carne congelado
+Knish | Knish | fndds:Knish | 1 unidad / 1 knish=60 | knish de papa · knishes
+
+// Asia. Los rollitos, dumplings, curries y salteados de siempre están en mundo.txt y las familias. USDA da los rollitos de
+// pollo y de camarones casi igual que el de carne: van aparte porque se piden así.
+Rollito primavera de pollo | Chicken egg roll | fndds:Egg roll, with chicken or turkey | 1 unidad / 1 egg roll=64 · 1 mini / 1 miniature=13 | rollito de primavera de pollo* (ES) · rollo primavera de pollo* (MX) · arrollado primavera de pollo* (AR UY) · egg roll de pollo | aceite=incluido
+Rollito primavera de camarones | Shrimp egg roll | fndds:Egg roll, with shrimp | 1 unidad / 1 egg roll=64 · 1 mini / 1 miniature=13 | rollito de primavera de gambas* (ES) · rollo primavera de camarón* (MX) · arrollado primavera de camarones* (AR UY) · egg roll de camarones | aceite=incluido
+Rollito primavera de verduras | Vegetable egg roll | fndds:Egg roll, meatless | 1 unidad / 1 egg roll=64 · 1 mini / 1 miniature=13 | rollito de primavera de verduras* (ES) · rollo primavera de verduras* (MX) · arrollado primavera de verduras* (AR UY) · egg roll vegetariano · rollito primavera vegetariano | aceite=incluido
+Rollito primavera de verduras congelado | Frozen vegetable egg roll | sr:Egg rolls, vegetable, frozen, prepared | 1 unidad / 1 egg roll=68 | rollito de primavera de verduras congelado* (ES) · rollo primavera de verduras congelado* (MX) · arrollado primavera de verduras congelado* (AR UY)
+Dumplings de verduras | Vegetable dumplings | fndds:Dumpling, no meat | 6 unidades / 6 pieces=150 · 1 unidad / 1 piece=25 · 1 taza / 1 cup=75 | gyozas de verduras · dim sum de verduras · dumplings vegetarianos
+Bao de carne | Meat bao bun | fndds:Bao bun | 1 unidad / 1 bun=100 | bao de cerdo · baozi de cerdo · siopao
+Bao de verduras | Vegetable bao bun | fndds:Bao bun, no meat | 1 unidad / 1 bun=100 | bao vegetariano · bao sin carne
+Cerdo moo shu | Moo shu pork | fndds:Moo Shu pork, without Chinese pancake | 1 taza / 1 cup=151 · 1 porción / 1 serving=113 | moo shu de cerdo · mu shu de cerdo
+Cerdo agridulce con arroz | Sweet and sour pork with rice | fndds:Sweet and sour pork with rice | 1 taza / 1 cup=244 | cerdo en salsa agridulce con arroz · chancho agridulce con arroz (CL PE) · puerco agridulce con arroz (MX) | aceite=incluido
+Pollo salteado con verduras y arroz | Chicken stir-fry with rice | fndds:Chicken or turkey, rice, and vegetables including carrots, broccoli, and/or dark-green leafy; soy-based sauce | 1 taza / 1 cup=217 | stir fry de pollo con arroz · pollo con verduras y arroz en salsa de soja · salteado de pollo con arroz
+Carne salteada con verduras y arroz | Beef stir-fry with rice | fndds:Beef, rice, and vegetables including carrots, broccoli, and/or dark-green leafy; soy-based sauce | 1 taza / 1 cup=217 | stir fry de carne con arroz · carne con verduras y arroz en salsa de soja · res salteada con verduras y arroz
+Cerdo salteado con verduras y arroz | Pork stir-fry with rice | fndds:Pork, rice, and vegetables including carrots, broccoli, and/or dark-green leafy; soy-based sauce | 1 taza / 1 cup=217 | stir fry de cerdo con arroz · chancho salteado con verduras y arroz (CL PE) · puerco salteado con verduras y arroz (MX)
+Pollo en salsa de soja con arroz | Chicken and rice in soy sauce | fndds:Chicken or turkey and rice with soy-based sauce | 1 taza / 1 cup=244 | pollo en salsa de soya con arroz* (MX CO VE) · pollo en sillao con arroz* (PE) · pollo teriyaki con arroz · bowl de pollo teriyaki
+Carne en salsa de soja con arroz | Beef and rice in soy sauce | fndds:Beef and rice with soy-based sauce | 1 taza / 1 cup=244 | carne en salsa de soya con arroz* (MX CO VE) · carne en sillao con arroz* (PE) · bulgogi con arroz · carne teriyaki con arroz
+Adobo con arroz | Adobo with rice | fndds:Adobo, with rice | 1 taza / 1 cup=244 | adobo de pollo con arroz · adobo de cerdo con arroz
+Congee con carne | Congee with meat | fndds:Congee, with meat, poultry, and/or seafood | 1 taza / 1 cup=255 | congee de pollo · congee de cerdo · jook · gachas de arroz con carne
+
+// India. El curry de pollo, de res, de pescado y de verduras, el dal, la samosa y el biryani de pollo o de verduras están
+// en mundo.txt y las familias.
+Pollo al curry con arroz | Chicken curry with rice | fndds:Chicken curry with rice | 1 taza / 1 cup=200 | curry de pollo con arroz · pollo en curry con arroz
+Curry de res con arroz | Beef curry with rice | fndds:Beef curry with rice | 1 taza / 1 cup=200 | carne al curry con arroz · curry de ternera con arroz* (ES)
+Curry de pescado con arroz | Fish curry with rice | fndds:Fish curry with rice | 1 taza / 1 cup=200 | pescado al curry con arroz · pescado en curry con arroz
+Curry de lentejas | Lentil curry | fndds:Lentil curry | 1 taza / 1 cup=240 | lentejas en curry
+Biryani de carne | Meat biryani | fndds:Biryani with meat | 1 taza / 1 cup=196 · 1 porción / 1 serving=245 | biryani de cordero · biryani de res · arroz biryani con carne
+Pakora | Pakora | fndds:Pakora | 1 porción / 1 serving=48 · 1 unidad / 1 pakora=12 | pakoras · bhaji | aceite=incluido
+Sambar | Sambar | fndds:Sambar, vegetable stew | 1 taza / 1 cup=248 · 1 porción / 1 serving=124 | sambhar
+
+// Comidas congeladas, sin marca: la bandeja con la carne, la guarnición y la verdura.
+Comida congelada | Frozen dinner | fndds:Frozen dinner, NFS | 1 bandeja / 1 meal=312 | cena congelada · plato congelado · comida congelada de carne · TV dinner
+Comida congelada de pollo | Frozen chicken dinner | fndds:Chicken dinner, NFS, frozen meal | 1 bandeja / 1 meal=312 | cena congelada de pollo · plato congelado de pollo
+Comida congelada de pollo frito | Frozen fried chicken dinner | fndds:Chicken, fried, with potatoes, vegetable, frozen meal | 1 bandeja / 1 meal=312 | cena congelada de pollo frito · pollo frito con papas congelado | aceite=incluido
+Comida congelada de pavo con relleno | Frozen turkey dinner with stuffing | fndds:Turkey with gravy, dressing, potatoes, vegetable, frozen meal | 1 porción / 1 serving=262 | cena congelada de pavo · pavo con relleno congelado · plato congelado de pavo
+Comida congelada de pan de carne | Frozen meatloaf dinner | fndds:Meat loaf with potatoes, vegetable, frozen meal | 1 porción / 1 serving=312 | cena congelada de pan de carne · pan de carne con puré congelado
+Comida congelada de pescado | Frozen fish dinner | fndds:Fish in lemon-butter sauce with starch item, vegetable, frozen meal | 1 bandeja / 1 meal=284 | cena congelada de pescado · pescado en salsa de limón congelado
+Comida congelada de nuggets | Frozen chicken nugget dinner | fndds:Chicken patty, or nuggets, boneless, breaded, potatoes, vegetable, frozen meal | 1 porción / 1 serving=191 | cena congelada de nuggets · nuggets con papas congelados | aceite=incluido
+Comida congelada light de pollo con arroz | Light frozen chicken and rice dinner | fndds:Chicken with rice and vegetable, diet frozen meal | 1 bandeja / 1 meal=241 | comida congelada dietética de pollo · pollo con arroz y verduras congelado light
+Bowl de arroz con pollo congelado | Frozen chicken rice bowl | sr:Rice bowl with chicken, frozen entree, prepared (includes fried, teriyaki, and sweet and sour varieties) | 1 envase / 1 bowl=340 | bowl de pollo teriyaki congelado · bowl de pollo agridulce congelado

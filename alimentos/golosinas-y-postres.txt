@@ -1,0 +1,123 @@
+// Más golosinas, azúcares y postres fríos (22/11/2026, lo pediste: «el máximo de comidas posibles»): los
+// chocolates por su porcentaje de cacao y las barras rellenas sin marca, los caramelos y gomitas que faltaban,
+// los endulzantes líquidos y los azúcares especiales, los jarabes, las mermeladas sin azúcar, los glaseados y las
+// salsas para postres, los pudines de sobre de cada sabor, la tapioca y los helados de agua. El formato es el de
+// genericos.txt. Son variantes: al buscar salen después de lo de siempre (el chocolate, la mermelada, el flan…).
+@variantes
+
+# dulces
+// Chocolates. «Chocolate amargo» está en genericos.txt: da lo mismo que el de 45 a 59 % de cacao de SR Legacy,
+// que por eso no va.
+Chocolate amargo 60-69 % cacao | Dark chocolate 60-69% cacao | sr:Chocolate, dark, 60-69% cacao solids | 20 g / 20 g=20 · 1 barra / 1 bar=112 | chocolate negro 60-69 % cacao* (ES) · chocolate 60 % · chocolate 65 % · chocolate amargo 60 %
+Chocolate amargo 70-85 % cacao | Dark chocolate 70-85% cacao | sr:Chocolate, dark, 70-85% cacao solids | 20 g / 20 g=20 · 1 barra / 1 bar=101 | chocolate negro 70-85 % cacao* (ES) · chocolate 70 % · chocolate 85 % · chocolate amargo 70 % · chocolate intenso
+Chocolate amargo con frutos secos | Dark chocolate with nuts | fndds:Dark chocolate candy with nuts | 20 g / 20 g=20 · 1 barra / 1 bar=45 · 1 barra grande / 1 large bar=90 | chocolate negro con frutos secos* (ES) · chocolate amargo con almendras · chocolate amargo con avellanas
+Chocolate sin azúcar | Sugar-free chocolate | fndds:Chocolate candy, sugar free | 1 porción / 1 serving=30 · 1 unidad / 1 piece=15 · 1 paquete / 1 package=45 | chocolate diet · chocolate con edulcorante · chocolate sin azúcar añadida
+Chocolate para repostería sin azúcar | Unsweetened baking chocolate | sr:Baking chocolate, unsweetened, squares | 1 cuadrado / 1 square=29 · 1 taza rallado / 1 cup grated=132 | chocolate 100 % cacao · chocolate amargo para hornear · chocolate sin azúcar para cocinar
+// El chocolate de mesa es el de tableta para preparar en taza (con azúcar y canela).
+Chocolate de mesa | Drinking chocolate tablet | sr:Baking chocolate, mexican, squares | 1 tableta / 1 tablet=20 | chocolate mexicano · chocolate en tableta para taza · chocolate para bebida
+Barra de algarroba sin azúcar | Unsweetened carob bar | sr:Candies, carob, unsweetened | 30 g / 30 g=30 · 1 barra / 1 bar=87 | chocolate de algarroba · algarroba en barra
+Granos de café cubiertos de chocolate | Chocolate-covered coffee beans | sr:Candies, dark chocolate coated coffee beans | 1 porción / 1 serving=40 | granos de café con chocolate · café bañado en chocolate
+
+// Barras y bombones rellenos, sin marca.
+Chocolate relleno de caramelo | Caramel-filled chocolate | fndds:Chocolate candy, caramel filled | 1 barra / 1 bar=45 · 1 barra mini / 1 fun size=15 · 1 unidad / 1 piece=8 | chocolate con caramelo · bombón de chocolate con caramelo
+Barra de chocolate con caramelo y maní | Chocolate bar with caramel and peanuts | fndds:Chocolate candy, caramel filled with nuts | 1 barra / 1 bar=45 · 1 barra mini / 1 bite size=10 · 1 barra grande / 1 king size=90 | barra de chocolate con caramelo y cacahuate* (MX GT HN SV) · barra de chocolate con caramelo y cacahuete* (ES) · chocolate con caramelo y maní
+Barra de chocolate rellena de nougat | Nougat-filled chocolate bar | fndds:Chocolate candy, nougat filled | 1 barra / 1 bar=55 · 1 barra mini / 1 fun size=15 · 1 barra grande / 1 king size=110 | chocolate con nougat
+Barra de chocolate con nougat y maní | Chocolate bar with nougat and peanuts | fndds:Chocolate candy, nougat filled with nuts | 1 barra / 1 bar=55 · 1 barra mini / 1 fun size=15 · 1 barra grande / 1 king size=110 | barra de chocolate con nougat y cacahuate* (MX GT HN SV) · barra de chocolate con nougat y cacahuete* (ES) · chocolate con nougat y maní
+Chocolate relleno de coco | Coconut-filled chocolate | fndds:Chocolate candy, coconut filled | 1 barra / 1 bar=45 · 1 barra mini / 1 fun size=15 · 1 barra grande / 1 king size=90 | barra de chocolate con coco · bombón de coco
+Barra de chocolate con galleta | Cookie-filled chocolate bar | fndds:Chocolate candy, cookie filled | 1 barra / 1 bar=45 · 1 barra mini / 1 fun size=15 · 1 barra grande / 1 king size=90 | barra de chocolate con galletita* (AR UY) · chocolate con galleta · chocolate con oblea
+Chocolate relleno de mantequilla de maní | Peanut butter-filled chocolate | fndds:Chocolate candy, peanut butter filled | 1 paquete / 1 pack=45 · 1 unidad / 1 piece=8 · 1 mini / 1 miniature=10 | chocolate relleno de crema de cacahuate* (MX) · chocolate relleno de crema de cacahuete* (ES) · chocolate relleno de pasta de maní* (AR UY) · copas de chocolate con mantequilla de maní
+Confites de chocolate con maní | Peanut candy-coated chocolates | fndds:Chocolate candy, candy shell with nuts | 1 paquete / 1 pouch=45 · 1 paquete mini / 1 fun size=15 · 1 unidad / 1 piece=2 | confites de chocolate con cacahuate* (MX GT HN SV) · confites de chocolate con cacahuete* (ES) · chocolates confitados con maní
+
+// Fudge.
+Fudge de chocolate | Chocolate fudge | fndds:Chocolate candy, fudge | 1 trozo / 1 piece=30 | fudge de chocolate casero · dulce de chocolate tipo fudge
+Fudge de chocolate con nueces | Chocolate fudge with nuts | sr:Candies, fudge, chocolate, with nuts, prepared-from-recipe | 30 g / 30 g=30 | fudge con nueces
+Fudge de vainilla | Vanilla fudge | sr:Candies, fudge, vanilla, prepared-from-recipe | 30 g / 30 g=30 | fudge blanco
+Fudge de mantequilla de maní | Peanut butter fudge | sr:Candies, fudge, peanut butter, prepared-from-recipe | 1 trozo / 1 piece=16 | fudge de crema de cacahuate* (MX) · fudge de crema de cacahuete* (ES) · fudge de pasta de maní* (AR UY) · fudge de maní
+
+// Caramelos, gomitas y otras golosinas.
+Caramelos sin azúcar | Sugar-free hard candy | fndds:Candy, non chocolate, sugar free | 1 unidad / 1 piece=5 · 1 porción / 1 serving=15 | caramelos duros sin azúcar · caramelos diet · caramelos con edulcorante
+Caramelos de mantequilla | Butterscotch candy | sr:Candies, butterscotch | 3 unidades / 3 pieces=16 · 30 g / 30 g=30 | caramelos de manteca* (AR UY PY) · butterscotch
+Toffee de mantequilla | English toffee | sr:Candies, toffee, prepared-from-recipe | 1 unidad / 1 piece=12 | toffee de manteca* (AR UY PY) · toffee inglés · caramelo crocante de mantequilla
+Caramelos masticables de chocolate | Chocolate chewy candy | sr:Candies, caramels, chocolate-flavor roll | 1 unidad / 1 piece=6.6 · 6 unidades / 6 pieces=40 · 1 barra / 1 bar=64 | masticables de chocolate · rollitos de chocolate masticables
+Confites de fruta | Fruit-flavored candy pieces | fndds:Candy, fruit flavored pieces | 1 paquete / 1 pouch=60 · 1 paquete mini / 1 bite size=15 · 1 unidad / 1 piece=2 | pastillas masticables de fruta · caramelos masticables de fruta · confites masticables
+Gomitas de fruta | Fruit snacks | fndds:Candy, fruit snacks | 1 sobre / 1 pouch=30 · 1 sobre mini / 1 fun size=15 · 1 unidad / 1 piece=2 | gominolas de fruta* (ES) · fruit snacks · gomitas de fruta en sobre
+Gomitas sin azúcar | Sugar-free gummy candy | sr:Candies, gum drops, no sugar or low calorie (sorbitol) | 1 unidad / 1 piece=5 · 1 taza / 1 cup=182 | gominolas sin azúcar* (ES) · ositos de goma sin azúcar · gomitas diet
+Jelly beans | Jelly beans | sr:Candies, jellybeans | 10 unidades / 10 jelly beans=11 · 10 grandes / 10 large=28 | grageas de goma · caramelos jelly beans
+Regaliz | Licorice | fndds:Candy, licorice | 1 tira / 1 stick=10 · 1 unidad / 1 piece=5 · 1 paquete / 1 pouch=60 | tiras de regaliz · caramelos de regaliz
+Lámina de fruta | Fruit leather | fndds:Candy, fruit leather | 1 unidad / 1 piece=10 · 1 paquete / 1 pouch=15 | rollo de fruta · fruta enrollada · láminas de fruta
+Dulce de tamarindo | Tamarind candy | sr:Candies, Tamarind | 1 porción / 1 serving=14 | caramelo de tamarindo · pulpa de tamarindo con azúcar
+Barra de coco | Coconut candy bar | sr:Candies, coconut bar, not chocolate covered | 1 barra / 1 bar=47 | cocada · golosina de coco
+Barra de maní | Peanut bar | sr:Candies, peanut bar | 1 barra / 1 bar=45 · 30 g / 30 g=30 | barra de cacahuate* (MX GT HN SV) · barra de cacahuete* (ES) · barrita de maní
+Crocante de sésamo | Sesame crunch | sr:Candies, sesame crunch | 20 unidades / 20 pieces=35 · 1 unidad / 1 piece=1.8 · 30 g / 30 g=30 | crocante de ajonjolí* (MX CO VE) · palanqueta de ajonjolí · barrita de sésamo
+Halva | Halva | sr:Candies, halavah, plain | 30 g / 30 g=30 | halvá · halawa · dulce de sésamo
+Fondant | Fondant | sr:Candies, fondant, prepared-from-recipe | 30 g / 30 g=30 | pasta de azúcar · fondant para tortas
+Pasta de almendras | Almond paste | fndds:Almond paste | 1 porción / 1 serving=14 · 1 taza / 1 cup=227 | pasta de almendra · pasta de almendras para repostería
+
+// Azúcares y endulzantes. Azúcar, morena, en polvo, edulcorante en polvo, stevia y sacarina están en genericos.txt.
+Azúcar turbinado | Turbinado sugar | sr:Sugar, turbinado | 1 cucharadita / 1 tsp=4.6 · 1 taza / 1 cup=202 | azúcar demerara · azúcar de caña sin refinar
+Azúcar con canela | Cinnamon sugar | fndds:Sugar, cinnamon | 1 cucharadita / 1 tsp=4.2 · 1 porción / 1 serving=8 | azúcar y canela · canela con azúcar
+Mezcla de azúcar y edulcorante | Sugar and sweetener blend | fndds:Sugar substitute and sugar blend | 1 cucharadita / 1 tsp=2 · 1 porción / 1 serving=4 | azúcar light · azúcar con edulcorante · azúcar con sucralosa
+Fructosa | Fructose | sr:Sweeteners, tabletop, fructose, dry, powder | 1 cucharadita / 1 tsp=4.2 · 1 sobre / 1 packet=3 | fructosa en polvo · azúcar de fruta
+Aspartamo | Aspartame | fndds:Sugar substitute, aspartame, powder | 1 sobre / 1 packet=1 · 1 pastilla / 1 tablet=0.1 · 1 cucharadita / 1 tsp=3.5 | aspartame · edulcorante de aspartamo
+Edulcorante de fruta del monje | Monk fruit sweetener | fndds:Sugar substitute, monk fruit, powder | 1 sobre / 1 packet=0.8 · 1 cucharadita / 1 tsp=0.5 | fruta del monje · monk fruit · luo han guo
+// Los líquidos se miden en gotas o cucharaditas; USDA no trae su taza, así que van sin «ml».
+Edulcorante líquido | Liquid sweetener | fndds:Sugar substitute, liquid, NFS | 1 gota / 1 drop=0.1 · 1 cucharadita / 1 tsp=5 · 1 porción / 1 serving=1 | endulzante líquido · gotas de edulcorante
+Sacarina líquida | Liquid saccharin | fndds:Sugar substitute, saccharin, liquid | 1 gota / 1 drop=0.1 · 1 cucharadita / 1 tsp=5 · 1 porción / 1 serving=1 | gotas de sacarina
+Stevia líquida | Liquid stevia | fndds:Sugar substitute, stevia, liquid | 1 gota / 1 drop=0.1 · 1 cucharadita / 1 tsp=5 · 1 porción / 1 serving=0.6 | estevia líquida · gotas de stevia
+
+// Jarabes. Lo que tiene la taza en USDA lleva «ml». Arce, agave, maíz y melaza están en genericos.txt.
+Jarabe para pancakes | Pancake syrup | sr:Syrups, table blends, pancake | 1 cucharada / 1 tbsp=20 · 1 taza / 1 cup=314 | miel para hot cakes* (MX) · sirope para tortitas* (ES) · jarabe sabor maple · jarabe para waffles | ml
+Jarabe para pancakes light | Light pancake syrup | sr:Syrups, table blends, pancake, reduced-calorie | 1 cucharada / 1 tbsp=15 · ¼ taza / ¼ cup=73 · 1 taza / 1 cup=240 | miel para hot cakes light* (MX) · sirope para tortitas light* (ES) · jarabe para pancakes reducido en calorías | ml
+Jarabe sin azúcar | Sugar-free syrup | sr:Syrups, sugar free | 1 cucharada / 1 tbsp=15 · 1 taza / 1 cup=240 | sirope sin azúcar · jarabe diet · jarabe para pancakes sin azúcar | ml
+Jarabe de arándanos | Blueberry syrup | fndds:Blueberry syrup | 1 cucharada / 1 tbsp=20 · 1 porción / 1 serving=40 · 1 taza / 1 cup=320 | jarabe de mora azul* (MX) · sirope de arándanos | ml
+Almíbar | Simple syrup | fndds:Simple syrup | 1 cucharada / 1 tbsp=20 · 1 porción / 1 serving=40 · 1 taza / 1 cup=320 | jarabe simple · almíbar simple · jarabe de azúcar | ml
+Granadina | Grenadine | sr:Syrups, grenadine | 1 cucharada / 1 tbsp=20 · 1 cucharadita / 1 tsp=6.7 | jarabe de granadina · sirope de granadina
+Jarabe de caña | Cane syrup | sr:Syrup, Cane | 1 porción / 1 serving=21 | sirope de caña · melado de caña
+
+// Para untar. Mermelada, mermelada light, jalea, de albaricoque y de naranja están en genericos.txt.
+Mermelada sin azúcar | Sugar-free jam | fndds:Jam or jelly, sugar free | 1 cucharada / 1 tbsp=20 · 1 sobre / 1 individual packet=14 | mermelada con edulcorante · mermelada diet · jalea sin azúcar
+Mermelada endulzada con jugo de fruta | Fruit-juice-sweetened jam | fndds:Jam or jelly, fruit juice sweetened | 1 cucharada / 1 tbsp=20 · 1 sobre / 1 individual packet=14 | mermelada 100 % fruta · mermelada con jugo de fruta · mermelada de fruta sin azúcar agregada
+Crema de manzana para untar | Apple butter | sr:Fruit butters, apple | 1 cucharada / 1 tbsp=17 · 1 taza / 1 cup=282 | mantequilla de manzana · apple butter · dulce de manzana para untar
+Mantequilla de maní con chocolate | Peanut butter chocolate spread | fndds:Peanut butter and chocolate spread | 1 cucharada / 1 tbsp=16 · 1 porción / 1 serving=32 | crema de cacahuate con chocolate* (MX) · crema de cacahuete con chocolate* (ES) · pasta de maní con chocolate* (AR UY) · crema de maní y chocolate
+
+// Salsas, glaseados y coberturas para postres. Sirope de chocolate, caramelo líquido, dulce de leche y crema de
+// avellanas están en genericos.txt; las cremas batidas, en lacteos.txt.
+Sirope de chocolate light | Light chocolate syrup | fndds:Chocolate syrup, light | 1 cucharada / 1 tbsp=15 · 1 porción / 1 serving=30 · 1 taza / 1 cup=240 | salsa de chocolate light · sirope de chocolate reducido en calorías | ml
+Salsa de fudge | Hot fudge sauce | fndds:Topping, chocolate | 1 cucharada / 1 tbsp=20 · 1 porción / 1 serving=40 | fudge caliente · hot fudge · salsa de chocolate espesa
+Crema de malvavisco | Marshmallow creme | fndds:Topping, marshmallow | 1 cucharada / 1 tbsp=6 · 1 porción / 1 serving=12 · 1 taza / 1 cup=95 | crema de marshmallow · malvavisco para untar
+Salsa de fresa para postres | Strawberry topping | sr:Toppings, strawberry | 2 cucharadas / 2 tbsp=42 · 1 taza / 1 cup=340 | salsa de frutilla para postres* (AR UY CL PY BO EC) · topping de fresa · salsa de fresa para helado
+Salsa de piña para postres | Pineapple topping | sr:Toppings, pineapple | 2 cucharadas / 2 tbsp=42 · 1 taza / 1 cup=340 | salsa de ananá para postres* (AR UY PY) · topping de piña · salsa de piña para helado
+Glaseado de chocolate | Chocolate frosting | fndds:Icing, chocolate | 1 cucharada / 1 tbsp=18 · 1 porción / 1 serving=36 · 1 taza / 1 cup=290 | betún de chocolate* (MX) · frosting de chocolate · cobertura cremosa de chocolate
+Glaseado de vainilla | Vanilla frosting | fndds:Icing, white | 1 cucharada / 1 tbsp=18 · 1 porción / 1 serving=36 · 1 taza / 1 cup=290 | betún de vainilla* (MX) · frosting de vainilla · glaseado blanco cremoso
+Glaseado de queso crema | Cream cheese frosting | sr:Frostings, cream cheese-flavor, ready-to-eat | 2 cucharadas / 2 tbsp=33 | betún de queso crema* (MX) · frosting de queso crema
+// El glaseado de azúcar impalpable y agua o jugo de limón; USDA solo trae la receta entera.
+Glaseado de azúcar | Sugar glaze | sr:Frostings, glaze, prepared-from-recipe | 100 g / 100 g=100 | glasé · baño de azúcar · glaseado para donas
+Crema vegetal batida en aerosol | Non-dairy whipped topping in a can | sr:Dessert topping, pressurized | 1 cucharada / 1 tbsp=4 · 1 taza / 1 cup=70 | nata vegetal montada en spray* (ES) · crema chantilly vegetal en aerosol · crema batida vegetal en spray
+Fruta bañada en chocolate | Chocolate-covered fruit | fndds:Fruit, chocolate covered | 1 unidad / 1 fruit=40 | fresas con chocolate · frutillas con chocolate (AR UY CL PY BO EC) · banana con chocolate · fruta cubierta de chocolate
+
+// Postres fríos. Flan, flan de sobre, natillas, arroz con leche, gelatina, mousse de chocolate, pudín de pan y los
+// pudines de chocolate y de vainilla (listos, de sobre y sin azúcar) están en genericos.txt y lacteos.txt.
+Flan casero | Homemade flan | sr:Desserts, flan, caramel custard, prepared-from-recipe | ½ taza / ½ cup=153 | quesillo casero* (VE) · flan de huevo
+Crème brûlée | Crème brûlée | fndds:Creme brulee | 1 porción / 1 serving=130 · 1 taza / 1 cup=260 | creme brulee · crema catalana · crema quemada
+Natillas de sobre | Custard from mix | sr:Egg custards, dry mix, prepared with whole milk | ½ taza / ½ cup=141 | natilla de sobre · natillas en polvo preparadas
+Pudín de chocolate sin grasa | Fat-free chocolate pudding | sr:Puddings, chocolate, ready-to-eat, fat free | 1 envase / 1 snack cup=113 | postre de chocolate sin grasa (AR UY) · pudín de chocolate descremado
+Pudín de vainilla sin grasa | Fat-free vanilla pudding | sr:Puddings, vanilla, ready-to-eat, fat free | 1 envase / 1 snack cup=99 | postre de vainilla sin grasa (AR UY) · pudín de vainilla descremado
+Pudín de coco de sobre | Coconut cream pudding from mix | sr:Puddings, coconut cream, dry mix, regular, prepared with whole milk | ½ taza / ½ cup=140 | postre de coco de sobre (AR UY) · pudín de coco
+Pudín de limón de sobre | Lemon pudding from mix | sr:Puddings, lemon, dry mix, instant, prepared with whole milk | ½ taza / ½ cup=147 | postre de limón de sobre (AR UY) · pudín de limón
+Pudín de banana de sobre | Banana pudding from mix | sr:Puddings, banana, dry mix, regular, prepared with whole milk | ½ taza / ½ cup=127 | pudín de plátano de sobre* (ES MX PE CL) · pudín de banano de sobre* (CO CR GT HN NI PA SV) · pudín de guineo de sobre* (PR DO EC) · pudín de cambur de sobre* (VE) · postre de banana de sobre (AR UY)
+Pudín de tapioca | Tapioca pudding | fndds:Pudding, tapioca, ready-to-eat | 1 envase / 1 snack cup=110 · 1 porción / 1 serving=130 · 1 taza / 1 cup=260 | tapioca con leche · postre de tapioca · budín de tapioca
+Pudín de tapioca sin grasa | Fat-free tapioca pudding | sr:Puddings, tapioca, ready-to-eat, fat free | 1 envase / 1 snack cup=112 | postre de tapioca sin grasa · tapioca con leche sin grasa
+Pudín de tapioca de sobre | Tapioca pudding from mix | sr:Puddings, tapioca, dry mix, prepared with whole milk | ½ taza / ½ cup=128 | postre de tapioca de sobre · tapioca de caja
+Arroz con leche de sobre | Rice pudding from mix | sr:Puddings, rice, dry mix, prepared with whole milk | ½ taza / ½ cup=128 | arroz con leche de caja · arroz con leche instantáneo
+Gelatina light con frutas | Sugar-free gelatin with fruit | fndds:Gelatin dessert, sugar free, with fruit | ½ taza / ½ cup=120 · 1 envase / 1 snack cup=125 | gelatina sin azúcar con frutas · gelatina diet con frutas
+Trifle | Trifle | fndds:Trifle | 1 porción / 1 serving=73 · 1 taza / 1 cup=145 | trifle inglés · postre inglés de bizcocho y crema
+Ensalada de frutas con crema batida | Fruit salad with whipped cream | fndds:Fruit salad, including citrus fruit, with whipped cream | 1 porción / 1 serving=91 · 1 taza / 1 cup=182 | macedonia con nata montada* (ES) · ensalada de frutas con chantilly · ensalada de frutas con crema
+
+// Helados de agua. La paleta helada (la de agua), la de chocolate, la sin azúcar y el sorbete están en
+// genericos.txt y lacteos.txt.
+Paleta helada de fruta | Frozen fruit juice bar | fndds:Frozen fruit juice bar | 1 unidad / 1 bar=80 | helado de agua de fruta* (AR UY) · polo de fruta* (ES) · paleta de fruta* (MX CO) · paleta de jugo de fruta
+Paleta helada con trozos de fruta | Fruit and juice bar | sr:Frozen novelties, fruit and juice bars | 1 unidad / 1 bar=77 · 1 grande / 1 large bar=92 | helado de agua con trozos de fruta* (AR UY) · polo con trozos de fruta* (ES) · paleta con trozos de fruta* (MX CO) · paleta de agua con fruta
+Paleta helada de leche | Frozen milk bar | sr:Milk dessert bar, frozen, made from lowfat milk | 1 unidad / 1 bar=68 | polo de leche* (ES) · paleta de leche* (MX CO)
+Granita | Italian ice | fndds:Italian Ice | 1 taza / 1 cup=130 | italian ice · granizado de frutas · granita de limón
+Granita sin azúcar | Sugar-free Italian ice | fndds:Italian Ice, no sugar added | 1 taza / 1 cup=130 | italian ice sin azúcar · granizado de frutas sin azúcar
+Hielo raspado con jarabe | Snow cone | fndds:Snow cone | 1 unidad / 1 snow cone=200 · 1 taza / 1 cup=130 | raspado* (MX) · raspadilla* (PE) · piragua* (PR) · snow cone

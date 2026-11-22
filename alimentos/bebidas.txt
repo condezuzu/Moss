@@ -1,0 +1,118 @@
+// Más bebidas, con y sin alcohol (22/11/2026, lo pediste: «el máximo de comidas posibles»): el café con azúcar, con crema,
+// con leche descremada o vegetal, helado y frappé, los tés helados, las bebidas de fruta que no son jugo, las aguas, los
+// vinos por cepa y los cócteles de USDA que estaban solo en inglés. El formato es el de genericos.txt. Son variantes: al
+// buscar «café» o «vino» salen después de los de siempre. Los tamaños del café (pequeño, mediano y grande) son los de USDA.
+@variantes
+
+# bebidas
+// El café.
+Café con azúcar | Coffee with sugar | fndds:Coffee, pre-sweetened with sugar | 1 taza (240 ml) / 1 cup (240 ml)=252 · 1 taza pequeña (150 ml) / 1 small cup (150 ml)=157 · 1 tazón (350 ml) / 1 mug (350 ml)=367 | tinto con azúcar* (CO) · café endulzado · café negro con azúcar | ml
+Café con crema | Coffee with cream | fndds:Coffee, pre-lightened | 1 taza (240 ml) / 1 cup (240 ml)=243 · 1 tazón (350 ml) / 1 mug (350 ml)=355 | café con un poco de leche · café con crema sin azúcar | ml
+Café con crema y azúcar | Coffee with cream and sugar | fndds:Coffee, pre-lightened and pre-sweetened with sugar | 1 taza (240 ml) / 1 cup (240 ml)=252 · 1 tazón (350 ml) / 1 mug (350 ml)=367 | café con un poco de leche y azúcar · café con crema endulzado | ml
+Café con leche descafeinado | Decaf coffee with milk | fndds:Coffee, cafe con leche, decaffeinated | 1 taza (240 ml) / 1 cup (240 ml)=252 · 1 tazón (350 ml) / 1 mug (350 ml)=367 | descafeinado con leche · café con leche sin cafeína | ml
+Café instantáneo 3 en 1 | 3-in-1 instant coffee | fndds:Coffee, instant, pre-lightened and pre-sweetened with sugar, reconstituted | 1 taza (240 ml) / 1 cup (240 ml)=252 · 1 tazón (350 ml) / 1 mug (350 ml)=367 | café soluble 3 en 1* (ES) · café 3 en 1 · café instantáneo con leche y azúcar · café de sobre con leche y azúcar | ml
+Café espresso con azúcar | Sweetened espresso | fndds:Coffee, Cuban | 1 espresso (30 ml) / 1 shot (30 ml)=31 · 1 doble (60 ml) / 1 double (60 ml)=63 | café solo con azúcar* (ES) · espresso con azúcar · café cubano · cafecito cubano | ml
+Cortado con azúcar | Sweetened macchiato | fndds:Coffee, macchiato, sweetened | 1 taza pequeña (90 ml) / 1 small cup (90 ml)=94 · 1 tacita (60 ml) / 1 espresso cup (60 ml)=62 | macchiato con azúcar · café cortado con azúcar | ml
+Café latte con leche descremada | Skim latte | fndds:Coffee, Latte, nonfat | 1 taza (240 ml) / 1 cup (240 ml)=243 · 1 pequeño (355 ml) / 1 small (355 ml)=360 · 1 mediano (473 ml) / 1 medium (473 ml)=480 · 1 grande (590 ml) / 1 large (590 ml)=600 | café latte con leche desnatada* (ES) · latte descremado · latte light | ml
+Café latte con bebida vegetal | Plant-based milk latte | fndds:Coffee, Latte, with non-dairy milk | 1 taza (240 ml) / 1 cup (240 ml)=243 · 1 pequeño (355 ml) / 1 small (355 ml)=360 · 1 mediano (473 ml) / 1 medium (473 ml)=480 · 1 grande (590 ml) / 1 large (590 ml)=600 | latte con leche vegetal · latte con leche de avena · latte con leche de almendras | ml
+Café latte saborizado | Flavored latte | fndds:Coffee, Latte, flavored | 1 taza (240 ml) / 1 cup (240 ml)=252 · 1 pequeño (355 ml) / 1 small (355 ml)=372 · 1 mediano (473 ml) / 1 medium (473 ml)=496 · 1 grande (590 ml) / 1 large (590 ml)=620 | latte de vainilla · latte de caramelo · latte con jarabe | ml
+Capuchino con leche descremada | Skim cappuccino | fndds:Coffee, Cappuccino, nonfat | 1 taza (240 ml) / 1 cup (240 ml)=243 · 1 pequeño (355 ml) / 1 small (355 ml)=360 · 1 mediano (473 ml) / 1 medium (473 ml)=480 · 1 grande (590 ml) / 1 large (590 ml)=600 | capuchino con leche desnatada* (ES) · cappuccino descremado · capuchino light | ml
+Capuchino con bebida vegetal | Plant-based milk cappuccino | fndds:Coffee, Cappuccino, with non-dairy milk | 1 taza (240 ml) / 1 cup (240 ml)=243 · 1 pequeño (355 ml) / 1 small (355 ml)=360 · 1 mediano (473 ml) / 1 medium (473 ml)=480 · 1 grande (590 ml) / 1 large (590 ml)=600 | capuchino con leche vegetal · cappuccino con leche de avena · cappuccino con leche de almendras | ml
+Café moca con leche descremada | Skim mocha | fndds:Coffee, Cafe Mocha, nonfat | 1 taza (240 ml) / 1 cup (240 ml)=252 · 1 pequeño (355 ml) / 1 small (355 ml)=372 · 1 mediano (473 ml) / 1 medium (473 ml)=496 · 1 grande (590 ml) / 1 large (590 ml)=620 | café moca con leche desnatada* (ES) · moca descremado · mocha light | ml
+Café moca con bebida vegetal | Plant-based milk mocha | fndds:Coffee, Cafe Mocha, with non-dairy milk | 1 taza (240 ml) / 1 cup (240 ml)=252 · 1 pequeño (355 ml) / 1 small (355 ml)=372 · 1 mediano (473 ml) / 1 medium (473 ml)=496 · 1 grande (590 ml) / 1 large (590 ml)=620 | moca con leche vegetal · mocha con leche de avena | ml
+Moca helado | Iced mocha | fndds:Coffee, Iced Cafe Mocha | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 pequeño (355 ml) / 1 small (355 ml)=372 · 1 mediano (473 ml) / 1 medium (473 ml)=496 · 1 grande (590 ml) / 1 large (590 ml)=620 | café moca helado · mocha helado · iced mocha | ml
+Latte helado con leche descremada | Iced skim latte | fndds:Coffee, Iced Latte, nonfat | 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 pequeño (355 ml) / 1 small (355 ml)=360 · 1 mediano (473 ml) / 1 medium (473 ml)=480 · 1 grande (590 ml) / 1 large (590 ml)=600 | latte helado con leche desnatada* (ES) · iced latte descremado | ml
+Latte helado con bebida vegetal | Iced plant-based milk latte | fndds:Coffee, Iced Latte, with non-dairy milk | 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 pequeño (355 ml) / 1 small (355 ml)=360 · 1 mediano (473 ml) / 1 medium (473 ml)=480 · 1 grande (590 ml) / 1 large (590 ml)=600 | latte helado con leche vegetal · iced latte con leche de avena | ml
+Latte helado saborizado | Flavored iced latte | fndds:Coffee, Iced Latte, flavored | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 pequeño (355 ml) / 1 small (355 ml)=372 · 1 mediano (473 ml) / 1 medium (473 ml)=496 · 1 grande (590 ml) / 1 large (590 ml)=620 | latte helado de vainilla · latte helado de caramelo · iced latte de vainilla | ml
+Café helado con leche y azúcar | Sweetened iced coffee with milk | fndds:Iced Coffee, pre-lightened and pre-sweetened | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 pequeño (355 ml) / 1 small (355 ml)=372 · 1 mediano (473 ml) / 1 medium (473 ml)=496 · 1 grande (590 ml) / 1 large (590 ml)=620 | café frío con leche y azúcar · café helado endulzado | ml
+Café envasado | Bottled coffee drink | fndds:Coffee, bottled/canned | 1 botella (280 ml) / 1 bottle (280 ml)=295 · 1 lata pequeña (190 ml) / 1 small can (190 ml)=202 · 1 lata (325 ml) / 1 can (325 ml)=341 | café en lata · café listo para tomar · café embotellado | ml
+Café envasado light | Light bottled coffee drink | fndds:Coffee, bottled/canned, light | 1 botella (280 ml) / 1 bottle (280 ml)=285 · 1 lata pequeña (190 ml) / 1 small can (190 ml)=195 · 1 lata (325 ml) / 1 can (325 ml)=330 | café en lata light · café listo para tomar light | ml
+Frappé de café | Blended iced coffee | fndds:Frozen coffee drink | 1 pequeño (355 ml) / 1 small (355 ml)=372 · 1 mediano (473 ml) / 1 medium (473 ml)=496 · 1 grande (590 ml) / 1 large (590 ml)=620 | café frappé · granizado de café · café frapé | ml
+Frappé de café con crema batida | Blended iced coffee with whipped cream | fndds:Frozen coffee drink, with whipped cream | 1 pequeño (355 ml) / 1 small (355 ml)=372 · 1 mediano (473 ml) / 1 medium (473 ml)=496 · 1 grande (590 ml) / 1 large (590 ml)=620 | frappé de café con nata montada* (ES) · café frappé con crema | ml
+Frappé de moca | Blended iced mocha | fndds:Frozen mocha coffee drink | 1 pequeño (355 ml) / 1 small (355 ml)=372 · 1 mediano (473 ml) / 1 medium (473 ml)=496 · 1 grande (590 ml) / 1 large (590 ml)=620 | moca frappé · mocha frappé | ml
+Frappé de moca con crema batida | Blended iced mocha with whipped cream | fndds:Frozen mocha coffee drink, with whipped cream | 1 pequeño (355 ml) / 1 small (355 ml)=372 · 1 mediano (473 ml) / 1 medium (473 ml)=496 · 1 grande (590 ml) / 1 large (590 ml)=620 | frappé de moca con nata montada* (ES) · mocha frappé con crema | ml
+Café de cereales | Grain coffee substitute | fndds:Coffee substitute | 1 taza (240 ml) / 1 cup (240 ml)=243 · 1 tazón (350 ml) / 1 mug (350 ml)=355 | sustituto de café · café de cebada · café de malta | ml
+// El té.
+Té oolong | Oolong tea | fndds:Tea, hot, leaf, oolong | 1 taza (240 ml) / 1 cup (240 ml)=243 · 1 tazón (350 ml) / 1 mug (350 ml)=355 | té azul · té wulong | ml
+Té de jengibre | Ginger tea | fndds:Tea, ginger | 1 taza (240 ml) / 1 cup (240 ml)=243 · 1 tazón (350 ml) / 1 mug (350 ml)=355 | té de kion* (PE) · infusión de jengibre | ml
+Té de burbujas | Bubble tea | fndds:Tea, bubble | 1 vaso / 1 drink=435 · 1 taza (240 ml) / 1 cup (240 ml)=243 | bubble tea · té con perlas de tapioca · boba | ml
+Té helado con azúcar | Sweet iced tea | fndds:Tea, iced, brewed, black, pre-sweetened with sugar | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 vaso grande (355 ml) / 1 large glass (355 ml)=372 | té frío con azúcar · té helado endulzado · sweet tea | ml
+Té helado light | Diet iced tea | fndds:Tea, iced, bottled, black, diet | 1 botella (500 ml) / 1 bottle (500 ml)=507 · 1 vaso (200 ml) / 1 glass (200 ml)=203 | té helado zero · té frío light · ice tea light | ml
+Té verde helado | Bottled green iced tea | fndds:Tea, iced, bottled, green | 1 botella (500 ml) / 1 bottle (500 ml)=524 · 1 vaso (200 ml) / 1 glass (200 ml)=210 | té verde frío · té verde embotellado | ml
+Té verde helado sin azúcar | Unsweetened green iced tea | fndds:Tea, iced, bottled, green, unsweetened | 1 botella (500 ml) / 1 bottle (500 ml)=507 · 1 vaso (200 ml) / 1 glass (200 ml)=203 | té verde frío sin azúcar | ml
+Té helado con limonada | Iced tea lemonade | fndds:Iced Tea / Lemonade juice drink | 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 botella (355 ml) / 1 bottle (355 ml)=360 · 1 botella grande (590 ml) / 1 large bottle (590 ml)=600 | té con limonada · limonada con té | ml
+// El atole, la horchata y lo de chocolate.
+Atole de chocolate | Chocolate atole (champurrado) | fndds:Atole de chocolate | 1 taza (240 ml) / 1 cup (240 ml)=252 · 1 vaso (200 ml) / 1 glass (200 ml)=210 | champurrado · atole de cacao | ml
+Atole de avena | Oat atole | fndds:Atole de avena | 1 taza (240 ml) / 1 cup (240 ml)=252 · 1 vaso (200 ml) / 1 glass (200 ml)=210 | atol de avena | ml
+Horchata con leche | Horchata made with milk | fndds:Horchata, made with milk | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 taza (240 ml) / 1 cup (240 ml)=252 | agua de horchata con leche* (MX) · horchata de leche | ml
+Leche con chocolate malteado | Chocolate malted milk | sr:Beverages, Malted drink mix, chocolate, powder, prepared with whole milk | 1 taza / 1 cup=265 · 1 vaso (200 ml) / 1 glass (200 ml)=224 | chocolate malteado con leche · leche con malta y chocolate | ml
+Chocolate en polvo sin azúcar | No-sugar-added cocoa mix | fndds:Chocolate beverage powder, light, dry mix, not reconstituted | 1 cucharada / 1 tbsp=10 · 1 porción / 1 serving=20 | chocolate en polvo light · chocolate en polvo sin azúcar añadida
+Ponche de huevo sin alcohol | Non-alcoholic eggnog | fndds:Eggnog | 1 taza (240 ml) / 1 cup (240 ml)=260 · 1 vaso (200 ml) / 1 glass (200 ml)=216 | eggnog sin alcohol · rompope sin alcohol | ml
+// Los refrescos.
+Refresco de uva | Grape soda | sr:Beverages, carbonated, grape soda | 1 lata (355 ml) / 1 can (355 ml)=372 · 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 botella (500 ml) / 1 bottle (500 ml)=524 | gaseosa de uva* (AR UY CO PE BO PY EC) | ml
+Refresco de cola reducido en azúcar | Reduced-sugar cola | sr:Beverages, carbonated, reduced sugar, cola, contains caffeine and sweeteners | 1 lata (355 ml) / 1 can (355 ml)=355 · 1 vaso (200 ml) / 1 glass (200 ml)=200 · 1 botella (500 ml) / 1 bottle (500 ml)=500 | gaseosa cola reducida en azúcar* (AR UY CO PE) · cola reducida en azúcar · cola con menos azúcar | ml
+Root beer | Root beer | fndds:Soft drink, root beer | 1 lata (355 ml) / 1 can (355 ml)=372 · 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 botella (500 ml) / 1 bottle (500 ml)=524 | cerveza de raíz · refresco de raíz | ml
+Ginger ale sin azúcar | Diet ginger ale | fndds:Soft drink, ginger ale, diet | 1 lata (355 ml) / 1 can (355 ml)=360 · 1 vaso (200 ml) / 1 glass (200 ml)=203 | ginger ale light · ginger ale zero | ml
+// Las bebidas de fruta que no son jugo (los jugos y los néctares están en frutas.txt).
+Bebida de frutas | Fruit juice drink | fndds:Fruit juice drink, with high vitamin C | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (200 ml) / 1 juice box (200 ml)=209 · 1 botella (500 ml) / 1 bottle (500 ml)=524 | bebida con jugo de frutas · bebida de jugo | ml
+Bebida de frutas reducida en azúcar | Reduced-sugar fruit juice drink | fndds:Fruit juice drink, with high vitamin C, light | 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 botella (300 ml) / 1 bottle (300 ml)=300 · 1 botella grande (500 ml) / 1 large bottle (500 ml)=507 | bebida de frutas light · bebida con jugo light | ml
+Bebida de frutas sin azúcar | Sugar-free fruit juice drink | fndds:Fruit juice drink, diet | 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 cajita (200 ml) / 1 juice box (200 ml)=203 · 1 botella (500 ml) / 1 bottle (500 ml)=507 | bebida de frutas zero · bebida con jugo sin azúcar | ml
+Bebida sabor a fruta | Fruit-flavored drink | fndds:Fruit flavored drink | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (200 ml) / 1 juice box (200 ml)=209 · 1 botella (500 ml) / 1 bottle (500 ml)=524 | bebida saborizada de frutas · bebida artificial de frutas | ml
+Bebida de naranja | Orange juice drink | sr:Beverages, Orange juice drink | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (250 ml) / 1 juice box (250 ml)=263 | bebida con jugo de naranja | ml
+Bebida de uva | Grape drink | sr:Beverages, grape drink, canned | 1 vaso (200 ml) / 1 glass (200 ml)=211 · 1 taza / 1 cup=250 | bebida con jugo de uva | ml
+Jugo de arándano light | Light cranberry juice cocktail | fndds:Cranberry juice drink, with high vitamin C, light | 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 porción / 1 serving=240 | zumo de arándanos light (ES) · jugo de arándano bajo en calorías | ml
+Limonada light | Light lemonade | fndds:Lemonade, fruit juice drink, light | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 porción / 1 serving=248 | limonada reducida en azúcar · limonada baja en calorías | ml
+Ponche de frutas | Fruit punch | fndds:Fruit punch, made with fruit juice and soda | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 porción / 1 serving=248 | punch de frutas | ml
+Granizado | Slush | fndds:Slush frozen drink | 1 vaso (240 ml) / 1 cup (240 ml)=240 · 1 pequeño (355 ml) / 1 small (355 ml)=360 · 1 mediano (650 ml) / 1 medium (650 ml)=660 | slush · granizada | ml
+Jugo de caña | Sugarcane juice | fndds:Sugar cane beverage | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 porción / 1 serving=248 | guarapo · jugo de caña de azúcar | ml
+Bebida de aloe vera | Aloe vera drink | fndds:Aloe vera juice drink | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 botella (500 ml) / 1 bottle (500 ml)=524 | jugo de aloe · bebida de sábila | ml
+Jugo de tomate con almeja | Clam and tomato juice | sr:Beverages, Clam and tomato juice, canned | 1 vaso (200 ml) / 1 glass (200 ml)=204 · 1 lata pequeña / 1 small can=166 | jugo de almeja y tomate | ml
+// Las aguas.
+Agua con gas saborizada | Flavored sparkling water | fndds:Water, carbonated, flavored | 1 lata (355 ml) / 1 can (355 ml)=360 · 1 botella (500 ml) / 1 bottle (500 ml)=507 · 1 vaso (250 ml) / 1 glass (250 ml)=254 | agua saborizada con gas · agua mineral con gas saborizada | ml
+Agua saborizada sin azúcar | Unsweetened flavored water | fndds:Water, non-carbonated, flavored | 1 botella (500 ml) / 1 bottle (500 ml)=507 · 1 vaso (200 ml) / 1 glass (200 ml)=203 | agua con sabor sin azúcar · agua saborizada light | ml
+Agua con vitaminas | Vitamin water | fndds:Water, enhanced, regular | 1 botella (590 ml) / 1 bottle (590 ml)=600 · 1 vaso (200 ml) / 1 glass (200 ml)=203 | agua vitaminada · agua enriquecida | ml
+Agua con vitaminas sin azúcar | Sugar-free vitamin water | fndds:Water, enhanced, diet | 1 botella (590 ml) / 1 bottle (590 ml)=600 · 1 vaso (200 ml) / 1 glass (200 ml)=203 | agua vitaminada sin azúcar · agua vitaminada zero | ml
+Suero oral | Oral rehydration solution | fndds:Fluid replacement, electrolyte solution | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 botella (500 ml) / 1 bottle (500 ml)=524 | suero de rehidratación · suero rehidratante · bebida de electrolitos | ml
+// Los batidos.
+Smoothie de frutas con yogur | Fruit smoothie with yogurt | fndds:Fruit smoothie, with whole fruit and dairy | 1 vaso (200 ml) / 1 glass (200 ml)=183 · 1 porción / 1 serving=324 | smoothie con yogur · batido de frutas con yogur | ml
+Piña colada sin alcohol | Virgin piña colada | fndds:Pina Colada, nonalcoholic | 1 vaso (250 ml) / 1 glass (250 ml)=254 · 1 porción / 1 serving=225 | piña colada virgen | ml
+
+# alcohol
+// Los vinos por cepa (SR Legacy): casi lo mismo que el tinto y el blanco de siempre, para encontrarlos por su nombre.
+Vino Cabernet Sauvignon | Cabernet Sauvignon | sr:Alcoholic Beverage, wine, table, red, Cabernet Sauvignon | 1 copa (150 ml) / 1 glass (150 ml)=149 · 1 botella (750 ml) / 1 bottle (750 ml)=746 | cabernet sauvignon · cabernet | ml
+Vino Merlot | Merlot | sr:Alcoholic Beverage, wine, table, red, Merlot | 1 copa (150 ml) / 1 glass (150 ml)=149 · 1 botella (750 ml) / 1 bottle (750 ml)=746 | merlot | ml
+Vino Pinot Noir | Pinot Noir | sr:Alcoholic Beverage, wine, table, red, Pinot Noir | 1 copa (150 ml) / 1 glass (150 ml)=149 · 1 botella (750 ml) / 1 bottle (750 ml)=746 | pinot noir | ml
+Vino Syrah | Syrah | sr:Alcoholic Beverage, wine, table, red, Syrah | 1 copa (150 ml) / 1 glass (150 ml)=149 · 1 botella (750 ml) / 1 bottle (750 ml)=746 | syrah · shiraz | ml
+Vino Chardonnay | Chardonnay | sr:Alcoholic beverage, wine, table, white, Chardonnay | 1 copa (150 ml) / 1 glass (150 ml)=149 · 1 botella (750 ml) / 1 bottle (750 ml)=743 | chardonnay | ml
+Vino Sauvignon Blanc | Sauvignon Blanc | sr:Alcoholic beverage, wine, table, white, Sauvignon Blanc | 1 copa (150 ml) / 1 glass (150 ml)=149 · 1 botella (750 ml) / 1 bottle (750 ml)=743 | sauvignon blanc | ml
+Vino Riesling | Riesling | sr:Alcoholic beverage, wine, table, white, Riesling | 1 copa (150 ml) / 1 glass (150 ml)=150 · 1 botella (750 ml) / 1 bottle (750 ml)=751 | riesling | ml
+Vino Pinot Grigio | Pinot Grigio | sr:Alcoholic beverage, wine, table, white, Pinot Gris (Grigio) | 1 copa (150 ml) / 1 glass (150 ml)=149 · 1 botella (750 ml) / 1 bottle (750 ml)=743 | pinot grigio · pinot gris | ml
+Vino Moscato | Moscato | sr:Alcoholic beverage, wine, table, white, Muscat | 1 copa (150 ml) / 1 glass (150 ml)=152 · 1 botella (750 ml) / 1 bottle (750 ml)=761 | moscato · muscat | ml
+// Otros vinos.
+Vino blanco de cosecha tardía | Late harvest white wine | sr:Alcoholic beverage, wine, table, white, late harvest | 1 copa pequeña (100 ml) / 1 small glass (100 ml)=104 · 1 copa (150 ml) / 1 glass (150 ml)=156 | vino de cosecha tardía · cosecha tardía | ml
+Vino light | Light wine | fndds:Wine, light | 1 copa (150 ml) / 1 glass (150 ml)=152 · 1 copa grande / 1 large glass=180 | vino bajo en calorías | ml
+Vino sin alcohol | Non-alcoholic wine | fndds:Wine, nonalcoholic | 1 copa (150 ml) / 1 glass (150 ml)=152 · 1 botella (750 ml) / 1 bottle (750 ml)=761 | vino 0,0 · vino desalcoholizado | ml
+Sake | Sake | fndds:Wine, rice | 1 vasito (60 ml) / 1 small cup (60 ml)=61 · 1 porción / 1 serving=180 | vino de arroz | ml
+// Lo demás: una bebida saborizada, un licor y los cócteles.
+Bebida saborizada con alcohol | Flavored malt beverage | fndds:Alcoholic malt beverage, sweetened | 1 botella (355 ml) / 1 bottle (355 ml)=360 · 1 lata grande (473 ml) / 1 large can (473 ml)=480 | limonada con alcohol · hard lemonade · cooler | ml
+Licor de menta | Crème de menthe | sr:Alcoholic beverage, creme de menthe, 72 proof | 1 medida (45 ml) / 1 shot (45 ml)=51 | crema de menta · pipermint | ml
+Whisky sour | Whiskey sour | fndds:Whiskey sour | 1 trago / 1 drink=225 | whiskey sour | ml
+Whisky con cola | Whiskey and cola | fndds:Whiskey and cola | 1 vaso (250 ml) / 1 glass (250 ml)=254 · 1 trago / 1 drink=225 | whisky con coca · whisky cola · whiskey con cola | ml
+Cuba libre light | Rum and diet cola | fndds:Rum and diet cola | 1 vaso (250 ml) / 1 glass (250 ml)=254 · 1 trago / 1 drink=225 | ron con cola light · ron con coca light · cubalibre light | ml
+Vodka tonic | Vodka tonic | fndds:Vodka and tonic | 1 vaso (250 ml) / 1 glass (250 ml)=254 · 1 trago / 1 drink=225 | vodka con tónica · vodka con agua tónica | ml
+Vodka con soda | Vodka soda | fndds:Vodka and soda | 1 vaso (250 ml) / 1 glass (250 ml)=254 · 1 trago / 1 drink=225 | vodka soda · vodka con agua con gas | ml
+Vodka con bebida energética | Vodka and energy drink | fndds:Vodka and energy drink | 1 vaso (250 ml) / 1 glass (250 ml)=254 · 1 trago / 1 drink=225 | vodka con energizante · vodka con energética | ml
+Ruso negro | Black Russian | fndds:Black Russian | 1 trago / 1 drink=75 | black russian | ml
+Ruso blanco | White Russian | fndds:White Russian | 1 trago / 1 drink=225 | white russian | ml
+Brandy Alexander | Brandy Alexander | fndds:Brandy Alexander | 1 trago / 1 drink=90 | alexander | ml
+Kamikaze | Kamikaze | fndds:Kamikaze | 1 trago / 1 drink=90 |  | ml
+Long Island | Long Island iced tea | fndds:Long Island iced tea | 1 trago / 1 drink=225 | long island iced tea · té helado long island | ml
+Mai Tai | Mai Tai | fndds:Mai Tai | 1 trago / 1 drink=180 |  | ml
+Manhattan | Manhattan | fndds:Manhattan | 1 trago / 1 drink=120 |  | ml
+Martini de sabores | Flavored martini | fndds:Martini, flavored | 1 trago / 1 drink=120 | cosmopolitan · cosmo · appletini · martini de manzana | ml
+Tom Collins | Tom Collins | fndds:Tom Collins | 1 trago / 1 drink=225 | collins | ml
+Daiquiri frozen | Frozen daiquiri | fndds:Frozen daiquiri | 1 trago / 1 drink=225 | daiquiri congelado · daiquiri frappé | ml
+Café con licor | Spiked coffee | fndds:Alcoholic coffee drink | 1 taza / 1 drink=240 | café irlandés · irish coffee · café con whisky | ml
+Cóctel | Cocktail | fndds:Cocktail, NFS | 1 trago / 1 drink=225 | coctel · cocktail | ml
+Ponche de frutas con alcohol | Spiked fruit punch | fndds:Fruit punch, alcoholic | 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 trago / 1 drink=225 | punch con alcohol | ml
+Shot de gelatina con alcohol | Jello shot | fndds:Gelatin shot, alcoholic | 1 vasito / 1 shot=42 | gelatina con alcohol · jello shot · shot de gelatina

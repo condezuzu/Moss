@@ -1,0 +1,149 @@
+// Más sopas, caldos, salsas y aderezos (22/11/2026, lo pediste: «el máximo de comidas posibles»): las sopas en lata y de
+// sobre listas para comer, las cremas, los caldos caseros y bajos en sodio, las salsas que faltaban, los gravies, las
+// mayonesas, los aderezos de ensalada en sus versiones light y sin grasa, y los dips. Todo sale de USDA y estaba en la
+// base solo en inglés. De cada sopa en lata, la forma preparada (las cremas, con leche; las demás, con agua o lista
+// para servir); nunca la condensada sin preparar. Lo que ya estaba (la mayonesa, el kétchup, la salsa de tomate, el
+// caldo de pollo, la crema de champiñones…) sigue en genericos.txt, mundo.txt y uruguay.txt. Son variantes: al buscar
+// salen después de lo de siempre.
+@variantes
+
+# platos
+// Sopas de pollo y de pavo.
+Sopa de pollo con fideos en lata | Canned chicken noodle soup | fndds:Soup, chicken noodle, canned | 1 taza / 1 cup=245 · 1 lata / 1 can=525 · 1 envase individual / 1 individual container=440 | sopa de pollo con fideos enlatada | ml
+Sopa de pollo con fideos en lata baja en sodio | Low-sodium canned chicken noodle soup | sr:Soup, chicken noodle, reduced sodium, canned, ready-to-serve | 1 taza / 1 cup=245 · 1 lata / 1 can=516 | sopa de pollo con fideos reducida en sodio · sopa de pollo con fideos baja en sal | ml
+Sopa instantánea de pollo con fideos | Instant chicken noodle soup | sr:Soup, chicken noodle, dry, mix, prepared with water | 1 taza / 1 cup=245 | sopa de sobre de pollo con fideos · sopa de pollo de sobre | ml
+Sopa de pollo con verduras en lata | Canned chicken vegetable soup | sr:Soup, chicken and vegetable, canned, ready-to-serve | 1 taza / 1 cup=255 | sopa de pollo y verduras en lata · sopa de pollo con vegetales en lata | ml
+Sopa de pollo con arroz en lata | Canned chicken rice soup | sr:Soup, chicken rice, canned, chunky, ready-to-serve | 1 taza / 1 cup=240 · 1 lata / 1 can=539 | sopa de pollo y arroz en lata · caldo de pollo con arroz en lata | ml
+Crema instantánea de pollo | Instant cream of chicken soup | sr:Soup, cream of chicken, dry, mix, prepared with water | 1 taza / 1 cup=261 | crema de pollo de sobre · sopa crema de pollo de sobre | ml
+Crema de pollo en lata | Canned cream of chicken soup | sr:Soup, cream of chicken, canned, prepared with equal volume milk | 1 taza / 1 cup=248 · 1 lata preparada / 1 can prepared=602 | crema de pollo enlatada · crema de ave en lata | ml
+Sopa cremosa de pollo y maíz | Chicken corn chowder | sr:Soup, chicken corn chowder, chunky, ready-to-serve, single brand | 1 porción / 1 serving=240 · 1 envase / 1 package=539 | sopa cremosa de pollo y choclo* (AR UY CL PE BO EC PY) · sopa cremosa de pollo y elote* (MX GT HN SV NI CR) · chowder de pollo y maíz
+Sopa de pavo con fideos | Turkey noodle soup | sr:Soup, turkey noodle, canned, prepared with equal volume water | 1 taza / 1 cup=244 · 1 lata preparada / 1 can prepared=593 | sopa de pavo con fideos en lata | ml
+// Sopas de carne.
+Sopa de carne en lata | Canned beef soup | fndds:Soup, beef, canned | 1 taza / 1 cup=245 · 1 lata / 1 can=525 · 1 envase individual / 1 individual container=440 | sopa de res en lata · sopa de carne enlatada | ml
+Sopa de verduras con carne en lata | Canned vegetable beef soup | sr:Soup, beef and vegetables, canned, ready-to-serve | 1 taza / 1 cup=250 · 1 lata / 1 can=528 | sopa de carne y verduras en lata · sopa de res con verduras en lata | ml
+Sopa de carne con cebada | Beef barley soup | sr:Soup, beef barley, ready to serve | 1 taza / 1 cup=208 · 1 lata / 1 can=527 | sopa de res con cebada · sopa de cebada con carne | densidad=1.03
+Sopa de carne con fideos | Beef noodle soup | sr:Soup, beef noodle, canned, prepared with equal volume water | 1 taza / 1 cup=244 · 1 lata preparada / 1 can prepared=593 | sopa de res con fideos · sopa de fideos con carne | ml
+Sopa de albóndigas con pasta y verduras | Wedding soup | fndds:Soup, Italian wedding | 1 taza / 1 cup=245 · 1 lata / 1 can=525 · 1 envase individual / 1 individual container=440 | sopa de boda italiana · sopa de bodas · wedding soup | ml
+Sopa de papa con carne | Potato soup with meat | fndds:Soup, potato with meat | 1 taza / 1 cup=255 · 1 lata / 1 can=525 · 1 envase individual / 1 individual container=440 | sopa de patata con carne* (ES) · sopa de papa con tocino · sopa de papa con jamón | ml
+// Sopas de verduras, de cereales y de legumbres.
+Sopa de verduras en lata | Canned vegetable soup | fndds:Soup, vegetable, canned | 1 taza / 1 cup=245 · 1 lata / 1 can=525 · 1 envase individual / 1 individual container=440 | sopa de vegetales en lata · sopa de verduras enlatada | ml
+Sopa de verduras en lata baja en sodio | Low-sodium canned vegetable soup | fndds:Soup, vegetable, canned, reduced sodium | 1 taza / 1 cup=245 · 1 lata / 1 can=525 · 1 envase individual / 1 individual container=440 | sopa de vegetales en lata baja en sodio · sopa de verduras reducida en sodio | ml
+Crema de verduras en polvo | Cream of vegetable soup mix | sr:Soup, cream of vegetable, dry, powder | 1 sobre / 1 packet=18 | crema instantánea de verduras · sopa crema de verduras de sobre · crema de verduras de sobre
+Sopa de cebada | Barley soup | fndds:Soup, barley | 1 taza / 1 cup=245 · 1 lata / 1 can=525 · 1 envase individual / 1 individual container=440 | sopa de cebada perlada · caldo de cebada | ml
+Sopa instantánea de cebolla | Instant onion soup | sr:Soup, onion, dry, mix, prepared with water | 1 taza / 1 cup=230 | sopa de cebolla de sobre · caldo de cebolla de sobre | ml
+Crema de cebolla | Cream of onion soup | sr:Soup, cream of onion, canned, prepared with equal volume milk | 1 taza / 1 cup=248 · 1 lata preparada / 1 can prepared=602 | sopa crema de cebolla · crema de cebollas | ml
+Crema de apio | Cream of celery soup | sr:Soup, cream of celery, canned, prepared with equal volume milk | 1 taza / 1 cup=248 · 1 lata preparada / 1 can prepared=602 | sopa crema de apio | ml
+Crema de papa en lata | Canned cream of potato soup | sr:Soup, cream of potato, canned, prepared with equal volume milk | 1 taza / 1 cup=248 · 1 lata preparada / 1 can prepared=602 | crema de patata en lata* (ES) · crema de papas en lata | ml
+Crema de champiñones en lata | Canned cream of mushroom soup | sr:Soup, cream of mushroom, canned, prepared with equal volume low fat (2%) milk | 1 taza / 1 cup=252 | crema de hongos en lata* (AR UY) · crema de setas en lata (ES) · crema de champiñones enlatada | ml
+Sopa de queso | Cheese soup | sr:Soup, cheese, canned, prepared with equal volume milk | 1 taza / 1 cup=251 · 1 lata preparada / 1 can prepared=609 | sopa crema de queso · sopa de queso cheddar | ml
+Sopa de tomate casera | Homemade tomato soup | fndds:Soup, tomato | 1 taza / 1 cup=245 | sopa de jitomate casera* (MX) · sopa de tomate natural | ml
+Sopa de tomate en lata | Canned tomato soup | fndds:Soup, tomato, canned | 1 taza / 1 cup=245 · 1 lata / 1 can=525 · 1 envase individual / 1 individual container=440 | sopa de jitomate en lata* (MX) · sopa de tomate enlatada | ml
+Sopa de tomate en lata baja en sodio | Low-sodium canned tomato soup | fndds:Soup, tomato, canned / carton, reduced sodium | 1 taza / 1 cup=245 · 1 lata / 1 can=525 · 1 envase individual / 1 individual container=440 | sopa de jitomate en lata baja en sodio* (MX) · sopa de tomate reducida en sodio | ml
+Sopa instantánea de tomate | Instant tomato soup | sr:Soup, tomato, dry, mix, prepared with water | 1 taza / 1 cup=265 | sopa instantánea de jitomate* (MX) · sopa de tomate de sobre | ml
+Sopa de tomate con arroz | Tomato rice soup | sr:Soup, tomato rice, canned, prepared with equal volume water | 1 taza / 1 cup=247 · 1 lata preparada / 1 can prepared=600 | sopa de jitomate con arroz* (MX) · sopa de arroz con tomate | ml
+Bisque de tomate | Tomato bisque | sr:Soup, tomato bisque, canned, prepared with equal volume milk | 1 taza / 1 cup=251 · 1 lata preparada / 1 can prepared=609 | bisque de jitomate* (MX) | ml
+Borscht | Borscht | fndds:Soup, borscht | 1 taza / 1 cup=245 | sopa de remolacha · sopa de betabel · sopa de betarraga · borsch | ml
+Sopa de frijoles en lata | Canned bean soup | fndds:Soup, bean, canned | 1 taza / 1 cup=255 · 1 lata / 1 can=525 · 1 envase individual / 1 individual container=440 | sopa de porotos en lata* (AR UY CL PY BO) · sopa de caraotas en lata* (VE) · sopa de habichuelas en lata* (PR DO) · sopa de alubias en lata (ES) | ml
+Sopa de frijoles con carne | Bean soup with meat | fndds:Soup, bean, with meat | 1 taza / 1 cup=255 | sopa de porotos con carne* (AR UY CL PY BO) · sopa de caraotas con carne* (VE) · sopa de habichuelas con carne* (PR DO) · sopa de frijoles con jamón · sopa de alubias con carne (ES) | ml
+Sopa de frijoles negros | Black bean soup | sr:Soup, black bean, canned, prepared with equal volume water | 1 taza / 1 cup=247 · 1 lata preparada / 1 can prepared=600 | sopa de porotos negros* (AR UY CL PY BO) · sopa de caraotas negras* (VE) · sopa de habichuelas negras* (PR DO) · sopa de judías negras* (ES) | ml
+Sopa de lentejas en lata | Canned lentil soup | fndds:Soup, lentil, canned | 1 taza / 1 cup=255 · 1 lata / 1 can=525 · 1 envase individual / 1 individual container=440 | sopa de lentejas enlatada | ml
+Sopa de arvejas con jamón | Split pea soup with ham | fndds:Soup, split pea, with meat | 1 taza / 1 cup=255 · 1 lata / 1 can=525 · 1 envase individual / 1 individual container=440 | sopa de guisantes con jamón* (ES) · sopa de chícharos con jamón* (MX) · sopa de alverjas con jamón* (CO) · sopa de arvejas partidas con jamón | ml
+// Sopas de pescado y mariscos.
+Sopa de pescado | Fish soup | fndds:Soup, fish or shrimp | 1 taza / 1 cup=245 | sopa de camarones · sopa de gambas | ml
+Sopa de almejas con tomate | Manhattan clam chowder | fndds:Soup, Manhattan clam chowder | 1 taza / 1 cup=245 · 1 lata / 1 can=525 · 1 envase individual / 1 individual container=440 | chowder de almejas con tomate · sopa roja de almejas | ml
+Bisque de mariscos | Seafood bisque | fndds:Soup, bisque | 1 taza / 1 cup=255 | bisque de langosta · bisque de camarones · crema de mariscos | ml
+Crema de camarones | Cream of shrimp soup | sr:Soup, cream of shrimp, canned, prepared with equal volume low fat (2%) milk | 1 taza / 1 cup=253 | crema de gambas* (ES) · sopa crema de camarones | ml
+Sopa de ostras | Oyster stew | sr:Soup, oyster stew, canned, prepared with equal volume milk | 1 taza / 1 cup=245 · 1 lata preparada / 1 can prepared=595 | sopa de ostiones* (MX) · sopa de ostras con leche | ml
+Gumbo | Gumbo | fndds:Gumbo, no rice | 1 taza / 1 cup=244 · 1 porción / 1 serving=122 | gumbo sin arroz · gumbo de pollo · gumbo de mariscos | ml
+Gumbo con arroz | Gumbo with rice | fndds:Gumbo with rice | 1 taza / 1 cup=244 · 1 porción / 1 serving=305 | gumbo de pollo con arroz · gumbo de mariscos con arroz
+// Sopas de otras cocinas.
+Sopa de huevo | Egg drop soup | fndds:Soup, egg drop | 1 taza / 1 cup=245 | sopa de gota de huevo · egg drop soup · sopa de huevo china | ml
+Pho vegetariano | Vegetarian pho | fndds:Soup, pho, no meat | 1 taza / 1 cup=245 | pho sin carne · pho de verduras · sopa pho vegetariana | ml
+Sopa de algas | Seaweed soup | fndds:Soup, seaweed | 1 taza / 1 cup=245 | sopa de alga wakame · miyeokguk | ml
+Sopa mulligatawny | Mulligatawny soup | fndds:Soup, mulligatawany | 1 taza / 1 cup=245 | mulligatawny | ml
+Sopa de bolitas de matzá | Matzo ball soup | fndds:Soup, Matzo ball | 1 taza / 1 cup=245 | sopa de matzo ball · sopa de kneidlach · sopa de knéidelaj | ml
+
+# salsas
+// Caldos: los caseros, los bajos en sodio y el consomé. Los de siempre (de pollo, de carne y los cubitos) están en genericos.txt.
+Caldo de pollo bajo en sodio | Low-sodium chicken broth | sr:Soup, chicken broth, less/reduced sodium, ready to serve | 1 taza / 1 cup=240 | caldo de pollo reducido en sodio · consomé de pollo bajo en sodio (MX) | ml
+Caldo de pollo casero | Homemade chicken stock | sr:Soup, stock, chicken, home-prepared | 1 taza / 1 cup=240 | fondo de pollo · caldo de ave casero · caldo de pollo hecho en casa | ml
+Caldo de carne bajo en sodio | Low-sodium beef broth | sr:Soup, beef broth, less/reduced sodium, ready to serve | 1 taza / 1 cup=219 · 1 lata / 1 can=407 · 1 caja / 1 carton=923 | caldo de res bajo en sodio · caldo de carne reducido en sodio · consomé de res bajo en sodio (MX) | densidad=1.01
+Caldo de carne casero | Homemade beef stock | sr:Soup, stock, beef, home-prepared | 1 taza / 1 cup=240 | fondo de carne · caldo de res casero · caldo de huesos de res | ml
+Consomé | Beef consommé | sr:Soup, beef broth, bouillon, consomme, prepared with equal volume water | 1 taza / 1 cup=241 · 1 lata preparada / 1 can prepared=586 | consomé de carne · consommé · consomé clarificado | ml
+Caldo de pescado | Fish stock | sr:Soup, stock, fish, home-prepared | 1 taza / 1 cup=233 | fumet · fondo de pescado · caldo de pescado casero | ml
+Caldo vegetal | Vegetable broth | sr:Soup, vegetable broth, ready to serve | 1 taza / 1 cup=221 · 1 lata / 1 can=390 · 1 caja / 1 carton=926 | caldo de verduras · caldo de verduras en caja · caldo vegetal en caja · caldo de vegetales | densidad=1.01
+Cubito de caldo bajo en sodio | Low-sodium bouillon cube | sr:Soup, bouillon cubes and granules, low sodium, dry | 1 cubito / 1 cube=3.6 · 1 cucharadita / 1 tsp=2.6 | caldo en cubo bajo en sodio · consomé en polvo bajo en sodio · caldo en polvo bajo en sodio
+// Salsas para pasta: la de tomate y la boloñesa de siempre están en genericos.txt.
+Salsa de tomate con verduras | Pasta sauce with vegetables | fndds:Spaghetti sauce with added vegetables | ½ taza / ½ cup=130 · 1 taza / 1 cup=260 · 1 porción / 1 serving=65 | tuco con verduras* (AR UY) · salsa para pasta con verduras · salsa de tomate y verduras
+Salsa de tomate light | Fat-free pasta sauce | fndds:Spaghetti sauce, fat free | ½ taza / ½ cup=130 · 1 taza / 1 cup=260 · 1 porción / 1 serving=65 | tuco light* (AR UY) · salsa para pasta sin grasa · salsa de tomate sin grasa
+Salsa boloñesa con verduras | Meat sauce with vegetables | fndds:Spaghetti sauce with meat and added vegetables | ½ taza / ½ cup=130 · 1 taza / 1 cup=260 · 1 porción / 1 serving=65 | salsa bolognesa con verduras · tuco con carne y verduras (AR UY) · ragú con verduras
+Salsa boloñesa de pollo | Chicken pasta sauce | fndds:Spaghetti sauce with poultry | ½ taza / ½ cup=130 · 1 taza / 1 cup=260 · 1 porción / 1 serving=65 | salsa de tomate con pollo · tuco con pollo (AR UY) · boloñesa de pollo · boloñesa de pavo
+Salsa de tomate con mariscos | Seafood pasta sauce | fndds:Spaghetti sauce with seafood | ½ taza / ½ cup=130 · 1 taza / 1 cup=260 · 1 porción / 1 serving=65 | tuco con mariscos* (AR UY) · salsa de mariscos para pasta · salsa de tomate con camarones
+Salsa para pizza | Pizza sauce | sr:Sauce, pizza, canned, ready-to-serve | ¼ taza / ¼ cup=63 | salsa de pizza · salsa de tomate para pizza
+Pesto en frasco | Jarred pesto | sr:Sauce, pesto, ready-to-serve, shelf stable | ¼ taza / ¼ cup=61 | pesto envasado · pesto de frasco · salsa pesto en frasco
+// Gravies: el de carne está en genericos.txt («Salsa de carne»).
+Salsa gravy de pollo | Chicken gravy | fndds:Gravy, poultry | ¼ taza / ¼ cup=60 · 1 taza / 1 cup=240 | gravy de pollo · gravy de ave · salsa gravy de ave | ml
+Salsa gravy de pavo | Turkey gravy | sr:Gravy, turkey, canned, ready-to-serve | ¼ taza / ¼ cup=59.5 · 1 cucharada / 1 tbsp=14.9 · 1 taza / 1 cup=238 · 1 lata / 1 can=298 | gravy de pavo | ml
+Salsa gravy de champiñones | Mushroom gravy | sr:Gravy, mushroom, canned | ¼ taza / ¼ cup=59.5 · 1 taza / 1 cup=238 · 1 lata / 1 can=298 | salsa gravy de hongos* (AR UY) · salsa gravy de setas (ES) · gravy de champiñones | ml
+Salsa gravy de salchicha | Sausage gravy | fndds:Sausage gravy | ¼ taza / ¼ cup=60 · 1 taza / 1 cup=240 | gravy de salchicha · sausage gravy · salsa blanca con salchicha
+Salsa gravy vegetariana | Vegetarian gravy | fndds:Gravy, vegetarian | ¼ taza / ¼ cup=60 · 1 taza / 1 cup=240 | gravy vegetariano · salsa gravy sin carne | ml
+Salsa au jus | Au jus | sr:Gravy, au jus, canned | ¼ taza / ¼ cup=59 · 1 lata / 1 can=298 | au jus · jugo de asado | densidad=1.0
+// Salsas de mesa y de otras cocinas.
+Salsa de soja baja en sodio | Reduced-sodium soy sauce | fndds:Soy sauce, reduced sodium | 1 cucharada / 1 tbsp=16 · 1 sobre / 1 packet=9 | salsa de soya baja en sodio* (MX CO VE) · sillao bajo en sodio* (PE) · salsa de soja light · shoyu bajo en sodio | densidad=1.08
+Tamari | Tamari | sr:Soy sauce made from soy (tamari) | 1 cucharada / 1 tbsp=18 · 1 cucharadita / 1 tsp=6 | salsa tamari · salsa de soja sin trigo
+Kétchup bajo en sodio | Reduced-sodium ketchup | fndds:Ketchup, reduced sodium | 1 cucharada / 1 tbsp=17 · 1 sobre / 1 packet=10 · 1 envase individual / 1 dipping container=28 | catsup bajo en sodio* (MX) · cátsup bajo en sodio · kétchup reducido en sodio
+Mostaza amarilla | Yellow mustard | sr:Mustard, prepared, yellow | 1 cucharadita / 1 tsp=5 · 1 sobre / 1 packet=5 | mostaza para hot dog
+Relish de maíz | Corn relish | fndds:Relish, corn | 1 cucharada / 1 tbsp=15 | relish de choclo* (AR UY CL PE BO EC PY) · relish de elote* (MX GT HN SV NI CR)
+Salsa cóctel | Cocktail sauce | fndds:Cocktail sauce | 1 cucharada / 1 tbsp=17 · 1 sobre / 1 packet=12 · 1 envase individual / 1 dipping container=28 | salsa coctel · salsa de cóctel
+Salsa de rábano picante | Horseradish sauce | fndds:Horseradish sauce | 1 cucharada / 1 tbsp=16 · 1 sobre / 1 packet=12 | salsa de rábano rusticano · salsa de raíz picante · salsa horseradish
+Salsa para carne | Steak sauce | fndds:Steak sauce | 1 cucharada / 1 tbsp=17 | salsa para bistec · steak sauce
+Salsa búfalo | Buffalo sauce | fndds:Buffalo sauce | 1 cucharada / 1 tbsp=16 · 1 envase individual / 1 dipping container=28 · 1 porción / 1 serving=32 | salsa buffalo · salsa para alitas · salsa picante para alitas
+Salsa para tacos | Taco sauce | fndds:Taco sauce | 1 cucharada / 1 tbsp=16 · 1 sobre / 1 packet=9 · 1 envase individual / 1 dipping container=28 | salsa taco · salsa de tacos
+Salsa de curry | Curry sauce | fndds:Curry sauce | 1 cucharada / 1 tbsp=16 · 1 porción / 1 serving=32 | salsa curry · salsa al curry
+Salsa de ciruela | Plum sauce | sr:Sauce, plum, ready-to-serve | 1 cucharada / 1 tbsp=19 · 1 taza / 1 cup=305 | salsa china de ciruela · salsa de ciruelas
+Salsa de pato | Duck sauce | fndds:Duck sauce | 1 cucharada / 1 tbsp=16 · 1 sobre / 1 packet=9 · 1 porción / 1 serving=32 | duck sauce
+Salsa de mantequilla y limón | Lemon butter sauce | fndds:Lemon-butter sauce | 1 cucharada / 1 tbsp=16 · 1 porción / 1 serving=32 | salsa de manteca y limón* (AR UY PY) · salsa de limón y mantequilla
+Sofrito | Sofrito | fndds:Puerto Rican seasoning without ham and tomato sauce | 1 porción / 1 serving=5 · 1 taza / 1 cup=240 | recaíto · sofrito casero
+Chutney | Chutney | fndds:Chutney | 1 cucharada / 1 tbsp=16 · 1 porción / 1 serving=32 | chutney de mango · chutney de frutas
+// Mayonesas: la común y la light están en genericos.txt.
+Mayonesa sin grasa | Fat-free mayonnaise | fndds:Mayonnaise, fat free | 1 cucharada / 1 tbsp=16 · 1 porción / 1 serving=11 | mayonesa 0 % grasa · mahonesa sin grasa
+Mayonesa light con aceite de oliva | Reduced-fat olive oil mayonnaise | fndds:Mayonnaise, reduced fat,  with olive oil | 1 cucharada / 1 tbsp=13.8 · 1 sobre / 1 packet=12 | mayonesa de oliva light · mayonesa light de oliva
+Mayonesa vegana | Vegan mayonnaise | fndds:Vegan mayonnaise | 1 cucharada / 1 tbsp=14.1 · 1 porción / 1 serving=9 | mayonesa sin huevo · veganesa · mayo vegana
+Mayonesa de tofu | Tofu mayonnaise | sr:Mayonnaise, made with tofu | 1 cucharada / 1 tbsp=15 · 1 taza / 1 cup=240 | mayonesa con tofu
+Aderezo tipo mayonesa | Mayonnaise-type dressing | fndds:Mayonnaise-type salad dressing | 1 cucharada / 1 tbsp=14.7 · 1 sobre / 1 packet=12 · 1 porción / 1 serving=10 | salsa tipo mayonesa · aderezo de mayonesa
+Aderezo tipo mayonesa light | Light mayonnaise-type dressing | fndds:Mayonnaise-type salad dressing, light | 1 cucharada / 1 tbsp=14.5 · 1 porción / 1 serving=10 | salsa tipo mayonesa light · aderezo de mayonesa light
+// Aderezos de ensalada: el César, el ranch, el de mostaza y miel y la salsa rosada de siempre están en genericos.txt.
+Aderezo César light | Light Caesar dressing | fndds:Caesar dressing, light | 1 cucharada / 1 tbsp=15 · 1 porción / 1 serving=30 · 1 sobre / 1 packet=44 | salsa césar light
+Aderezo César sin grasa | Fat-free Caesar dressing | fndds:Caesar dressing, fat free | 1 cucharada / 1 tbsp=14 · 1 porción / 1 serving=28 | salsa césar sin grasa
+Aderezo ranch light | Light ranch dressing | fndds:Ranch dressing, light | 1 cucharada / 1 tbsp=15 · 1 porción / 1 serving=30 · 1 sobre / 1 packet=44 | ranch light
+Aderezo ranch sin grasa | Fat-free ranch dressing | fndds:Ranch dressing, fat free | 1 cucharada / 1 tbsp=15 · 1 porción / 1 serving=30 · 1 sobre / 1 packet=44 | ranch sin grasa
+Aderezo italiano | Italian dressing | fndds:Italian dressing, made with vinegar and oil | 1 cucharada / 1 tbsp=14.7 · 1 porción / 1 serving=29 · 1 sobre / 1 packet=44 | aderezo italiano envasado · aderezo italiano de botella · italian dressing
+Aderezo italiano light | Light Italian dressing | fndds:Italian dressing, light | 1 cucharada / 1 tbsp=14 · 1 porción / 1 serving=28 · 1 sobre / 1 packet=44 | vinagreta light
+Aderezo italiano sin grasa | Fat-free Italian dressing | fndds:Italian dressing, fat free | 1 cucharada / 1 tbsp=14 · 1 sobre / 1 packet=44 | vinagreta sin grasa
+Aderezo italiano cremoso | Creamy Italian dressing | fndds:Creamy Italian dressing | 1 cucharada / 1 tbsp=15 · 1 porción / 1 serving=30 · 1 sobre / 1 packet=44 |
+Aderezo francés | French dressing | fndds:French or Catalina dressing | 1 cucharada / 1 tbsp=15.6 · 1 porción / 1 serving=31 · 1 sobre / 1 packet=44 | aderezo catalina · french dressing
+Aderezo francés light | Light French dressing | fndds:French or Catalina dressing, light | 1 cucharada / 1 tbsp=16.2 · 1 porción / 1 serving=32 · 1 sobre / 1 packet=44 | aderezo catalina light
+Aderezo francés sin grasa | Fat-free French dressing | fndds:French or Catalina dressing, fat free | 1 cucharada / 1 tbsp=16 · 1 porción / 1 serving=32 · 1 sobre / 1 packet=44 | aderezo catalina sin grasa
+Aderezo ruso | Russian dressing | fndds:Russian dressing | 1 cucharada / 1 tbsp=15.3 · 1 porción / 1 serving=31 · 1 sobre / 1 packet=44 | russian dressing
+Aderezo de queso azul | Blue cheese dressing | fndds:Blue or roquefort cheese dressing | 1 cucharada / 1 tbsp=15.3 · 1 porción / 1 serving=31 · 1 sobre / 1 packet=44 | aderezo de roquefort* (AR UY) · aderezo roquefort · aderezo blue cheese
+Aderezo de queso azul light | Light blue cheese dressing | fndds:Blue or roquefort cheese dressing, light | 1 cucharada / 1 tbsp=15.3 · 1 porción / 1 serving=31 · 1 sobre / 1 packet=44 | aderezo de roquefort light* (AR UY) · aderezo blue cheese light
+Aderezo de queso azul sin grasa | Fat-free blue cheese dressing | fndds:Blue or roquefort cheese dressing, fat free | 1 cucharada / 1 tbsp=16.6 · 1 porción / 1 serving=33 · 1 sobre / 1 packet=44 | aderezo de roquefort sin grasa* (AR UY)
+Aderezo de mostaza y miel light | Light honey mustard dressing | fndds:Honey mustard dressing, light | 1 cucharada / 1 tbsp=15 · 1 porción / 1 serving=30 · 1 sobre / 1 packet=44 | salsa de miel y mostaza light · honey mustard light
+Aderezo de mostaza y miel sin grasa | Fat-free honey mustard dressing | fndds:Honey mustard dressing, fat free | 1 cucharada / 1 tbsp=16 · 1 porción / 1 serving=32 | salsa de miel y mostaza sin grasa · honey mustard sin grasa
+Salsa rosada light | Light Thousand Island dressing | fndds:Thousand Island dressing, light | 1 cucharada / 1 tbsp=15.3 · 1 porción / 1 serving=31 · 1 sobre / 1 packet=44 | salsa golf light* (AR UY PY) · salsa rosa light* (ES) · aderezo mil islas light* (MX) · mil islas light
+Salsa rosada sin grasa | Fat-free Thousand Island dressing | fndds:Thousand Island dressing, fat free | 1 cucharada / 1 tbsp=16 · 1 porción / 1 serving=32 · 1 sobre / 1 packet=44 | salsa golf sin grasa* (AR UY PY) · salsa rosa sin grasa* (ES) · aderezo mil islas sin grasa* (MX)
+Aderezo para ensalada de col | Coleslaw dressing | fndds:Coleslaw dressing | 1 cucharada / 1 tbsp=15.6 · 1 porción / 1 serving=31 | aderezo para ensalada de repollo* (AR UY CL PE CO VE) · aderezo coleslaw
+Aderezo de semillas de amapola | Poppy seed dressing | fndds:Poppy seed dressing | 1 cucharada / 1 tbsp=14.7 · 1 porción / 1 serving=29 | aderezo de amapola
+Aderezo de sésamo | Sesame dressing | fndds:Sesame dressing | 1 cucharada / 1 tbsp=14.7 · 1 porción / 1 serving=29 · 1 sobre / 1 packet=44 | aderezo de ajonjolí* (MX CO VE)
+Aderezo de aguacate | Avocado dressing | fndds:Avocado dressing | 1 cucharada / 1 tbsp=15.3 · 1 porción / 1 serving=31 | aderezo de palta* (AR UY CL PE BO PY)
+// Dips: el de queso picante, el de frijoles y el de alcachofa ya están.
+Dip de cebolla | Onion dip | fndds:Onion dip, regular | 2 cucharadas / 2 tbsp=30 · 1 cucharada / 1 tbsp=15 · 1 envase individual / 1 individual container=70 | dip de cebolla y crema · dip de cebolla con crema agria
+Dip de cebolla light | Light onion dip | fndds:Onion dip, light | 2 cucharadas / 2 tbsp=30 · 1 cucharada / 1 tbsp=15 · 1 envase individual / 1 individual container=70 | dip de cebolla bajo en grasa
+Dip de cebolla con yogur | Yogurt onion dip | fndds:Onion dip, yogurt based | 2 cucharadas / 2 tbsp=30 · 1 cucharada / 1 tbsp=15 · 1 envase individual / 1 individual container=70 | dip de cebolla y yogur
+Dip de espinaca | Spinach dip | fndds:Spinach dip, regular | 2 cucharadas / 2 tbsp=30 · 1 cucharada / 1 tbsp=15 · 1 envase individual / 1 individual container=70 | dip de espinacas
+Dip de espinaca light | Light spinach dip | fndds:Spinach dip, light | 2 cucharadas / 2 tbsp=30 · 1 cucharada / 1 tbsp=15 · 1 envase individual / 1 individual container=70 | dip de espinacas light
+Dip de espinaca con yogur | Yogurt spinach dip | fndds:Spinach dip, yogurt based | 2 cucharadas / 2 tbsp=30 · 1 cucharada / 1 tbsp=15 · 1 envase individual / 1 individual container=70 | dip de espinacas y yogur
+Dip de espinaca y alcachofa | Spinach artichoke dip | fndds:Spinach and artichoke dip | 2 cucharadas / 2 tbsp=30 · 1 cucharada / 1 tbsp=15 · 1 envase individual / 1 individual container=70 | dip de espinaca y alcaucil* (AR UY) · dip de espinacas y alcachofas
+Dip de chipotle | Chipotle dip | fndds:Chipotle dip, regular | 2 cucharadas / 2 tbsp=30 · 1 cucharada / 1 tbsp=15 · 1 envase individual / 1 individual container=70 | aderezo de chipotle · dip chipotle
+Dip de mostaza y miel | Honey mustard dip | fndds:Honey mustard dip | 2 cucharadas / 2 tbsp=30 · 1 cucharada / 1 tbsp=15 · 1 envase individual / 1 individual container=70 | dip honey mustard
+Dip de capas | Layered dip | fndds:Layer dip | 2 cucharadas / 2 tbsp=30 · 1 cucharada / 1 tbsp=15 · 1 envase individual / 1 individual container=70 | dip de siete capas · dip de 7 capas · dip de frijoles en capas

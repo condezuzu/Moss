@@ -1,0 +1,82 @@
+// Más grasas, especias, ingredientes de cocina y suplementos (22/11/2026, lo pediste: «el máximo de comidas
+// posibles»): lo de USDA que estaba en la base solo en inglés, con su nombre en español y sus porciones. Lo
+// que ya estaba (los aceites de siempre, la mantequilla, las especias comunes, la proteína de suero…) sigue en
+// genericos.txt y uruguay.txt. Sin marcas: lo que en USDA es de una marca va con un nombre genérico.
+@variantes
+
+# grasas
+// Los aceites se miden en ml, como en genericos.txt. El extra virgen tiene las mismas calorías y grasas que
+// el común: es el aceite de oliva de SR Legacy.
+Aceite de oliva extra virgen | Extra virgin olive oil | sr:Oil, olive, salad or cooking | 1 cucharada / 1 tbsp=13.5 · 1 cucharadita / 1 tsp=4.5 | aceite de oliva virgen extra · AOVE | densidad=0.92
+Aceite de girasol alto oleico | High-oleic sunflower oil | sr:Oil, sunflower, high oleic (70% and over) | 1 cucharada / 1 tbsp=14 · 1 cucharadita / 1 tsp=4.5 | aceite de maravilla alto oleico* (CL) · girasol alto oleico | densidad=0.92
+Aceite de cártamo | Safflower oil | sr:Oil, safflower, salad or cooking, high oleic (primary safflower oil of commerce) | 1 cucharada / 1 tbsp=13.6 · 1 cucharadita / 1 tsp=4.5 | aceite de alazor | densidad=0.92
+Aceite de semilla de uva | Grapeseed oil | sr:Oil, grapeseed | 1 cucharada / 1 tbsp=13.6 · 1 cucharadita / 1 tsp=4.5 | aceite de pepita de uva · aceite de uva | densidad=0.92
+Aceite de linaza | Flaxseed oil | sr:Oil, flaxseed, cold pressed | 1 cucharada / 1 tbsp=13.6 | aceite de lino* (AR UY ES) · aceite de linaza prensado en frío | densidad=0.92
+Aceite de nuez | Walnut oil | sr:Oil, walnut | 1 cucharada / 1 tbsp=13.6 · 1 cucharadita / 1 tsp=4.5 | aceite de nueces | densidad=0.92
+Aceite de almendras | Almond oil | sr:Oil, almond | 1 cucharada / 1 tbsp=13.6 · 1 cucharadita / 1 tsp=4.5 | aceite de almendra | densidad=0.92
+Aceite de avellanas | Hazelnut oil | sr:Oil, hazelnut | 1 cucharada / 1 tbsp=13.6 · 1 cucharadita / 1 tsp=4.5 | aceite de avellana | densidad=0.92
+Aceite de germen de trigo | Wheat germ oil | sr:Oil, wheat germ | 1 cucharadita / 1 tsp=4.5 · 1 cucharada / 1 tbsp=13.6 |  | densidad=0.92
+Aceite de palma | Palm oil | sr:Oil, palm | 1 cucharada / 1 tbsp=13.6 · 1 cucharadita / 1 tsp=4.5 |  | densidad=0.92
+Manteca de cacao | Cocoa butter | sr:Oil, cocoa butter | 1 cucharada / 1 tbsp=13.6 · 1 cucharadita / 1 tsp=4.5 | mantequilla de cacao
+// Margarinas y untables. La común y la light están en genericos.txt.
+Margarina en barra | Stick margarine | fndds:Margarine, stick | 1 cucharada / 1 tbsp=14 · 1 porción individual / 1 pat=7 | margarina en bloque
+Margarina untable | Tub margarine | fndds:Margarine, tub | 1 cucharada / 1 tbsp=14 · 1 porción individual / 1 individual container=5 | margarina en pote · margarina en tarrina
+Margarina sin sal | Unsalted margarine | sr:Margarine, regular, 80% fat, composite, stick, without salt | 1 cucharada / 1 tbsp=14.2 · 1 porción individual / 1 pat=5 · 1 barra / 1 stick=113 | margarina sin sal agregada
+Margarina extra light | Extra-light margarine | sr:Margarine-like, vegetable oil spread, 20% fat, with salt | 1 cucharada / 1 tbsp=15 | margarina 20 % grasa · margarina muy baja en grasa
+Margarina sin grasa | Fat-free margarine | sr:Margarine-like, vegetable oil spread, fat-free, tub | 1 cucharada / 1 tbsp=14.6 | margarina 0 % grasa · untable sin grasa
+Mantequilla untable con aceite | Butter and oil blend spread | sr:Margarine-like, margarine-butter blend, soybean oil and butter | 1 cucharada / 1 tbsp=14.1 · 1 cucharadita / 1 tsp=4.7 | manteca untable con aceite* (AR UY PY) · mezcla de mantequilla y margarina
+// Grasas animales. La de cerdo y la de res están en genericos.txt y uruguay.txt.
+Grasa de pollo | Chicken fat | sr:Fat, chicken | 1 cucharada / 1 tbsp=12.8 | schmaltz · grasa de gallina
+Grasa de ganso | Goose fat | sr:Fat, goose | 1 cucharada / 1 tbsp=12.8 | grasa de oca
+Grasa de tocino | Bacon grease | sr:Animal fat, bacon grease | 1 cucharadita / 1 tsp=4.3 | grasa de panceta* (AR UY) · grasa de beicon* (ES) · grasa de tocineta* (CO VE)
+
+# especias
+// Semillas, hierbas secas y mezclas que faltaban.
+Alcaravea | Caraway seeds | sr:Spices, caraway seed | 1 cucharadita / 1 tsp=2.1 · 1 cucharada / 1 tbsp=6.7 | semillas de alcaravea · comino de prado
+Semillas de apio | Celery seed | sr:Spices, celery seed | 1 cucharadita / 1 tsp=2 · 1 cucharada / 1 tbsp=6.5 | apio en semillas
+Semillas de eneldo | Dill seed | sr:Spices, dill seed | 1 cucharadita / 1 tsp=2.1 · 1 cucharada / 1 tbsp=6.6 | eneldo en semillas
+Semillas de hinojo | Fennel seed | sr:Spices, fennel seed | 1 cucharadita / 1 tsp=2 · 1 cucharada / 1 tbsp=5.8 | hinojo en grano · hinojo seco
+Fenogreco | Fenugreek seed | sr:Spices, fenugreek seed | 1 cucharadita / 1 tsp=3.7 · 1 cucharada / 1 tbsp=11.1 | alholva · semillas de fenogreco · methi
+Macis | Mace | sr:Spices, mace, ground | 1 cucharadita / 1 tsp=1.7 · 1 cucharada / 1 tbsp=5.3 | macis molido · flor de nuez moscada
+Mejorana | Marjoram | sr:Spices, marjoram, dried | 1 cucharadita / 1 tsp=0.6 · 1 cucharada / 1 tbsp=1.7 | mejorana seca
+Estragón | Tarragon | sr:Spices, tarragon, dried | 1 cucharadita / 1 tsp=0.6 · 1 cucharada / 1 tbsp=1.8 · 1 cucharadita molido / 1 tsp ground=1.6 | estragón seco
+Perifollo | Chervil | sr:Spices, chervil, dried | 1 cucharadita / 1 tsp=0.6 · 1 cucharada / 1 tbsp=1.9 | perifollo seco · cerafolio
+Ajedrea | Savory | sr:Spices, savory, ground | 1 cucharadita / 1 tsp=1.4 · 1 cucharada / 1 tbsp=4.4 | ajedrea molida
+Cilantro seco | Dried cilantro | sr:Spices, coriander leaf, dried | 1 cucharadita / 1 tsp=0.6 · 1 cucharada / 1 tbsp=1.8 | culantro seco* (PE) · cilantro deshidratado · hojas de cilantro secas
+Menta seca | Dried mint | sr:Spearmint, dried | 1 cucharadita / 1 tsp=0.5 · 1 cucharada / 1 tbsp=1.6 | hierbabuena seca · yerbabuena seca · menta deshidratada
+Condimento para aves | Poultry seasoning | sr:Spices, poultry seasoning | 1 cucharadita / 1 tsp=1.5 · 1 cucharada / 1 tbsp=4.4 | sazonador para pollo · especias para pollo
+Pumpkin spice | Pumpkin pie spice | sr:Spices, pumpkin pie spice | 1 cucharadita / 1 tsp=1.7 · 1 cucharada / 1 tbsp=5.6 | especias para pastel de calabaza · mezcla pumpkin spice
+Sazonador para tacos | Taco seasoning | sr:Seasoning mix, dry, taco, original | 2 cucharaditas / 2 tsp=5.7 | condimento para tacos · especias para tacos
+Sazonador para chili | Chili seasoning mix | sr:Seasoning mix, dry, chili, original | 1⅓ cucharadas / 1⅓ tbsp=9 | condimento para chili con carne · especias para chili
+Sazón con achiote | Sazón seasoning with coriander and annatto | sr:Seasoning mix, dry, sazon, coriander & annatto | ¼ cucharadita / ¼ tsp=1 | sazón de cilantro y achiote · sazón con culantro y achiote
+// La vainilla de imitación: con alcohol (la más común) y sin. El extracto natural está en genericos.txt.
+Vainilla artificial | Imitation vanilla extract | sr:Vanilla extract, imitation, alcohol | 1 cucharadita / 1 tsp=4.2 · 1 cucharada / 1 tbsp=13 | esencia de vainilla artificial · saborizante de vainilla
+Vainilla artificial sin alcohol | Alcohol-free imitation vanilla | sr:Vanilla extract, imitation, no alcohol | 1 cucharadita / 1 tsp=4.2 · 1 cucharada / 1 tbsp=13 | esencia de vainilla sin alcohol · vainilla sin alcohol
+
+# verduras
+// Hierbas frescas, junto a la menta de genericos.txt.
+Menta piperita | Peppermint | sr:Peppermint, fresh | 2 cucharadas / 2 tbsp=3.2 · 2 hojas / 2 leaves=0.1 | piperita · hojas de menta piperita
+Hierba limón | Lemongrass | sr:Lemon grass (citronella), raw | 1 cucharada / 1 tbsp=4.8 · 1 taza / 1 cup=67 | zacate limón · lemongrass · citronela
+
+# ingredientes
+// Para hornear y cocinar. La levadura, el bicarbonato, el polvo de hornear, la maicena y la gelatina sin sabor
+// ya estaban.
+Crémor tártaro | Cream of tartar | sr:Leavening agents, cream of tartar | 1 cucharadita / 1 tsp=3 · ½ cucharadita / ½ tsp=1.5 | cremor tártaro · bitartrato de potasio
+Polvo de hornear bajo en sodio | Low-sodium baking powder | sr:Leavening agents, baking powder, low-sodium | 1 cucharadita / 1 tsp=5 · ½ cucharadita / ½ tsp=2.5 | polvo para hornear bajo en sodio* (MX) · levadura química baja en sodio* (ES)
+Cacao en polvo alcalinizado | Dutch-process cocoa powder | sr:Cocoa, dry powder, unsweetened, processed with alkali | 1 cucharada / 1 tbsp=5.4 · 1 taza / 1 cup=86 | cocoa alcalinizada* (MX CO VE) · cacao holandés · cacao alcalino
+Harina de algarroba | Carob flour | sr:Carob flour | 1 cucharada / 1 tbsp=6 · 1 taza / 1 cup=103 | algarroba en polvo · harina de algarrobo
+Agar agar | Agar | sr:Seaweed, agar, dried | 100 g / 100 g=100 | agar · agar-agar · gelatina vegetal
+Polvo para gelatina | Gelatin dessert mix | sr:Gelatin desserts, dry mix | 1 porción para ½ taza / 1 portion for ½ cup=21 · 1 sobre / 1 package=85 | gelatina en polvo · gelatina de sabor en polvo
+Extracto de levadura para untar | Yeast extract spread | sr:Yeast extract spread | 1 cucharadita / 1 tsp=6 | extracto de levadura · pasta de extracto de levadura
+
+# suplementos
+// Batidos nutricionales sin marca. El común, el de proteínas y la proteína en polvo están en genericos.txt.
+Batido nutricional hipercalórico | High-calorie nutritional shake | fndds:Nutritional drink or shake, ready-to-drink (Ensure Plus) | 1 botella (237 ml) / 1 bottle (8 fl oz)=252 · 1 onza / 1 fl oz=31.5 | suplemento nutricional hipercalórico · batido nutricional plus · suplemento nutricional plus | ml
+// La lata es la de USDA; la densidad, la de la misma bebida en FNDDS (31 g la onza).
+Batido nutricional para diabéticos | Diabetic nutritional shake | sr:Nutritional supplement for people with diabetes, liquid | 1 lata / 1 can=227 | suplemento nutricional para diabéticos · batido para diabéticos | densidad=1.05
+Batido sustituto de comida | Meal replacement shake | fndds:Nutritional drink or shake, ready-to-drink (Slim Fast) | 1 lata (325 ml) / 1 can (11 fl oz)=341 · 1 taza / 1 cup=248 | sustituto de comida · reemplazo de comida · batido reemplazo de comida | ml
+Sustituto de comida en polvo | Meal replacement powder | fndds:Nutritional powder mix (Slim Fast) | 1 medida / 1 scoop=26 | reemplazo de comida en polvo · batido sustituto de comida en polvo
+Batido de proteínas light | Light protein shake | fndds:Nutritional drink or shake, ready-to-drink, light (Muscle Milk) | 1 cajita (250 ml) / 1 box (8.5 fl oz)=272 · 1 botella (414 ml) / 1 bottle (14 fl oz)=448 · 1 taza / 1 cup=256 | shake de proteína light · bebida proteica light | ml
+Mezcla proteica en polvo | High-protein powder blend | fndds:Nutritional powder mix, high protein, NFS | 1 sobre / 1 packet=44 | proteína en polvo con carbohidratos · blend de proteínas
+Aceite de hígado de bacalao | Cod liver oil | sr:Fish oil, cod liver | 1 cucharadita / 1 tsp=4.5 · 1 cucharada / 1 tbsp=13.6 | aceite de bacalao | densidad=0.92
+Lecitina de soja | Soy lecithin | sr:Oil, soybean lecithin | 1 cucharada / 1 tbsp=13.6 · 1 cucharadita / 1 tsp=4.5 | lecitina de soya* (MX CO VE) · lecitina

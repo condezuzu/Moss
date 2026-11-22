@@ -1,0 +1,136 @@
+// Más dulces horneados (22/11/2026, lo pediste: «el máximo de comidas posibles»): las galletas dulces que
+// faltaban (light, sin azúcar, sin gluten, rellenas, de mantequilla de maní, de jengibre…), los brownies, los
+// pasteles y cupcakes, los cheesecakes, las tartas y los pies, los cobblers y crumbles, los strudels, las
+// danesas, las donas y la pastelería que USDA tenía solo en inglés. Ninguna marca en los nombres. Son variantes:
+// al buscar salen después de lo de siempre (las galletas con chispas, el brownie, el pastel de chocolate, la
+// tarta de manzana… siguen en genericos.txt).
+@variantes
+
+# dulces
+// Galletas dulces. Las de siempre (con chispas, de mantequilla, María, Graham, rellenas, de avena) están en genericos.txt.
+Galletas con chispas de chocolate light | Reduced-fat chocolate chip cookies | fndds:Cookie, chocolate chip, reduced fat | 1 unidad / 1 cookie=30 · 1 grande / 1 large=45 · 1 mini / 1 bite size=5 · 1 paquete de 100 kcal / 1 100-calorie pack=22 | galletitas con chips light* (AR UY) · cookies light · galletas con chips de chocolate light
+Galletas con chispas de chocolate bajas en azúcar | Reduced-sugar chocolate chip cookies | fndds:Cookie, chocolate chip, reduced sugar | 1 unidad / 1 cookie=30 · 1 grande / 1 large=45 · 1 mini / 1 bite size=5 | galletitas con chips bajas en azúcar* (AR UY) · cookies bajas en azúcar · galletas con chispas de chocolate reducidas en azúcar
+Galletas blandas con chispas de chocolate | Soft chocolate chip cookies | sr:Cookies, chocolate chip, commercially prepared, soft-type | 1 unidad / 1 cookie=14.2 · 30 g / 30 g=30 | galletitas blandas con chips* (AR UY) · cookies blandas · galletas suaves con chispas de chocolate
+Galletas de avena con chispas de chocolate | Oatmeal chocolate chip cookies | fndds:Cookie, oatmeal, with chocolate chips | 1 unidad / 1 cookie=30 · 1 grande / 1 large=45 · 1 mini / 1 bite size=5 | galletitas de avena con chips* (AR UY) · cookies de avena con chocolate
+Galletas de avena light | Reduced-fat oatmeal cookies | fndds:Cookie, oatmeal, reduced fat, NS as to raisins | 1 unidad / 1 cookie=30 · 1 grande / 1 large=45 · 1 mini / 1 bite size=5 | galletitas de avena light* (AR UY) · galletas de avena bajas en grasa
+Galletas de avena rellenas de crema | Oatmeal cream pies | fndds:Cookie, oatmeal sandwich, with creme filling | 1 unidad / 1 large sandwich=36 · 1 pequeña / 1 small sandwich=14 · 1 porción / 1 serving=42 | galletitas de avena rellenas* (AR UY) · sándwich de avena con crema
+Galletas de mantequilla de maní | Peanut butter cookies | fndds:Cookie, peanut butter | 1 unidad / 1 cookie=30 · 1 grande / 1 large=45 · 1 mini / 1 bite size=5 | galletitas de pasta de maní* (AR UY) · galletas de crema de cacahuate* (MX) · galletas de crema de cacahuete* (ES)
+Galletas de mantequilla de maní sin azúcar | Sugar-free peanut butter cookies | fndds:Cookie, peanut butter, sugar free | 1 unidad / 1 cookie=30 · 1 pequeña / 1 small=20 · 1 grande / 1 large=45 | galletitas de pasta de maní sin azúcar* (AR UY) · galletas de crema de cacahuate sin azúcar* (MX) · galletas de crema de cacahuete sin azúcar* (ES)
+Galletas rellenas de mantequilla de maní | Peanut butter sandwich cookies | fndds:Cookie, peanut butter sandwich | 1 unidad / 1 sandwich=14 · 1 grande / 1 large sandwich=36 · 1 porción / 1 serving=42 | galletitas rellenas de pasta de maní* (AR UY) · galletas rellenas de crema de cacahuate* (MX) · galletas rellenas de crema de cacahuete* (ES)
+Galletas dulces sin azúcar | Sugar-free cookies | fndds:Cookie, sugar or plain, sugar free | 1 unidad / 1 cookie=30 · 1 grande / 1 large=45 · 1 mini / 1 bite size=5 | galletitas dulces sin azúcar* (AR UY) · galletas sin azúcar · galletas para diabéticos
+Galletas dulces sin gluten | Gluten-free cookies | fndds:Cookie, gluten free | 1 unidad / 1 cookie=30 · 1 pequeña / 1 small=20 · 1 grande / 1 large=45 · 1 mini / 1 bite size=5 | galletitas dulces sin gluten* (AR UY) · galletitas dulces sin TACC (AR UY) · cookies sin gluten
+Galletas dulces multicereal | High-fiber multigrain cookies | fndds:Cookie, multigrain, high fiber | 1 unidad / 1 cookie=30 · 1 porción / 1 serving=60 | galletitas dulces multicereal* (AR UY) · galletas dulces con fibra · galletas dulces multigrano
+Galletas bañadas en chocolate | Chocolate-coated cookies | fndds:Cookie, butter or sugar, with chocolate icing or filling | 1 unidad / 1 cookie=10 · 1 mini / 1 bite size=7 | galletitas bañadas en chocolate* (AR UY) · galletas cubiertas de chocolate · galletas con cobertura de chocolate
+Galletas glaseadas | Iced sugar cookies | fndds:Cookie, butter or sugar, with icing or filling other than chocolate | 1 unidad / 1 cookie=42 · 1 grande / 1 large=63 · 1 mini / 1 bite size=7 | galletitas glaseadas* (AR UY) · galletas decoradas · galletas con glaseado · galletas con glasé
+Galletas shortbread | Shortbread cookies | sr:Cookies, shortbread, commercially prepared, plain | 1 unidad / 1 cookie=11.8 · 30 g / 30 g=30 | galletitas shortbread* (AR UY) · shortbread
+Galletas shortbread con nuez pecana | Pecan shortbread cookies | sr:Cookies, shortbread, commercially prepared, pecan | 1 unidad / 1 cookie=14 · 30 g / 30 g=30 | galletitas shortbread con pecanas* (AR UY) · galletas shortbread con nuez* (MX) · galletas de mantequilla con nuez pecana
+Galletas de jengibre | Gingersnaps | sr:Cookies, gingersnaps | 1 unidad / 1 cookie=7 · 1 grande / 1 large=32 | galletitas de jengibre* (AR UY) · gingersnaps · galletas de jengibre crocantes
+Galletas de melaza | Molasses cookies | sr:Cookies, molasses | 1 mediana / 1 medium=15 · 1 grande / 1 large=32 | galletitas de melaza* (AR UY)
+Galletas de almendra | Almond cookies | fndds:Cookie, almond | 1 unidad / 1 cookie=30 · 1 grande / 1 large=45 · 1 mini / 1 bite size=5 | galletitas de almendra* (AR UY) · galletas de almendras
+Biscotti | Biscotti | fndds:Cookie, biscotti | 1 unidad / 1 cookie=32 · 2 unidades / 2 cookies=64 | cantucci · biscottis
+Galletas de la fortuna | Fortune cookies | fndds:Cookie, fortune | 1 unidad / 1 cookie=8 · 3 unidades / 3 cookies=24 | galletitas de la fortuna* (AR UY) · galletas de la suerte
+Galletas de animalitos | Animal crackers | fndds:Cookie, animal | 1 porción / 1 serving=20 · 1 unidad / 1 cracker=4 · 1 bolsita / 1 single serving bag=28 · 1 taza / 1 cup=64 | galletitas de animalitos* (AR UY) · animalitos* (MX) · galletas de animales
+Galletas de vainilla | Vanilla wafers | fndds:Cookie, vanilla wafer | 1 porción / 1 serving=16 · 1 unidad / 1 wafer=4 · 1 grande / 1 large=6 | galletitas de vainilla* (AR UY) · vanilla wafers
+Galletas rellenas con doble crema | Double-stuffed sandwich cookies | fndds:Cookie, chocolate, sandwich, with extra filling | 1 unidad / 1 sandwich=15 · 1 grande / 1 large sandwich=36 · 1 porción / 1 serving=45 | galletitas rellenas con doble relleno* (AR UY) · galletas con doble relleno
+Galletas rellenas light | Reduced-fat sandwich cookies | fndds:Cookie, chocolate sandwich, reduced fat | 1 unidad / 1 cookie=14 · 1 grande / 1 large sandwich=36 · 1 porción / 1 serving=42 | galletitas rellenas light* (AR UY) · galletas rellenas bajas en grasa
+Galletas rellenas bañadas en chocolate | Chocolate-covered sandwich cookies | sr:Cookies, chocolate sandwich, with creme filling, regular, chocolate-coated | 1 unidad / 1 cookie=17 · 30 g / 30 g=30 | galletitas rellenas bañadas en chocolate* (AR UY) · galletas rellenas con cobertura de chocolate
+Obleas rellenas sin azúcar | Sugar-free cream-filled wafers | fndds:Cookie, sugar wafer, sugar free | 1 unidad / 1 wafer=8 · 1 porción / 1 serving=24 · 1 pequeña / 1 small=4 | obleas sin azúcar* (AR UY) · barquillos rellenos sin azúcar · wafers sin azúcar
+Galletas Graham bañadas en chocolate | Chocolate-covered graham crackers | sr:Cookies, graham crackers, chocolate-coated | 3 unidades / 3 pieces=27 · 30 g / 30 g=30 | galletas graham con chocolate
+Galletas Graham light | Low-fat graham crackers | sr:Cookies, graham crackers, plain or honey, lowfat | 1 porción / 1 serving=35 | galletas graham bajas en grasa
+Galletas rellenas de higo | Fig bars | fndds:Cookie, fig bar | 1 unidad / 1 bar=16 · 1 porción / 1 serving=32 · 1 paquete individual / 1 individual package=57 | galletitas rellenas de higo* (AR UY) · barritas de higo · galletas de higo
+Barritas de limón | Lemon bars | fndds:Cookie, lemon bar | 1 barrita / 1 small bar=25 · 1 porción / 1 serving=38 · 1 grande / 1 large bar=56 | cuadrados de limón · lemon bars
+Galletas de malvavisco bañadas en chocolate | Chocolate-covered marshmallow cookies | fndds:Cookie, marshmallow, chocolate-covered | 1 unidad / 1 cookie=30 · 1 porción / 1 serving=60 | galletas con malvavisco y chocolate · galletas de masmelo con chocolate (CO)
+Palitos de galleta bañados en chocolate | Chocolate-covered biscuit sticks | sr:Cookies, chocolate cream covered biscuit sticks | 1 porción / 1 serving=40 | palitos bañados en chocolate · palitos de galleta con chocolate
+Masa para galletas | Cookie dough | fndds:Cookie, batter or dough, raw | 1 porción / 1 serving=63 · 1 taza / 1 cup=250 | masa de galletas · cookie dough · masa de cookies
+
+// Brownies. El de siempre (sin glaseado) está en genericos.txt.
+Brownie con glaseado | Frosted brownie | fndds:Cookie, brownie, with icing or filling | 1 unidad / 1 brownie=65 · 1 pequeño / 1 small=40 · 1 grande / 1 large=110 | brownie con cobertura · brownie con frosting
+Brownie light | Reduced-fat brownie | fndds:Cookie, brownie, reduced fat, NS as to icing | 1 unidad / 1 brownie=50 · 1 grande / 1 large=90 · 1 mini / 1 bite size=5 | brownie bajo en grasa · brownie reducido en grasa
+Brownie casero | Homemade brownie | sr:Cookies, brownies, prepared from recipe | 1 cuadrado (5 cm) / 1 square (2")=24 · 30 g / 30 g=30 | brownie hecho en casa
+
+// Pasteles y cupcakes. USDA da cada uno «para torta o cupcake»: la porción de cada uno va aparte. Los de siempre
+// (chocolate, vainilla, zanahoria, tres leches, bizcocho, panqué) están en genericos.txt; los hechos con mezcla
+// de caja dan lo mismo que los de panadería y no se repiten.
+Pastel de chocolate con glaseado blanco | Chocolate cake with white frosting | fndds:Cake or cupcake, chocolate with white icing, bakery | 1 porción / 1 slice=115 · 1 porción de pastel de capas / 1 layer cake slice=175 · 1 cupcake / 1 cupcake=90 · 1 mini / 1 bite size=30 | torta de chocolate con glaseado blanco* (AR UY CL VE PY) · cupcake de chocolate con glaseado blanco
+Pastel de vainilla con glaseado de chocolate | Vanilla cake with chocolate frosting | fndds:Cake or cupcake, white with chocolate icing, bakery | 1 porción / 1 slice=115 · 1 porción de pastel de capas / 1 layer cake slice=175 · 1 cupcake / 1 cupcake=90 · 1 mini / 1 bite size=30 | torta de vainilla con glaseado de chocolate* (AR UY CL VE PY) · cupcake de vainilla con chocolate
+Pastel de chocolate casero | Homemade chocolate cake | sr:Cake, chocolate, prepared from recipe without frosting | 1 porción / 1 piece=95 | torta de chocolate casera* (AR UY CL VE PY) · pastel de chocolate hecho en casa
+Pastel de chocolate sin harina | Flourless chocolate cake | fndds:Cake, chocolate, flourless | 1 porción / 1 slice=115 · 1 taza / 1 cup=120 | torta de chocolate sin harina* (AR UY CL VE PY)
+Pastel de chocolate con coco y nueces pecanas | German chocolate cake | fndds:Cake or cupcake, German chocolate | 1 porción / 1 slice=200 · 1 cupcake / 1 cupcake=90 · 1 taza / 1 cup=120 | torta de chocolate con coco y pecanas* (AR UY) · pastel de chocolate alemán
+Pastel red velvet | Red velvet cake | fndds:Cake or cupcake, red velvet | 1 porción / 1 slice=200 · 1 cupcake / 1 cupcake=90 · 1 taza / 1 cup=120 | torta red velvet* (AR UY CL VE PY) · red velvet · cupcake red velvet · pastel terciopelo rojo
+Pastel de banana | Banana cake | fndds:Cake or cupcake, banana | 1 porción / 1 slice=200 · 1 cupcake / 1 cupcake=90 · 1 taza / 1 cup=120 | torta de banana* (AR UY PY) · pastel de plátano* (MX) · torta de banano* (CO) · torta de cambur* (VE) · cupcake de banana
+Pastel de coco | Coconut cake | fndds:Cake or cupcake, coconut | 1 porción / 1 slice=200 · 1 cupcake / 1 cupcake=90 · 1 taza / 1 cup=120 | cupcake de coco
+Pastel de jengibre | Gingerbread cake | fndds:Cake or cupcake, gingerbread | 1 porción / 1 slice=115 · 1 taza / 1 cup=100 | torta de jengibre* (AR UY CL VE PY) · pan de jengibre · gingerbread
+Pastel de ángel | Angel food cake | fndds:Cake, angel food | 1 porción / 1 slice=60 · 1 taza / 1 cup=50 | torta de ángel* (AR UY CL VE PY) · bizcocho de ángel* (ES)
+Pastel con crema | Cream cake | fndds:Cake, cream | 1 porción / 1 slice=200 · 1 cupcake / 1 cupcake=90 · 1 taza / 1 cup=120 | torta con crema* (AR UY CL VE PY) · pastel de crema
+Pastel de crema pastelera con chocolate | Boston cream pie | fndds:Cake, Boston cream pie | 1 porción / 1 slice=115 · 1 taza / 1 cup=70 | pastel boston
+Pastel invertido de piña | Pineapple upside-down cake | fndds:Cake, pineapple, upside down | 1 porción / 1 slice=115 · 1 taza / 1 cup=120 | pastel volteado de piña* (MX) · torta invertida de ananá* (AR UY PY) · torta invertida de piña* (CL VE)
+Shortcake de fresas | Strawberry shortcake | fndds:Cake, strawberry shortcake | 1 porción / 1 serving=175 · 1 taza / 1 cup=150 | shortcake de frutillas* (AR UY CL PY BO EC)
+Bizcocho enrollado con mermelada | Jelly roll | fndds:Cake, jelly roll | 1 porción / 1 slice=100 | arrollado de mermelada* (AR UY) · brazo de gitano con mermelada* (ES) · pionono con mermelada
+Pastelito de chocolate relleno de crema | Cream-filled chocolate snack cake | fndds:Snack cake, chocolate | 1 unidad / 1 cupcake=45 · 1 mini / 1 bite size=15 | pastelito envasado de chocolate · cupcake de chocolate relleno
+Pastelito esponjoso relleno de crema | Cream-filled sponge snack cake | fndds:Snack cake, white | 1 unidad / 1 cake=45 · 1 mini / 1 bite size=15 | pastelito envasado de vainilla · bizcochito relleno de crema
+// Coffee cake: el pastel con crumble de canela por arriba.
+Pastel de canela con crumble | Crumb coffee cake | fndds:Coffee cake, crumb or quick-bread type | 1 porción / 1 serving=65 · 1 pastel cuadrado (20 cm) / 1 cake (8" square)=501 | torta de canela con crumble* (AR UY CL VE PY) · coffee cake · pastel con streusel
+Pastel con crumble relleno de queso crema | Cheese-filled coffee cake | fndds:Coffee cake, crumb or quick-bread type, cheese-filled | 1 porción / 1 serving=65 · 1 pastel cuadrado (20 cm) / 1 cake (8" square)=568 | torta con crumble y queso crema* (AR UY CL VE PY) · coffee cake de queso crema
+Pastel de fruta con crumble | Fruit coffee cake | fndds:Coffee cake, crumb or quick-bread type, with fruit | 1 porción / 1 serving=78 · 1 rebanada / 1 slice=65 | torta de fruta con crumble* (AR UY CL VE PY) · coffee cake de fruta
+
+// Cheesecakes. El de siempre y el de frutos rojos ya están.
+Cheesecake de chocolate | Chocolate cheesecake | fndds:Cheesecake, chocolate | 1 porción / 1 slice=175 · 1 taza / 1 cup=180 | tarta de queso y chocolate* (ES) · pay de queso con chocolate* (MX) · torta de queso y chocolate
+Cheesecake sin horno | No-bake cheesecake | sr:Cake, cheesecake, prepared from mix, no-bake type | 1 porción / 1 piece=99 | tarta de queso sin horno* (ES) · pay de queso frío* (MX) · cheesecake frío · torta de queso fría
+
+// Tartas y pies. La de manzana y el pie de limón con merengue están en genericos.txt.
+Tarta de manzana con crumble | Dutch apple pie | sr:Pie, Dutch Apple, Commercially Prepared | 1 porción / 1 slice=137 | pay de manzana con crumble* (MX) · pie de manzana con crumble* (CO PE CL VE) · tarta de manzana con streusel
+Tarta de frutos rojos | Berry pie | fndds:Pie, berry | 1 porción / 1 slice=150 · 1 porción pequeña / 1 small slice=75 · 1 porción grande / 1 large slice=250 | tarta de frutos del bosque* (ES AR UY PY) · pay de frutos rojos* (MX) · pie de frutos rojos* (CO PE CL VE)
+Tarta de arándanos | Blueberry pie | fndds:Pie, blueberry | 1 porción / 1 slice=150 · 1 porción pequeña / 1 small slice=75 · 1 porción grande / 1 large slice=250 | pay de mora azul* (MX) · pie de arándanos* (CO PE CL VE)
+Tarta de cerezas | Cherry pie | fndds:Pie, cherry | 1 porción / 1 slice=150 · 1 porción pequeña / 1 small slice=75 · 1 porción grande / 1 large slice=250 | pay de cereza* (MX) · pie de cerezas* (CO PE CL VE)
+Tarta de durazno | Peach pie | fndds:Pie, peach | 1 porción / 1 slice=150 · 1 porción pequeña / 1 small slice=75 · 1 porción grande / 1 large slice=250 | tarta de melocotón* (ES) · pay de durazno* (MX) · pie de durazno* (CO PE CL VE)
+Tarta de fresas | Strawberry pie | fndds:Pie, strawberry | 1 porción / 1 slice=150 · 1 taza / 1 cup=250 | tarta de frutillas* (AR UY PY BO EC) · pie de frutillas* (CL) · pay de fresa* (MX) · pie de fresa* (CO PE VE)
+Tarta de nuez pecana | Pecan pie | fndds:Pie, pecan | 1 porción / 1 slice=150 · 1 porción pequeña / 1 small slice=75 · 1 porción grande / 1 large slice=250 | tarta de pecanas* (AR UY) · pay de nuez* (MX) · pie de nuez pecana* (CO PE CL VE) · tarta de pacanas (ES) · pecan pie
+Pie de calabaza | Pumpkin pie | fndds:Pie, pumpkin | 1 porción / 1 slice=150 · 1 porción pequeña / 1 small slice=75 · 1 porción grande / 1 large slice=250 | pay de calabaza* (MX) · pumpkin pie · tarta dulce de calabaza
+Tarta de crema de banana | Banana cream pie | fndds:Pie, banana cream | 1 porción / 1 slice=150 · 1 taza / 1 cup=250 | pay de plátano* (MX) · banana cream pie
+Tarta de crema de chocolate | Chocolate cream pie | fndds:Pie, chocolate cream | 1 porción / 1 slice=150 · 1 taza / 1 cup=250 | pay de chocolate* (MX) · pie de chocolate* (CO PE CL VE)
+Tarta de crema de coco | Coconut cream pie | fndds:Pie, coconut cream | 1 porción / 1 slice=150 · 1 taza / 1 cup=250 | pay de coco* (MX) · pie de coco* (CO PE CL VE)
+Tarta de crema de vainilla | Vanilla cream pie | fndds:Pie, vanilla cream | 1 porción / 1 slice=150 · 1 taza / 1 cup=250 | pay de vainilla* (MX) · pie de vainilla* (CO PE CL VE)
+Pie de lima | Key lime pie | fndds:Pie, key lime | 1 porción / 1 slice=150 · 1 taza / 1 cup=250 | tarta de lima* (ES) · key lime pie
+Pie de limón sin merengue | Lemon pie without meringue | fndds:Pie, lemon | 1 porción / 1 slice=150 · 1 taza / 1 cup=250 | lemon pie sin merengue* (AR UY) · tarta de limón sin merengue* (ES)
+Tartaleta de fruta | Fruit tart | fndds:Tart, all types | 1 unidad / 1 tart=125 | tartaleta de frutas · tarta individual de fruta
+Pastel de tostadora de fruta light | Low-fat toaster pastry | sr:Tart, breakfast, low fat | 1 unidad / 1 pastry=52 | tarta de tostadora light · pastelito para tostadora light
+// Las bases, para armar la tarta en casa.
+Base de tarta horneada | Baked pie crust | fndds:Pie shell | 1 base de tartaleta / 1 tart shell=25 · 1 base de tarta (23 cm) / 1 pie shell (9")=170 | base de pie · masa de tarta horneada
+Base de galletas para tarta | Graham cracker pie crust | fndds:Pie shell, graham cracker | 1 base de tartaleta / 1 tart shell=25 · 1 base de tarta (23 cm) / 1 pie shell (9")=210 | base de galletas graham · base para cheesecake
+
+// Cobblers y crumbles. El crumble de manzana ya está.
+Cobbler de manzana | Apple cobbler | fndds:Cobbler, apple | 1 porción / 1 serving=125 · 1 taza / 1 cup=250 |
+Cobbler de frutos rojos | Berry cobbler | fndds:Cobbler, berry | 1 porción / 1 serving=125 · 1 taza / 1 cup=250 |
+Cobbler de cerezas | Cherry cobbler | fndds:Cobbler, cherry | 1 porción / 1 serving=125 · 1 taza / 1 cup=250 |
+Cobbler de durazno | Peach cobbler | fndds:Cobbler, peach | 1 porción / 1 serving=125 · 1 taza / 1 cup=250 | cobbler de melocotón* (ES)
+Crumble de frutos rojos | Berry crisp | fndds:Crisp, berry | 1 porción / 1 serving=125 · 1 taza / 1 cup=250 | crumble de frutos del bosque* (ES AR UY PY) · crujiente de frutos rojos
+Crumble de cerezas | Cherry crisp | fndds:Crisp, cherry | 1 porción / 1 serving=125 · 1 taza / 1 cup=250 | crujiente de cerezas
+Crumble de durazno | Peach crisp | fndds:Crisp, peach | 1 porción / 1 serving=125 · 1 taza / 1 cup=250 | crumble de melocotón* (ES) · crujiente de durazno
+
+// Strudels y danesas. El de manzana y la danesa simple ya están.
+Strudel de queso | Cheese strudel | fndds:Strudel, cheese | 1 porción / 1 piece=125 | estrúdel de queso
+Strudel de cerezas | Cherry strudel | fndds:Strudel, cherry | 1 porción / 1 piece=125 | estrúdel de cerezas
+Strudel de frutos rojos | Berry strudel | fndds:Strudel, berry | 1 porción / 1 piece=125 | estrúdel de frutos rojos
+Danesa de queso | Cheese danish | fndds:Danish pastry, with cheese | 1 unidad / 1 pastry=70 · 1 pequeña / 1 small=56 · 1 grande / 1 large=142 · 1 mini / 1 miniature=28 | pastelito danés de queso · danesa de queso crema
+Danesa de fruta | Fruit danish | fndds:Danish pastry, with fruit | 1 unidad / 1 pastry=70 · 1 pequeña / 1 small=56 · 1 mediana / 1 medium=113 · 1 mini / 1 miniature=28 | pastelito danés de fruta
+
+// Donas. Las de siempre, la bañada en chocolate y las rellenas de crema y de dulce de leche ya están.
+Dona glaseada | Glazed doughnut | sr:Doughnuts, yeast-leavened, glazed, enriched (includes honey buns) | 1 unidad / 1 doughnut=75 · 1 extra grande / 1 extra large=122 · 1 bastón / 1 doughnut stick=56 · 1 bolita / 1 doughnut hole=13 | dónut glaseado* (ES) · rosquilla glaseada | aceite=incluido
+Dona de chocolate glaseada | Glazed chocolate doughnut | sr:Doughnuts, cake-type, chocolate, sugared or glazed | 1 unidad / 1 doughnut=60 · 1 pequeña / 1 small=42 | dónut de chocolate glaseado* (ES) | aceite=incluido
+Dona rellena de mermelada | Jelly-filled doughnut | fndds:Doughnut, jelly | 1 unidad / 1 doughnut=80 | bola de fraile de mermelada* (UY AR) · berlín de mermelada* (CL) · berlinesa de mermelada · dona de mermelada | aceite=incluido
+Dona con azúcar en polvo | Powdered sugar doughnut | fndds:Doughnut, cake type, powdered sugar | 1 unidad / 1 doughnut=65 · 1 mini / 1 miniature=15 | dona con azúcar impalpable* (AR UY) · dónut con azúcar glas* (ES) · dona con azúcar flor* (CL) | aceite=incluido
+
+// Fritos y pastelería.
+Funnel cake con azúcar | Funnel cake | fndds:Funnel cake with sugar | 1 unidad (15 cm) / 1 cake (6")=90 · 1 porción / 1 serving=70 | funnel cake | aceite=incluido
+Sopaipilla con miel | Sopaipilla with honey | fndds:Sopaipilla with syrup or honey | 1 porción / 1 serving=70 · 1 pequeña / 1 small=12 | sopapilla con miel · sopaipilla con almíbar | aceite=incluido
+Baklava | Baklava | fndds:Baklava | 1 porción / 1 piece=80 · 1 trozo pequeño / 1 small piece=13 | baclava · baklawa
+Cannoli | Cannoli | fndds:Pastry, Italian, with cheese | 1 unidad / 1 pastry=85 | canoli · cannolis
+Pastelito de guayaba | Guava pastry | sr:Pastry, Pastelitos de Guava (guava pastries) | 1 unidad / 1 piece=86 | pastelito de hojaldre con guayaba · pastelitos de guayaba
+Hojaldre relleno de fruta | Fruit-filled pastry | fndds:Pastry, fruit-filled | 1 unidad / 1 pastry=78 | pastelito de hojaldre con fruta · turnover de fruta · empanadilla de hojaldre con fruta
+Hojaldre relleno de crema | Cream-filled puff pastry | fndds:Pastry, puff, custard or cream filled, iced or not iced | 1 unidad / 1 napoleon=85 · 1 cuerno / 1 cream horn=57 · 1 mini / 1 miniature napoleon=30 | milhojas de crema · napoleón · cañoncito de crema
+Pastel de luna | Mooncake | fndds:Pastry, made with bean or lotus seed paste filling, baked | 1 pequeño / 1 small mooncake=46 · 1 grande / 1 large mooncake=138 | mooncake
+Empanada de fruta | Fruit empanada | fndds:Empanada, fruit | 1 unidad / 1 empanada=75 | empanada dulce de fruta · empanadita de fruta
+
+# panes
+// La sopaipilla sola, sin miel, se come como pan.
+Sopaipilla | Sopaipilla | fndds:Sopaipilla, without syrup or honey | 1 porción / 1 serving=70 · 1 pequeña / 1 small=10 | sopapilla | aceite=incluido
