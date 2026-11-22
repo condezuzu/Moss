@@ -1,0 +1,168 @@
+// Más granos y cereales (22/11/2026, lo pediste: «el máximo de comidas posibles»): los arroces, la avena y los
+// cereales calientes, los otros granos, las harinas, los cereales de desayuno genéricos y los platos simples de
+// arroz o de grano sin carne que USDA tenía solo en inglés. El formato es el de genericos.txt. De lo que FNDDS
+// repite según la grasa, solo «no added fat» (los platos llevan «aceite»: la app pregunta). Son variantes: al
+// buscar salen después de lo de siempre (el arroz blanco, la avena, la quinoa… siguen en genericos.txt).
+@variantes
+
+# cereales
+// Arroces. USDA no tiene basmati ni jazmín: son arroz blanco de grano largo, y salen de las otras descripciones
+// de USDA del grano largo (sin enriquecer), con los mismos valores que «Arroz blanco».
+Arroz basmati crudo | Uncooked basmati rice | sr:Rice, white, long-grain, regular, raw, unenriched | ¼ taza / ¼ cup=46 · 1 taza / 1 cup=185 | arroz basmati seco
+Arroz basmati cocido | Cooked basmati rice | sr:Rice, white, long-grain, regular, unenriched, cooked without salt | 1 taza / 1 cup=158 | arroz basmati | crudo=Arroz basmati crudo
+Arroz jazmín cocido | Cooked jasmine rice | sr:Rice, white, long-grain, regular, enriched, cooked | 1 taza / 1 cup=158 | arroz jazmín · arroz jasmine · arroz tailandés | crudo=Arroz blanco crudo
+Arroz de grano medio crudo | Uncooked medium-grain rice | sr:Rice, white, medium-grain, raw, enriched | ¼ taza / ¼ cup=49 · 1 taza / 1 cup=195 | arroz calrose crudo · arroz de grano mediano crudo
+Arroz de grano medio cocido | Cooked medium-grain rice | sr:Rice, white, medium-grain, enriched, cooked | 1 taza / 1 cup=186 | arroz calrose · arroz de grano mediano | crudo=Arroz de grano medio crudo
+Arroz glutinoso crudo | Uncooked glutinous rice | sr:Rice, white, glutinous, unenriched, uncooked | ¼ taza / ¼ cup=46 · 1 taza / 1 cup=185 | arroz pegajoso crudo · arroz glutinoso seco
+Arroz glutinoso cocido | Cooked glutinous rice | sr:Rice, white, glutinous, unenriched, cooked | 1 taza / 1 cup=174 | arroz pegajoso · arroz glutinoso · sticky rice | crudo=Arroz glutinoso crudo
+Arroz salvaje crudo | Uncooked wild rice | sr:Wild rice, raw | ¼ taza / ¼ cup=40 · 1 taza / 1 cup=160 | arroz silvestre crudo
+Arroz salvaje cocido | Cooked wild rice | sr:Wild rice, cooked | 1 taza / 1 cup=164 | arroz silvestre · arroz salvaje | crudo=Arroz salvaje crudo
+Arroz instantáneo crudo | Uncooked instant rice | sr:Rice, white, long-grain, precooked or instant, enriched, dry | ½ taza / ½ cup=48 · 1 taza / 1 cup=95 | arroz precocido crudo · arroz rápido · arroz de un minuto
+Arroz instantáneo cocido | Cooked instant rice | sr:Rice, white, long-grain, precooked or instant, enriched, prepared | 1 taza / 1 cup=165 | arroz precocido · arroz instantáneo | crudo=Arroz instantáneo crudo
+Arroz blanco al vapor | Steamed white rice | sr:Rice, white, steamed, Chinese restaurant | 1 taza / 1 cup=132 | arroz al vapor · arroz blanco de restaurante chino · arroz de restaurante | crudo=Arroz blanco crudo
+// El arroz blanco hecho con aceite y sal, como se cocina en buena parte de América Latina: el aceite ya está contado.
+Arroz blanco con aceite | White rice cooked with oil | fndds:Rice, white, cooked with fat, Puerto Rican style | 1 taza / 1 cup=155 · 1 porción / 1 serving=116 | arroz graneado · arroz blanco con aceite y sal | crudo=Arroz blanco crudo · aceite=incluido
+Arroz integral con arroz salvaje | Brown and wild rice | fndds:Rice, brown and wild, cooked, no added fat | 1 taza / 1 cup=151 · 1 porción / 1 serving=113 | arroz integral y salvaje · mezcla de arroz integral y salvaje
+Arroz amarillo crudo | Uncooked yellow rice mix | sr:Yellow rice with seasoning, dry packet mix, unprepared | 1 porción / 1 serving=57 | arroz amarillo de paquete · arroz amarillo seco
+Arroz amarillo | Yellow rice | fndds:Yellow rice, cooked, no added fat | 1 taza / 1 cup=158 · 1 porción / 1 serving=118 | arroz amarillo cocido · arroz con azafrán · arroz con cúrcuma · arroz con color | crudo=Arroz amarillo crudo
+Salvado de arroz | Rice bran | sr:Rice bran, crude | 2 cucharadas / 2 tbsp=15 · 1 taza / 1 cup=118 |
+Harina de arroz integral | Brown rice flour | sr:Rice flour, brown | ¼ taza / ¼ cup=40 · 1 taza / 1 cup=158 |
+Papel de arroz | Rice paper | fndds:Rice paper | 1 hoja mediana / 1 medium sheet=15 · 1 hoja pequeña / 1 small sheet=5 · 1 hoja grande / 1 large sheet=20 | obleas de arroz · hojas de arroz · láminas de arroz
+Crema de arroz preparada | Cream of rice | fndds:Cream of rice | 1 taza / 1 cup=240 | crema de arroz cocida · cereal caliente de arroz
+
+// Avena y cereales calientes. La instantánea se dice «preparada» (se le echa agua caliente, no se cocina).
+Avena instantánea preparada | Prepared instant oatmeal | fndds:Oatmeal, instant, plain, made with water, no added fat | 1 sobre preparado / 1 packet, prepared=148 · 1 taza / 1 cup=240 · 1 envase individual / 1 single-serve cup=210 | avena instantánea cocida · avena instantánea con agua · avena de sobre | crudo=Avena instantánea
+Avena instantánea sabor maple | Maple and brown sugar instant oats | sr:Cereals, oats, instant, fortified, maple and brown sugar, dry | 1 sobre / 1 packet=43 | avena instantánea de arce y azúcar morena · avena de sobre sabor maple
+Avena instantánea sabor maple preparada | Prepared maple instant oatmeal | fndds:Oatmeal, instant, maple flavored, no added fat | 1 sobre preparado / 1 packet, prepared=163 · 1 taza / 1 cup=240 · 1 envase individual / 1 single-serve cup=210 | avena instantánea de arce cocida · avena instantánea sabor maple cocida | crudo=Avena instantánea sabor maple
+Avena instantánea con canela | Cinnamon spice instant oats | sr:Cereals, oats, instant, fortified, with cinnamon and spice, dry | 1 sobre / 1 packet=45 | avena de sobre con canela · avena instantánea de canela y especias
+Avena instantánea con canela preparada | Prepared cinnamon instant oatmeal | sr:Cereals, oats, instant, fortified, with cinnamon and spice, prepared with water | 1 sobre preparado / 1 packet, prepared=161 · 1 taza / 1 cup=240 | avena instantánea con canela cocida | crudo=Avena instantánea con canela
+Avena instantánea con pasas preparada | Prepared raisin and spice instant oatmeal | sr:Cereals, oats, instant, fortified, with raisins and spice, prepared with water | 1 sobre preparado / 1 packet, prepared=158 · 1 taza / 1 cup=240 | avena instantánea con pasas y canela · avena de sobre con pasas
+Avena instantánea de frutas preparada | Prepared fruit-flavored instant oatmeal | fndds:Oatmeal, instant, fruit flavored, no added fat | 1 sobre preparado / 1 packet, prepared=163 · 1 taza / 1 cup=240 · 1 envase individual / 1 single-serve cup=210 | avena instantánea con frutas · avena de sobre con frutas · avena instantánea sabor frutas
+Salvado de avena cocido | Cooked oat bran | sr:Oat bran, cooked | 1 taza / 1 cup=219 | salvado de avena con agua · porridge de salvado de avena | crudo=Salvado de avena
+
+// Maíz.
+Grits crudos | Uncooked grits | sr:Cereals, corn grits, white, regular and quick, enriched, dry | ¼ taza / ¼ cup=39 · 1 taza / 1 cup=156 · 1 cucharada / 1 tbsp=9.7 | sémola de maíz blanco cruda · polenta blanca cruda · maíz blanco molido
+Grits cocidos | Cooked grits | fndds:Grits, regular or quick, made with water, no added fat | 1 taza / 1 cup=240 | grits · sémola de maíz blanco · polenta blanca | crudo=Grits crudos
+Maíz nixtamalizado en lata | Canned hominy | sr:Hominy, canned, white | 1 taza / 1 cup=165 | maíz pozolero* (MX) · mote* (EC PE BO) · hominy · maíz pelado · maíz para pozole
+Maíz amarillo seco | Dried yellow corn | sr:Corn grain, yellow | ¼ taza / ¼ cup=42 · 1 taza / 1 cup=166 | maíz seco en grano · maíz amarillo partido · maíz amarillo entero
+Harina de maíz integral | Whole-grain cornmeal | sr:Cornmeal, whole-grain, yellow | ¼ taza / ¼ cup=31 · 1 taza / 1 cup=122 | harina de maíz entero · polenta integral
+Harina de maíz azul | Blue corn flour | sr:Corn flour, whole-grain, blue (harina de maiz morado) | 1 cucharada / 1 tbsp=6.9 | harina de maíz morado
+Salvado de maíz | Corn bran | sr:Corn bran, crude | 2 cucharadas / 2 tbsp=9.5 · 1 taza / 1 cup=76 |
+
+// Otros granos. Los que USDA solo tiene sin cocinar se dicen «en grano», como en el paquete.
+Cebada integral en grano | Hulled barley | sr:Barley, hulled | ¼ taza / ¼ cup=46 · 1 taza / 1 cup=184 | cebada descascarillada · cebada mondada · cebada integral cruda
+Centeno en grano | Rye grain | sr:Rye grain | ¼ taza / ¼ cup=42 · 1 taza / 1 cup=169 | granos de centeno · centeno crudo · centeno entero
+Sorgo en grano | Sorghum grain | sr:Sorghum grain | ¼ taza / ¼ cup=48 · 1 taza / 1 cup=192 | granos de sorgo · sorgo crudo
+Trigo en grano | Wheat berries | sr:Wheat, hard red winter | ¼ taza / ¼ cup=48 · 1 taza / 1 cup=192 | granos de trigo · trigo entero · trigo crudo
+Trigo germinado | Sprouted wheat | sr:Wheat, sprouted | 1 taza / 1 cup=108 | brotes de trigo · germinado de trigo
+Germen de trigo tostado | Toasted wheat germ | sr:Cereals ready-to-eat, wheat germ, toasted, plain | 2 cucharadas / 2 tbsp=14 · 1 taza / 1 cup=113 |
+Gluten de trigo | Vital wheat gluten | sr:Vital wheat gluten | 100 g / 100 g=100 | gluten vital · harina de gluten · gluten en polvo
+Espelta cruda | Uncooked spelt | sr:Spelt, uncooked | ¼ taza / ¼ cup=44 · 1 taza / 1 cup=174 | trigo espelta crudo · escanda cruda · espelta en grano
+Espelta cocida | Cooked spelt | sr:Spelt, cooked | 1 taza / 1 cup=194 | trigo espelta · escanda · espelta | crudo=Espelta cruda
+Teff crudo | Uncooked teff | sr:Teff, uncooked | ¼ taza / ¼ cup=48 · 1 taza / 1 cup=193 | tef crudo · teff en grano
+Teff cocido | Cooked teff | sr:Teff, cooked | 1 taza / 1 cup=252 | tef · teff | crudo=Teff crudo
+Mijo inflado | Puffed millet | sr:Millet, puffed | 1 taza / 1 cup=21 | mijo soplado · cereal de mijo inflado
+
+// Harinas y almidones.
+Harina para repostería | Cake flour | sr:Wheat flour, white, cake, enriched | ¼ taza / ¼ cup=34 · 1 taza / 1 cup=137 | harina de repostería · harina pastelera · harina floja (ES) · harina para tortas
+Harina de centeno integral | Dark rye flour | sr:Rye flour, dark | ¼ taza / ¼ cup=32 · 1 taza / 1 cup=128 | harina de centeno oscura · harina integral de centeno
+Harina de cebada | Barley flour | sr:Barley flour or meal | ¼ taza / ¼ cup=37 · 1 taza / 1 cup=148 |
+Harina de malta | Barley malt flour | sr:Barley malt flour | 1 cucharada / 1 tbsp=10 · 1 taza / 1 cup=162 | harina de cebada malteada · harina malteada
+Harina de trigo sarraceno | Buckwheat flour | sr:Buckwheat flour, whole-groat | ¼ taza / ¼ cup=30 · 1 taza / 1 cup=120 | harina de alforfón · harina de sarraceno
+Harina de mijo | Millet flour | sr:Millet flour | ¼ taza / ¼ cup=30 · 1 taza / 1 cup=119 |
+Harina de sorgo | Sorghum flour | sr:Sorghum flour, whole-grain | ¼ taza / ¼ cup=30 · 1 taza / 1 cup=121 | harina de sorgo integral
+Harina de triticale | Triticale flour | sr:Triticale flour, whole-grain | ¼ taza / ¼ cup=33 · 1 taza / 1 cup=130 |
+Fécula de arrurruz | Arrowroot flour | sr:Arrowroot flour | 1 cucharada / 1 tbsp=8 · 1 taza / 1 cup=128 | arrurruz · almidón de arrurruz · harina de arrurruz · arrowroot
+
+// Cereales de desayuno, sin marca.
+Cereal de desayuno | Breakfast cereal | fndds:Cereal, ready-to-eat, NFS | 1 taza / 1 cup=35 · 1 porción / 1 serving=30 | cereales de desayuno · cereal · cereales
+Aritos de avena | Oat O's cereal | fndds:Cereal, O's, plain | 1 taza / 1 cup=30 | aros de avena · cereal de avena en aros
+Aritos de avena con miel | Honey nut O's cereal | fndds:Cereal, O's, honey nut | 1 taza / 1 cup=40 · 1 porción / 1 serving=30 | aros de avena con miel · aritos de miel · cereal de miel y almendras
+Aritos multicereal | Multigrain O's cereal | fndds:Cereal, O's, multigrain | 1 taza / 1 cup=30 | aros multicereal · aritos multigrano
+Copos de arroz y trigo | Rice and wheat flakes | fndds:Cereal, K's, plain | 1 taza / 1 cup=35 · 1 porción / 1 serving=30 | hojuelas de arroz y trigo* (MX) · copos de arroz
+Copos de arroz y trigo saborizados | Flavored rice and wheat flakes | fndds:Cereal, K's, flavored | 1 taza / 1 cup=35 · 1 porción / 1 serving=30 | hojuelas de arroz y trigo saborizadas* (MX) · copos de arroz y trigo con frutos rojos · copos de arroz con vainilla
+Copos de trigo | Wheat flakes | fndds:Cereal, wheat flakes | 1 taza / 1 cup=40 · 1 porción / 1 serving=30 | hojuelas de trigo* (MX) · copos de trigo integral
+Copos con racimos de avena | Flakes with oat clusters | fndds:Cereal, oat bunches | 1 taza / 1 cup=45 · 1 porción / 1 serving=30 | hojuelas con racimos de avena* (MX) · cereal de avena y miel · copos con granola
+Arroz inflado azucarado | Frosted crispy rice cereal | fndds:Cereal, rice crispy, flavored | 1 taza / 1 cup=40 · 1 porción / 1 serving=30 | arroz crocante azucarado · cereal de arroz azucarado
+Arroz inflado de chocolate | Chocolate crispy rice cereal | fndds:Cereal, chocolate crispy | 1 taza / 1 cup=40 · 1 porción / 1 serving=30 | arroz inflado con cacao · arroz crocante de chocolate · cereal de arroz con chocolate
+Arroz inflado frutal | Fruity crispy rice cereal | fndds:Cereal, fruit crispy | 1 taza / 1 cup=35 · 1 porción / 1 serving=30 | arroz inflado de frutas · arroz crocante de colores
+Arroz inflado natural | Puffed rice | sr:Cereals ready-to-eat, rice, puffed, fortified | 1 taza / 1 cup=14 | arroz soplado · arroz inflado sin azúcar
+Trigo inflado | Puffed wheat | sr:Cereals ready-to-eat, wheat, puffed, fortified | 1 taza / 1 cup=12 | trigo soplado · trigo inflado sin azúcar
+Maíz inflado | Corn puffs cereal | fndds:Cereal, corn puffs | 1 taza / 1 cup=25 · 1 porción / 1 serving=30 | bolitas de maíz · cereal de maíz inflado
+Cereal inflado de sabores | Flavored puffs cereal | fndds:Cereal, flavored puffs | 1 taza / 1 cup=30 | bolitas frutales · bolitas de cereal de colores · cereal de bolitas
+Cuadritos de maíz | Corn squares cereal | fndds:Cereal, corn squares | 1 taza / 1 cup=30 | cereal de maíz en cuadritos
+Cuadritos de maíz saborizados | Flavored corn squares cereal | fndds:Cereal, corn squares, flavored | 1 taza / 1 cup=40 · 1 porción / 1 serving=30 | cuadritos de maíz con miel · cereal de maíz en cuadritos con sabor
+Cuadritos de arroz | Rice squares cereal | fndds:Cereal, rice squares | 1 taza / 1 cup=30 | cereal de arroz en cuadritos
+Cuadritos de trigo | Wheat squares cereal | fndds:Cereal, wheat squares | 1 taza / 1 cup=60 · 1 porción / 1 serving=30 | cereal de trigo en cuadritos
+Cuadritos de avena | Oat squares cereal | fndds:Cereal, oat squares | 1 taza / 1 cup=45 · 1 porción / 1 serving=30 | cereal de avena en cuadritos
+Cereal de canela | Cinnamon toast cereal | fndds:Cereal, cinnamon toast | 1 taza / 1 cup=40 · 1 porción / 1 serving=30 | cuadritos de canela · cereal de canela y azúcar
+Cereal de avena con malvaviscos | Frosted oat cereal with marshmallows | fndds:Cereal, frosted oats with marshmallows | 1 taza / 1 cup=35 · 1 porción / 1 serving=30 | cereal de avena con masmelos* (CO) · cereal de avena con nubes* (ES) · cereal con malvaviscos
+Cereal de miel | Honey cereal | fndds:Cereal, other, honey | 1 taza / 1 cup=40 · 1 porción / 1 serving=30 | cereal con miel · bolitas de miel
+Cereal de mantequilla de maní | Peanut butter cereal | fndds:Cereal, other, peanut butter | 1 taza / 1 cup=40 · 1 porción / 1 serving=30 | cereal de crema de cacahuate* (MX) · cereal de crema de cacahuete* (ES) · cereal de pasta de maní* (AR UY) · bolitas de mantequilla de maní
+Cereal crujiente de maíz y avena | Sweetened corn and oat crunch cereal | fndds:Cereal, crunch | 1 taza / 1 cup=35 · 1 porción / 1 serving=30 | cereal crujiente azucarado · almohaditas crujientes de maíz y avena
+Cereal multigrano | Multigrain cereal | fndds:Cereal, multigrain | 1 taza / 1 cup=50 · 1 porción / 1 serving=30 | cereal multicereal · cereal de varios granos
+Cereal de salvado azucarado | Sweetened bran flakes | fndds:Cereal, bran flakes, flavored | 1 taza / 1 cup=60 · 1 porción / 1 serving=30 | copos de salvado azucarados · cereal de fibra azucarado
+Cereal de salvado de avena | Oat bran cereal | fndds:Cereal, oat bran, ready-to-eat | 1 taza / 1 cup=80 · 1 porción / 1 serving=30 | copos de salvado de avena
+Cereal de trigo triturado | Shredded wheat | fndds:Cereal, shredded wheat, plain | 1 taza / 1 cup=45 · 1 unidad grande / 1 large biscuit=25 · 1 unidad pequeña / 1 spoon-size biscuit=3 · 1 porción / 1 serving=30 | trigo triturado · almohaditas de trigo integral · shredded wheat
+Cereal de trigo triturado azucarado | Frosted shredded wheat | fndds:Cereal, shredded wheat, flavored | 1 taza / 1 cup=50 · 1 porción / 1 serving=30 | trigo triturado glaseado · almohaditas de trigo azucaradas
+// USDA no tiene muesli: esto es lo más parecido (copos de trigo y salvado, endulzados, con frutas y frutos secos).
+Cereal de salvado con frutas y frutos secos | Bran cereal with fruit and nuts | sr:Cereals ready-to-eat, wheat and bran, presweetened with nuts and fruits | 1 taza / 1 cup=55 | cereal tipo muesli · cereal de trigo y salvado con frutas · cereal de fibra con frutas
+Granola casera | Homemade granola | sr:Cereals ready-to-eat, granola, homemade | ½ taza / ½ cup=61 · 1 taza / 1 cup=122 | granola hecha en casa · granola artesanal
+
+# platos
+// Avena y maíz.
+Avena con leche vegetal | Oatmeal made with plant milk | fndds:Oatmeal, regular or quick, made with non-dairy milk, no added fat | 1 taza / 1 cup=240 | avena con bebida vegetal · porridge con leche vegetal · avena con leche de almendras
+Avena instantánea con leche | Instant oatmeal made with milk | fndds:Oatmeal, instant, plain, made with milk, no added fat | 1 sobre preparado / 1 packet, prepared=148 · 1 taza / 1 cup=240 | avena de sobre con leche · avena rápida con leche
+Grits con queso | Cheese grits | fndds:Grits, with cheese, no added fat | 1 taza / 1 cup=240 | sémola de maíz blanco con queso · polenta blanca con queso
+Palitos de maíz fritos | Fried cornmeal sticks | fndds:Cornmeal stick, Puerto Rican style | 1 unidad / 1 stick=20 | sorullitos* (PR) · sorullos · sorullitos de maíz | aceite=incluido
+
+// Arroz blanco con algo.
+Arroz con zanahoria | Rice with carrots | fndds:Rice, white, with carrots, no added fat | 1 taza / 1 cup=160 · 1 porción / 1 serving=120 | arroz con zanahorias | aceite
+Arroz con arvejas | Rice with peas | fndds:Rice, white, with peas, no added fat | 1 taza / 1 cup=160 · 1 porción / 1 serving=120 | arroz con guisantes* (ES) · arroz con chícharos* (MX) · arroz con alverjas* (CO) | aceite
+Arroz con arvejas y zanahoria | Rice with peas and carrots | fndds:Rice, white, with peas and carrots, no added fat | 1 taza / 1 cup=160 · 1 porción / 1 serving=120 | arroz con guisantes y zanahoria* (ES) · arroz con chícharos y zanahoria* (MX) · arroz con alverjas y zanahoria* (CO) · arroz jardinera | aceite
+Arroz con maíz | Rice with corn | fndds:Rice, white, with corn, no added fat | 1 taza / 1 cup=161 · 1 porción / 1 serving=121 | arroz con choclo* (AR UY CL PE BO EC PY) · arroz con elote* (MX GT HN SV NI CR) | aceite
+Arroz con verduras verdes | Rice with green vegetables | fndds:Rice, white, with dark green vegetables, no added fat | 1 taza / 1 cup=172 · 1 porción / 1 serving=129 | arroz con espinaca · arroz con brócoli · arroz con espinacas | aceite
+Arroz con salsa de tomate | Rice with tomato sauce | fndds:Rice, white, with tomatoes and/or tomato-based sauce, no added fat | 1 taza / 1 cup=206 · 1 porción / 1 serving=154 |  | aceite
+Arroz con salsa de queso | Rice with cheese sauce | fndds:Rice, white, with cheese and/or cream based sauce, no added fat | 1 taza / 1 cup=204 · 1 porción / 1 serving=153 | arroz cremoso · arroz con crema · arroz con salsa blanca | aceite
+Arroz con verduras y salsa de queso | Rice with vegetables and cheese sauce | fndds:Rice, white, with vegetables, cheese and/or cream based sauce, no added fat | 1 taza / 1 cup=258 · 1 porción / 1 serving=194 | arroz cremoso con verduras · arroz con verduras y crema | aceite
+Arroz con salsa de soja | Rice with soy sauce | fndds:Rice, white, with soy-based sauce, no added fat | 1 taza / 1 cup=237 | arroz con salsa de soya* (MX CO VE) · arroz con sillao* (PE) | aceite
+Arroz con verduras y salsa de soja | Rice with vegetables and soy sauce | fndds:Rice, white, with vegetables, soy-based sauce, no added fat | 1 taza / 1 cup=255 | arroz con verduras y salsa de soya* (MX CO VE) · arroz con verduras y sillao* (PE) · arroz salteado con verduras | aceite
+Arroz con lentejas | Rice with lentils | fndds:Rice, white, with lentils, no added fat | 1 taza / 1 cup=198 · 1 porción / 1 serving=148 | lentejas con arroz · mujaddara · mjadra | aceite
+Arroz con pasas | Rice with raisins | fndds:Rice with raisins | 1 taza / 1 cup=185 · 1 porción / 1 serving=139 | arroz con pasas de uva · arroz con uvas pasas
+Arroz pilaf | Rice pilaf | fndds:Rice pilaf | 1 taza / 1 cup=206 · 1 porción / 1 serving=155 | pilaf · pilaf de arroz · arroz pilav
+Arroz con fideos | Rice and vermicelli pilaf | fndds:Flavored rice and pasta mixture | 1 taza / 1 cup=196 · 1 porción / 1 serving=147 | arroz árabe · arroz con cabello de ángel · arroz con fideos finos
+Arroz saborizado | Flavored rice mix | fndds:Flavored rice mixture | 1 taza / 1 cup=218 · 1 porción / 1 serving=164 | arroz de sobre · arroz preparado de paquete · arroz sazonado
+Arroz saborizado con queso | Cheese-flavored rice mix | fndds:Flavored rice mixture with cheese | 1 taza / 1 cup=230 · 1 porción / 1 serving=173 | arroz de sobre con queso · arroz sabor queso
+Arroz con leche sin azúcar | Unsweetened milk rice | fndds:Rice, cooked, with milk | 1 taza / 1 cup=200 · 1 porción / 1 serving=150 | arroz cocido en leche · arroz con leche sin endulzar
+
+// Arroz con frijoles: «Arroz con frijoles» (blanco, sin decir de cuáles) está en genericos.txt.
+Arroz con frijoles guisados | Rice with stewed beans | fndds:Rice with stewed beans, Puerto Rican style | 1 taza / 1 cup=188 · 1 porción / 1 serving=141 | arroz con habichuelas guisadas* (PR DO) · arroz con porotos guisados (AR UY CL) · arroz con menestra (PE EC)
+Arroz con frijoles negros | Black beans and rice | fndds:Black beans and white rice | 1 taza / 1 cup=170 | arroz con porotos negros* (AR UY CL PY BO) · arroz con caraotas negras* (VE) · arroz con habichuelas negras* (PR DO) · arroz con judías negras* (ES) · frijoles negros con arroz
+Arroz con frijoles rojos | Red beans and rice | fndds:Kidney beans and white rice | 1 taza / 1 cup=170 | arroz con porotos rojos* (AR UY CL PY BO) · arroz con caraotas rojas* (VE) · arroz con habichuelas rojas* (PR DO) · arroz con alubias rojas* (ES)
+Arroz con frijoles pintos | Pinto beans and rice | fndds:Pinto beans and white rice | 1 taza / 1 cup=170 | arroz con porotos pintos* (AR UY CL) · frijoles pintos con arroz
+Arroz integral con frijoles | Brown rice and beans | fndds:Beans and brown rice | 1 taza / 1 cup=170 | arroz integral con habichuelas* (PR DO) · arroz integral con porotos (AR UY CL)
+Arroz integral con frijoles negros | Black beans and brown rice | fndds:Black beans and brown rice | 1 taza / 1 cup=170 | arroz integral con porotos negros* (AR UY CL PY BO) · arroz integral con caraotas negras* (VE) · arroz integral con habichuelas negras* (PR DO) · arroz integral con judías negras* (ES)
+
+// Arroz integral con algo.
+Arroz integral con verduras | Brown rice with vegetables | fndds:Rice, brown, with other vegetables, no added fat | 1 taza / 1 cup=186 · 1 porción / 1 serving=140 | arroz integral con vegetales · arroz integral primavera | aceite
+Arroz integral con verduras verdes | Brown rice with green vegetables | fndds:Rice, brown, with dark green vegetables, no added fat | 1 taza / 1 cup=186 · 1 porción / 1 serving=140 | arroz integral con espinaca · arroz integral con brócoli | aceite
+Arroz integral con zanahoria | Brown rice with carrots | fndds:Rice, brown, with carrots, no added fat | 1 taza / 1 cup=186 · 1 porción / 1 serving=140 | arroz integral con zanahorias | aceite
+Arroz integral con arvejas | Brown rice with peas | fndds:Rice, brown, with peas, no added fat | 1 taza / 1 cup=187 · 1 porción / 1 serving=140 | arroz integral con guisantes* (ES) · arroz integral con chícharos* (MX) · arroz integral con alverjas* (CO) | aceite
+Arroz integral con arvejas y zanahoria | Brown rice with peas and carrots | fndds:Rice, brown, with peas and carrots, no added fat | 1 taza / 1 cup=187 · 1 porción / 1 serving=140 | arroz integral con guisantes y zanahoria* (ES) · arroz integral con chícharos y zanahoria* (MX) · arroz integral con alverjas y zanahoria* (CO) | aceite
+Arroz integral con maíz | Brown rice with corn | fndds:Rice, brown, with corn, no added fat | 1 taza / 1 cup=188 · 1 porción / 1 serving=141 | arroz integral con choclo* (AR UY CL PE BO EC PY) · arroz integral con elote* (MX GT HN SV NI CR) | aceite
+Arroz integral con salsa de tomate | Brown rice with tomato sauce | fndds:Rice, brown, with tomatoes and/or tomato based sauce, no added fat | 1 taza / 1 cup=243 · 1 porción / 1 serving=182 |  | aceite
+Arroz integral con salsa de queso | Brown rice with cheese sauce | fndds:Rice, brown, with cheese and/or cream based sauce, no added fat | 1 taza / 1 cup=277 · 1 porción / 1 serving=208 | arroz integral cremoso · arroz integral con crema | aceite
+Arroz integral con salsa de soja | Brown rice with soy sauce | fndds:Rice, brown, with soy-based sauce, no added fat | 1 taza / 1 cup=237 | arroz integral con salsa de soya* (MX CO VE) · arroz integral con sillao* (PE) | aceite
+Arroz integral con verduras y salsa de soja | Brown rice with vegetables and soy sauce | fndds:Rice, brown, with vegetables, soy-based sauce, no added fat | 1 taza / 1 cup=286 | arroz integral con verduras y salsa de soya* (MX CO VE) · arroz integral con verduras y sillao* (PE) · arroz integral salteado con verduras | aceite
+
+// Congee y otros platos de arroz o de grano.
+Congee | Congee | fndds:Congee | 1 taza / 1 cup=255 | gachas de arroz · papilla de arroz · arroz congee · juk · sopa de arroz china
+Congee con verduras | Congee with vegetables | fndds:Congee, with vegetables | 1 taza / 1 cup=255 | gachas de arroz con verduras
+Congee con huevo | Congee with egg | fndds:Congee, with egg | 1 taza / 1 cup=255 | gachas de arroz con huevo
+Croquetas de arroz | Rice croquettes | fndds:Rice croquette | 1 croqueta / 1 croquette=62 | croqueta de arroz · bolitas de arroz fritas | aceite=incluido
+Hojas de parra rellenas de arroz | Rice-stuffed grape leaves | fndds:Grape leaves stuffed with rice | 1 unidad / 1 roll=56 | dolmas de arroz · dolmades vegetarianas · hojas de parra sin carne
+Biryani de verduras | Vegetable biryani | fndds:Biryani with vegetables | 1 taza / 1 cup=172 · 1 porción / 1 serving=215 | biryani vegetariano · arroz biryani de verduras
+Upma | Upma | fndds:Upma | 1 taza / 1 cup=170 | sémola salteada · uppittu
+Idli | Idli | fndds:Idli | 1 unidad / 1 idli=38 · 2 unidades / 2 idlis=76 | idly · pastelito de arroz y lentejas
+Dosa | Dosa | fndds:Dosa, plain | 1 mediana / 1 medium=80 · 1 pequeña / 1 small=35 · 1 grande / 1 large=155 | dosa simple · crepe de arroz y lentejas · dosai
+Dosa rellena | Filled dosa | fndds:Dosa, with filling | 1 mediana / 1 medium=267 · 1 pequeña / 1 small=113 · 1 grande / 1 large=523 | masala dosa · dosa masala

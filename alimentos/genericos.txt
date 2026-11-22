@@ -247,7 +247,7 @@ Arvejas partidas crudas | Dry split peas | sr:Peas, green, split, mature seeds, 
 Arvejas partidas | Split peas | sr:Peas, split, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=196 | guisantes partidos* (ES) · chícharos secos* (MX) · arvejas secas · arvejas partidas cocidas | crudo=Arvejas partidas crudas
 Habas | Fava beans | sr:Broadbeans, immature seeds, raw | 1 taza / 1 cup=109 |
 Habas cocidas | Boiled fava beans | sr:Broadbeans, immature seeds, cooked, boiled, drained, without salt | 100 g / 100 g=100 | habas hervidas | crudo=Habas
-Altramuces | Lupini beans | sr:Lupins, mature seeds, cooked, boiled, without salt | ½ taza / ½ cup=83 · 1 taza / 1 cup=166 | chochos* (EC PE BO) · lupines (AR CL UY) · lupinos
+Altramuces | Lupini beans | sr:Lupins, mature seeds, cooked, boiled, without salt | ½ taza / ½ cup=83 · 1 taza / 1 cup=166 | chochos* (EC PE BO) · lupines (AR CL UY) · lupinos | crudo=Altramuces crudos
 Soja cruda | Dry soybeans | sr:Soybeans, mature seeds, raw | ¼ taza / ¼ cup=47 · 1 taza / 1 cup=186 | soya cruda* (MX CO VE) · porotos de soja crudos (AR UY) · soja seca
 Soja | Soybeans | sr:Soybeans, mature cooked, boiled, without salt | 1 taza / 1 cup=172 | soya* (MX CO VE) · porotos de soja (AR UY) · soja cocida | crudo=Soja cruda
 Edamame crudo | Frozen edamame | sr:Edamame, frozen, unprepared | 1 taza / 1 cup=118 | edamame congelado

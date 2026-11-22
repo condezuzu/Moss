@@ -1,0 +1,177 @@
+// Más frutas y sus jugos (22/11/2026, lo pediste: «el máximo de comidas posibles»): las variedades, lo congelado,
+// lo seco, lo que viene en lata (en su jugo, en almíbar liviano y en almíbar), las frutas poco comunes y los jugos
+// y néctares de USDA que estaban solo en inglés. El formato es el de genericos.txt. Son variantes: al buscar
+// «manzana» o «jugo» salen después de los de siempre. Lo que ya estaba (la fruta fresca, los jugos comunes) sigue ahí.
+@variantes
+
+# frutas
+// Las variedades de lo de siempre.
+Manzana fuji | Fuji apple | sr:Apples, raw, fuji, with skin | 1 mediana / 1 medium=192 · 1 pequeña / 1 small=158 · 1 grande / 1 large=236 · 1 taza en rodajas / 1 cup sliced=109 |  | desecho
+Manzana gala | Gala apple | sr:Apples, raw, gala, with skin | 1 mediana / 1 medium=172 · 1 pequeña / 1 small=157 · 1 grande / 1 large=200 · 1 taza en rodajas / 1 cup sliced=109 | manzana royal gala | desecho
+Manzana golden | Golden Delicious apple | sr:Apples, raw, golden delicious, with skin | 1 mediana / 1 medium=169 · 1 pequeña / 1 small=129 · 1 grande / 1 large=215 · 1 taza en rodajas / 1 cup sliced=109 | manzana amarilla · manzana golden delicious | desecho
+Manzana verde | Granny Smith apple | sr:Apples, raw, granny smith, with skin | 1 mediana / 1 medium=167 · 1 pequeña / 1 small=144 · 1 grande / 1 large=206 · 1 taza en rodajas / 1 cup sliced=109 | manzana granny smith | desecho
+Manzana roja | Red Delicious apple | sr:Apples, raw, red delicious, with skin | 1 mediana / 1 medium=212 · 1 pequeña / 1 small=158 · 1 grande / 1 large=260 · 1 taza en rodajas / 1 cup sliced=109 | manzana red delicious · manzana deliciosa | desecho
+Manzana pelada | Peeled apple | sr:Apples, raw, without skin | 1 mediana / 1 medium=161 · 1 pequeña / 1 small=132 · 1 grande / 1 large=216 · 1 taza en rodajas / 1 cup sliced=110 | manzana sin cáscara · manzana sin piel | desecho
+Pera williams | Bartlett pear | sr:Pears, raw, bartlett | 1 mediana / 1 medium=177 · 1 pequeña / 1 small=152 · 1 grande / 1 large=227 · 1 taza en rodajas / 1 cup sliced=140 | pera bartlett | desecho
+Pera bosc | Bosc pear | sr:Pears, raw, bosc | 1 mediana / 1 medium=179 · 1 pequeña / 1 small=159 · 1 grande / 1 large=219 · 1 taza en rodajas / 1 cup sliced=140 | pera kaiser · pera beurré bosc | desecho
+Pera anjou | Green Anjou pear | sr:Pears, raw, green anjou | 1 mediana / 1 medium=202 · 1 pequeña / 1 small=172 · 1 grande / 1 large=242 · 1 taza en rodajas / 1 cup sliced=140 | pera de Anjou · pera anjou verde | desecho
+Pera roja | Red Anjou pear | sr:Pears, raw, red anjou | 1 mediana / 1 medium=157 · 1 pequeña / 1 small=126 · 1 grande / 1 large=223 · 1 taza en rodajas / 1 cup sliced=140 | pera anjou roja · pera red anjou | desecho
+Uvas sin semilla | Seedless grapes | sr:Grapes, red or green (European type, such as Thompson seedless), raw | 1 taza / 1 cup=151 · 10 uvas / 10 grapes=49 | uvas verdes · uvas rojas · uvas sin pepitas (ES)
+Uvas americanas | American grapes (slip skin) | sr:Grapes, american type (slip skin), raw | 1 taza / 1 cup=92 · 10 uvas / 10 grapes=24 | uvas frutilla* (UY) · uvas chinche* (AR) · uva isabella · uva concord
+Uvas muscadinas | Muscadine grapes | sr:Grapes, muscadine, raw | 10 uvas / 10 grapes=60 · 1 uva / 1 grape=6 | uva muscadina
+Naranja navel | Navel orange | sr:Oranges, raw, navels | 1 unidad / 1 orange=140 · 1 taza en gajos / 1 cup sections=165 | china navel* (PR) · naranja de ombligo | desecho
+Naranja valencia | Valencia orange | sr:Oranges, raw, California, valencias | 1 unidad / 1 orange=121 · 1 taza en gajos / 1 cup sections=180 | china valencia* (PR) · naranja para jugo · naranja de zumo (ES) | desecho
+Toronja blanca | White grapefruit | sr:Grapefruit, raw, white, all areas | ½ unidad / ½ grapefruit=118 · 1 taza en gajos / 1 cup sections=230 | pomelo blanco* (AR UY PY CL ES BO) · pomelo amarillo | desecho
+Pampelmusa | Pummelo | sr:Pummelo, raw | 1 taza en gajos / 1 cup sections=190 · 1 unidad / 1 fruit=609 | pomelo chino · pummelo · cimboa | desecho
+Kumquat | Kumquat | sr:Kumquats, raw | 1 unidad / 1 kumquat=19 · 5 unidades / 5 kumquats=95 | quinoto* (AR UY) · naranja china · naranjita china
+Aguacate hass | Hass avocado | sr:Avocados, raw, California | ½ unidad / ½ avocado=68 · 1 unidad / 1 avocado=136 · 1 taza en puré / 1 cup pureed=230 | palta hass* (AR UY CL PE BO PY) | desecho
+Aguacate antillano | Florida avocado | sr:Avocados, raw, Florida | ½ unidad / ½ avocado=152 · 1 unidad / 1 avocado=304 · 1 taza en puré / 1 cup pureed=230 | palta antillana* (AR UY CL PE BO PY) · aguacate tropical · aguacate de piel verde | desecho
+Melón casaba | Casaba melon | sr:Melons, casaba, raw | 1 taza en cubos / 1 cup cubes=170 · 1 tajada / 1 wedge=164 | melón amarillo | desecho
+
+// Bayas y cerezas.
+Cerezas ácidas | Sour cherries | sr:Cherries, sour, red, raw | 1 taza / 1 cup=155 | guindas · cerezas agrias | desecho
+Arándanos rojos frescos | Fresh cranberries | sr:Cranberries, raw | 1 taza / 1 cup=100 · 1 taza picados / 1 cup chopped=110 | cranberries frescos
+Grosellas rojas | Redcurrants | sr:Currants, red and white, raw | 1 taza / 1 cup=112 | grosellas · grosellas blancas
+Grosellas negras | Blackcurrants | sr:Currants, european black, raw | 1 taza / 1 cup=112 | casis · cassis
+Grosellas espinosas | Gooseberries | sr:Gooseberries, raw | 1 taza / 1 cup=150 | uva espina
+Bayas de saúco | Elderberries | sr:Elderberries, raw | 1 taza / 1 cup=145 | saúco
+Moras de árbol | Mulberries | sr:Mulberries, raw | 1 taza / 1 cup=140 · 10 unidades / 10 mulberries=15 | moras de morera
+
+// Tropicales y poco comunes.
+Anón | Sugar apple | sr:Sugar-apples, (sweetsop), raw | 1 unidad / 1 fruit=155 · 1 taza de pulpa / 1 cup pulp=250 | saramuyo (MX) · anona blanca · anón de azúcar | desecho
+Anona | Custard apple | sr:Custard-apple, (bullock's-heart), raw | 100 g / 100 g=100 | anona colorada · anona roja · corazón de buey | desecho
+Durián | Durian | sr:Durian, raw or frozen | 1 taza en trozos / 1 cup chopped=243 |  | desecho
+Kiwano | Horned melon | sr:Horned melon (Kiwano) | 1 unidad / 1 fruit=209 · 1 taza / 1 cup=233 | melón africano · pepino africano · melón con cuernos
+Longan | Longan | sr:Longans, raw | 10 unidades / 10 longans=32 · 1 unidad / 1 longan=3.2 | ojo de dragón | desecho
+Azufaifa | Jujube | sr:Jujube, raw | 100 g / 100 g=100 | jujube · jínjol
+Azufaifa seca | Dried jujube | sr:Jujube, Chinese, fresh, dried | 100 g / 100 g=100 | dátil rojo · dátil chino · jujube seco
+Mamey amarillo | Mammee apple | sr:Mammy-apple, (mamey), raw | 100 g / 100 g=100 · 1 unidad / 1 fruit=846 | mamey de Santo Domingo · mamey de Cartagena (CO) | desecho
+Pomarrosa | Rose apple | sr:Rose-apples, raw | 100 g / 100 g=100 | manzana rosa
+Guayaba fresa | Strawberry guava | sr:Guavas, strawberry, raw | 1 taza / 1 cup=244 · 1 unidad / 1 fruit=6 | arazá* (UY) · guayaba peruana · guayaba japonesa | desecho
+Nance | Nance | sr:Nance, frozen, unsweetened | 1 taza / 1 cup=112 · 3 unidades / 3 fruits=9.8 | nanche* (MX) · nancite (NI)
+Fruta de pan | Breadfruit | sr:Breadfruit, raw | 1 taza / 1 cup=220 · ¼ unidad pequeña / ¼ small fruit=96 | panapén* (PR) · árbol del pan · pana (PR) | desecho
+Fruta de pan cocida | Cooked breadfruit | fndds:Breadfruit, cooked | 1 taza / 1 cup=170 · 1 trozo / 1 piece=35 | panapén cocido* (PR) | crudo=Fruta de pan
+Ruibarbo | Rhubarb | sr:Rhubarb, raw | 1 tallo / 1 stalk=51 · 1 taza en cubos / 1 cup diced=122 |  | desecho
+Compota de ruibarbo | Stewed rhubarb with sugar | sr:Rhubarb, frozen, cooked, with sugar | ½ taza / ½ cup=120 · 1 taza / 1 cup=240 | ruibarbo cocido con azúcar
+
+// Cocidas y al horno.
+Manzana cocida | Boiled apple | sr:Apples, raw, without skin, cooked, boiled | 1 taza en rodajas / 1 cup sliced=171 | manzana hervida | crudo=Manzana pelada
+Banana al horno | Baked banana | fndds:Banana, baked | 1 unidad / 1 banana=140 | plátano al horno* (ES MX PE CL) · banano al horno* (CO CR GT HN NI PA SV) · guineo al horno* (PR DO EC) · cambur al horno* (VE) · banana asada | crudo=Banana
+Ciruelas pasas cocidas | Stewed prunes | sr:Plums, dried (prunes), stewed, without added sugar | ½ taza / ½ cup=124 · 1 taza / 1 cup=248 | compota de ciruelas pasas · ciruelas pasas hervidas | crudo=Ciruelas pasas
+Ciruelas pasas cocidas con azúcar | Stewed prunes with sugar | sr:Plums, dried (prunes), stewed, with added sugar | ½ taza / ½ cup=124 · 1 taza / 1 cup=248 | compota de ciruelas pasas con azúcar | crudo=Ciruelas pasas
+Orejones cocidos | Stewed dried apricots | sr:Apricots, dried, sulfured, stewed, without added sugar | ½ taza / ½ cup=125 · 1 taza / 1 cup=250 | compota de orejones | crudo=Orejones
+Duraznos secos cocidos | Stewed dried peaches | sr:Peaches, dried, sulfured, stewed, without added sugar | ½ taza / ½ cup=129 · 1 taza / 1 cup=258 | melocotones secos cocidos* (ES) · compota de duraznos secos | crudo=Duraznos secos
+Higos secos cocidos | Stewed dried figs | sr:Figs, dried, stewed | ½ taza / ½ cup=130 · 1 taza / 1 cup=259 | compota de higos secos | crudo=Higos secos
+
+// Congeladas, sin azúcar.
+Arándanos congelados | Frozen blueberries | sr:Blueberries, frozen, unsweetened | 1 taza / 1 cup=155 | mora azul congelada* (MX) · blueberries congelados
+Fresas congeladas | Frozen strawberries | sr:Strawberries, frozen, unsweetened | 1 taza / 1 cup=149 · 1 fresa / 1 strawberry=10.6 | frutillas congeladas* (AR UY CL PY BO EC)
+Frambuesas congeladas | Frozen raspberries | sr:Raspberries, frozen, red, unsweetened | 1 taza / 1 cup=140 |
+Moras congeladas | Frozen blackberries | sr:Blackberries, frozen, unsweetened | 1 taza / 1 cup=151 | zarzamoras congeladas* (MX)
+Arándanos silvestres congelados | Frozen wild blueberries | sr:Blueberries, wild, frozen | 1 taza / 1 cup=140 | mora azul silvestre congelada* (MX)
+Cerezas congeladas | Frozen cherries | fndds:Cherries, frozen | 1 taza / 1 cup=150 · 10 cerezas / 10 cherries=70 |
+Cerezas ácidas congeladas | Frozen sour cherries | sr:Cherries, sour, red, frozen, unsweetened | 1 taza / 1 cup=155 | guindas congeladas
+Mango congelado | Frozen mango | fndds:Mango, frozen | 1 taza / 1 cup=150 · 1 trozo / 1 chunk=25 | mango en cubos congelado
+Durazno congelado | Frozen peaches | fndds:Peach, frozen | 1 taza / 1 cup=150 · 1 rodaja / 1 slice=20 | melocotón congelado* (ES)
+Piña congelada | Frozen pineapple | fndds:Pineapple, frozen | 1 taza / 1 cup=150 · 1 trozo / 1 chunk=15 | ananá congelado* (AR UY PY)
+Melón congelado | Frozen melon | fndds:Melon, frozen | 1 taza / 1 cup=150 | bolitas de melón congeladas
+Frutas congeladas | Frozen mixed fruit | fndds:Fruit mixture, frozen | 1 taza / 1 cup=150 | mezcla de frutas congeladas · mix de frutas congeladas · fruta congelada
+
+// Secas y deshidratadas.
+Banana deshidratada | Dried banana | sr:Bananas, dehydrated, or banana powder | ¼ taza / ¼ cup=25 · 1 cucharada / 1 tbsp=6.2 | plátano deshidratado* (ES MX PE CL) · banano deshidratado* (CO CR GT HN NI PA SV) · guineo deshidratado* (PR DO EC) · cambur deshidratado* (VE) · banana seca · banana en polvo
+Arándanos azules secos | Dried blueberries | sr:Blueberries, dried, sweetened | ¼ taza / ¼ cup=40 | mora azul seca* (MX) · blueberries secos · arándanos azules deshidratados
+Cerezas secas | Dried cherries | sr:Cherries, tart, dried, sweetened | ¼ taza / ¼ cup=40 | cerezas deshidratadas · guindas secas
+Pasas de Corinto | Zante currants | sr:Currants, zante, dried | ¼ taza / ¼ cup=36 · 1 taza / 1 cup=144 | corintos · pasas corinto
+Pasas rubias | Golden raisins | sr:Raisins, golden, seedless | ¼ taza / ¼ cup=36 · 1 taza / 1 cup=145 | pasas sultanas · pasas doradas · sultanas
+Dátiles deglet nour | Deglet Noor dates | sr:Dates, deglet noor | 1 dátil / 1 date=7.1 · 5 dátiles / 5 dates=36 · 1 taza picados / 1 cup chopped=147 | dátiles deglet noor · dátiles pequeños
+Papaya deshidratada | Dried papaya | fndds:Papaya, dried | 1 porción / 1 serving=40 · 1 trozo / 1 piece=8 | lechosa deshidratada* (VE DO) · fruta bomba deshidratada* (CU) · mamón deshidratado* (PY) · papaya seca
+Duraznos secos | Dried peaches | sr:Peaches, dried, sulfured, uncooked | 1 mitad / 1 half=13 · 5 mitades / 5 halves=65 | melocotones secos* (ES) · orejones de durazno · duraznos deshidratados
+Peras secas | Dried pears | sr:Pears, dried, sulfured, uncooked | 1 mitad / 1 half=18 · 1 taza en mitades / 1 cup halves=180 | peras deshidratadas · orejones de pera
+Piña deshidratada | Dried pineapple | fndds:Pineapple, dried | 1 porción / 1 serving=40 · 1 trozo / 1 piece=8 | ananá deshidratado* (AR UY PY) · piña seca
+Caqui seco | Dried persimmon | sr:Persimmons, japanese, dried | 1 unidad / 1 fruit=34 | kaki seco · caqui deshidratado
+Bayas de goji | Goji berries | sr:Goji berries, dried | 1 cucharada / 1 tbsp=5.6 · 5 cucharadas / 5 tbsp=28 | goji · bayas goji · goji seco
+
+// En lata: en su jugo, en almíbar liviano y en almíbar.
+Duraznos en su jugo | Canned peaches in juice | fndds:Peach, canned, juice pack | 1 mitad / 1 half=75 · 1 taza / 1 cup=245 · 1 envase individual / 1 snack size container=113 | melocotón en su jugo* (ES) · duraznos al natural · duraznos en lata sin azúcar
+Duraznos en almíbar liviano | Canned peaches in light syrup | sr:Peaches, canned, light syrup pack, solids and liquids | 1 mitad con almíbar / 1 half with liquid=98 · 1 taza / 1 cup=251 | melocotón en almíbar ligero* (ES) · duraznos en almíbar ligero
+Peras en su jugo | Canned pears in juice | fndds:Pear, canned, juice pack | 1 mitad / 1 half=90 · 1 taza / 1 cup=245 · 1 envase individual / 1 snack size container=113 | peras al natural · peras en lata sin azúcar
+Peras en almíbar liviano | Canned pears in light syrup | sr:Pears, canned, light syrup pack, solids and liquids | 1 mitad con almíbar / 1 half with liquid=76 · 1 taza / 1 cup=251 | peras en almíbar ligero
+Piña en su jugo | Canned pineapple in juice | sr:Pineapple, canned, juice pack, solids and liquids | 1 rodaja / 1 slice=47 · 1 taza / 1 cup=249 | ananá en su jugo* (AR UY PY) · piña al natural · piña en lata sin azúcar
+Piña en almíbar liviano | Canned pineapple in light syrup | sr:Pineapple, canned, light syrup pack, solids and liquids | 1 rodaja / 1 slice=48 · 1 taza / 1 cup=252 | ananá en almíbar liviano* (AR UY PY) · piña en almíbar ligero
+Albaricoques en su jugo | Canned apricots in juice | sr:Apricots, canned, juice pack, with skin, solids and liquids | 1 mitad con jugo / 1 half with liquid=36 · 1 taza / 1 cup=244 | damascos en su jugo* (AR UY CL PY BO PE) · chabacanos en su jugo* (MX) · albaricoques al natural
+Albaricoques en almíbar liviano | Canned apricots in light syrup | sr:Apricots, canned, light syrup pack, with skin, solids and liquids | 1 mitad con almíbar / 1 half with liquid=40 · 1 taza / 1 cup=253 | damascos en almíbar liviano* (AR UY CL PY BO PE) · chabacanos en almíbar ligero* (MX) · albaricoques en almíbar ligero
+Albaricoques en almíbar | Canned apricots in syrup | sr:Apricots, canned, heavy syrup pack, with skin, solids and liquids | 1 mitad con almíbar / 1 half with liquid=40 · 1 taza / 1 cup=258 | damascos en almíbar* (AR UY CL PY BO PE) · chabacanos en almíbar* (MX) · albaricoques en conserva
+Cerezas en su jugo | Canned cherries in juice | sr:Cherries, sweet, canned, juice pack, solids and liquids | ½ taza / ½ cup=125 · 1 taza / 1 cup=250 | cerezas al natural · cerezas en lata sin azúcar
+Cerezas en almíbar liviano | Canned cherries in light syrup | sr:Cherries, sweet, canned, light syrup pack, solids and liquids | ½ taza / ½ cup=126 · 1 taza / 1 cup=252 | cerezas en almíbar ligero
+Cerezas en lata en almíbar | Canned cherries in heavy syrup | sr:Cherries, sweet, canned, pitted, heavy syrup pack, solids and liquids | ½ taza / ½ cup=127 · 1 taza / 1 cup=253 | cerezas dulces en almíbar · cerezas en conserva
+Ciruelas en su jugo | Canned plums in juice | sr:Plums, canned, purple, juice pack, solids and liquids | 1 ciruela con jugo / 1 plum with liquid=46 · 1 taza / 1 cup=252 | ciruelas al natural · ciruelas en lata sin azúcar
+Ciruelas en almíbar liviano | Canned plums in light syrup | sr:Plums, canned, purple, light syrup pack, solids and liquids | 1 ciruela con almíbar / 1 plum with liquid=46 · 1 taza / 1 cup=252 | ciruelas en almíbar ligero
+Ciruelas en almíbar | Canned plums in syrup | sr:Plums, canned, purple, heavy syrup pack, solids and liquids | 1 ciruela con almíbar / 1 plum with liquid=46 · 1 taza / 1 cup=258 | ciruelas en conserva
+Higos en almíbar liviano | Canned figs in light syrup | sr:Figs, canned, light syrup pack, solids and liquids | 1 higo con almíbar / 1 fig with liquid=28 · 1 taza / 1 cup=252 | higos en almíbar ligero
+Higos en lata en almíbar | Canned figs in heavy syrup | sr:Figs, canned, heavy syrup pack, solids and liquids | 1 higo con almíbar / 1 fig with liquid=28 · 1 taza / 1 cup=259 | higos en conserva
+Toronja en su jugo | Canned grapefruit in juice | sr:Grapefruit, sections, canned, juice pack, solids and liquids | ½ taza / ½ cup=125 · 1 taza / 1 cup=249 | pomelo en su jugo* (AR UY PY CL ES BO) · gajos de toronja en lata
+Toronja en almíbar liviano | Canned grapefruit in light syrup | sr:Grapefruit, sections, canned, light syrup pack, solids and liquids | ½ taza / ½ cup=127 · 1 taza / 1 cup=254 | pomelo en almíbar liviano* (AR UY PY CL BO) · pomelo en almíbar ligero* (ES) · gajos de toronja en almíbar
+Mandarinas en su jugo | Canned mandarin oranges in juice | sr:Tangerines, (mandarin oranges), canned, juice pack | ½ taza / ½ cup=125 · 1 taza / 1 cup=249 | tangerinas en su jugo* (CO) · mandarinas al natural · gajos de mandarina en lata
+Cóctel de frutas en su jugo | Fruit cocktail in juice | fndds:Fruit cocktail, canned, juice pack | 1 porción / 1 serving=120 · 1 taza / 1 cup=245 · 1 envase individual / 1 snack size container=113 | cóctel de frutas al natural · cóctel de frutas sin azúcar
+Cóctel de frutas en almíbar liviano | Fruit cocktail in light syrup | sr:Fruit cocktail, (peach and pineapple and pear and grape and cherry), canned, light syrup, solids and liquids | ½ taza / ½ cup=121 · 1 taza / 1 cup=242 | cóctel de frutas en almíbar ligero
+Ensalada de frutas tropicales en almíbar | Canned tropical fruit salad in syrup | sr:Fruit salad, (pineapple and papaya and banana and guava), tropical, canned, heavy syrup, solids and liquids | ½ taza / ½ cup=129 · 1 taza / 1 cup=257 | cóctel de frutas tropicales · frutas tropicales en almíbar
+Mango en almíbar | Canned mango in syrup | fndds:Mango, canned | 1 porción / 1 serving=125 · 1 trozo / 1 piece=25 · 1 taza / 1 cup=250 | mango en lata · mango en conserva
+Papaya en almíbar | Papaya in heavy syrup | sr:Papaya, canned, heavy syrup, drained | 1 trozo / 1 piece=39 | dulce de lechosa* (VE DO) · dulce de fruta bomba* (CU) · dulce de mamón* (PY) · dulce de papaya · papaya en conserva
+Jaca en almíbar | Canned jackfruit in syrup | sr:Jackfruit, canned, syrup pack | 1 taza escurrida / 1 cup drained=178 | yaca en almíbar · jackfruit en lata
+Rambután en almíbar | Canned rambutan in syrup | sr:Rambutan, canned, syrup pack | 1 unidad / 1 fruit=9 · 1 taza escurrido / 1 cup drained=150 | rambután en lata
+Mangostán en almíbar | Canned mangosteen in syrup | sr:Mangosteen, canned, syrup pack | 1 taza escurrido / 1 cup drained=196 | mangostino en almíbar · mangostán en lata
+Nance en almíbar | Nance in syrup | sr:Nance, canned, syrup, drained | 3 unidades / 3 fruits=11.1 | nanche en almíbar* (MX) · nances en almíbar
+Fresas en almíbar | Canned strawberries in syrup | sr:Strawberries, canned, heavy syrup pack, solids and liquids | ½ taza / ½ cup=127 · 1 taza / 1 cup=254 | frutillas en almíbar* (AR UY CL PY BO EC)
+Moras en almíbar | Canned blackberries in syrup | sr:Blackberries, canned, heavy syrup, solids and liquids | ½ taza / ½ cup=128 · 1 taza / 1 cup=256 | zarzamoras en almíbar* (MX)
+Frambuesas en almíbar | Canned raspberries in syrup | sr:Raspberries, canned, red, heavy syrup pack, solids and liquids | ½ taza / ½ cup=128 · 1 taza / 1 cup=256 |
+Arándanos en almíbar | Canned blueberries in syrup | sr:Blueberries, canned, heavy syrup, solids and liquids | ½ taza / ½ cup=128 · 1 taza / 1 cup=256 | mora azul en almíbar* (MX)
+Compota de manzana sin azúcar | Unsweetened applesauce | fndds:Applesauce, unsweetened | 1 porción / 1 serving=120 · 1 envase individual / 1 snack size container=113 · 1 sobre / 1 pouch=90 · 1 taza / 1 cup=245 | puré de manzana sin azúcar
+
+# frutos-secos
+// El coco seco sin azúcar (el «Coco rallado» de siempre es el endulzado de paquete).
+Coco rallado sin azúcar | Unsweetened shredded coconut | sr:Nuts, coconut meat, dried (desiccated), not sweetened | 30 g / 30 g=30 | coco seco · coco rallado natural
+Coco tostado | Toasted coconut | sr:Nuts, coconut meat, dried (desiccated), toasted | 30 g / 30 g=30 | coco rallado tostado
+
+# salsas
+// Con las aceitunas y el jugo de limón de siempre, que están en esta categoría.
+Aceitunas rellenas | Stuffed olives | fndds:Olives, stuffed | 5 unidades / 5 olives=25 · 1 unidad / 1 olive=5 | aceitunas rellenas de pimiento · aceitunas verdes rellenas · olivas rellenas (ES)
+Aceitunas negras grandes | Jumbo black olives | sr:Olives, ripe, canned (jumbo-super colossal) | 5 unidades / 5 jumbo olives=42 · 1 unidad / 1 jumbo olive=8.3 | aceitunas negras gigantes · aceitunas jumbo
+Tapenade | Olive tapenade | fndds:Olive tapenade | 1 cucharada / 1 tbsp=16 | paté de aceitunas · pasta de aceitunas · olivada
+Salsa de arándanos rojos | Cranberry sauce | sr:Cranberry sauce, canned, sweetened | 1 rebanada / 1 slice=57 · 1 taza / 1 cup=277 | salsa de arándanos · salsa de cranberries
+Jugo de limón envasado | Bottled lemon juice | sr:Lemon juice from concentrate, canned or bottled | 1 cucharada / 1 tbsp=15 · 1 cucharadita / 1 tsp=5 | zumo de limón envasado* (ES) · jugo de limón amarillo envasado* (MX PE CO VE CR GT EC) · jugo de limón de botella · jugo de limón concentrado | ml
+Jugo de lima | Lime juice | fndds:Lime juice, 100%, freshly squeezed | 1 cucharada / 1 tbsp=15 · 1 lima exprimida / juice of 1 lime=44 | jugo de limón verde* (MX PE CO VE CR GT EC) · zumo de lima* (ES) | ml
+
+# especias
+Ralladura de limón | Lemon zest | sr:Lemon peel, raw | 1 cucharadita / 1 tsp=2 · 1 cucharada / 1 tbsp=6 | ralladura de limón amarillo* (MX PE CO VE CR GT EC) · cáscara de limón · piel de limón
+Ralladura de naranja | Orange zest | sr:Orange peel, raw | 1 cucharadita / 1 tsp=2 · 1 cucharada / 1 tbsp=6 | ralladura de china* (PR) · cáscara de naranja · piel de naranja
+
+# bebidas
+// Jugos 100 %.
+Jugo de naranja con calcio | Calcium-fortified orange juice | fndds:Orange juice, 100%, with calcium added, canned, bottled or in a carton | 1 vaso (200 ml) / 1 glass (200 ml)=210 | zumo de naranja con calcio* (ES) · jugo de china con calcio* (PR) | ml
+Jugo de toronja envasado | Bottled grapefruit juice | fndds:Grapefruit juice, 100%, canned, bottled or in a carton | 1 vaso (200 ml) / 1 glass (200 ml)=210 | jugo de pomelo envasado* (AR UY PY CL BO) · zumo de pomelo envasado* (ES) | ml
+Jugo de arándano rojo sin azúcar | Unsweetened cranberry juice | fndds:Cranberry juice, 100%, not a blend | 1 vaso (200 ml) / 1 glass (200 ml)=210 | zumo de arándano rojo sin azúcar* (ES) · jugo de arándano rojo puro · jugo de cranberry | ml
+Jugo de arándano rojo y otras frutas | Cranberry juice blend (100% juice) | fndds:Cranberry juice blend, 100% juice | 1 vaso (200 ml) / 1 glass (200 ml)=210 | zumo de arándano rojo y otras frutas* (ES) · jugo de cranberry y frutas | ml
+Jugo de arándano azul | Blueberry juice | fndds:Blueberry juice | 1 vaso (200 ml) / 1 glass (200 ml)=210 | jugo de mora azul* (MX) · zumo de arándano azul* (ES) · jugo de blueberry | ml
+Jugo de ciruela | Prune juice | fndds:Prune juice, 100% | 1 vaso (200 ml) / 1 glass (200 ml)=210 | zumo de ciruela* (ES) · jugo de ciruela pasa · jugo de ciruelas | ml
+Jugo de fresa | Strawberry juice | fndds:Strawberry juice, 100% | 1 vaso (200 ml) / 1 glass (200 ml)=203 | jugo de frutilla* (AR UY CL PY BO EC) · zumo de fresa* (ES) | ml
+Jugo de sandía | Watermelon juice | fndds:Watermelon juice, 100% | 1 vaso (200 ml) / 1 glass (200 ml)=203 | jugo de patilla* (VE) · zumo de sandía* (ES) · agua de sandía (MX) | ml
+Jugo de acerola | Acerola juice | sr:Acerola juice, raw | 1 vaso (200 ml) / 1 glass (200 ml)=205 | zumo de acerola* (ES) | ml
+// La taza de USDA (269 g) no cierra con su onza líquida (31,5 g): la densidad sale de la onza.
+Jugo de cereza ácida | Tart cherry juice | sr:Cherry juice, tart | 1 vaso (200 ml) / 1 glass (200 ml)=213 | zumo de cereza ácida* (ES) · jugo de guinda · jugo de cereza | densidad=1.065
+Jugo de açaí | Açaí juice blend | fndds:Fruit juice, acai blend | 1 vaso (200 ml) / 1 glass (200 ml)=210 | zumo de açaí* (ES) · jugo de asaí · jugo de acaí | ml
+Jugo de naranja y piña | Orange pineapple juice | sr:Orange Pineapple Juice Blend | 1 vaso (200 ml) / 1 glass (200 ml)=208 | jugo de naranja y ananá* (AR UY PY) · zumo de naranja y piña* (ES) · jugo de china y piña* (PR) | ml
+Jugo de naranja y toronja | Orange grapefruit juice | sr:Orange-grapefruit juice, canned or bottled, unsweetened | 1 vaso (200 ml) / 1 glass (200 ml)=209 | jugo de naranja y pomelo* (AR UY PY CL BO) · zumo de naranja y pomelo* (ES) · jugo de china y toronja* (PR) | ml
+Jugo de manzana y uva | Apple grape juice | sr:Juice, apple and grape blend, with added ascorbic acid | 1 vaso (200 ml) / 1 glass (200 ml)=211 | zumo de manzana y uva* (ES) | ml
+Jugo de frutas y verduras | Fruit and vegetable juice | fndds:Vegetable and fruit juice, 100% juice, with high vitamin C | 1 vaso (200 ml) / 1 glass (200 ml)=210 | zumo de frutas y verduras* (ES) · jugo de frutas y vegetales | ml
+// Néctares y lo que se toma parecido.
+Néctar de albaricoque | Apricot nectar | fndds:Apricot nectar | 1 vaso (200 ml) / 1 glass (200 ml)=210 | néctar de damasco* (AR UY CL PY BO PE) · néctar de chabacano* (MX) · jugo de albaricoque | ml
+Néctar de banana | Banana nectar | fndds:Banana nectar | 1 vaso (200 ml) / 1 glass (200 ml)=210 | néctar de plátano* (ES MX PE CL) · néctar de banano* (CO CR GT HN NI PA SV) · néctar de guineo* (PR DO EC) · néctar de cambur* (VE) · jugo de banana | ml
+Néctar de papaya | Papaya nectar | fndds:Papaya nectar | 1 vaso (200 ml) / 1 glass (200 ml)=210 | néctar de lechosa* (VE DO) · néctar de fruta bomba* (CU) · néctar de mamón* (PY) · jugo de papaya | ml
+Néctar de maracuyá | Passion fruit nectar | fndds:Passion fruit nectar | 1 vaso (200 ml) / 1 glass (200 ml)=210 | néctar de parchita* (VE) · néctar de chinola* (DO) · néctar de parcha* (PR) · néctar de fruta de la pasión* (ES) | ml
+Néctar de melón | Cantaloupe nectar | fndds:Cantaloupe nectar | 1 vaso (200 ml) / 1 glass (200 ml)=210 | jugo de melón · agua de melón (MX) | ml
+Néctar de guanábana | Soursop nectar | fndds:Soursop, nectar | 1 vaso (200 ml) / 1 glass (200 ml)=210 | jugo de guanábana | ml
+Néctar de tamarindo | Tamarind nectar | sr:Tamarind nectar, canned | 1 vaso (200 ml) / 1 glass (200 ml)=212 | jugo de tamarindo · agua de tamarindo (MX) · refresco de tamarindo | ml
+Limonada casera | Homemade-style lemonade | sr:Lemonade, frozen concentrate, white, prepared with water | 1 vaso (200 ml) / 1 glass (200 ml)=209 | limonada natural | ml
+Agua de coco endulzada | Sweetened coconut water | fndds:Coconut water, sweetened | 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 lata / 1 can=360 | agua de coco con azúcar | ml
+Smoothie de frutas y verduras | Fruit and vegetable smoothie | fndds:Fruit and vegetable smoothie, no dairy | 1 vaso (200 ml) / 1 glass (200 ml)=183 | jugo verde · smoothie verde · batido verde | ml
+Smoothie de frutas envasado | Bottled fruit smoothie | fndds:Fruit smoothie, bottled | 1 vaso (200 ml) / 1 glass (200 ml)=210 | smoothie de botella | ml

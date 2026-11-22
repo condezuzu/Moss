@@ -1,0 +1,262 @@
+// Más pescados y mariscos (22/11/2026, lo pediste: «el máximo de comidas posibles»): las otras formas de cocinar
+// los pescados de siempre, cada tipo de salmón y de atún, las especies que USDA tenía solo en inglés, más mariscos
+// y los platos simples de pescado o de marisco. El formato es el de genericos.txt. Son variantes: al buscar salen
+// después de lo de siempre (el salmón, la merluza, el atún en agua, los camarones… siguen en genericos.txt).
+@variantes
+
+# pescados
+// Las otras formas de cocinar los pescados de genericos.txt. «A la plancha» es el de SR Legacy, sin grasa (se
+// pregunta por el aceite); «al vapor» y «frito» son los de FNDDS (el frito va rebozado y ya trae su aceite).
+// El pescado blanco es el «white, mixed species» de FNDDS, que a la plancha y al horno ya lleva un poco de grasa.
+Pescado blanco al horno | Baked white fish | fndds:Fish, white, mixed species, baked or broiled | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 · 1 pescado entero / 1 whole fish=270 | filete de pescado al horno · pescado blanco asado | crudo=Pescado crudo · aceite=incluido
+Pescado blanco a la plancha | Grilled white fish | fndds:Fish, white, mixed species, grilled | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 · 1 pescado entero / 1 whole fish=270 | pescado a la plancha · pescado a la parrilla · pescado blanco a la parrilla · pescado grillado | crudo=Pescado crudo · aceite=incluido
+Pescado blanco al vapor | Steamed white fish | fndds:Fish, white, mixed species, steamed | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 · 1 pescado entero / 1 whole fish=270 | pescado al vapor · pescado hervido · pescado sancochado · pescado blanco hervido | crudo=Pescado crudo
+Pescado blanco frito | Fried white fish | fndds:Fish, white, mixed species, fried | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 · 1 pescado entero / 1 whole fish=270 | filete de pescado frito · pescado rebozado · pescado blanco rebozado | crudo=Pescado crudo · aceite=incluido
+Pescado empanizado al horno | Baked breaded fish | fndds:Fish, white, mixed species, baked or broiled, coated | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 | pescado apanado al horno* (CO CL PE EC) · pescado empanado al horno* (AR UY ES) · filete de pescado empanizado al horno · pescado rebozado al horno | crudo=Pescado crudo · aceite=incluido
+Pescado ahumado | Smoked fish | fndds:Fish, smoked | 1 porción / 1 serving=85 · 1 taza / 1 cup=135 | pescado blanco ahumado · eglefino ahumado · haddock ahumado
+Bacalao a la plancha | Grilled cod | sr:Fish, cod, Pacific, cooked, dry heat (may contain additives to retain moisture) | 1 filete / 1 fillet=90 · 100 g / 100 g=100 | bacalao fresco a la plancha · bacalao a la parrilla · bacalao asado | crudo=Bacalao crudo · aceite
+Bacalao al vapor | Steamed cod | fndds:Fish, cod, steamed | 1 filete / 1 fillet=140 · 1 filete grande / 1 large fillet=210 | bacalao hervido · bacalao cocido · bacalao fresco al vapor | crudo=Bacalao crudo
+// El bacalao de genericos.txt es el del Pacífico; el del Atlántico (el de Europa) es algo más graso.
+Bacalao del Atlántico crudo | Raw Atlantic cod | sr:Fish, cod, Atlantic, raw | 1 filete / 1 fillet=231 · 100 g / 100 g=100 | bacalao atlántico crudo · bacalao skrei crudo
+Bacalao del Atlántico a la plancha | Grilled Atlantic cod | sr:Fish, cod, Atlantic, cooked, dry heat | 1 filete / 1 fillet=180 · 100 g / 100 g=100 | bacalao atlántico a la plancha · bacalao del Atlántico al horno · bacalao skrei a la plancha | crudo=Bacalao del Atlántico crudo · aceite
+Merluza a la plancha | Grilled hake | sr:Fish, whiting, mixed species, cooked, dry heat | 1 filete / 1 fillet=72 · 100 g / 100 g=100 | merluza a la parrilla · merluza asada · filet de merluza a la plancha (AR UY) | crudo=Merluza cruda · aceite
+Merluza al vapor | Steamed hake | fndds:Fish, whiting, steamed | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 · 1 pescado entero / 1 whole fish=270 | merluza hervida · merluza cocida · merluza al papillote | crudo=Merluza cruda
+Tilapia a la plancha | Grilled tilapia | sr:Fish, tilapia, cooked, dry heat | 1 filete / 1 fillet=87 · 100 g / 100 g=100 | mojarra a la plancha* (MX CO) · tilapia a la parrilla · tilapia asada | crudo=Tilapia cruda · aceite
+Tilapia al vapor | Steamed tilapia | fndds:Fish, tilapia, steamed | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 · 1 pescado entero / 1 whole fish=270 | mojarra al vapor* (MX CO) · tilapia hervida · tilapia cocida | crudo=Tilapia cruda
+Trucha a la plancha | Grilled trout | sr:Fish, trout, rainbow, farmed, cooked, dry heat | 1 filete / 1 fillet=71 · 100 g / 100 g=100 | trucha a la parrilla · trucha asada · trucha arcoíris a la plancha | crudo=Trucha cruda · aceite
+Trucha al vapor | Steamed trout | fndds:Fish, trout, steamed | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 · 1 pescado entero / 1 whole fish=270 | trucha hervida · trucha cocida · trucha al papillote | crudo=Trucha cruda
+Trucha salvaje cruda | Raw wild rainbow trout | sr:Fish, trout, rainbow, wild, raw | 1 filete / 1 fillet=159 · 100 g / 100 g=100 | trucha arcoíris salvaje cruda · trucha de río cruda
+Trucha salvaje a la plancha | Grilled wild rainbow trout | sr:Fish, trout, rainbow, wild, cooked, dry heat | 1 filete / 1 fillet=143 · 100 g / 100 g=100 | trucha arcoíris salvaje a la plancha · trucha de río a la plancha · trucha salvaje al horno | crudo=Trucha salvaje cruda · aceite
+Lenguado a la plancha | Grilled flounder | sr:Fish, flatfish (flounder and sole species), cooked, dry heat | 1 filete / 1 fillet=127 · 100 g / 100 g=100 | lenguado a la parrilla · lenguado asado · filete de lenguado a la plancha | crudo=Lenguado crudo · aceite
+Lenguado al vapor | Steamed flounder | fndds:Fish, flounder, steamed | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 · 1 pescado entero / 1 whole fish=270 | lenguado hervido · lenguado cocido | crudo=Lenguado crudo
+Lenguado frito | Fried flounder | fndds:Fish, flounder, fried | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 · 1 pescado entero / 1 whole fish=270 | lenguado rebozado · lenguado empanizado · filete de lenguado frito | crudo=Lenguado crudo · aceite=incluido
+Caballa a la plancha | Grilled mackerel | sr:Fish, mackerel, Pacific and jack, mixed species, cooked, dry heat | 100 g / 100 g=100 · 1 filete / 1 fillet=176 | jurel a la plancha · caballa a la parrilla · caballa asada | crudo=Caballa cruda · aceite
+Caballa frita | Fried mackerel | fndds:Fish, mackerel, fried | 1 filete / 1 fillet=140 · 1 filete grande / 1 large fillet=210 | jurel frito · caballa rebozada · macarela frita (MX) | crudo=Caballa cruda · aceite=incluido
+Caballa del Atlántico cruda | Raw Atlantic mackerel | sr:Fish, mackerel, Atlantic, raw | 1 filete / 1 fillet=112 · 100 g / 100 g=100 | caballa atlántica cruda · verdel crudo
+Caballa del Atlántico a la plancha | Grilled Atlantic mackerel | sr:Fish, mackerel, Atlantic, cooked, dry heat | 1 filete / 1 fillet=88 · 100 g / 100 g=100 | caballa atlántica a la plancha · caballa del Atlántico al horno · verdel a la plancha | crudo=Caballa del Atlántico cruda · aceite
+Caballa real cruda | Raw king mackerel | sr:Fish, mackerel, king, raw | 100 g / 100 g=100 · ½ filete / ½ fillet=198 | carite lucio crudo · king mackerel crudo
+Caballa real a la plancha | Grilled king mackerel | sr:Fish, mackerel, king, cooked, dry heat | 100 g / 100 g=100 · ½ filete / ½ fillet=154 | caballa real al horno · carite lucio a la plancha · king mackerel | crudo=Caballa real cruda · aceite
+Caballa salada | Salted mackerel | sr:Fish, mackerel, salted | 1 trozo / 1 piece=80 · 100 g / 100 g=100 | caballa en salazón · macarela salada (MX)
+// Los de FNDDS que no dicen cómo se cocinan vienen empanizados y con su grasa, como la corvina de genericos.txt.
+Pargo empanizado | Breaded snapper | fndds:Fish, snapper | 1 filete / 1 fillet=90 · 1 pescado entero / 1 whole fish=270 | huachinango empanizado* (MX) · pargo apanado* (CO CL PE EC) · pargo empanado* (AR UY ES) · pargo frito · pargo rojo frito | crudo=Pargo crudo · aceite=incluido
+Pez espada empanizado | Breaded swordfish | fndds:Fish, swordfish | 1 filete / 1 fillet=140 | pez espada apanado* (CO PE EC) · albacora apanada* (CL) · pez espada empanado* (AR UY ES) · pez espada rebozado · pez espada frito | crudo=Pez espada crudo · aceite=incluido
+Filete de lisa empanizado | Breaded mullet fillet | fndds:Fish, mullet | 1 filete / 1 fillet=140 · 1 pescado entero / 1 whole fish=420 | filete de lisa apanado* (CO CL PE EC) · mújol empanado* (ES) · filete de lisa empanado* (AR UY) · lisa frita · lisa empanizada | crudo=Filete de lisa crudo · aceite=incluido
+Filete de fletán empanizado | Breaded halibut fillet | fndds:Fish, halibut | 1 filete / 1 fillet=140 | filete de fletán apanado* (CO CL PE EC) · filete de fletán empanado* (AR UY ES) · fletán frito · fletán rebozado · halibut empanizado | crudo=Filete de fletán crudo · aceite=incluido
+Filete de lubina frito | Fried sea bass fillet | fndds:Fish, bass, fried | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 | lubina frita · róbalo frito · robalo frito · lubina rebozada | crudo=Filete de lubina crudo · aceite=incluido
+Filete de lubina al vapor | Steamed sea bass fillet | fndds:Fish, bass, steamed | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 | lubina al vapor · lubina hervida · róbalo al vapor · lubina al papillote | crudo=Filete de lubina crudo
+Filete de bagre al vapor | Steamed catfish fillet | fndds:Fish, catfish, steamed | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 · 1 pescado entero / 1 whole fish=270 | pez gato al vapor* (ES) · bagre al vapor · bagre hervido | crudo=Filete de bagre crudo
+
+// Cada salmón. El «del Atlántico» de cultivo es el de casi todas las pescaderías.
+Salmón del Atlántico crudo | Raw farmed Atlantic salmon | sr:Fish, salmon, Atlantic, farmed, raw | 100 g / 100 g=100 · ½ filete / ½ fillet=198 | salmón de cultivo crudo · salmón de criadero crudo · salmón atlántico crudo · salmón noruego crudo · sashimi de salmón
+Salmón del Atlántico a la plancha | Grilled farmed Atlantic salmon | sr:Fish, salmon, Atlantic, farmed, cooked, dry heat | 100 g / 100 g=100 · ½ filete / ½ fillet=178 | salmón del Atlántico al horno · salmón de cultivo a la plancha · salmón de criadero a la plancha · salmón atlántico a la plancha | crudo=Salmón del Atlántico crudo · aceite
+Salmón del Atlántico salvaje crudo | Raw wild Atlantic salmon | sr:Fish, salmon, Atlantic, wild, raw | 100 g / 100 g=100 · ½ filete / ½ fillet=198 | salmón salvaje crudo · salmón silvestre crudo
+Salmón del Atlántico salvaje a la plancha | Grilled wild Atlantic salmon | sr:Fish, salmon, Atlantic, wild, cooked, dry heat | 100 g / 100 g=100 · ½ filete / ½ fillet=154 | salmón salvaje a la plancha · salmón salvaje al horno · salmón silvestre a la plancha | crudo=Salmón del Atlántico salvaje crudo · aceite
+Salmón real crudo | Raw king salmon | sr:Fish, salmon, chinook, raw | 100 g / 100 g=100 · ½ filete / ½ fillet=198 | salmón chinook crudo · salmón rey crudo
+Salmón real a la plancha | Grilled king salmon | sr:Fish, salmon, chinook, cooked, dry heat | 100 g / 100 g=100 · ½ filete / ½ fillet=154 | salmón real al horno · salmón chinook a la plancha · salmón rey a la plancha | crudo=Salmón real crudo · aceite
+Salmón keta crudo | Raw chum salmon | sr:Fish, salmon, chum, raw | 100 g / 100 g=100 · ½ filete / ½ fillet=198 | salmón chum crudo · keta crudo
+Salmón keta a la plancha | Grilled chum salmon | sr:Fish, salmon, chum, cooked, dry heat | 100 g / 100 g=100 · ½ filete / ½ fillet=154 | salmón keta al horno · salmón chum a la plancha | crudo=Salmón keta crudo · aceite
+Salmón coho crudo | Raw farmed coho salmon | sr:Fish, salmon, coho, farmed, raw | 1 filete / 1 fillet=159 · 100 g / 100 g=100 | salmón plateado crudo · salmón coho de cultivo crudo
+Salmón coho a la plancha | Grilled farmed coho salmon | sr:Fish, salmon, coho, farmed, cooked, dry heat | 1 filete / 1 fillet=143 · 100 g / 100 g=100 | salmón coho al horno · salmón plateado a la plancha · salmón coho de cultivo a la plancha | crudo=Salmón coho crudo · aceite
+Salmón coho salvaje crudo | Raw wild coho salmon | sr:Fish, salmon, coho, wild, raw | 100 g / 100 g=100 · ½ filete / ½ fillet=198 | salmón plateado salvaje crudo
+Salmón coho salvaje a la plancha | Grilled wild coho salmon | sr:Fish, salmon, coho, wild, cooked, dry heat | 100 g / 100 g=100 · ½ filete / ½ fillet=178 | salmón coho salvaje al horno · salmón plateado salvaje a la plancha | crudo=Salmón coho salvaje crudo · aceite
+Salmón rosado crudo | Raw pink salmon | sr:Fish, salmon, pink, raw | 100 g / 100 g=100 · ½ filete / ½ fillet=159 | salmón rosa crudo
+Salmón rosado a la plancha | Grilled pink salmon | sr:Fish, salmon, pink, cooked, dry heat | 100 g / 100 g=100 · ½ filete / ½ fillet=124 | salmón rosado al horno · salmón rosa a la plancha | crudo=Salmón rosado crudo · aceite
+Salmón rojo crudo | Raw sockeye salmon | sr:Fish, salmon, sockeye, raw | 100 g / 100 g=100 · ½ filete / ½ fillet=198 | salmón sockeye crudo
+Salmón rojo a la plancha | Grilled sockeye salmon | sr:Fish, salmon, sockeye, cooked, dry heat | 100 g / 100 g=100 · ½ filete / ½ fillet=155 | salmón rojo al horno · salmón sockeye a la plancha | crudo=Salmón rojo crudo · aceite
+Salmón rojo en lata | Canned sockeye salmon | sr:Fish, salmon, sockeye, canned, drained solids | 100 g / 100 g=100 · 1 lata / 1 can=337 | salmón sockeye en lata · salmón rojo enlatado · salmón rojo en conserva
+Salmón al vapor | Steamed salmon | fndds:Fish, salmon, steamed | 1 filete / 1 fillet=140 · 1 filete grande / 1 large fillet=210 | salmón hervido · salmón cocido · salmón al papillote · salmón pochado | crudo=Salmón crudo
+Salmón frito | Fried salmon | fndds:Fish, salmon, fried | 1 filete / 1 fillet=140 · 1 filete grande / 1 large fillet=210 | salmón rebozado · salmón empanizado | crudo=Salmón crudo · aceite=incluido
+
+// Los otros atunes.
+Atún rojo crudo | Raw bluefin tuna | sr:Fish, tuna, fresh, bluefin, raw | 100 g / 100 g=100 | atún de aleta azul crudo · atún bluefin crudo · sashimi de atún rojo
+Atún rojo a la plancha | Grilled bluefin tuna | sr:Fish, tuna, fresh, bluefin, cooked, dry heat | 100 g / 100 g=100 | atún rojo al horno · atún de aleta azul a la plancha · atún rojo sellado | crudo=Atún rojo crudo · aceite
+Atún listado crudo | Raw skipjack tuna | sr:Fish, tuna, fresh, skipjack, raw | 100 g / 100 g=100 · ½ filete / ½ fillet=198 | barrilete crudo · listado crudo · skipjack crudo
+Atún listado a la plancha | Grilled skipjack tuna | sr:Fish, tuna, skipjack, fresh, cooked, dry heat | 100 g / 100 g=100 · ½ filete / ½ fillet=154 | barrilete a la plancha · atún listado al horno · listado a la plancha | crudo=Atún listado crudo · aceite
+Atún de aleta amarilla a la plancha | Grilled yellowfin tuna | sr:Fish, tuna, yellowfin, fresh, cooked, dry heat | 100 g / 100 g=100 | atún aleta amarilla a la plancha · atún sellado · atún de aleta amarilla al horno · atún yellowfin | crudo=Atún crudo · aceite
+Atún en agua sin sal | Tuna in water, no salt added | sr:Fish, tuna, light, canned in water, without salt, drained solids | 100 g / 100 g=100 · 1 lata / 1 can=165 | atún al natural sin sal* (ES) · atún en lata sin sal · atún bajo en sodio
+Atún en aceite sin sal | Tuna in oil, no salt added | sr:Fish, tuna, light, canned in oil, without salt, drained solids | 100 g / 100 g=100 · 1 lata / 1 can=171 | atún en lata con aceite sin sal · atún en aceite bajo en sodio
+
+// Más especies. Como en mundo.txt, son filetes (lo que se come); «a la plancha» es sin grasa y se pregunta por el aceite.
+Filete de abadejo de Alaska crudo | Raw Alaska pollock fillet | sr:Fish, pollock, Alaska, raw | 100 g / 100 g=100 | abadejo de Alaska crudo · colín de Alaska crudo · pollock crudo
+Filete de abadejo de Alaska a la plancha | Grilled Alaska pollock fillet | sr:Fish, pollock, Alaska, cooked, dry heat (may contain additives to retain moisture) | 1 filete / 1 fillet=60 · 100 g / 100 g=100 | abadejo de Alaska a la plancha · abadejo de Alaska al horno · colín de Alaska a la plancha · pollock | crudo=Filete de abadejo de Alaska crudo · aceite
+Filete de eglefino crudo | Raw haddock fillet | sr:Fish, haddock, raw | 100 g / 100 g=100 · 1 filete / 1 fillet=193 | eglefino crudo · haddock crudo
+Filete de eglefino a la plancha | Grilled haddock fillet | sr:Fish, haddock, cooked, dry heat | 100 g / 100 g=100 · 1 filete / 1 fillet=150 | eglefino a la plancha · eglefino al horno · haddock | crudo=Filete de eglefino crudo · aceite
+Filete de eglefino frito | Fried haddock fillet | fndds:Fish, haddock, fried | 1 filete / 1 fillet=140 · 1 filete grande / 1 large fillet=210 | eglefino frito · eglefino rebozado · haddock frito | crudo=Filete de eglefino crudo · aceite=incluido
+Filete de eglefino al vapor | Steamed haddock fillet | fndds:Fish, haddock, steamed | 1 filete / 1 fillet=140 · 1 filete grande / 1 large fillet=210 | eglefino al vapor · eglefino hervido · haddock al vapor | crudo=Filete de eglefino crudo
+Filete de maruca crudo | Raw ling fillet | sr:Fish, ling, raw | 100 g / 100 g=100 · 1 filete / 1 fillet=193 | maruca cruda
+Filete de maruca a la plancha | Grilled ling fillet | sr:Fish, ling, cooked, dry heat | 100 g / 100 g=100 · 1 filete / 1 fillet=151 | maruca a la plancha · maruca al horno | crudo=Filete de maruca crudo · aceite
+Filete de fletán negro crudo | Raw Greenland halibut fillet | sr:Fish, halibut, Greenland, raw | 100 g / 100 g=100 · ½ filete / ½ fillet=204 | fletán negro crudo · halibut negro crudo
+Filete de fletán negro a la plancha | Grilled Greenland halibut fillet | sr:Fish, halibut, greenland, cooked, dry heat | 100 g / 100 g=100 · ½ filete / ½ fillet=159 | fletán negro a la plancha · fletán negro al horno · halibut negro | crudo=Filete de fletán negro crudo · aceite
+Filete de bacalao negro crudo | Raw sablefish fillet | sr:Fish, sablefish, raw | 100 g / 100 g=100 · ½ filete / ½ fillet=193 | bacalao negro crudo · black cod crudo · sablefish crudo
+Filete de bacalao negro a la plancha | Grilled sablefish fillet | sr:Fish, sablefish, cooked, dry heat | 100 g / 100 g=100 · ½ filete / ½ fillet=151 | bacalao negro a la plancha · bacalao negro al horno · black cod · sablefish | crudo=Filete de bacalao negro crudo · aceite
+Bacalao negro ahumado | Smoked sablefish | sr:Fish, sablefish, smoked | 50 g / 50 g=50 · 100 g / 100 g=100 | black cod ahumado · sablefish ahumado
+Filete de arenque crudo | Raw herring fillet | sr:Fish, herring, Atlantic, raw | 100 g / 100 g=100 · 1 filete / 1 fillet=184 | arenque crudo · arenque fresco
+Filete de arenque a la plancha | Grilled herring fillet | sr:Fish, herring, Atlantic, cooked, dry heat | 100 g / 100 g=100 · 1 filete / 1 fillet=143 | arenque a la plancha · arenque al horno · arenque asado | crudo=Filete de arenque crudo · aceite
+// Sábalo: el «shad» de USDA; el del Río de la Plata es de otra familia, pero también es un pescado graso.
+Filete de sábalo crudo | Raw shad fillet | sr:Fish, shad, american, raw | 100 g / 100 g=100 · 1 filete / 1 fillet=184 | sábalo crudo
+Filete de sábalo a la plancha | Grilled shad fillet | sr:Fish, shad, american, cooked, dry heat | 100 g / 100 g=100 · 1 filete / 1 fillet=144 | sábalo a la plancha · sábalo a la parrilla · sábalo al horno · sábalo asado | crudo=Filete de sábalo crudo · aceite
+Filete de anjova crudo | Raw bluefish fillet | sr:Fish, bluefish, raw | 1 filete / 1 fillet=150 · 100 g / 100 g=100 | anchoa de banco cruda* (AR UY) · anjova cruda · bluefish crudo
+Filete de anjova a la plancha | Grilled bluefish fillet | sr:Fish, bluefish, cooked, dry heat | 1 filete / 1 fillet=117 · 100 g / 100 g=100 | anchoa de banco a la plancha* (AR UY) · anjova a la plancha · anjova al horno · anchoa de banco a la parrilla | crudo=Filete de anjova crudo · aceite
+Filete de pámpano crudo | Raw pompano fillet | sr:Fish, pompano, florida, raw | 1 filete / 1 fillet=112 · 100 g / 100 g=100 | pámpano crudo
+Filete de pámpano a la plancha | Grilled pompano fillet | sr:Fish, pompano, florida, cooked, dry heat | 1 filete / 1 fillet=88 · 100 g / 100 g=100 | pámpano a la plancha · pámpano al horno · pámpano asado | crudo=Filete de pámpano crudo · aceite
+Filete de pámpano frito | Fried pompano fillet | fndds:Fish, pompano, fried | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 · 1 pescado entero / 1 whole fish=270 | pámpano frito · pámpano empanizado | crudo=Filete de pámpano crudo · aceite=incluido
+Filete de pámpano al vapor | Steamed pompano fillet | fndds:Fish, pompano, steamed | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 · 1 pescado entero / 1 whole fish=270 | pámpano al vapor · pámpano hervido | crudo=Filete de pámpano crudo
+// Besugo y sargo: los dos espáridos de USDA («scup» y «sheepshead»), los más parecidos a los de cada costa.
+Filete de besugo crudo | Raw porgy fillet | sr:Fish, scup, raw | 1 filete / 1 fillet=64 · 100 g / 100 g=100 | besugo crudo · porgy crudo
+Filete de besugo a la plancha | Grilled porgy fillet | sr:Fish, scup, cooked, dry heat | 1 filete / 1 fillet=50 · 100 g / 100 g=100 | besugo a la plancha · besugo al horno · besugo a la parrilla · porgy | crudo=Filete de besugo crudo · aceite
+Filete de sargo crudo | Raw sheepshead fillet | sr:Fish, sheepshead, raw | 100 g / 100 g=100 · 1 filete / 1 fillet=238 | sargo crudo
+Filete de sargo a la plancha | Grilled sheepshead fillet | sr:Fish, sheepshead, cooked, dry heat | 100 g / 100 g=100 · 1 filete / 1 fillet=186 | sargo a la plancha · sargo al horno · sargo a la parrilla | crudo=Filete de sargo crudo · aceite
+Filete de lubina rayada crudo | Raw striped bass fillet | sr:Fish, bass, striped, raw | 1 filete / 1 fillet=159 · 100 g / 100 g=100 | lubina rayada cruda · róbalo rayado crudo · striped bass crudo
+Filete de lubina rayada a la plancha | Grilled striped bass fillet | sr:Fish, bass, striped, cooked, dry heat | 1 filete / 1 fillet=124 · 100 g / 100 g=100 | lubina rayada a la plancha · lubina rayada al horno · róbalo rayado a la plancha · striped bass | crudo=Filete de lubina rayada crudo · aceite
+Filete de lobina crudo | Raw freshwater bass fillet | sr:Fish, bass, fresh water, mixed species, raw | 1 filete / 1 fillet=79 · 100 g / 100 g=100 | lobina cruda · lobina negra cruda · black bass crudo
+Filete de lobina a la plancha | Grilled freshwater bass fillet | sr:Fish, bass, freshwater, mixed species, cooked, dry heat | 1 filete / 1 fillet=62 · 100 g / 100 g=100 | lobina a la plancha · lobina al horno · lobina negra a la plancha · black bass | crudo=Filete de lobina crudo · aceite
+Filete de gallineta crudo | Raw ocean perch fillet | sr:Fish, ocean perch, Atlantic, raw | 1 filete / 1 fillet=64 · 100 g / 100 g=100 | gallineta cruda · gallineta nórdica cruda · perca de mar cruda
+Filete de gallineta a la plancha | Grilled ocean perch fillet | sr:Fish, ocean perch, Atlantic, cooked, dry heat | 1 filete / 1 fillet=50 · 100 g / 100 g=100 | gallineta a la plancha · gallineta al horno · perca de mar a la plancha | crudo=Filete de gallineta crudo · aceite
+Filete de perca crudo | Raw perch fillet | sr:Fish, perch, mixed species, raw | 1 filete / 1 fillet=60 · 100 g / 100 g=100 | perca cruda
+Filete de perca a la plancha | Grilled perch fillet | sr:Fish, perch, mixed species, cooked, dry heat | 1 filete / 1 fillet=46 · 100 g / 100 g=100 | perca a la plancha · perca al horno | crudo=Filete de perca crudo · aceite
+Filete de perca frito | Fried perch fillet | fndds:Fish, perch, fried | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 · 1 pescado entero / 1 whole fish=270 | perca frita · perca rebozada | crudo=Filete de perca crudo · aceite=incluido
+Filete de perca al vapor | Steamed perch fillet | fndds:Fish, perch, steamed | 1 filete / 1 fillet=90 · 1 filete grande / 1 large fillet=135 · 1 pescado entero / 1 whole fish=270 | perca al vapor · perca hervida | crudo=Filete de perca crudo
+Filete de lucio crudo | Raw pike fillet | sr:Fish, pike, northern, raw | 100 g / 100 g=100 · ½ filete / ½ fillet=198 | lucio crudo
+Filete de lucio a la plancha | Grilled pike fillet | sr:Fish, pike, northern, cooked, dry heat | 100 g / 100 g=100 · ½ filete / ½ fillet=155 | lucio a la plancha · lucio al horno | crudo=Filete de lucio crudo · aceite
+Filete de lucioperca crudo | Raw walleye fillet | sr:Fish, pike, walleye, raw | 1 filete / 1 fillet=159 · 100 g / 100 g=100 | lucioperca cruda · walleye crudo
+Filete de lucioperca a la plancha | Grilled walleye fillet | sr:Fish, pike, walleye, cooked, dry heat | 1 filete / 1 fillet=124 · 100 g / 100 g=100 | lucioperca a la plancha · lucioperca al horno · walleye | crudo=Filete de lucioperca crudo · aceite
+Filete de carpa crudo | Raw carp fillet | sr:Fish, carp, raw | 100 g / 100 g=100 · 1 filete / 1 fillet=218 | carpa cruda
+Filete de carpa a la plancha | Grilled carp fillet | sr:Fish, carp, cooked, dry heat | 100 g / 100 g=100 · 1 filete / 1 fillet=170 | carpa a la plancha · carpa al horno · carpa asada | crudo=Filete de carpa crudo · aceite
+Filete de carpa empanizado | Breaded carp fillet | fndds:Fish, carp | 1 filete / 1 fillet=90 · 1 pescado entero / 1 whole fish=270 | filete de carpa apanado* (CO CL PE EC) · filete de carpa empanado* (AR UY ES) · carpa frita · carpa empanizada | crudo=Filete de carpa crudo · aceite=incluido
+Filete de bagre salvaje crudo | Raw wild catfish fillet | sr:Fish, catfish, channel, wild, raw | 1 filete / 1 fillet=159 · 100 g / 100 g=100 | pez gato salvaje crudo* (ES) · bagre salvaje crudo · bagre de río crudo
+Filete de bagre salvaje a la plancha | Grilled wild catfish fillet | sr:Fish, catfish, channel, wild, cooked, dry heat | 1 filete / 1 fillet=143 · 100 g / 100 g=100 | pez gato salvaje a la plancha* (ES) · bagre salvaje a la plancha · bagre salvaje al horno · bagre de río a la plancha | crudo=Filete de bagre salvaje crudo · aceite
+Filete de pez limón crudo | Raw yellowtail fillet | sr:Fish, yellowtail, mixed species, raw | 100 g / 100 g=100 · ½ filete / ½ fillet=187 | pez limón crudo · seriola cruda · hamachi · sashimi de pez limón · yellowtail crudo
+Filete de pez limón a la plancha | Grilled yellowtail fillet | sr:Fish, yellowtail, mixed species, cooked, dry heat | 100 g / 100 g=100 · ½ filete / ½ fillet=146 | pez limón a la plancha · pez limón al horno · seriola a la plancha · yellowtail | crudo=Filete de pez limón crudo · aceite
+Filete de blanquillo crudo | Raw tilefish fillet | sr:Fish, tilefish, raw | 100 g / 100 g=100 · ½ filete / ½ fillet=193 | blanquillo crudo · tilefish crudo
+Filete de blanquillo a la plancha | Grilled tilefish fillet | sr:Fish, tilefish, cooked, dry heat | 100 g / 100 g=100 · ½ filete / ½ fillet=150 | blanquillo a la plancha · blanquillo al horno · tilefish | crudo=Filete de blanquillo crudo · aceite
+Filete de reloj anaranjado crudo | Raw orange roughy fillet | sr:Fish, roughy, orange, raw | 100 g / 100 g=100 | reloj anaranjado crudo · pez reloj crudo · orange roughy crudo
+Filete de reloj anaranjado a la plancha | Grilled orange roughy fillet | sr:Fish, roughy, orange, cooked, dry heat | 100 g / 100 g=100 | reloj anaranjado a la plancha · pez reloj a la plancha · orange roughy | crudo=Filete de reloj anaranjado crudo · aceite
+Anguila cruda | Raw eel | sr:Fish, eel, mixed species, raw | 100 g / 100 g=100 · 1 filete / 1 fillet=204 | anguila fresca
+Anguila a la plancha | Grilled eel | sr:Fish, eel, mixed species, cooked, dry heat | 100 g / 100 g=100 · 1 filete / 1 fillet=159 | anguila asada · anguila al horno · unagi | crudo=Anguila cruda · aceite
+Esturión crudo | Raw sturgeon | sr:Fish, sturgeon, mixed species, raw | 100 g / 100 g=100 | esturión fresco
+Esturión a la plancha | Grilled sturgeon | sr:Fish, sturgeon, mixed species, cooked, dry heat | 100 g / 100 g=100 · 1 trozo / 1 piece=145 | esturión al horno · esturión asado | crudo=Esturión crudo · aceite
+Esturión ahumado | Smoked sturgeon | sr:Fish, sturgeon, mixed species, smoked | 50 g / 50 g=50 · 100 g / 100 g=100 |
+// Eperlano: el «smelt» de USDA. El pejerrey es de otra familia, pero es el pescado chico y magro que más se le parece.
+Eperlano crudo | Raw smelt | sr:Fish, smelt, rainbow, raw | 100 g / 100 g=100 | pejerrey crudo (AR UY CL PE) · smelt crudo
+Eperlano a la plancha | Grilled smelt | sr:Fish, smelt, rainbow, cooked, dry heat | 100 g / 100 g=100 | pejerrey a la plancha (AR UY CL PE) · pejerrey al horno (AR UY CL PE) · eperlano al horno · smelt | crudo=Eperlano crudo · aceite
+Anchoas frescas | Fresh anchovies | sr:Fish, anchovy, european, raw | 100 g / 100 g=100 | boquerones* (ES) · anchoas crudas · boquerones crudos · anchoítas (AR UY) · anchovetas (PE CL)
+Huevas de pescado crudas | Raw fish roe | sr:Fish, roe, mixed species, raw | 1 cucharada / 1 tbsp=14 · 100 g / 100 g=100 | huevas crudas · hueva de pescado cruda
+Huevas de pescado cocidas | Cooked fish roe | sr:Fish, roe, mixed species, cooked, dry heat | 100 g / 100 g=100 | huevas a la plancha · huevas de pescado a la plancha · huevas cocidas | crudo=Huevas de pescado crudas · aceite
+Caviar | Caviar | sr:Fish, caviar, black and red, granular | 1 cucharada / 1 tbsp=16 | caviar negro · caviar rojo · huevas de salmón · ikura
+// El surimi solo: la pasta de pescado con la que se hacen los palitos de cangrejo (que están en genericos.txt).
+Surimi de pescado | Fish surimi | sr:Fish, surimi | 100 g / 100 g=100 | pasta de pescado · kamaboko
+Camarones de surimi | Imitation shrimp | sr:Crustaceans, shrimp, mixed species, imitation, made from surimi | 100 g / 100 g=100 | gambas de surimi* (ES) · colas de surimi · imitación de camarón
+Hamburguesa de pescado | Fish patty | fndds:Fish, cake or patty | 1 unidad / 1 patty=85 | medallón de pescado* (AR UY) · torta de pescado · tortitas de pescado · croqueta de pescado · fish cake | aceite=incluido
+Hamburguesa de salmón | Salmon patty | fndds:Fish, salmon cake or patty | 1 unidad / 1 patty=85 | medallón de salmón* (AR UY) · tortitas de salmón · croquetas de salmón · salmon cake | aceite=incluido
+Hamburguesa de atún | Tuna patty | fndds:Tuna cake or patty | 1 unidad / 1 patty=120 | medallón de atún* (AR UY) · tortitas de atún · croquetas de atún · torta de atún | aceite=incluido
+Nuggets de salmón | Salmon nuggets | sr:Salmon nuggets, breaded, frozen, heated | 100 g / 100 g=100 | bocaditos de salmón empanizados · trocitos de salmón rebozados | aceite=incluido
+Gefilte fish | Gefilte fish | fndds:Gefilte fish | 1 pieza con caldo / 1 piece with broth=68 · 1 porción / 1 serving=125 · 1 taza / 1 cup=250 | guefilte fish · albóndigas de pescado · bolas de pescado
+
+// Mariscos.
+Camarones al horno | Baked shrimp | fndds:Shrimp, baked or broiled | 10 camarones medianos / 10 medium shrimp=100 · 1 porción / 1 serving=85 · 1 taza / 1 cup=135 | gambas al horno* (ES) · langostinos al horno · camarones salteados | crudo=Camarones crudos · aceite=incluido
+Camarones empanizados al horno | Baked breaded shrimp | fndds:Shrimp, baked or broiled, coated | 10 camarones medianos / 10 medium shrimp=100 · 1 porción / 1 serving=85 · 1 taza / 1 cup=135 | gambas rebozadas al horno* (ES) · camarones apanados al horno* (CO CL PE EC) · camarones empanados al horno* (AR UY) · langostinos empanizados al horno | crudo=Camarones crudos · aceite=incluido
+Camarones en lata | Canned shrimp | fndds:Shrimp, canned | 1 lata / 1 can=115 · 1 lata pequeña / 1 small can=75 · 1 taza / 1 cup=135 | gambas en lata* (ES) · camarones enlatados · camarones en conserva
+Camarones secos | Dried shrimp | fndds:Shrimp, dried | 1 porción / 1 serving=85 · 1 taza / 1 cup=135 | gambas secas* (ES) · camarón seco · camarones deshidratados
+Cangrejo real crudo | Raw king crab | sr:Crustaceans, crab, alaska king, raw | 100 g / 100 g=100 · 1 pata / 1 leg=172 | centolla cruda* (CL AR) · king crab crudo · patas de cangrejo real crudas
+Cangrejo real cocido | Cooked king crab | sr:Crustaceans, crab, alaska king, cooked, moist heat | 1 pata / 1 leg=134 · 100 g / 100 g=100 | centolla cocida* (CL AR) · centolla · king crab · patas de cangrejo real | crudo=Cangrejo real crudo
+Cangrejo Dungeness crudo | Raw Dungeness crab | sr:Crustaceans, crab, dungeness, raw | 100 g / 100 g=100 · 1 cangrejo / 1 crab=163 | buey del Pacífico crudo · dungeness crudo
+Cangrejo Dungeness cocido | Cooked Dungeness crab | sr:Crustaceans, crab, dungeness, cooked, moist heat | 1 cangrejo / 1 crab=127 · 100 g / 100 g=100 | buey del Pacífico · buey de mar cocido · dungeness | crudo=Cangrejo Dungeness crudo
+Cangrejo de las nieves crudo | Raw snow crab | sr:Crustaceans, crab, queen, raw | 100 g / 100 g=100 | cangrejo de nieve crudo · snow crab crudo
+Cangrejo de las nieves cocido | Cooked snow crab | sr:Crustaceans, crab, queen, cooked, moist heat | 100 g / 100 g=100 | cangrejo de nieve · patas de cangrejo de las nieves · snow crab | crudo=Cangrejo de las nieves crudo
+Cangrejo en lata | Canned crab | fndds:Crab, canned | 1 lata / 1 can=120 · 1 lata pequeña / 1 small can=60 · 1 taza / 1 cup=135 | carne de cangrejo en lata · cangrejo enlatado · jaiba en lata (MX CL PE)
+Cangrejo de caparazón blando frito | Fried soft-shell crab | fndds:Crab, soft shell | 1 cangrejo / 1 crab=65 | cangrejo blando frito · jaiba suave frita (MX) · cangrejo de concha blanda · soft shell crab | crudo=Cangrejo crudo · aceite=incluido
+Tortitas de cangrejo | Crab cake | fndds:Crab, cake | 1 unidad / 1 cake=85 | crab cake · pastel de cangrejo · torta de cangrejo · croqueta de cangrejo · tortitas de jaiba (MX) | aceite=incluido
+Tortitas de camarón | Shrimp patty | fndds:Shrimp, cake or patty | 1 unidad / 1 patty=85 | tortitas de gambas* (ES) · torta de camarón · hamburguesa de camarón · croquetas de camarón | aceite=incluido
+Tortitas de almeja | Clam cake | fndds:Clam cake or patty | 1 unidad / 1 cake=120 | torta de almeja · croquetas de almeja · clam cake | aceite=incluido
+Cangrejo de río crudo | Raw crayfish | sr:Crustaceans, crayfish, mixed species, wild, raw | 100 g / 100 g=100 · 8 unidades / 8 crayfish=27 | cangrejos de río crudos · acociles crudos (MX) · crawfish crudo
+Cangrejo de río cocido | Cooked crayfish | fndds:Crayfish, cooked | 1 porción / 1 serving=85 · 1 taza / 1 cup=135 · 1 unidad / 1 crayfish=15 | cangrejos de río · cangrejo de río hervido · acociles (MX) · crawfish | crudo=Cangrejo de río crudo
+Cangrejo de río frito | Fried crayfish | fndds:Crayfish, fried | 1 porción / 1 serving=85 · 1 taza / 1 cup=135 · 1 unidad / 1 crayfish=15 | cangrejos de río fritos · colas de cangrejo de río fritas · crawfish frito | crudo=Cangrejo de río crudo · aceite=incluido
+// Langosta espinosa: la del Caribe y del Pacífico, sin pinzas (la de genericos.txt es la del Atlántico norte).
+Langosta espinosa cruda | Raw spiny lobster | sr:Crustaceans, spiny lobster, mixed species, raw | 100 g / 100 g=100 · 1 langosta / 1 lobster=209 | langosta del Caribe cruda · cola de langosta cruda · langosta roja cruda
+Langosta espinosa cocida | Cooked spiny lobster | sr:Crustaceans, spiny lobster, mixed species, cooked, moist heat | 100 g / 100 g=100 · 1 langosta / 1 lobster=163 | langosta del Caribe · cola de langosta · langosta espinosa hervida · langosta roja | crudo=Langosta espinosa cruda
+Almejas fritas | Fried clams | fndds:Clams, fried | 1 porción / 1 serving=85 · 1 taza / 1 cup=135 · 1 almeja / 1 clam=15 | almejas rebozadas · almejas empanizadas | crudo=Almejas crudas · aceite=incluido
+Almejas al horno | Baked clams | fndds:Clams, baked or broiled | 1 porción / 1 serving=85 · 1 taza / 1 cup=135 · 1 almeja / 1 clam=15 | almejas a la plancha · almejas a la parrilla · almejas asadas | crudo=Almejas crudas · aceite=incluido
+Ostras fritas | Fried oysters | fndds:Oysters, fried | 1 porción / 1 serving=85 · 1 taza / 1 cup=135 · 1 ostra / 1 oyster=15 | ostiones empanizados* (MX) · ostras rebozadas · ostras empanizadas | crudo=Ostras · aceite=incluido
+Ostras al vapor | Steamed oysters | fndds:Oysters, steamed | 1 porción / 1 serving=85 · 1 taza / 1 cup=135 · 1 ostra / 1 oyster=15 | ostiones al vapor* (MX) · ostras cocidas · ostras hervidas | crudo=Ostras
+Ostras al horno | Baked oysters | fndds:Oysters, baked or broiled | 1 porción / 1 serving=85 · 1 taza / 1 cup=135 · 1 ostra / 1 oyster=15 | ostiones al horno* (MX) · ostras a la parrilla · ostras asadas · ostras gratinadas | crudo=Ostras · aceite=incluido
+Ostras en lata | Canned oysters | fndds:Oysters, canned | 1 lata / 1 can=115 · 1 lata pequeña / 1 small can=75 · 1 ostra / 1 oyster=15 | ostiones en lata* (MX) · ostras en conserva · ostras enlatadas
+Ostras del Pacífico crudas | Raw Pacific oysters | sr:Mollusks, oyster, Pacific, raw | 1 mediana / 1 medium=50 · 100 g / 100 g=100 | ostiones del Pacífico crudos* (MX) · ostras japonesas crudas · ostra japonesa
+Ostras del Pacífico al vapor | Steamed Pacific oysters | sr:Mollusks, oyster, Pacific, cooked, moist heat | 1 mediana / 1 medium=25 · 100 g / 100 g=100 | ostiones del Pacífico al vapor* (MX) · ostras japonesas cocidas · ostras del Pacífico cocidas | crudo=Ostras del Pacífico crudas
+Vieiras a la plancha | Grilled scallops | fndds:Scallops, grilled | 1 porción / 1 serving=85 · 1 taza / 1 cup=135 · 1 vieira / 1 scallop=15 | conchas de abanico a la plancha* (PE) · ostiones a la plancha* (CL) · vieiras selladas · vieiras salteadas · callos de hacha a la plancha (MX) | crudo=Vieiras crudas · aceite=incluido
+Vieiras fritas | Fried scallops | fndds:Scallops, fried | 1 porción / 1 serving=85 · 1 taza / 1 cup=135 · 1 vieira / 1 scallop=15 | conchas de abanico fritas* (PE) · ostiones fritos* (CL) · vieiras rebozadas · vieiras empanizadas | crudo=Vieiras crudas · aceite=incluido
+Abulón crudo | Raw abalone | sr:Mollusks, abalone, mixed species, raw | 100 g / 100 g=100 | oreja de mar cruda · abalón crudo
+Abulón frito | Fried abalone | sr:Mollusks, abalone, mixed species, cooked, fried | 100 g / 100 g=100 | abulón empanizado · oreja de mar frita · abalón frito | crudo=Abulón crudo · aceite=incluido
+Caracoles crudos | Raw snails | sr:Mollusks, snail, raw | 100 g / 100 g=100 | caracoles de tierra crudos · escargots crudos
+Caracoles cocidos | Cooked snails | fndds:Escargot | 1 porción / 1 serving=85 · 1 caracol / 1 snail=5 | escargots · caracoles en salsa · caracoles con mantequilla de ajo | crudo=Caracoles crudos · aceite=incluido
+Caracol de mar crudo | Raw whelk | sr:Mollusks, whelk, unspecified, raw | 100 g / 100 g=100 | bocina cruda · caracola cruda
+Caracol de mar cocido | Cooked whelk | sr:Mollusks, whelk, unspecified, cooked, moist heat | 100 g / 100 g=100 | bocina cocida · caracola cocida · caracol de mar hervido | crudo=Caracol de mar crudo
+// Caracol rosado: el «conch» de USDA, ya cocido (al horno o a la parrilla); USDA no lo tiene crudo.
+Caracol rosado | Conch | sr:Mollusks, conch, baked or broiled | 1 taza en rodajas / 1 cup sliced=127 · 100 g / 100 g=100 | lambí* (DO) · carrucho* (PR) · caracol pala (CO) · botuto (VE) · cobo (CU) · conch
+Mariscos mixtos | Mixed shellfish | fndds:Shellfish, NFS | 1 porción / 1 serving=85 · 1 taza / 1 cup=135 | mariscos surtidos · mariscos · frutos del mar | aceite=incluido
+Medusa en salazón | Salted jellyfish | sr:Jellyfish, dried, salted | 1 taza / 1 cup=58 | medusa seca · medusa salada
+Ancas de rana crudas | Raw frog legs | sr:Frog legs, raw | 1 anca / 1 leg=45 · 100 g / 100 g=100 | patas de rana crudas
+Ancas de rana fritas | Fried frog legs | fndds:Frog legs | 1 porción / 1 serving=85 · 1 anca / 1 leg=25 | patas de rana fritas · ancas de rana rebozadas · ancas de rana | crudo=Ancas de rana crudas · aceite=incluido
+
+# platos
+// Pescado en salsa, con verduras y en ensalada.
+Pescado en salsa de tomate | Fish in tomato sauce | fndds:Fish with tomato-based sauce | 1 taza / 1 cup=222 · 1 porción / 1 serving=111 | pescado en salsa · pescado guisado · pescado entomatado · pescado a la veracruzana · sudado de pescado
+Pescado en salsa blanca | Fish in white sauce | fndds:Fish with cream or white sauce, not tuna or lobster | 1 taza / 1 cup=249 · 1 porción / 1 serving=124 | pescado a la crema · pescado con salsa bechamel · pescado en salsa de crema
+Pescado frito con salsa criolla | Fried fish with creole sauce | fndds:Fried fish with sauce, Puerto Rican style | 1 trozo con salsa / 1 piece with sauce=213 · 1 porción / 1 serving=135 | pescado en mojo isleño · pescado frito con mojo · pescado frito en salsa | aceite=incluido
+Curry de pescado | Fish curry | fndds:Fish curry | 1 taza / 1 cup=240 | pescado al curry · pescado en curry
+Brocheta de pescado | Fish kebab with vegetables | fndds:Fish shish kabob with vegetables, excluding potatoes | 1 brocheta / 1 kebab=202 · 1 taza / 1 cup=154 | pincho de pescado (ES) · brocheta de pescado con verduras · kebab de pescado
+Pescado con verduras en salsa de tomate | Fish and vegetables in tomato sauce | fndds:Fish and vegetables including carrots, broccoli, and/or dark-green leafy; no potatoes, tomato-based sauce | 1 taza / 1 cup=224 · 1 porción / 1 serving=112 | pescado guisado con verduras · cazuela de pescado con verduras
+Pescado con verduras en salsa de soja | Fish and vegetables in soy sauce | fndds:Fish and vegetables including carrots, broccoli, and/or dark-green leafy; no potatoes, soy-based sauce | 1 taza / 1 cup=217 · 1 porción / 1 serving=163 | pescado con verduras en salsa de soya* (MX CO VE) · pescado salteado con verduras · pescado con verduras al wok
+Tempura de pescado y verduras | Fish and vegetable tempura | fndds:Fish, tofu, and vegetables, tempura | 1 porción / 1 serving=134 · 1 taza / 1 cup=63 | tempura mixta · tempura de pescado · tempura de pescado, tofu y verduras | aceite=incluido
+Pastel de pescado | Fish mousse | fndds:Fish timbale or mousse | 1 taza / 1 cup=175 · 1 porción / 1 serving=88 | mousse de pescado · timbal de pescado · budín de pescado (AR UY) · pudin de pescado (ES)
+Lenguado relleno de cangrejo | Crab-stuffed flounder | fndds:Flounder with crab stuffing | 1 pieza / 1 piece=210 · 1 porción / 1 serving=135 | lenguado relleno · filete de lenguado relleno · pescado relleno de cangrejo
+Salmón guisado | Stewed salmon | fndds:Stewed salmon, Puerto Rican style | 1 taza / 1 cup=212 · 1 porción / 1 serving=106 | salmón en salsa · guiso de salmón · salmón guisado con cebolla
+Ensalada de bacalao | Salt cod salad | fndds:Codfish salad, Puerto Rican style, Serenata | 1 taza / 1 cup=145 · 1 porción / 1 serving=72 | serenata de bacalao* (PR) · bacalao en ensalada · ensalada de bacalao salado
+Bacalao con tubérculos hervidos | Salt cod with boiled root vegetables | fndds:Codfish with starchy vegetables, Puerto Rican style | 1 taza / 1 cup=173 · 1 porción / 1 serving=86 | bacalao con viandas* (PR CU) · bacalao con víveres* (DO) · bacalao con papas y yuca · bacalao con verduras hervidas
+Atún en salsa blanca | Creamed tuna | fndds:Tuna with cream or white sauce | 1 taza / 1 cup=237 · 1 porción / 1 serving=118 | atún a la crema · atún con salsa bechamel · atún con crema
+Ensalada de atún con huevo | Tuna salad with egg | fndds:Tuna salad with egg | ½ taza / ½ cup=119 · 1 taza / 1 cup=238 | atún con huevo y mayonesa · ensalada de atún y huevo duro
+Ensalada de atún con queso | Tuna salad with cheese | fndds:Tuna salad with cheese | ½ taza / ½ cup=119 · 1 taza / 1 cup=238 | atún con queso y mayonesa · ensalada de atún y queso
+Ensalada de atún con mayonesa light | Tuna salad with light mayo | fndds:Tuna salad, made with light mayonnaise | ½ taza / ½ cup=119 · 1 taza / 1 cup=238 | ensalada de atún light · atún con mayonesa light
+Ensalada de atún con vinagreta | Tuna salad with vinaigrette | fndds:Tuna salad, made with Italian dressing | ½ taza / ½ cup=119 · 1 taza / 1 cup=238 | ensalada de atún sin mayonesa · atún con vinagreta · atún con aderezo italiano
+Ensalada de atún con aderezo sin grasa | Tuna salad with fat-free dressing | fndds:Tuna salad, made with any type of fat free dressing | ½ taza / ½ cup=119 · 1 taza / 1 cup=238 | ensalada de atún sin grasa · atún con aderezo sin grasa
+Ensalada de salmón | Salmon salad | fndds:Salmon salad | ½ taza / ½ cup=104 · 1 taza / 1 cup=208 | salmón con mayonesa · ensalada de salmón en lata
+
+// Mariscos en salsa, con verduras y en ensalada.
+Ensalada de mariscos | Seafood salad | fndds:Seafood salad | ½ taza / ½ cup=104 · 1 taza / 1 cup=208 | mariscos con mayonesa · ensalada de frutos del mar · salpicón de mariscos
+Ensalada de cangrejo | Crab salad | fndds:Crab salad | ½ taza / ½ cup=104 · 1 taza / 1 cup=208 | cangrejo con mayonesa · ensalada de jaiba (MX CL PE) · salpicón de jaiba (MX)
+Ensalada de palitos de cangrejo | Imitation crab salad | fndds:Crab salad made with imitation crab | ½ taza / ½ cup=104 · 1 taza / 1 cup=208 | ensalada de surimi* (ES) · ensalada de kanikama* (AR UY CL PE) · ensalada de kani · kani salad
+Ensalada de langosta | Lobster salad | fndds:Lobster salad | ½ taza / ½ cup=91 · 1 taza / 1 cup=182 | langosta con mayonesa · salpicón de langosta
+Ensalada verde con camarones y huevo | Shrimp garden salad with egg | fndds:Shrimp garden salad, shrimp, lettuce, eggs, tomato and/or carrots, other vegetables, no dressing | 1 plato / 1 salad=244 · 1 taza / 1 cup=95 | ensalada verde con gambas y huevo* (ES) · ensalada de lechuga con camarones · ensalada con camarones
+Ensalada verde con mariscos | Seafood garden salad | fndds:Seafood garden salad with seafood, lettuce, tomato and/or carrots, other vegetables, no dressing | 1 plato / 1 salad=332 · 1 taza / 1 cup=95 | ensalada de lechuga con mariscos · ensalada con mariscos
+Camarones scampi | Shrimp scampi | fndds:Shrimp scampi | 1 taza / 1 cup=250 · 1 porción / 1 serving=125 · 1 camarón / 1 shrimp=15 | gambas scampi* (ES) · camarones en mantequilla de ajo · camarones a la mantequilla · scampi
+Camarones a la criolla | Shrimp creole | fndds:Shrimp creole, no rice | 1 taza / 1 cup=246 · 1 porción / 1 serving=123 | gambas a la criolla* (ES) · camarones enchilados · enchilado de camarones · camarones en salsa criolla · camarones en salsa de tomate
+Camarones teriyaki | Teriyaki shrimp | fndds:Shrimp teriyaki | 1 taza / 1 cup=201 · 1 porción / 1 serving=113 | gambas teriyaki* (ES) · camarones en salsa teriyaki
+Camarones kung pao | Kung pao shrimp | fndds:Kung Pao shrimp | 1 taza / 1 cup=162 · 1 porción / 1 serving=121 | gambas kung pao* (ES) · camarones gong bao
+Camarones agridulces | Sweet and sour shrimp | fndds:Sweet and sour shrimp | 1 taza / 1 cup=176 · 1 porción / 1 serving=132 · 1 camarón / 1 shrimp=12 | gambas agridulces* (ES) · camarones en salsa agridulce | aceite=incluido
+Camarones en salsa de langosta | Shrimp with lobster sauce | fndds:Shrimp with lobster sauce | 1 taza / 1 cup=185 · 1 porción / 1 serving=92 | gambas en salsa de langosta* (ES) · camarones con salsa cantonesa
+Camarones rellenos de cangrejo | Crab-stuffed shrimp | fndds:Shrimp with crab stuffing | 1 porción / 1 serving=70 · 1 camarón relleno / 1 stuffed shrimp=16 · 1 taza / 1 cup=140 | gambas rellenas de cangrejo* (ES) · camarones rellenos · langostinos rellenos
+Tostadas de camarón | Shrimp toast | fndds:Shrimp toast | ½ rebanada / ½ slice=48 | tostadas de gambas* (ES) · pan de camarón frito · shrimp toast | aceite=incluido
+Chop suey de camarones | Shrimp chop suey | fndds:Shrimp chow mein or chop suey, no noodles | 1 taza / 1 cup=220 · 1 porción / 1 serving=165 | chop suey de gambas* (ES) · chop suey de langostinos · chow mein de camarones sin fideos
+Camarones con verduras | Shrimp and vegetables | fndds:Shrimp and vegetables including carrots, broccoli, and/or dark-green leafy; no potatoes, no sauce | 1 taza / 1 cup=162 · 1 porción / 1 serving=81 | gambas con verduras* (ES) · camarones salteados con verduras · salteado de camarones · langostinos con verduras
+Camarones con verduras en salsa de soja | Shrimp and vegetables in soy sauce | fndds:Shrimp and vegetables including carrots, broccoli, and/or dark-green leafy; no potatoes, soy-based sauce | 1 taza / 1 cup=217 · 1 porción / 1 serving=163 | gambas con verduras en salsa de soja* (ES) · camarones con verduras en salsa de soya* (MX CO VE) · wok de camarones · camarones con verduras al wok
+Brocheta de camarones | Shrimp kebab with vegetables | fndds:Shrimp shish kabob with vegetables, excluding potatoes | 1 brocheta / 1 kebab=202 · 1 taza / 1 cup=154 | brocheta de gambas* (ES) · brocheta de langostinos · pincho de camarones · kebab de camarones
+Mariscos con verduras en salsa de soja | Shellfish and vegetables in soy sauce | fndds:Shellfish mixture and vegetables including carrots, broccoli, and/or dark-green leafy; no potatoes, soy-based sauce | 1 taza / 1 cup=217 · 1 porción / 1 serving=163 | mariscos con verduras en salsa de soya* (MX CO VE) · mariscos salteados con verduras · wok de mariscos · salteado de mariscos
+Cangrejo en salsa de tomate | Crab in tomato sauce | fndds:Crabs in tomato-based sauce, Puerto Rican style | 1 taza / 1 cup=170 · 1 porción / 1 serving=85 | salmorejo de jueyes · cangrejo guisado · jaiba en salsa de tomate (MX CL PE)
+Langosta a la criolla | Lobster in creole sauce | fndds:Lobster with sauce, Puerto Rican style | 1 taza / 1 cup=242 · 1 porción / 1 serving=121 | langosta en salsa criolla · langosta guisada · langosta enchilada · langosta en salsa
+Langosta rellena al horno | Baked stuffed lobster | fndds:Lobster with bread stuffing, baked | 1 porción / 1 serving=135 · 1 langosta / 1 lobster=400 | langosta rellena · langosta gratinada
+Thermidor de mariscos | Seafood thermidor | fndds:Seafood thermidor | 1 taza / 1 cup=250 · 1 porción / 1 serving=125 | langosta thermidor · langosta termidor · mariscos thermidor · mariscos gratinados
+Soufflé de mariscos | Seafood soufflé | fndds:Seafood souffle | 1 taza / 1 cup=159 · 1 porción / 1 serving=80 | suflé de mariscos · soufflé de pescado
+Almejas casino | Clams casino | fndds:Clams Casino | 1 porción / 1 serving=85 · 1 almeja / 1 clam=30 | almejas gratinadas · almejas rellenas al horno · almejas con tocino
+Ostras Rockefeller | Oysters Rockefeller | fndds:Oysters Rockefeller | 1 porción / 1 serving=85 · 1 ostra / 1 oyster=30 | ostiones Rockefeller* (MX) · ostras gratinadas con espinaca
+
+// Sushi. El California roll es el «Sushi» de genericos.txt (USDA le da los mismos valores), con su nombre.
+California roll | California roll | fndds:Sushi roll, California | 6 piezas / 6 pieces=180 · 1 pieza / 1 piece=30 | roll california · sushi california · maki california · rollo california
+Sushi de atún | Tuna sushi roll | fndds:Sushi roll tuna | 6 piezas / 6 pieces=180 · 1 pieza / 1 piece=30 | maki de atún · roll de atún · rolls de atún · tekka maki
+Sushi de camarón | Shrimp sushi roll | fndds:Sushi roll, shrimp | 6 piezas / 6 pieces=180 · 1 pieza / 1 piece=30 | sushi de gambas* (ES) · maki de camarón · roll de camarón · roll de langostino · ebi maki
+Sushi de anguila | Eel sushi roll | fndds:Sushi roll, eel | 6 piezas / 6 pieces=180 · 1 pieza / 1 piece=30 | maki de anguila · roll de anguila · roll de unagi
+Sushi de aguacate | Avocado sushi roll | fndds:Sushi roll, avocado | 6 piezas / 6 pieces=180 · 1 pieza / 1 piece=30 | sushi de palta* (AR UY CL PE BO PY) · maki de aguacate · roll de aguacate · avocado roll
+Sushi vegetariano | Vegetable sushi roll | fndds:Sushi roll, vegetable | 6 piezas / 6 pieces=132 · 1 pieza / 1 piece=22 | sushi de verduras · maki de pepino · kappa maki · roll vegetariano · roll de verduras
+Nigiri de atún | Tuna nigiri | fndds:Sushi, topped with tuna | 2 piezas / 2 pieces=70 · 1 pieza / 1 piece=35 | sushi nigiri de atún · nigiri de maguro
+Nigiri de camarón | Shrimp nigiri | fndds:Sushi, topped with shrimp | 2 piezas / 2 pieces=70 · 1 pieza / 1 piece=35 | nigiri de gamba* (ES) · nigiri de langostino · nigiri de ebi · sushi nigiri de camarón
+Nigiri de anguila | Eel nigiri | fndds:Sushi, topped with eel | 2 piezas / 2 pieces=70 · 1 pieza / 1 piece=35 | nigiri de unagi · sushi nigiri de anguila
+Nigiri de cangrejo | Crab nigiri | fndds:Sushi, topped with crab | 2 piezas / 2 pieces=70 · 1 pieza / 1 piece=35 | nigiri de kanikama · nigiri de kani · sushi nigiri de cangrejo
+Nigiri de huevo | Egg nigiri | fndds:Sushi, topped with egg | 2 piezas / 2 pieces=100 · 1 pieza / 1 piece=50 | nigiri de tamago · tamago · nigiri de tortilla japonesa

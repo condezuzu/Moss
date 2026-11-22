@@ -345,7 +345,19 @@ conocido, lo que no se vende ahí va después de lo genérico y de lo que sí (`
 su marca no lo sube ni agranda la lista: en México, «mostaza» es la mostaza y no el menú de Mostaza. En Uruguay, o sin
 saber el país, todo como antes.
 
-La base pesa 11,8 MB (el tope ahora es 14): va entera en
+**Las variantes (22/11/2026).** Lo pediste: «el máximo de comidas posibles», lo saludable primero y «hasta cualquier
+tipo de pan». De lo de USDA que estaba solo en inglés salieron 2.047 alimentos con su nombre en español, sus porciones y
+los nombres de cada región, en quince archivos por familia: `panes.txt`, `granos.txt`, `pastas.txt`,
+`galletas-y-masas.txt`, `verduras-1.txt` (de la A a la L en inglés), `verduras-2.txt` (de la M a la Z, las mezclas, las
+ensaladas y los encurtidos), `tuberculos.txt`, `frutas.txt`, `legumbres-y-frutos-secos.txt`, `aves.txt`,
+`pescados.txt`, `carnes-res.txt`, `carnes-otras.txt` (cerdo, cordero, caza y fiambres), `huevos.txt` y `lacteos.txt`.
+De lo que USDA repite según la grasa queda solo «no added fat» (la app pregunta por el aceite), y de cada corte de carne,
+el corte con su grasa y, si cambia mucho, el magro. Todos llevan `@variantes`: son variantes de lo de siempre y al buscar
+salen después (`VARIANTE` en `buscar.ts`, +3), salvo que se escriba su nombre entero: «pan» da el blanco y el integral
+antes que el de cebolla, y «pan de cebolla» da el de cebolla. Quedan unos 8.200 de USDA sin nombre en español: en su
+mayoría repeticiones por la grasa, el recorte o la marca.
+
+La base pesa 14,2 MB (el tope ahora es 16): va entera en
 la app y en la próxima actualización por aire.
 
 ### El stock de los súper (investigado el 2/11/2026)

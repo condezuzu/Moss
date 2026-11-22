@@ -112,6 +112,12 @@ un pase de seis capturas de la app de verdad (`assets/novedades`). En Perfil, «
 decir si va. Con tu sí lo paso a la app (la regla, el aviso antes de que termine y los términos). Lo último, como pediste
 (camino A): sacar la 1.1 de revisión, corregir la ficha («sigue gratis» ya no es cierto), armar la build 9 y mandarla de nuevo.
 
+**Más alimentos (lo pediste el 22/11): 2.047 nuevos**, de 4.859 curados a 6.906, lo saludable primero: panes, granos, pastas,
+galletas y snacks, verduras, tubérculos, frutas y jugos, legumbres y frutos secos, aves, pescados, carnes, huevos y lácteos,
+cada uno con su nombre en cada país (spec/nutricion.md, «Las variantes»). Al buscar salen después de lo de siempre: «pan» da
+primero el blanco y el integral. Van adentro de la build 9; no salieron por aire. La base pesa 14,2 MB (subí el tope a 16).
+**Te toca:** probar la búsqueda en el iPhone cuando llegue la build 9.
+
 La suscripción: **mandada a revisión el 21/11/2026** (lo pediste, sin build de prueba).
 - **Qué se mandó:** la versión 1.1.0 con la build 8, las dos suscripciones (anual y mensual) y su grupo, todo en un
   solo envío. Al 21/11 Apple los tiene en *Waiting for Review*. La publicación quedó **manual**.

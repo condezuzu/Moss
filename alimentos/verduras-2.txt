@@ -1,0 +1,183 @@
+// Más verduras, de la M a la Z en inglés (22/11/2026, lo pediste: «el máximo de comidas posibles»): hongos, okra,
+// cebollas, chirivía, arvejas, pimientos y chiles, calabazas, rábano, colinabo, algas, espinaca, brotes, calabacín,
+// tomates y nabo, más las mezclas, las ensaladas solo de verduras y los encurtidos. Todo sale de USDA y estaba en la
+// base solo en inglés. El formato es el de genericos.txt. De lo que FNDDS repite según la grasa, solo «no added fat»:
+// en lo salteado y a la plancha la app pregunta por el aceite. Los pimientos y el tomate asados son la excepción:
+// FNDDS solo los tiene cocidos con su aceite. Lo que ya estaba (champiñones, cebolla, calabaza, tomate, espinaca…)
+// sigue en genericos.txt y en uruguay.txt. Son variantes: al buscar salen después de lo de siempre.
+@variantes
+
+# verduras
+// Hongos.
+Champiñones cocidos | Boiled mushrooms | sr:Mushrooms, white, cooked, boiled, drained, without salt | 1 taza / 1 cup=156 · 1 unidad / 1 mushroom=12 · 1 cucharada / 1 tbsp=9.8 | champiñones hervidos · hongos cocidos (AR UY) · setas cocidas (ES) | crudo=Champiñones
+Champiñones a la plancha | Grilled mushrooms | fndds:Mushrooms, fresh, cooked, no added fat | 1 taza / 1 cup=155 · 1 porción / 1 serving=78 · 1 unidad / 1 mushroom=13 · 1 lámina / 1 slice=6 | champiñones grillados · champiñones al horno · hongos a la plancha (AR UY) · setas a la plancha (ES) | crudo=Champiñones · aceite
+Champiñones cremini | Cremini mushrooms | sr:Mushrooms, brown, italian, or crimini, raw | 1 taza en láminas / 1 cup sliced=72 · 1 unidad / 1 mushroom=20 · 1 taza enteros / 1 cup whole=87 | champiñones marrones · champiñones castaños · hongos cremini · crimini
+Hongos enoki | Enoki mushrooms | sr:Mushrooms, enoki, raw | 1 taza / 1 cup=64 · 1 grande / 1 large=5 · 1 mediano / 1 medium=3 | enoki · setas enoki · enokitake
+Hongos maitake | Maitake mushrooms | sr:Mushrooms, maitake, raw | 1 taza en trozos / 1 cup diced=70 | maitake · setas maitake
+Hongos morilla | Morel mushrooms | sr:Mushrooms, morel, raw | 1 taza / 1 cup=66 · 1 unidad / 1 piece=12.9 | morillas · colmenillas (ES) · morchella
+Hongos chanterelle | Chanterelle mushrooms | sr:Mushrooms, Chanterelle, raw | 1 taza / 1 cup=54 · 1 unidad / 1 piece=5.4 | rebozuelos (ES) · chantarelas · chanterelle
+Shiitake cocido | Cooked shiitake | sr:Mushrooms, shiitake, cooked, without salt | 4 unidades / 4 mushrooms=72 · 1 taza en trozos / 1 cup pieces=145 | shiitake hervido · hongos shiitake cocidos · setas shiitake cocidas | crudo=Shiitake
+Shiitake seco | Dried shiitake | sr:Mushrooms, shiitake, dried | 4 unidades / 4 mushrooms=15 · 1 unidad / 1 mushroom=3.6 | shiitake deshidratado · hongos shiitake secos · setas shiitake secas
+Hongos de paja en lata | Canned straw mushrooms | sr:Mushrooms, straw, canned, drained solids | 1 taza / 1 cup=182 · 1 unidad / 1 piece=5.5 | hongos de paja · setas de paja
+Hongos oreja de madera secos | Dried wood ear mushrooms | sr:Fungi, Cloud ears, dried | 1 taza / 1 cup=28 · 1 unidad / 1 piece=4.5 | hongos negros chinos · oreja de Judas · hongo negro seco
+// Okra.
+Okra | Okra | sr:Okra, raw | 1 taza / 1 cup=100 · 8 vainas / 8 pods=95 | quimbombó* (CU VE) · guingambó* (PR) · molondrón* (DO) · ñajú* (PA) · ocra · quingombó · bamia
+Okra cocida | Boiled okra | sr:Okra, cooked, boiled, drained, without salt | ½ taza en rodajas / ½ cup slices=80 · 8 vainas / 8 pods=85 | quimbombó cocido* (CU VE) · guingambó cocido* (PR) · molondrón cocido* (DO) · ñajú cocido* (PA) · okra hervida | crudo=Okra
+Okra salteada | Sautéed okra | fndds:Okra, fresh, cooked, no added fat | 1 porción / 1 serving=80 · 1 taza / 1 cup=160 · 1 vaina / 1 pod=10 | quimbombó salteado* (CU VE) · guingambó salteado* (PR) · molondrón salteado* (DO) · ñajú salteado* (PA) · okra a la plancha | crudo=Okra · aceite
+Okra congelada | Frozen okra | sr:Okra, frozen, unprepared | ⅓ paquete / ⅓ package=95 · 1 paquete / 1 package=284 | quimbombó congelado* (CU VE) · guingambó congelado* (PR) · molondrón congelado* (DO) · ñajú congelado* (PA)
+// Cebollas.
+Cebolla dulce | Sweet onion | sr:Onions, sweet, raw | 1 porción / 1 serving=148 · 1 unidad / 1 onion=331 | cebolla vidalia · cebolla blanca dulce | desecho
+Cebolla a la plancha | Grilled onions | fndds:Onions, cooked, no added fat | 1 porción / 1 serving=105 · 1 rodaja / 1 slice=15 · 1 unidad / 1 onion=148 · 1 taza / 1 cup=210 | cebolla grillada · cebolla asada · cebolla a la parrilla | crudo=Cebolla · aceite
+Cebolla sofrita | Pan-fried onions | sr:Onions, yellow, sauteed | 1 taza picada / 1 cup chopped=87 | cebolla frita en sartén · cebolla pochada (ES) · cebolla caramelizada · sofrito de cebolla | crudo=Cebolla · aceite=incluido
+// Chirivía y colinabo.
+Chirivía | Parsnip | sr:Parsnips, raw | 1 taza en rodajas / 1 cup slices=133 | pastinaca · chirivías | desecho
+Chirivía cocida | Boiled parsnip | sr:Parsnips, cooked, boiled, drained, without salt | ½ taza en rodajas / ½ cup slices=78 · 1 unidad / 1 parsnip=160 | chirivía hervida · pastinaca cocida | crudo=Chirivía
+Colinabo | Rutabaga | sr:Rutabagas, raw | 1 taza en cubos / 1 cup cubes=140 · 1 pequeño / 1 small=192 · 1 mediano / 1 medium=386 · 1 grande / 1 large=772 | rutabaga · nabo sueco · nabicol | desecho
+Colinabo cocido | Boiled rutabaga | sr:Rutabagas, cooked, boiled, drained, without salt | 1 taza en cubos / 1 cup cubes=170 · 1 taza en puré / 1 cup mashed=240 | rutabaga cocida · nabo sueco cocido · puré de colinabo | crudo=Colinabo
+// Arvejas: las de siempre y las que se comen con la vaina.
+Arvejas congeladas | Frozen green peas | sr:Peas, green, frozen, unprepared | 1 taza / 1 cup=134 · 1 paquete / 1 package=284 | guisantes congelados* (ES) · chícharos congelados* (MX) · alverjas congeladas* (CO)
+Arvejas en lata sin sal | No-salt-added canned peas | sr:Peas, green, canned, no salt added, drained solids | ½ taza / ½ cup=85 · 1 lata / 1 can=313 | guisantes en lata sin sal* (ES) · chícharos de lata sin sal* (MX) · alverjas en lata sin sal* (CO) · arvejas en conserva sin sal
+Arvejas con zanahoria congeladas | Frozen peas and carrots | sr:Peas and carrots, frozen, unprepared | ½ taza / ½ cup=70 · 1 paquete / 1 package=284 | guisantes con zanahoria congelados* (ES) · chícharos con zanahoria congelados* (MX) · alverjas con zanahoria congeladas* (CO) · arvejas y zanahorias congeladas
+Arvejas con zanahoria cocidas | Cooked peas and carrots | sr:Peas and carrots, frozen, cooked, boiled, drained, without salt | ½ taza / ½ cup=80 · 1 paquete / 1 package=278 | guisantes con zanahoria cocidos* (ES) · chícharos con zanahoria cocidos* (MX) · alverjas con zanahoria cocidas* (CO) · arvejas y zanahorias · arvejas con zanahoria | crudo=Arvejas con zanahoria congeladas
+Arvejas con zanahoria en lata | Canned peas and carrots | fndds:Peas and carrots, canned, cooked, no added fat | 1 porción / 1 serving=80 · 1 taza / 1 cup=160 | guisantes con zanahoria en lata* (ES) · chícharos con zanahoria de lata* (MX) · alverjas con zanahoria en lata* (CO) · arvejas y zanahorias en lata
+Arvejas con maíz | Peas and corn | fndds:Peas and corn, cooked, no added fat | 1 porción / 1 serving=80 · 1 taza / 1 cup=160 | guisantes con maíz* (ES) · chícharos con elote* (MX) · alverjas con maíz* (CO) · arvejas con choclo* (AR UY CL PE BO EC PY) · arvejas con elote* (GT HN SV NI CR) · arvejas y maíz
+Arvejas chinas | Snow peas | sr:Peas, edible-podded, raw | 1 taza / 1 cup=63 · 10 vainas / 10 pods=34 · 1 taza picadas / 1 cup chopped=98 | tirabeques* (ES) · chícharos chinos* (MX) · holantao* (PE) · arveja china · guisantes mollares · vainas de arveja · sugar snap
+Arvejas chinas cocidas | Boiled snow peas | sr:Peas, edible-podded, boiled, drained, without salt | 1 taza / 1 cup=160 | tirabeques cocidos* (ES) · chícharos chinos cocidos* (MX) · holantao cocido* (PE) · arvejas chinas hervidas · arvejas chinas al vapor | crudo=Arvejas chinas
+Arvejas chinas salteadas | Stir-fried snow peas | fndds:Snowpeas, fresh, cooked, no added fat | 1 porción / 1 serving=80 · 1 taza / 1 cup=160 · 1 vaina / 1 pod=3 | tirabeques salteados* (ES) · chícharos chinos salteados* (MX) · holantao salteado* (PE) · arvejas chinas al wok | crudo=Arvejas chinas · aceite
+// Pimientos y chiles. Los asados son «Peppers, cooked» de FNDDS, que ya trae el aceite (no hay «no added fat»).
+Pimiento verde cocido | Boiled green bell pepper | sr:Peppers, sweet, green, cooked, boiled, drained, without salt | 1 taza en tiras / 1 cup strips=135 · 1 cucharada picado / 1 tbsp chopped=11.6 | morrón verde cocido* (AR UY PY) · pimentón verde cocido* (CO VE CL) · pimiento verde hervido | crudo=Pimiento verde
+Pimiento rojo cocido | Boiled red bell pepper | sr:Peppers, sweet, red, cooked, boiled, drained, without salt | 1 taza en tiras / 1 cup strips=135 · ½ taza picado / ½ cup chopped=68 · 1 cucharada / 1 tbsp=11.6 | morrón rojo cocido* (AR UY PY) · pimentón rojo cocido* (CO VE CL) · pimiento rojo hervido | crudo=Pimiento rojo
+Pimiento rojo asado | Roasted red bell pepper | fndds:Peppers, red, cooked | 1 unidad / 1 pepper=120 · 1 porción / 1 serving=78 · 1 trozo / 1 piece=10 · 1 taza / 1 cup=155 | morrón rojo asado* (AR UY PY) · pimentón rojo asado* (CO VE CL) · pimientos asados · pimiento asado · morrones asados | crudo=Pimiento rojo · aceite=incluido
+Pimiento verde asado | Roasted green bell pepper | fndds:Peppers, green, cooked | 1 unidad / 1 pepper=120 · 1 porción / 1 serving=78 · 1 trozo / 1 piece=10 · 1 taza / 1 cup=155 | morrón verde asado* (AR UY PY) · pimentón verde asado* (CO VE CL) · pimiento verde al horno | crudo=Pimiento verde · aceite=incluido
+Pimiento verde salteado | Sautéed green bell pepper | sr:Peppers, sweet, green, sauteed | 1 taza picado / 1 cup chopped=115 | morrón verde salteado* (AR UY PY) · pimentón verde salteado* (CO VE CL) | crudo=Pimiento verde · aceite=incluido
+Pimiento banana | Banana pepper | sr:Pepper, banana, raw | 1 mediano / 1 medium=46 · 1 pequeño / 1 small=33 · 1 grande / 1 large=75 · 1 taza / 1 cup=124 | chile banana · ají banana · chile güero (MX)
+Chile verde picante | Green hot chili pepper | sr:Peppers, hot chili, green, raw | 1 unidad / 1 pepper=45 · ½ taza picado / ½ cup chopped=75 | ají verde picante* (AR UY CL PE BO CO VE EC PY) · guindilla verde* (ES) · chile verde
+Chiles verdes en lata | Canned green chiles | sr:Peppers, chili, green, canned | 1 taza / 1 cup=139 | chile verde en lata · chiles verdes picados
+// Calabazas de invierno.
+Calabaza al horno | Baked winter squash | sr:Squash, winter, all varieties, cooked, baked, without salt | 1 taza en cubos / 1 cup cubes=205 | zapallo asado* (AR UY CL PE BO PY) · ahuyama al horno* (CO VE) · auyama al horno* (DO) · ayote al horno* (CR NI HN GT SV) · calabaza asada | crudo=Calabaza
+Puré de calabaza en lata | Canned pumpkin puree | sr:Pumpkin, canned, without salt | ½ taza / ½ cup=123 · 1 taza / 1 cup=245 | puré de zapallo en lata* (AR UY CL PE BO PY) · puré de ahuyama en lata* (CO VE) · puré de auyama en lata* (DO) · puré de ayote en lata* (CR NI HN GT SV) · calabaza en lata · calabaza en conserva
+Flor de calabaza | Squash blossoms | sr:Pumpkin flowers, raw | 1 taza / 1 cup=33 · 1 flor / 1 flower=2 | flor de zapallo* (AR UY CL PE BO PY) · flor de ahuyama* (CO VE) · flor de auyama* (DO) · flor de ayote* (CR NI HN GT SV) · flores de calabaza
+Flor de calabaza cocida | Cooked squash blossoms | sr:Pumpkin flowers, cooked, boiled, drained, without salt | 1 taza / 1 cup=134 | flor de zapallo cocida* (AR UY CL PE BO PY) · flor de ahuyama cocida* (CO VE) · flor de auyama cocida* (DO) · flor de ayote cocida* (CR NI HN GT SV) · flores de calabaza cocidas | crudo=Flor de calabaza
+Calabaza bellota | Acorn squash | sr:Squash, winter, acorn, raw | 1 taza en cubos / 1 cup cubes=140 · 1 unidad / 1 squash=431 | zapallo bellota* (AR UY CL PE BO PY) · ahuyama bellota* (CO VE) · auyama bellota* (DO) · ayote bellota* (CR NI HN GT SV) | desecho
+Calabaza bellota al horno | Baked acorn squash | sr:Squash, winter, acorn, cooked, baked, without salt | 1 taza en cubos / 1 cup cubes=205 | zapallo bellota al horno* (AR UY CL PE BO PY) · ahuyama bellota al horno* (CO VE) · auyama bellota al horno* (DO) · ayote bellota al horno* (CR NI HN GT SV) | crudo=Calabaza bellota
+Calabaza espagueti | Spaghetti squash | sr:Squash, winter, spaghetti, raw | 1 taza en cubos / 1 cup cubes=101 | zapallo espagueti* (AR UY CL PE BO PY) · ahuyama espagueti* (CO VE) · auyama espagueti* (DO) · ayote espagueti* (CR NI HN GT SV) · calabaza spaghetti | desecho
+Calabaza espagueti cocida | Cooked spaghetti squash | sr:Squash, winter, spaghetti, cooked, boiled, drained, or baked, without salt | 1 taza / 1 cup=155 | zapallo espagueti cocido* (AR UY CL PE BO PY) · ahuyama espagueti cocida* (CO VE) · auyama espagueti cocida* (DO) · ayote espagueti cocido* (CR NI HN GT SV) · calabaza espagueti al horno · espaguetis de calabaza | crudo=Calabaza espagueti
+Calabaza hubbard | Hubbard squash | sr:Squash, winter, hubbard, raw | 1 taza en cubos / 1 cup cubes=116 | zapallo hubbard* (AR UY CL PE BO PY) · ahuyama hubbard* (CO VE) · auyama hubbard* (DO) · ayote hubbard* (CR NI HN GT SV) | desecho
+Calabaza hubbard al horno | Baked hubbard squash | sr:Squash, winter, hubbard, baked, without salt | 1 taza en cubos / 1 cup cubes=205 | zapallo hubbard al horno* (AR UY CL PE BO PY) · ahuyama hubbard al horno* (CO VE) · auyama hubbard al horno* (DO) · ayote hubbard al horno* (CR NI HN GT SV) | crudo=Calabaza hubbard
+Calabaza moscada congelada | Frozen butternut squash | sr:Squash, winter, butternut, frozen, unprepared | ⅓ paquete / ⅓ package=113 · 1 paquete / 1 package=340 | zapallo anco congelado* (AR UY) · butternut congelado
+Puré de calabaza moscada | Mashed butternut squash | sr:Squash, winter, butternut, frozen, cooked, boiled, without salt | 1 taza / 1 cup=240 | puré de zapallo anco* (AR UY) · puré de butternut · calabaza moscada hervida | crudo=Calabaza moscada
+// Rábano y brotes.
+Rábano daikon cocido | Boiled daikon radish | sr:Radishes, oriental, cooked, boiled, drained, without salt | 1 taza en rodajas / 1 cup sliced=147 | daikon cocido · daikon hervido · rábano blanco cocido | crudo=Rábano daikon
+Brotes de rábano | Radish sprouts | sr:Radish seeds, sprouted, raw | 1 taza / 1 cup=38 | germinado de rábano · brotes de rabanito · kaiware
+Brotes de soja cocidos | Boiled bean sprouts | sr:Mung beans, mature seeds, sprouted, cooked, boiled, drained, without salt | 1 taza / 1 cup=124 | brotes de frijol cocidos* (MX) · brotes de soya cocidos* (CO VE) · germinado de soja cocido · brotes de soja hervidos | crudo=Brotes de soja
+Brotes de soja salteados | Stir-fried bean sprouts | sr:Mung beans, mature seeds, sprouted, cooked, stir-fried | 1 taza / 1 cup=124 | brotes de frijol salteados* (MX) · brotes de soya salteados* (CO VE) · germinado de soja salteado · brotes de soja al wok | crudo=Brotes de soja · aceite
+Brotes de soja en lata | Canned bean sprouts | sr:Beans, mung, mature seeds, sprouted, canned, drained solids | 1 taza / 1 cup=125 | brotes de frijol en lata* (MX) · brotes de soya en lata* (CO VE) · brotes de soja en conserva
+Brotes de soja amarilla | Soybean sprouts | sr:Soybeans, mature seeds, sprouted, raw | ½ taza / ½ cup=35 · 10 brotes / 10 sprouts=10 | brotes de soya amarilla* (MX CO VE) · kongnamul
+Brotes de soja amarilla al vapor | Steamed soybean sprouts | sr:Soybeans, mature seeds, sprouted, cooked, steamed | 1 taza / 1 cup=94 | brotes de soya amarilla al vapor* (MX CO VE) · brotes de soja amarilla cocidos | crudo=Brotes de soja amarilla
+// Algas.
+Alga nori | Nori seaweed | fndds:Seaweed, dried | 1 porción / 1 serving=5 · 1 tira / 1 strip=0.5 · 1 taza / 1 cup=15 | nori · alga para sushi · láminas de nori · alga seca · snack de algas
+Alga wakame | Wakame seaweed | sr:Seaweed, wakame, raw | 2 cucharadas / 2 tbsp=10 | wakame
+Alga kelp | Kelp seaweed | sr:Seaweed, kelp, raw | 2 cucharadas / 2 tbsp=10 | kelp · kombu · alga kombu
+// Espinaca.
+Espinaca congelada | Frozen spinach | sr:Spinach, frozen, chopped or leaf, unprepared | 1 taza / 1 cup=156 · 1 paquete / 1 package=284 | espinacas congeladas · espinaca picada congelada
+Espinaca congelada cocida | Cooked frozen spinach | sr:Spinach, frozen, chopped or leaf, cooked, boiled, drained, without salt | ½ taza / ½ cup=95 · 1 paquete / 1 package=220 | espinacas congeladas cocidas | crudo=Espinaca congelada
+Espinaca en lata | Canned spinach | sr:Spinach, canned, regular pack, drained solids | ½ taza / ½ cup=107 · 1 taza / 1 cup=214 | espinacas en lata · espinaca en conserva
+Espinaca al vapor | Steamed spinach | fndds:Spinach, fresh, cooked, no added fat | 1 porción / 1 serving=90 · 1 taza / 1 cup=180 | espinacas al vapor | crudo=Espinaca
+// Calabacín.
+Calabacín amarillo | Yellow squash | sr:Squash, summer, crookneck and straightneck, raw | 1 taza en rodajas / 1 cup sliced=127 | zapallito amarillo* (AR UY) · calabacita amarilla* (MX) · zapallo italiano amarillo* (CL) · zucchini amarillo* (PE CO VE)
+Calabacín amarillo cocido | Boiled yellow squash | sr:Squash, summer, crookneck and straightneck, cooked, boiled, drained, without salt | ½ taza en rodajas / ½ cup slices=90 · 1 taza en rodajas / 1 cup sliced=180 | zapallito amarillo cocido* (AR UY) · calabacita amarilla cocida* (MX) · zapallo italiano amarillo cocido* (CL) | crudo=Calabacín amarillo
+Calabacín baby | Baby zucchini | sr:Squash, zucchini, baby, raw | 1 mediano / 1 medium=11 · 1 grande / 1 large=16 | zapallito baby* (AR UY) · calabacita baby* (MX) · zapallo italiano baby* (CL) · zucchini baby* (PE CO VE) · mini calabacín
+Calabacín a la plancha | Grilled zucchini | fndds:Summer squash, yellow or green, fresh, cooked, no added fat | 1 porción / 1 serving=90 · 1 rodaja / 1 slice=10 · 1 unidad / 1 zucchini=200 · 1 taza / 1 cup=180 | zapallito a la plancha* (AR UY) · calabacita a la plancha* (MX) · zapallo italiano a la plancha* (CL) · zucchini a la plancha* (PE CO VE) · calabacín grillado · calabacín al horno | crudo=Calabacín · aceite
+// Tomates.
+Tomate cherry | Cherry tomato | fndds:Tomatoes, raw | 5 unidades / 5 cherry tomatoes=85 · 1 unidad / 1 cherry tomato=17 · 1 tomate uva / 1 grape tomato=8 | jitomate cherry* (MX) · tomatitos cherry · tomate cereza · tomate uva
+Tomate verde sin madurar | Green tomato | sr:Tomatoes, green, raw | 1 mediano / 1 medium=123 · 1 pequeño / 1 small=91 · 1 grande / 1 large=182 · 1 rodaja / 1 slice=20 | jitomate verde* (MX) · tomate inmaduro | desecho
+Tomate amarillo | Yellow tomato | sr:Tomatoes, yellow, raw | 1 unidad / 1 tomato=212 · 1 taza picado / 1 cup chopped=139 | jitomate amarillo* (MX) · tomate naranja
+Tomate cocido | Cooked tomato | sr:Tomatoes, red, ripe, cooked | 1 taza / 1 cup=240 · 2 medianos / 2 medium=246 | jitomate cocido* (MX) · tomate hervido · tomates cocidos | crudo=Tomate
+Tomate asado | Roasted tomato | fndds:Tomatoes, fresh, cooked | 1 unidad / 1 tomato=110 · 1 porción / 1 serving=120 · 1 taza / 1 cup=240 | jitomate asado* (MX) · tomates asados · tomate al horno · tomate a la plancha | crudo=Tomate · aceite=incluido
+Tomates enteros en lata | Canned whole tomatoes | sr:Tomatoes, red, ripe, canned, packed in tomato juice | 1 taza / 1 cup=240 · 1 mediano / 1 medium=111 · 1 lata / 1 can=190 · 1 cucharada / 1 tbsp=15 | jitomates enteros en lata* (MX) · tomates pelados en lata · tomate entero pelado · tomates al natural
+Tomates estofados en lata | Canned stewed tomatoes | sr:Tomatoes, red, ripe, canned, stewed | ½ taza / ½ cup=128 · 1 taza / 1 cup=255 | jitomates estofados en lata* (MX) · tomates guisados en lata · tomates en lata con cebolla y pimiento
+Tomates con chiles verdes en lata | Canned tomatoes with green chilies | sr:Tomatoes, red, ripe, canned, with green chilies | ½ taza / ½ cup=121 · 1 taza / 1 cup=241 | jitomates con chiles verdes en lata* (MX) · tomate con chile verde en lata
+Tomates secos en aceite | Sun-dried tomatoes in oil | sr:Tomatoes, sun-dried, packed in oil, drained | 5 unidades / 5 pieces=15 · 1 unidad / 1 piece=3 · 1 taza / 1 cup=110 | jitomates secos en aceite* (MX) · tomates deshidratados en aceite · tomate seco en aceite
+// Hojas de nabo y otras.
+Hojas de nabo | Turnip greens | sr:Turnip greens, raw | 1 taza picadas / 1 cup chopped=55 | grelos* (ES) · nabizas
+Hojas de nabo cocidas | Boiled turnip greens | sr:Turnip greens, cooked, boiled, drained, without salt | 1 taza picadas / 1 cup chopped=144 | grelos cocidos* (ES) · nabizas cocidas · hojas de nabo hervidas | crudo=Hojas de nabo
+Castañas de agua | Water chestnuts | sr:Waterchestnuts, chinese, (matai), raw | 4 unidades / 4 water chestnuts=36 · ½ taza en rodajas / ½ cup slices=62 | castaña de agua · castañas de agua frescas | desecho
+Castañas de agua en lata | Canned water chestnuts | sr:Waterchestnuts, chinese, canned, solids and liquids | ½ taza en rodajas / ½ cup slices=70 · 4 unidades / 4 water chestnuts=28 | castañas de agua en conserva
+Radicchio | Radicchio | sr:Radicchio, raw | 1 taza en tiras / 1 cup shredded=40 · 1 hoja / 1 leaf=8 | achicoria roja · achicoria morada · radicchio rosso
+Verdolaga | Purslane | sr:Purslane, raw | 1 taza / 1 cup=43 | verdolagas
+Verdolaga cocida | Boiled purslane | sr:Purslane, cooked, boiled, drained, without salt | 1 taza / 1 cup=115 | verdolagas cocidas · verdolagas hervidas | crudo=Verdolaga
+Salsifí | Salsify | sr:Salsify, (vegetable oyster), raw | 1 taza en rodajas / 1 cup slices=133 | salsifíes · escorzonera | desecho=13 cáscara/peel
+Salsifí cocido | Boiled salsify | sr:Salsify, cooked, boiled, drained, without salt | 1 taza en rodajas / 1 cup sliced=135 | salsifíes cocidos · salsifí hervido | crudo=Salsifí
+// Mezclas.
+Verduras salteadas | Stir-fried vegetables | fndds:Asian stir fry vegetables, cooked, no added fat | 1 taza / 1 cup=127 · 1 porción / 1 serving=64 | verduras al wok · salteado de verduras · vegetales salteados · wok de verduras | aceite
+Verduras de guiso | Stew vegetables | fndds:Vegetables, stew type, cooked, no added fat | 1 taza / 1 cup=160 · 1 porción / 1 serving=80 | verduras de puchero · verduras del cocido · verduras para guiso · papa, zanahoria y cebolla hervidas
+Succotash | Succotash | sr:Succotash, (corn and limas), cooked, boiled, drained, without salt | 1 taza / 1 cup=192 | maíz con frijoles lima · sucotash
+Verduras deshidratadas | Dried vegetable mix | fndds:Vegetable mixture, dried | 1 cucharada / 1 tbsp=6 | verduras secas · mezcla de verduras deshidratadas · verduras secas para sopa
+Verduras mixtas en lata bajas en sodio | Low-sodium canned mixed vegetables | fndds:Classic mixed vegetables, canned, reduced sodium, cooked, no added fat | 1 porción / 1 serving=90 · 1 taza / 1 cup=180 | jardinera baja en sodio* (UY AR) · verduras mixtas en lata sin sal
+
+# salsas
+// Encurtidos: van con los pepinillos, el chucrut y los jalapeños en vinagre de genericos.txt.
+Pepinillos dulces | Sweet pickles | sr:Pickles, cucumber, sweet (includes bread and butter pickles) | 1 unidad / 1 gherkin=25 · 1 grande / 1 large gherkin=35 · 1 rodaja / 1 chip=7.5 · 1 taza en rodajas / 1 cup sliced=153 | pepinillos agridulces · pepinos agridulces
+Pepinillos bajos en sodio | Reduced-sodium dill pickles | sr:Pickles, cucumber, dill, reduced sodium | 1 unidad / 1 spear=35 · 1 rodaja / 1 slice=7 · 1 grande / 1 large=135 | pepinillos con menos sal · pepinillos reducidos en sodio
+Relish de pepinillos | Sweet pickle relish | sr:Pickle relish, sweet | 1 cucharada / 1 tbsp=15 · 1 sobre / 1 packet=10 | relish · relish dulce · pepinillos picados dulces
+Jengibre encurtido | Pickled ginger | fndds:Ginger root, pickled | 1 porción / 1 serving=30 · 1 taza / 1 cup=240 | kion encurtido* (PE) · gari · jengibre para sushi · jengibre en vinagre
+Okra en vinagre | Pickled okra | fndds:Okra, pickled | 1 porción / 1 serving=30 · 1 vaina / 1 pod=11 | quimbombó en vinagre* (CU VE) · guingambó en vinagre* (PR) · molondrón en vinagre* (DO) · ñajú en vinagre* (PA) · okra encurtida
+Champiñones en vinagre | Pickled mushrooms | fndds:Mushrooms, pickled | 1 porción / 1 serving=30 · 1 unidad / 1 mushroom=13 · 1 taza / 1 cup=155 | champiñones encurtidos · champiñones marinados · hongos en vinagre (AR UY) · setas en vinagre (ES)
+Pimientos en vinagre | Pickled sweet peppers | fndds:Peppers, sweet, pickled | 1 unidad / 1 pepper=30 · 1 taza / 1 cup=150 | morrones en vinagre* (AR UY PY) · pimentones en vinagre* (CO VE CL) · pimientos encurtidos · pimientos agridulces
+Chiles picantes en vinagre | Pickled hot peppers | fndds:Peppers, hot, pickled | 1 unidad / 1 pepper=15 · 1 porción / 1 serving=30 · 1 rodaja / 1 slice=2 · 1 taza / 1 cup=150 | ajíes picantes en vinagre* (AR UY CL PE BO CO VE EC PY) · guindillas en vinagre* (ES) · chiles encurtidos · piparras
+Rábano encurtido | Pickled radish | fndds:Radishes, pickled | 1 porción / 1 serving=30 · 1 taza / 1 cup=150 | rábano en vinagre · daikon encurtido · takuan · rabanitos encurtidos
+Nabo encurtido | Pickled turnip | fndds:Turnip, pickled | 1 porción / 1 serving=30 · 1 rodaja / 1 slice=7 · 1 taza / 1 cup=155 | nabo en vinagre · nabos encurtidos
+Remolacha en vinagre | Pickled beets | fndds:Beets, pickled | 1 porción / 1 serving=30 · 1 rodaja / 1 slice=10 · 1 unidad / 1 beet=25 · 1 taza / 1 cup=170 | betabel en vinagre* (MX) · betarraga en vinagre* (CL PE BO) · remolacha encurtida · remolacha en conserva
+Coliflor encurtida | Pickled cauliflower | fndds:Cauliflower, pickled | 1 porción / 1 serving=30 · 1 ramito / 1 floret=13 · 1 taza / 1 cup=125 | coliflor en vinagre
+Repollo morado encurtido | Pickled red cabbage | fndds:Cabbage, red, pickled | 1 porción / 1 serving=30 · 1 taza / 1 cup=150 | col morada encurtida* (MX) · lombarda encurtida* (ES) · repollo morado en vinagre
+Verduras encurtidas | Pickled vegetables | fndds:Vegetables, pickled | 1 porción / 1 serving=30 · 1 taza / 1 cup=160 | encurtidos mixtos · verduras en vinagre · giardiniera · pickles (AR UY) · variantes (ES)
+Calabacín en vinagre | Pickled zucchini | fndds:Zucchini, pickled | 1 porción / 1 serving=30 · 1 taza / 1 cup=170 | zapallitos en vinagre* (AR UY) · calabacitas en vinagre* (MX) · zapallo italiano en vinagre* (CL) · zucchini en vinagre* (PE CO VE) · calabacín encurtido
+// La salsa de tomate de lata, sin más que tomate y sal: la de las pastas ya está en genericos.txt.
+Salsa de tomate en lata | Canned tomato sauce | sr:Tomato products, canned, sauce | ½ taza / ½ cup=123 · 1 taza / 1 cup=245 | salsa de jitomate en lata* (MX) · salsa de tomate natural
+
+# especias
+Cebolla deshidratada | Dried onion flakes | sr:Onions, dehydrated flakes | 1 cucharada / 1 tbsp=5 · ¼ taza / ¼ cup=14 | cebolla en hojuelas · cebolla seca · cebolla en escamas
+Chile seco | Dried hot chili pepper | sr:Peppers, hot chile, sun-dried | 1 unidad / 1 pepper=0.5 · 1 taza / 1 cup=37 | ají seco* (AR UY CL PE BO CO VE EC PY) · guindilla seca* (ES) · chiles secos · chile de árbol
+Chile ancho | Ancho chili pepper | sr:Peppers, ancho, dried | 1 unidad / 1 pepper=17 | chile ancho seco · chile poblano seco
+Chile pasilla | Pasilla chili pepper | sr:Peppers, pasilla, dried | 1 unidad / 1 pepper=7 | chile pasilla seco · chile negro
+
+# suplementos
+Espirulina | Spirulina | sr:Seaweed, spirulina, dried | 1 cucharada / 1 tbsp=7 · 1 taza / 1 cup=112 | espirulina en polvo · alga espirulina · spirulina
+
+# bebidas
+Jugo de tomate sin sal | Unsalted tomato juice | sr:Tomato juice, canned, without salt added | 1 vaso (200 ml) / 1 glass (200 ml)=205 · 1 taza / 1 cup=243 · 1 vaso pequeño / 6 fl oz=182 | zumo de tomate sin sal* (ES) · jugo de tomate bajo en sodio | ml
+Jugo de verduras bajo en sodio | Low-sodium vegetable juice | fndds:Tomato and vegetable juice, 100%, low sodium | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 porción / 1 serving=248 | zumo de verduras bajo en sodio* (ES) · jugo de vegetales bajo en sodio · jugo de verduras sin sal | ml
+
+# platos
+// Rellenos, fritos y gratinados.
+Champiñones rellenos | Stuffed mushrooms | fndds:Mushrooms, stuffed | 1 unidad / 1 stuffed cap=25 · 1 porción / 1 serving=95 · 1 taza / 1 cup=190 | champiñón relleno · hongos rellenos (AR UY) · setas rellenas (ES)
+Champiñones fritos | Fried mushrooms | fndds:Fried mushrooms | 1 porción / 1 order=70 · 1 unidad / 1 mushroom=20 · 1 taza / 1 cup=135 | champiñones rebozados · champiñones empanizados · hongos fritos (AR UY) · setas rebozadas (ES) | aceite=incluido
+Aros de cebolla al horno | Oven-baked onion rings | sr:Onion rings, breaded, par fried, frozen, prepared, heated in oven | 10 aros medianos / 10 medium rings=60 · 10 aros grandes / 10 large rings=71 · 1 taza / 1 cup=48 | aros de cebolla congelados · aros de cebolla horneados | aceite=incluido
+Okra frita | Fried okra | fndds:Fried okra | 1 porción / 1 serving=45 · 1 taza / 1 cup=90 · 1 trozo / 1 piece=8 | quimbombó frito* (CU VE) · guingambó frito* (PR) · molondrón frito* (DO) · ñajú frito* (PA) · okra rebozada · okra empanizada | aceite=incluido
+Jalapeños rellenos | Jalapeño poppers | fndds:Stuffed jalapeno pepper | 1 unidad / 1 popper=25 · 1 porción / 1 serving=100 | jalapeño poppers · jalapeños rellenos de queso · chiles jalapeños rellenos | aceite=incluido
+Pimientos rellenos de arroz | Rice-stuffed peppers | fndds:Stuffed pepper, with rice, meatless | ½ unidad / ½ pepper=149 · 1 unidad / 1 pepper=298 · 1 taza / 1 cup=198 | morrones rellenos de arroz* (AR UY PY) · pimentones rellenos de arroz* (CO VE CL) · pimientos rellenos sin carne · pimientos rellenos vegetarianos
+Tomates rellenos de arroz | Rice-stuffed tomatoes | fndds:Stuffed tomato, with rice, meatless | 1 unidad / 1 tomato=149 · 1 taza / 1 cup=198 | jitomates rellenos de arroz* (MX) · tomates rellenos sin carne · tomate relleno de arroz
+Tomates rellenos de arroz y carne | Stuffed tomatoes with rice and meat | fndds:Stuffed tomato, with rice and meat | 1 unidad / 1 tomato=149 · 1 taza / 1 cup=198 | jitomates rellenos de arroz y carne* (MX) · tomates rellenos de carne · tomates rellenos al horno
+Tomates verdes fritos | Fried green tomatoes | fndds:Fried green tomatoes | 1 rodaja / 1 slice=35 · 1 porción / 1 serving=90 · 1 taza / 1 cup=180 | jitomates verdes fritos* (MX) · tomates verdes rebozados | aceite=incluido
+Calabacín frito | Fried zucchini | fndds:Fried summer squash, yellow or green | 1 porción / 1 serving=110 · 1 rodaja / 1 slice=20 · 1 taza / 1 cup=220 | zapallitos fritos* (AR UY) · calabacitas fritas* (MX) · zapallo italiano frito* (CL) · zucchini frito* (PE CO VE) · calabacín rebozado · calabacín empanizado | aceite=incluido
+Calabacín gratinado con tomate y queso | Zucchini casserole with tomato and cheese | fndds:Squash, summer, casserole with tomato and cheese | 1 porción / 1 serving=109 · 1 taza / 1 cup=217 | zapallitos gratinados* (AR UY) · calabacitas con jitomate y queso* (MX) · zapallo italiano gratinado* (CL) · zucchini gratinado* (PE CO VE) · calabacín gratinado
+Soufflé de calabacín | Zucchini soufflé | fndds:Squash, summer, souffle | 1 porción / 1 serving=68 · 1 taza / 1 cup=136 | soufflé de zapallitos* (AR UY) · soufflé de calabacita* (MX) · soufflé de zapallo italiano* (CL) · soufflé de zucchini* (PE CO VE) · suflé de calabacín
+Soufflé de espinaca | Spinach soufflé | fndds:Spinach souffle | 1 porción / 1 serving=50 · 1 taza / 1 cup=100 | soufflé de espinacas · suflé de espinaca
+Espinaca gratinada con queso | Spinach and cheese casserole | fndds:Spinach and cheese casserole | 1 porción / 1 serving=100 · 1 taza / 1 cup=200 | espinacas gratinadas · gratinado de espinaca · espinacas con queso
+Pepinillos fritos | Fried pickles | fndds:Pickles, fried | 1 porción / 1 serving=60 · 1 rodaja / 1 slice=14 · 1 unidad / 1 spear=80 · 1 taza / 1 cup=155 | pepinillos rebozados · pepinillos empanizados | aceite=incluido
+Tempura de verduras | Vegetable tempura | fndds:Vegetable tempura | 1 taza / 1 cup=63 · 1 trozo / 1 piece=7 · 1 buñuelo / 1 fritter=30 | verduras en tempura · tempura de vegetales · verduras rebozadas | aceite=incluido
+Guiso de verduras | Vegetarian stew | fndds:Vegetarian stew | 1 taza / 1 cup=247 · 1 porción / 1 serving=185 | guisado de verduras · estofado de verduras · guiso vegetariano
+Curry de verduras con arroz | Vegetable curry with rice | fndds:Vegetable curry with rice | 1 taza / 1 cup=200 | verduras al curry con arroz · curry vegetariano con arroz
+// Ensaladas solo de verduras (o con huevo o queso), sin el aderezo salvo donde lo dice.
+Ensalada de lechuga | Lettuce salad | fndds:Lettuce, salad with assorted vegetables excluding tomatoes and carrots, no dressing | 1 taza / 1 cup=74 | ensalada de hojas verdes · ensalada de lechuga y pepino
+Ensalada mixta con aguacate | Mixed salad with avocado | fndds:Lettuce, salad with avocado, tomato, and/or carrots, with or without other vegetables, no dressing | 1 taza / 1 cup=87 | ensalada mixta con palta* (AR UY CL PE BO PY) · ensalada con aguacate · ensalada de lechuga, tomate y aguacate
+Ensalada mixta con queso | Mixed salad with cheese | fndds:Lettuce, salad with cheese, tomato and/or carrots, with or without other vegetables, no dressing | 1 taza / 1 cup=77 | ensalada con queso · ensalada de lechuga, tomate y queso
+Ensalada mixta con huevo | Mixed salad with egg | fndds:Lettuce, salad with egg, tomato, and/or carrots, with or without other vegetables, no dressing | 1 taza / 1 cup=88 | ensalada con huevo · ensalada de lechuga, tomate y huevo
+Ensalada mixta con huevo y queso | Garden salad with egg and cheese | fndds:Lettuce, salad with egg, cheese, tomato, and/or carrots, with or without other vegetables, no dressing | 1 ensalada / 1 garden salad=236 · 1 ensalada pequeña / 1 side salad=168 · 1 taza / 1 cup=79 | ensalada con huevo y queso · ensalada de lechuga, tomate, huevo y queso
+Ensalada de col sin mayonesa | Cabbage salad without mayonnaise | fndds:Cabbage salad, NFS | 1 porción / 1 serving=110 · 1 taza / 1 cup=220 | ensalada de repollo sin mayonesa* (AR UY CL PE CO VE) · ensalada de repollo con limón · ensalada de col con vinagre
+Ensalada de zanahoria con mayonesa | Carrot salad with mayonnaise | fndds:Carrots, raw, salad | 1 porción / 1 serving=88 · 1 taza / 1 cup=175 | ensalada de zanahoria y pasas · ensalada de zanahoria rallada con mayonesa
+Ensalada de pepino | Cucumber salad | fndds:Cucumber salad made with cucumber and vinegar | 1 porción / 1 serving=80 · 1 taza / 1 cup=159 | pepino con vinagre · ensalada de pepinos · pepino aliñado
+Ensalada de pepino con crema agria | Creamy cucumber salad | fndds:Cucumber salad, made with sour cream dressing | 1 porción / 1 serving=67 · 1 taza / 1 cup=133 | ensalada de pepino con crema ácida* (MX) · ensalada de pepino con crema · pepinos con crema
+Ensalada de tomate y pepino | Tomato and cucumber salad | fndds:Tomato and cucumber salad made with tomato, cucumber, oil, and vinegar | 1 porción / 1 serving=80 · 1 taza / 1 cup=159 | ensalada de jitomate y pepino* (MX) · ensalada de pepino y tomate
+Ensalada de judías verdes | Green bean salad | fndds:Bean salad, yellow and/or green string beans | 1 porción / 1 serving=75 · 1 taza / 1 cup=150 | ensalada de ejotes* (MX GT HN SV) · ensalada de chauchas* (AR UY PY) · ensalada de vainitas* (PE VE EC) · ensalada de habichuelas* (CO) · ensalada de porotos verdes* (CL) · ensalada de vainicas* (CR)
+Ensalada de arvejas con mayonesa | Pea salad with mayonnaise | fndds:Pea salad | 1 porción / 1 serving=107 · 1 taza / 1 cup=214 | ensalada de guisantes con mayonesa* (ES) · ensalada de chícharos con mayonesa* (MX) · ensalada de alverjas con mayonesa* (CO) · ensalada de arvejas

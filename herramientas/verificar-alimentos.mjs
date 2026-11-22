@@ -88,8 +88,8 @@ for (const tabla of ['palabras', 'trigramas']) {
 }
 comprobar(indices, 'los dos índices de búsqueda están sanos');
 const megas = statSync(ruta).size / 1048576;
-// Con los productos de marca (alimentos/marcas.txt). Va entera en la app y en una actualización por aire.
-comprobar(megas < 14, `la base pesa ${megas.toFixed(1)} MB (el tope es 14)`);
+// Con los productos de marca (alimentos/marcas.txt) y las variantes de la tanda del 22/11/2026. Va entera en la app y en una actualización por aire.
+comprobar(megas < 16, `la base pesa ${megas.toFixed(1)} MB (el tope es 16)`);
 
 // USDA usa factores de Atwater propios de cada alimento, y la fibra cuenta menos: se avisa de
 // diferencias de más de un 20 % y 20 kcal. El alcohol aporta 7 kcal/g.

@@ -1,0 +1,88 @@
+// Más huevos y platos de huevo (22/11/2026, lo pediste: «el máximo de comidas posibles»): las formas del huevo
+// solo que faltaban (pasado por agua, escalfado, al horno, de ganso, en polvo, líquido, el sustituto), los omelets
+// y los huevos revueltos con cada relleno que USDA distingue, los de claras, las quiches, el soufflé de queso y el
+// egg foo yung. El formato es el de genericos.txt. De lo que FNDDS repite según la grasa, solo «no added fat»
+// (llevan «aceite»: la app pregunta); lo hecho con aceite ya estaba en genericos.txt y en mundo.txt. Son
+// variantes: al buscar salen después de lo de siempre (el huevo, el huevo duro, los huevos revueltos…).
+@variantes
+
+# huevos
+// El huevo solo, cocinado. USDA no distingue el pasado por agua del duro (es el mismo huevo hervido menos
+// tiempo): sale de la otra descripción del huevo hervido, la de SR Legacy. «Omelet simple» es el omelet o los
+// huevos revueltos sin el aceite contado («Huevos revueltos», en genericos.txt, ya lo trae).
+Huevo pasado por agua | Soft-boiled egg | sr:Egg, whole, cooked, hard-boiled | 1 unidad / 1 egg=50 | huevo tibio* (MX CO) · huevo a la copa* (CL) · huevos pasados por agua · huevo pasado · huevo blando · huevo mollet | crudo=Huevo · desecho=12 cáscara/shell
+Huevo escalfado | Poached egg | sr:Egg, whole, cooked, poached | 1 unidad / 1 egg=50 | huevos escalfados · huevo pocheado | crudo=Huevo
+Huevo al horno | Baked egg | fndds:Egg, whole, baked, no added fat | 1 unidad / 1 egg=50 · 1 taza / 1 cup=135 | huevos al horno · huevo horneado | crudo=Huevo · aceite
+Omelet simple | Plain omelet | fndds:Egg omelet or scrambled egg, no added fat | 1 huevo / 1 egg=50 · 2 huevos / 2 eggs=100 · 1 taza / 1 cup=135 | omelet natural · omelette simple · huevos revueltos sin aceite · tortilla francesa sin aceite (ES) | crudo=Huevo · aceite
+Yema cocida | Cooked egg yolk | fndds:Egg, yolk only, cooked, no added fat | 1 yema / 1 yolk=17 · 1 taza / 1 cup=135 | yemas cocidas · yema dura · yema de huevo cocida | crudo=Yema de huevo · aceite
+Huevo en escabeche | Pickled egg | fndds:Egg, whole, pickled | 1 unidad / 1 egg=50 | huevos en escabeche · huevo encurtido · huevos encurtidos · huevos en vinagre
+
+// De otras aves. El de pato y el de ganso cocinados son fritos: FNDDS los hace con grasa.
+Huevo de pato frito | Fried duck egg | fndds:Duck egg, cooked | 1 unidad / 1 egg=70 | huevo de pato estrellado* (MX) · huevos de pato fritos | crudo=Huevo de pato · aceite=incluido
+Huevo de ganso | Goose egg | sr:Egg, goose, whole, fresh, raw | 1 unidad / 1 egg=144 | huevos de ganso · huevo de oca | desecho
+Huevo de ganso frito | Fried goose egg | fndds:Goose egg, cooked | 1 unidad / 1 egg=144 | huevo de ganso estrellado* (MX) · huevos de ganso fritos | crudo=Huevo de ganso · aceite=incluido
+Huevo de pavo | Turkey egg | sr:Egg, turkey, whole, fresh, raw | 1 unidad / 1 egg=79 | huevos de pavo | desecho
+Huevos de codorniz en lata | Canned quail eggs | fndds:Quail egg, canned | 1 unidad / 1 egg=9 · 1 porción / 1 serving=18 | huevos de codorniz en conserva · huevos de codorniz cocidos · huevitos de codorniz | crudo=Huevo de codorniz
+
+// En polvo, líquido (el de cartón) y el sustituto de huevo, que es de claras y sin grasa.
+Huevo en polvo | Whole egg powder | sr:Egg, whole, dried | 1 cucharada / 1 tbsp=5 · 1 taza tamizado / 1 cup sifted=85 | huevo deshidratado · huevo entero en polvo
+Clara de huevo en polvo | Egg white powder | sr:Egg, white, dried, powder, stabilized, glucose reduced | 1 cucharada / 1 tbsp=7 · 1 taza tamizada / 1 cup sifted=107 | albúmina en polvo · albúmina de huevo · claras en polvo · clara deshidratada · proteína de clara de huevo
+Yema de huevo en polvo | Egg yolk powder | sr:Egg, yolk, dried | 1 cucharada / 1 tbsp=4 · 1 taza tamizada / 1 cup sifted=67 | yema deshidratada · yemas en polvo
+Huevo líquido pasteurizado | Pasteurized liquid whole egg | sr:Egg, whole, raw, frozen, pasteurized | 100 g / 100 g=100 | huevo líquido · huevo entero líquido · huevo pasteurizado | densidad=1.03
+Claras líquidas pasteurizadas | Pasteurized liquid egg whites | sr:Egg, white, raw, frozen, pasteurized | 100 g / 100 g=100 | claras líquidas · claras de huevo líquidas · claras pasteurizadas · claras de huevo pasteurizadas | densidad=1.03
+Sustituto de huevo líquido | Liquid egg substitute | sr:Egg substitute, liquid or frozen, fat free | ¼ taza / ¼ cup=60 · 1 taza / 1 cup=240 | sustituto de huevo · sucedáneo de huevo · huevo líquido sin colesterol | ml
+Sustituto de huevo cocido | Cooked egg substitute | fndds:Egg substitute, omelet, scrambled, or fried, no added fat | 1 porción / 1 serving=110 · 1 taza / 1 cup=135 | sustituto de huevo revuelto · omelet de sustituto de huevo | crudo=Sustituto de huevo líquido · aceite
+
+# platos
+// Omelets y huevos revueltos con relleno. USDA los agrupa por tipo de relleno: queso; jamón, tocino o salchicha;
+// espinaca y otras verduras verdes; tomate con cebolla y pimiento; champiñones con cebolla y pimiento; papa y
+// cebolla. Sin el aceite contado: la app pregunta. Los que ya estaban (con aceite) llevan el otro nombre: había
+// «Omelet de queso», «Huevos revueltos con jamón» y «Omelet con papa»; acá van «Huevos revueltos con queso»,
+// «Omelet de jamón» y «Omelet de cebolla». USDA no tiene frittata: se encuentra como alias de los de verduras.
+Huevos revueltos con queso | Scrambled eggs with cheese | fndds:Egg omelet or scrambled egg, with cheese, no added fat | 2 huevos / 2 eggs=120 · 1 huevo / 1 egg=60 · 1 taza / 1 cup=135 | huevos con queso · revuelto de queso (ES) | aceite
+Omelet de jamón | Ham omelet | fndds:Egg omelet or scrambled egg, with meat, no added fat | 2 huevos / 2 eggs=140 · 1 huevo / 1 egg=70 · 1 taza / 1 cup=135 | omelette de jamón · tortilla de jamón (ES) · omelet de tocino · omelet de salchicha · omelet de chorizo | aceite
+Huevos revueltos con jamón y queso | Scrambled eggs with ham and cheese | fndds:Egg omelet or scrambled egg, with cheese and meat, no added fat | 2 huevos / 2 eggs=160 · 1 huevo / 1 egg=80 · 1 taza / 1 cup=135 | huevos con jamón y queso · revuelto de jamón y queso (ES) · huevos revueltos con tocino y queso | aceite
+Huevos a la mexicana | Mexican-style scrambled eggs | fndds:Egg omelet or scrambled egg, with tomatoes, no added fat | 2 huevos / 2 eggs=140 · 1 huevo / 1 egg=70 · 1 taza / 1 cup=135 | huevo a la mexicana · huevos revueltos a la mexicana · omelet de tomate | aceite
+Omelet de champiñones | Mushroom omelet | fndds:Egg omelet or scrambled egg, with vegetables other than dark green and/or tomatoes, no added fat | 2 huevos / 2 eggs=140 · 1 huevo / 1 egg=70 · 1 taza / 1 cup=135 | omelette de champiñones · tortilla de champiñones (ES) · omelet de hongos (AR UY) · huevos revueltos con champiñones · omelet de pimientos | aceite
+Omelet de cebolla | Onion omelet | fndds:Egg omelet or scrambled egg, with potatoes and/or onions, no added fat | 2 huevos / 2 eggs=140 · 1 huevo / 1 egg=70 · 1 taza / 1 cup=135 | omelette de cebolla · tortilla de cebolla (ES) · huevos revueltos con cebolla | aceite
+Omelet de espinaca | Spinach omelet | fndds:Egg omelet or scrambled egg, with dark-green vegetables, no added fat | 2 huevos / 2 eggs=140 · 1 huevo / 1 egg=70 · 1 taza / 1 cup=135 | omelette de espinaca · tortilla francesa de espinacas (ES) · huevos revueltos con espinaca · omelet de brócoli | aceite
+Omelet de espinaca y queso | Spinach and cheese omelet | fndds:Egg omelet or scrambled egg, with cheese and dark-green vegetables, no added fat | 2 huevos / 2 eggs=160 · 1 huevo / 1 egg=80 · 1 taza / 1 cup=135 | omelette de espinaca y queso · omelet de queso y espinaca · huevos revueltos con espinaca y queso · frittata de espinaca | aceite
+Omelet de espinaca y tomate | Spinach and tomato omelet | fndds:Egg omelet or scrambled egg, with tomatoes and dark-green vegetables, no fat added | 2 huevos / 2 eggs=140 · 1 huevo / 1 egg=70 · 1 taza / 1 cup=135 | omelet de espinaca y jitomate* (MX) · omelette de espinaca y tomate · huevos revueltos con espinaca y tomate | aceite
+Omelet de espinaca, queso y tomate | Spinach, cheese and tomato omelet | fndds:Egg omelet or scrambled egg, with cheese, tomatoes, and dark-green vegetables, no added fat | 2 huevos / 2 eggs=160 · 1 huevo / 1 egg=80 · 1 taza / 1 cup=135 | omelet de espinaca, queso y jitomate* (MX) · omelette de espinaca, queso y tomate · omelet vegetariano | aceite
+Omelet de queso y tomate | Cheese and tomato omelet | fndds:Egg omelet or scrambled egg, with cheese and tomatoes, no added fat | 2 huevos / 2 eggs=160 · 1 huevo / 1 egg=80 · 1 taza / 1 cup=135 | omelet de queso y jitomate* (MX) · omelette de queso y tomate · omelet de tomate y queso · huevos revueltos con queso y tomate | aceite
+Omelet de champiñones y queso | Mushroom and cheese omelet | fndds:Egg omelet or scrambled egg, with cheese and vegetables other than dark green and/or tomatoes, no added fat | 2 huevos / 2 eggs=160 · 1 huevo / 1 egg=80 · 1 taza / 1 cup=135 | omelette de champiñones y queso · omelet de queso y champiñones · omelet de hongos y queso (AR UY) · omelet de queso y verduras · frittata de verduras · frittata | aceite
+Omelet de jamón y champiñones | Ham and mushroom omelet | fndds:Egg omelet or scrambled egg, with meat and vegetables other than dark-green and/or tomatoes, no added fat | 2 huevos / 2 eggs=180 · 1 huevo / 1 egg=90 · 1 taza / 1 cup=135 | omelette de jamón y champiñones · omelet de jamón y verduras · omelet de jamón y pimientos · huevos revueltos con jamón y champiñones | aceite
+Omelet de jamón y tomate | Ham and tomato omelet | fndds:Egg omelet or scrambled egg, with meat and tomatoes, no added fat | 2 huevos / 2 eggs=180 · 1 huevo / 1 egg=90 · 1 taza / 1 cup=135 | omelet de jamón y jitomate* (MX) · omelette de jamón y tomate · huevos revueltos con jamón y tomate | aceite
+Omelet de jamón y espinaca | Ham and spinach omelet | fndds:Egg omelet or scrambled egg, with meat and dark-green vegetables, no added fat | 2 huevos / 2 eggs=180 · 1 huevo / 1 egg=90 · 1 taza / 1 cup=135 | omelette de jamón y espinaca · omelet de espinaca y jamón · huevos revueltos con jamón y espinaca | aceite
+// El «western» o «denver» de los desayunos de Estados Unidos: jamón, queso, pimiento y cebolla.
+Omelet de jamón, queso y champiñones | Ham, cheese and mushroom omelet | fndds:Egg omelet or scrambled egg, with cheese, meat, and vegetables other than dark-green and/or tomatoes, no added fat | 2 huevos / 2 eggs=200 · 1 huevo / 1 egg=100 · 1 taza / 1 cup=135 | omelet western · omelet denver · omelet de jamón, queso y verduras · omelet de jamón, queso y pimientos | aceite
+Omelet de jamón, queso y tomate | Ham, cheese and tomato omelet | fndds:Egg omelet or scrambled egg, with cheese, meat, and tomatoes, no added fat | 2 huevos / 2 eggs=200 · 1 huevo / 1 egg=100 · 1 taza / 1 cup=135 | omelet de jamón, queso y jitomate* (MX) · omelette de jamón, queso y tomate | aceite
+Omelet de jamón, queso y espinaca | Ham, cheese and spinach omelet | fndds:Egg omelet or scrambled egg, with cheese, meat, and dark-green vegetables, no added fat | 2 huevos / 2 eggs=200 · 1 huevo / 1 egg=100 · 1 taza / 1 cup=135 | omelette de jamón, queso y espinaca | aceite
+
+// De claras con relleno: USDA solo los tiene con la grasa ya contada. El de claras solas es «Claras cocidas».
+Omelet de claras con queso | Egg white omelet with cheese | fndds:Egg white, omelet, scrambled, or fried, with cheese | 2 claras / 2 egg whites=82 · 1 clara / 1 egg white=41 · 1 taza / 1 cup=135 | claras revueltas con queso · omelette de claras con queso · tortilla de claras con queso (ES) | aceite=incluido
+Omelet de claras con jamón | Egg white omelet with ham | fndds:Egg white, omelet, scrambled, or fried, with meat | 2 claras / 2 egg whites=92 · 1 clara / 1 egg white=46 · 1 taza / 1 cup=135 | claras revueltas con jamón · omelette de claras con jamón · tortilla de claras con jamón (ES) | aceite=incluido
+Omelet de claras con espinaca | Egg white omelet with spinach | fndds:Egg white, omelet, scrambled, or fried, with vegetables | 2 claras / 2 egg whites=92 · 1 clara / 1 egg white=46 · 1 taza / 1 cup=135 | claras revueltas con espinaca · omelet de claras con verduras · omelette de claras con espinaca | aceite=incluido
+Omelet de claras con jamón y queso | Egg white omelet with ham and cheese | fndds:Egg white, omelet, scrambled, or fried, with cheese and meat | 2 claras / 2 egg whites=102 · 1 clara / 1 egg white=51 · 1 taza / 1 cup=135 | claras revueltas con jamón y queso · omelette de claras con jamón y queso | aceite=incluido
+Omelet de claras con espinaca y queso | Egg white omelet with spinach and cheese | fndds:Egg white, omelet, scrambled, or fried, with cheese and vegetables | 2 claras / 2 egg whites=102 · 1 clara / 1 egg white=51 · 1 taza / 1 cup=135 | claras revueltas con espinaca y queso · omelet de claras con queso y verduras | aceite=incluido
+Omelet de claras con jamón y espinaca | Egg white omelet with ham and spinach | fndds:Egg white, omelet, scrambled, or fried, with meat and vegetables | 2 claras / 2 egg whites=112 · 1 clara / 1 egg white=56 · 1 taza / 1 cup=135 | claras revueltas con jamón y espinaca · omelet de claras con jamón y verduras | aceite=incluido
+Omelet de claras con jamón, queso y espinaca | Egg white omelet with ham, cheese and spinach | fndds:Egg white, omelet, scrambled, or fried, with cheese, meat, and vegetables | 2 claras / 2 egg whites=122 · 1 clara / 1 egg white=61 · 1 taza / 1 cup=135 | omelet de claras con jamón, queso y verduras · claras revueltas con jamón, queso y espinaca | aceite=incluido
+
+// Otros platos de huevo. «Huevos rellenos» (con atún) ya está en uruguay.txt: estos son los de mayonesa sola.
+Huevos rellenos con mayonesa | Deviled eggs | fndds:Egg, deviled | 1 mitad / 1 half=30 | huevos endiablados · huevos duros con mayonesa
+Huevos con salsa blanca | Creamed eggs | fndds:Egg, creamed | 1 huevo / 1 egg=145 | huevos con bechamel · huevos duros con salsa blanca · huevos a la bechamel
+Ensalada de huevo con mayonesa light | Egg salad with light mayo | fndds:Egg salad, made with light mayonnaise | ½ taza / ½ cup=111 · 1 taza / 1 cup=222 | ensalada de huevo light · ensalada de huevo con mayonesa liviana (AR UY)
+Cazuela de huevo con pan, jamón y queso | Breakfast egg casserole | fndds:Egg casserole with bread, cheese, milk and meat | 1 taza / 1 cup=164 · 1 porción / 1 serving=82 | cazuela de desayuno · casserole de huevo · strata · budín salado de pan y huevo
+
+// Quiches y soufflé. Las tartas caseras («Tarta de jamón y queso», «Tarta de espinaca»…) están en uruguay.txt:
+// estas son las quiches de USDA, con crema y queso suizo, bastante más calóricas.
+Quiche lorraine | Quiche Lorraine | fndds:Quiche with meat, poultry or fish | 1 porción / 1 slice=192 · 1 quiche individual / 1 individual quiche=113 | quiche de tocino · quiche de panceta (AR UY) · quiche de beicon (ES) · quiche lorena
+Quiche de queso | Cheese quiche | fndds:Cheese quiche, meatless | 1 porción / 1 slice=192 · 1 quiche individual / 1 individual quiche=113 | quiche de queso suizo · quiche de queso y crema
+Quiche de espinaca y queso | Spinach quiche | fndds:Spinach quiche, meatless | 1 porción / 1 slice=143 · 1 quiche individual / 1 individual quiche=113 | quiche de espinacas · quiche de espinaca con crema
+Soufflé de queso | Cheese soufflé | fndds:Cheese souffle | 1 taza / 1 cup=95 · 1 porción / 1 serving=48 | suflé de queso · soufflé de huevo y queso
+
+// Egg foo yung, la tortilla de huevo de los restaurantes chinos, con su salsa.
+Egg foo yung de pollo | Chicken egg foo yung | fndds:Chicken egg foo yung | 1 tortilla / 1 patty=86 · 1 porción / 1 serving=131 · 1 taza / 1 cup=175 | foo yung de pollo · fu yung de pollo · huevo foo yung de pollo · tortilla china de pollo
+Egg foo yung de cerdo | Pork egg foo yung | fndds:Pork egg foo yung | 1 tortilla / 1 patty=86 · 1 porción / 1 serving=131 · 1 taza / 1 cup=175 | foo yung de cerdo · fu yung de cerdo · huevo foo yung de cerdo · tortilla china de cerdo
+Egg foo yung de carne | Beef egg foo yung | fndds:Beef egg foo yung | 1 tortilla / 1 patty=86 · 1 porción / 1 serving=131 · 1 taza / 1 cup=175 | foo yung de carne · fu yung de carne · egg foo yung de res · tortilla china de carne
+Egg foo yung de camarones | Shrimp egg foo yung | fndds:Shrimp egg foo yung | 1 tortilla / 1 patty=86 · 1 porción / 1 serving=131 · 1 taza / 1 cup=175 | egg foo yung de gambas* (ES) · foo yung de camarones · fu yung de camarones · tortilla china de camarones · egg foo yung · egg foo young

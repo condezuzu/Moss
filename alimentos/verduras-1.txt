@@ -1,0 +1,171 @@
+// Más verduras, de la A a la L en inglés (22/11/2026, lo pediste: «el máximo de comidas posibles»): de la
+// alcachofa al puerro, lo que USDA tenía solo en inglés. Cada verdura en sus formas (congelada, en lata, al horno,
+// salteada, encurtida) y los platos simples donde es lo principal. El formato es el de genericos.txt.
+// De lo que FNDDS repite según la grasa, solo «no added fat», con «aceite» (la app pregunta); lo salteado que
+// FNDDS trae en una sola versión ya tiene el aceite contado («aceite=incluido», como la acelga salteada).
+// Son variantes: al buscar salen después de lo de siempre (la zanahoria, el brócoli… siguen en genericos.txt).
+@variantes
+
+# verduras
+// Alcachofa. Lo congelado de USDA son los corazones.
+Corazones de alcachofa congelados | Frozen artichoke hearts | sr:Artichokes, (globe or french), frozen, unprepared | ⅓ paquete / ⅓ package=84 · 1 paquete / 1 package=255 | corazones de alcaucil congelados* (AR UY) · alcachofa congelada · alcachofas congeladas
+Corazones de alcachofa cocidos | Cooked artichoke hearts | sr:Artichokes, (globe or french), frozen, cooked, boiled, drained, without salt | 1 taza / 1 cup=168 · ⅓ paquete cocido / ⅓ package, cooked=80 · 1 paquete cocido / 1 package, cooked=240 | corazones de alcaucil cocidos* (AR UY) · corazones de alcachofa · fondos de alcachofa | crudo=Corazones de alcachofa congelados
+
+// Espárragos.
+Espárragos a la plancha | Grilled asparagus | fndds:Asparagus, fresh, cooked, no added fat | 1 porción / 1 serving=90 · 1 espárrago / 1 spear=16 · 1 taza / 1 cup=180 | espárragos salteados · espárragos a la parrilla · espárragos grillados · espárragos al horno | crudo=Espárragos · aceite
+Espárragos congelados | Frozen asparagus | sr:Asparagus, frozen, unprepared | 4 espárragos / 4 spears=58 · 1 paquete / 1 package=284 |
+Espárragos congelados cocidos | Cooked frozen asparagus | sr:Asparagus, frozen, cooked, boiled, drained, without salt | 4 espárragos / 4 spears=60 · 1 taza / 1 cup=180 · 1 paquete cocido / 1 package, cooked=293 |  | crudo=Espárragos congelados
+
+// Brotes de bambú. Lo de siempre es el de lata.
+Brotes de bambú en lata | Canned bamboo shoots | sr:Bamboo shoots, canned, drained solids | 1 taza en rodajas / 1 cup sliced=131 · 1 lata / 1 can=262 | brotes de bambú · brotes de bambú en conserva · bambú en lata
+Brotes de bambú frescos | Fresh bamboo shoots | sr:Bamboo shoots, raw | 1 taza en rodajas / 1 cup sliced=151 · ½ taza en trozos / ½ cup pieces=76 | bambú fresco | desecho=71 vainas exteriores/outer sheaths
+Brotes de bambú cocidos | Boiled bamboo shoots | sr:Bamboo shoots, cooked, boiled, drained, without salt | 1 taza en rodajas / 1 cup sliced=120 · 1 brote / 1 shoot=144 | bambú cocido · brotes de bambú hervidos | crudo=Brotes de bambú frescos
+Brotes de bambú salteados | Stir-fried bamboo shoots | fndds:Bamboo shoots, cooked | 1 taza / 1 cup=155 · 1 porción / 1 serving=78 | bambú salteado | crudo=Brotes de bambú frescos · aceite=incluido
+
+// Judías verdes y amarillas.
+Judías verdes en lata | Canned green beans | sr:Beans, snap, green, canned, regular pack, drained solids | 1 taza / 1 cup=135 · 10 unidades / 10 beans=62 · 1 lata / 1 can=262 | ejotes en lata* (MX GT HN SV) · chauchas en lata* (AR UY PY) · vainitas en lata* (PE VE EC) · habichuelas en lata* (CO) · porotos verdes en lata* (CL) · vainicas en lata* (CR) · judías verdes en conserva
+Judías verdes en lata sin sal | No-salt-added canned green beans | sr:Beans, snap, green, canned, no salt added, drained solids | 1 taza / 1 cup=153 · 10 unidades / 10 beans=62 · 1 lata / 1 can=262 | ejotes en lata sin sal* (MX GT HN SV) · chauchas en lata sin sal* (AR UY PY) · vainitas en lata sin sal* (PE VE EC) · habichuelas en lata sin sal* (CO) · porotos verdes en lata sin sal* (CL) · vainicas en lata sin sal* (CR)
+Judías verdes congeladas | Frozen green beans | sr:Beans, snap, green, frozen, all styles, unprepared | 1 taza / 1 cup=121 · 1 paquete / 1 package=284 | ejotes congelados* (MX GT HN SV) · chauchas congeladas* (AR UY PY) · vainitas congeladas* (PE VE EC) · habichuelas congeladas* (CO) · porotos verdes congelados* (CL) · vainicas congeladas* (CR)
+Judías verdes congeladas cocidas | Cooked frozen green beans | sr:Beans, snap, green, frozen, cooked, boiled, drained without salt | 1 taza / 1 cup=135 | ejotes congelados cocidos* (MX GT HN SV) · chauchas congeladas cocidas* (AR UY PY) · vainitas congeladas cocidas* (PE VE EC) · habichuelas congeladas cocidas* (CO) · porotos verdes congelados cocidos* (CL) · vainicas congeladas cocidas* (CR) | crudo=Judías verdes congeladas
+Judías verdes al vapor | Steamed green beans | fndds:Green beans, fresh, cooked, no added fat | 1 taza / 1 cup=140 · 1 porción / 1 serving=70 · 1 unidad / 1 bean=6 | ejotes al vapor* (MX GT HN SV) · chauchas al vapor* (AR UY PY) · vainitas al vapor* (PE VE EC) · habichuelas al vapor* (CO) · porotos verdes al vapor* (CL) · vainicas al vapor* (CR) | crudo=Judías verdes crudas
+Judías verdes encurtidas | Pickled green beans | fndds:Green beans, pickled | 1 porción / 1 serving=30 · 1 taza / 1 cup=145 | ejotes encurtidos* (MX GT HN SV) · chauchas encurtidas* (AR UY PY) · vainitas encurtidas* (PE VE EC) · habichuelas encurtidas* (CO) · porotos verdes encurtidos* (CL) · vainicas encurtidas* (CR) · judías verdes en vinagre
+Judías amarillas crudas | Raw yellow wax beans | sr:Beans, snap, yellow, raw | 1 taza / 1 cup=100 · 10 unidades / 10 beans=55 | ejotes amarillos crudos* (MX GT HN SV) · chauchas amarillas crudas* (AR UY PY) · vainitas amarillas crudas* (PE VE EC) · judías de cera crudas | desecho=12 puntas e hilos/ends and strings
+Judías amarillas | Yellow wax beans | sr:Beans, snap, yellow, cooked, boiled, drained, without salt | 1 taza / 1 cup=125 | ejotes amarillos* (MX GT HN SV) · chauchas amarillas* (AR UY PY) · vainitas amarillas* (PE VE EC) · judías amarillas cocidas · judías de cera | crudo=Judías amarillas crudas
+Judías amarillas en lata | Canned yellow wax beans | sr:Beans, snap, yellow, canned, regular pack, drained solids | 1 taza / 1 cup=153 · 10 unidades / 10 beans=62 · 1 lata / 1 can=262 | ejotes amarillos en lata* (MX GT HN SV) · chauchas amarillas en lata* (AR UY PY) · vainitas amarillas en lata* (PE VE EC) · judías amarillas en conserva
+
+// Remolacha y sus hojas.
+Remolacha en lata | Canned beets | sr:Beets, canned, drained solids | 1 taza en rodajas / 1 cup sliced=170 · 1 unidad / 1 beet=24 · 1 rodaja / 1 slice=8 · 1 lata / 1 can=294 | betabel en lata* (MX) · betarraga en lata* (CL PE BO) · remolachas en lata
+Remolacha al horno | Roasted beets | fndds:Beets, fresh, cooked, no added fat | 1 unidad / 1 beet=50 · 1 taza / 1 cup=170 · 1 rodaja / 1 slice=10 · 1 porción / 1 serving=85 | betabel al horno* (MX) · betarraga al horno* (CL PE BO) · remolacha asada | crudo=Remolacha · aceite
+Hojas de remolacha | Beet greens | sr:Beet greens, raw | 1 taza / 1 cup=38 · 1 hoja / 1 leaf=32 | hojas de betabel* (MX) · hojas de betarraga* (CL PE BO) | desecho
+Hojas de remolacha cocidas | Boiled beet greens | sr:Beet greens, cooked, boiled, drained, without salt | 1 taza / 1 cup=144 · ½ taza / ½ cup=72 | hojas de betabel cocidas* (MX) · hojas de betarraga cocidas* (CL PE BO) | crudo=Hojas de remolacha
+Hojas de remolacha salteadas | Sautéed beet greens | fndds:Beet greens, cooked | 1 taza / 1 cup=150 · 1 porción / 1 serving=75 | hojas de betabel salteadas* (MX) · hojas de betarraga salteadas* (CL PE BO) | crudo=Hojas de remolacha · aceite=incluido
+
+// Brócoli, rapini y brócoli chino.
+Brócoli congelado | Frozen broccoli | sr:Broccoli, frozen, chopped, unprepared | 1 taza / 1 cup=156 · 1 paquete / 1 package=284 | brécol congelado (ES)
+Brócoli congelado cocido | Cooked frozen broccoli | sr:Broccoli, frozen, chopped, cooked, boiled, drained, without salt | 1 taza / 1 cup=184 |  | crudo=Brócoli congelado
+Brócoli al horno | Roasted broccoli | fndds:Broccoli, fresh, cooked, no added fat | 1 taza / 1 cup=155 · 1 porción / 1 serving=78 · 1 trozo / 1 piece=10 | brócoli asado · brócoli a la plancha · brócoli grillado | crudo=Brócoli · aceite
+Rapini | Broccoli rabe | sr:Broccoli raab, raw | 1 taza picado / 1 cup chopped=40 · 1 tallo / 1 stalk=19 | brócoli rabe · brócoli rapini · cime di rapa
+Rapini cocido | Boiled broccoli rabe | sr:Broccoli raab, cooked | 1 porción / 1 serving=85 · 1 manojo cocido / 1 bunch, cooked=437 | brócoli rabe cocido · rapini hervido | crudo=Rapini
+Brócoli chino | Chinese broccoli | fndds:Broccoli, chinese, raw | 1 taza / 1 cup=36 | gai lan · kai lan
+Brócoli chino salteado | Stir-fried Chinese broccoli | fndds:Broccoli, Chinese, cooked | 1 taza / 1 cup=88 · 1 porción / 1 serving=44 | gai lan salteado | crudo=Brócoli chino · aceite=incluido
+
+// Coles de Bruselas.
+Coles de Bruselas congeladas | Frozen Brussels sprouts | sr:Brussels sprouts, frozen, unprepared | ⅓ paquete / ⅓ package=95 · 1 paquete / 1 package=284 | repollitos de Bruselas congelados* (AR UY CL)
+Coles de Bruselas congeladas cocidas | Cooked frozen Brussels sprouts | sr:Brussels sprouts, frozen, cooked, boiled, drained, without salt | 1 taza / 1 cup=155 | repollitos de Bruselas congelados cocidos* (AR UY CL) | crudo=Coles de Bruselas congeladas
+Coles de Bruselas al horno | Roasted Brussels sprouts | fndds:Brussels sprouts, fresh, cooked, no added fat | 1 taza / 1 cup=155 · 1 unidad / 1 sprout=20 · 1 porción / 1 serving=78 | repollitos de Bruselas al horno* (AR UY CL) · coles de Bruselas asadas · coles de Bruselas a la plancha | crudo=Coles de Bruselas · aceite
+
+// Repollos y coles chinas.
+Repollo al horno | Roasted cabbage | fndds:Cabbage, green, cooked, no added fat | 1 taza / 1 cup=150 · 1 porción / 1 serving=75 | col al horno* (ES MX CU) · repollo asado · repollo a la plancha | crudo=Repollo · aceite
+Repollo encurtido | Pickled cabbage | fndds:Cabbage, green, pickled | 1 porción / 1 serving=30 · 1 taza / 1 cup=150 | col encurtida* (ES MX CU) · curtido · curtido de repollo · repollo en vinagre
+Repollo morado cocido | Boiled red cabbage | sr:Cabbage, red, cooked, boiled, drained, without salt | ½ taza en tiras / ½ cup shredded=75 · 1 hoja / 1 leaf=22 | col morada cocida* (MX) · lombarda cocida* (ES) | crudo=Repollo morado
+Repollo morado salteado | Sautéed red cabbage | fndds:Cabbage, red, cooked | 1 taza / 1 cup=155 · 1 porción / 1 serving=78 | col morada salteada* (MX) · lombarda salteada* (ES) · lombarda rehogada | crudo=Repollo morado · aceite=incluido
+Repollo crespo | Savoy cabbage | sr:Cabbage, savoy, raw | 1 taza en tiras / 1 cup shredded=70 | col de Saboya* (ES MX CU) · col de Milán · repollo de Milán · repollo rizado | desecho=20 hojas y corazón/outer leaves and core
+Repollo crespo cocido | Boiled savoy cabbage | sr:Cabbage, savoy, cooked, boiled, drained, without salt | 1 taza en tiras / 1 cup shredded=145 | col de Saboya cocida* (ES MX CU) | crudo=Repollo crespo
+Repollo crespo salteado | Sautéed savoy cabbage | fndds:Cabbage, savoy, cooked | 1 taza / 1 cup=155 · 1 porción / 1 serving=78 | col de Saboya salteada* (ES MX CU) | crudo=Repollo crespo · aceite=incluido
+Repollo chino | Napa cabbage | sr:Cabbage, chinese (pe-tsai), raw | 1 taza en tiras / 1 cup shredded=76 | col napa* (ES MX CU) · akusay · hakusai | desecho=7 hojas de afuera y base/outer leaves and root base
+Repollo chino cocido | Boiled napa cabbage | sr:Cabbage, chinese (pe-tsai), cooked, boiled, drained, without salt | 1 taza en tiras / 1 cup shredded=119 · 1 hoja / 1 leaf=14 | col napa cocida* (ES MX CU) · akusay cocido | crudo=Repollo chino
+Bok choy cocido | Boiled bok choy | sr:Cabbage, chinese (pak-choi), cooked, boiled, drained, without salt | 1 taza en tiras / 1 cup shredded=170 | pak choi cocido | crudo=Bok choy
+Bok choy salteado | Stir-fried bok choy | fndds:Cabbage, Chinese, cooked, no added fat | 1 taza / 1 cup=170 · 1 porción / 1 serving=85 | pak choi salteado | crudo=Bok choy · aceite
+
+// Zanahoria.
+Zanahorias baby | Baby carrots | sr:Carrots, baby, raw | 1 porción / 1 serving=85 · 1 mediana / 1 medium=10 · 1 grande / 1 large=15 | zanahoria baby · mini zanahorias · zanahorias mini
+Zanahoria en lata | Canned carrots | sr:Carrots, canned, regular pack, drained solids | 1 taza en rodajas / 1 cup sliced=146 · 1 lata / 1 can=284 | zanahorias en lata · zanahoria en conserva
+Zanahoria en lata sin sal | No-salt-added canned carrots | sr:Carrots, canned, no salt added, drained solids | 1 taza en rodajas / 1 cup sliced=146 · 1 lata / 1 can=284 | zanahorias en lata sin sal
+Zanahoria congelada | Frozen carrots | sr:Carrots, frozen, unprepared | ½ taza en rodajas / ½ cup sliced=64 · 1 paquete / 1 package=284 | zanahorias congeladas
+Zanahoria al horno | Roasted carrots | fndds:Carrots, fresh, cooked, no added fat | 1 taza / 1 cup=155 · 1 zanahoria / 1 carrot=60 · 1 zanahoria baby / 1 baby carrot=10 · 1 porción / 1 serving=78 | zanahorias asadas · zanahorias al horno · zanahoria asada · zanahoria a la plancha | crudo=Zanahoria · aceite
+// USDA no tiene el puré: es la zanahoria cocida sin grasa de FNDDS (la que parte de congelada, que no estaba usada); la taza de puré, 230 g, es de USDA.
+Puré de zanahoria | Mashed carrots | fndds:Carrots, frozen, cooked, no added fat | 1 taza / 1 cup=230 · 1 porción / 1 serving=78 | puré de zanahorias · zanahoria en puré
+Zanahorias glaseadas | Glazed carrots | fndds:Carrots, glazed, cooked | 1 taza / 1 cup=160 · 1 porción / 1 serving=80 · 1 zanahoria baby / 1 baby carrot=10 | zanahoria glaseada · zanahorias caramelizadas
+
+// Coliflor.
+Coliflor congelada | Frozen cauliflower | sr:Cauliflower, frozen, unprepared | ½ taza / ½ cup=66 · 1 paquete / 1 package=284 |
+Coliflor congelada cocida | Cooked frozen cauliflower | sr:Cauliflower, frozen, cooked, boiled, drained, without salt | 1 taza / 1 cup=180 |  | crudo=Coliflor congelada
+Coliflor al horno | Roasted cauliflower | fndds:Cauliflower, fresh, cooked, no added fat | 1 taza / 1 cup=155 · 1 porción / 1 serving=78 · 1 ramito / 1 floret=13 | coliflor asada · coliflor a la plancha · coliflor rostizada | crudo=Coliflor · aceite
+// USDA no tiene el puré: es la coliflor hervida con sal (la otra descripción de USDA de la coliflor cocida), sin una taza de puré.
+Puré de coliflor | Mashed cauliflower | sr:Cauliflower, cooked, boiled, drained, with salt | 100 g / 100 g=100 | coliflor en puré · puré de coliflor sin papa
+Coliflor verde | Green cauliflower | sr:Cauliflower, green, raw | 1 taza / 1 cup=64 · 1 ramito / 1 floret=25 · 1 cabeza mediana / 1 medium head=431 | romanesco · brócoli romanesco · coliflor romanesco · brocoflor | desecho=39 hojas y corazón/leaves and core
+Coliflor verde cocida | Cooked green cauliflower | sr:Cauliflower, green, cooked, no salt added | 1 porción / 1 serving=90 | romanesco cocido | crudo=Coliflor verde
+
+// Apio y apionabo.
+Apio cocido | Boiled celery | sr:Celery, cooked, boiled, drained, without salt | 1 taza en cubos / 1 cup diced=150 · 2 tallos / 2 stalks=75 | apio hervido | crudo=Apio
+Apionabo | Celeriac | sr:Celeriac, raw | 1 taza / 1 cup=156 | apio nabo · apio rábano · raíz de apio · apirrábano | desecho
+Apionabo cocido | Boiled celeriac | sr:Celeriac, cooked, boiled, drained, without salt | 1 taza en trozos / 1 cup pieces=155 | apio nabo cocido | crudo=Apionabo
+
+// Endibia, escarola y otras hojas de ensalada.
+Endibia | Belgian endive | sr:Chicory, witloof, raw | 1 unidad / 1 head=53 · ½ taza / ½ cup=45 | endibia belga · endivia belga · achicoria de Bruselas · witloof | desecho=11 base y corazón/base and core
+Escarola cocida | Boiled escarole | sr:Escarole, cooked, boiled, drained, no salt added | 1 taza / 1 cup=150 | escarola hervida | crudo=Escarola
+Escarola salteada | Sautéed escarole | fndds:Escarole, cooked | 1 taza / 1 cup=135 · 1 porción / 1 serving=68 | escarola rehogada | crudo=Escarola · aceite=incluido
+Canónigos | Lamb's lettuce | sr:Cornsalad, raw | 1 taza / 1 cup=56 | hierba de los canónigos · lechuga de campo · valerianela · mâche
+Berro de jardín | Garden cress | sr:Cress, garden, raw | 1 taza / 1 cup=50 · 1 ramita / 1 sprig=1 | mastuerzo · berro hortelano · lepidio
+
+// Pepino.
+Pepino pelado | Peeled cucumber | sr:Cucumber, peeled, raw | 1 taza en rodajas / 1 cup sliced=119 · 1 mediano / 1 medium=201 · 1 pequeño / 1 small=158 · 1 grande / 1 large=280 · 1 rodaja / 1 slice=7 | pepino sin cáscara
+
+// Berenjena.
+Berenjena a la parrilla | Grilled eggplant | fndds:Eggplant, cooked, no added fat | 1 rodaja / 1 slice=55 · 1 taza / 1 cup=95 · 1 unidad / 1 eggplant=540 | berenjena asada · berenjena al horno · berenjena grillada · berenjenas a la parrilla | crudo=Berenjena · aceite
+Berenjena encurtida | Pickled eggplant | fndds:Eggplant, pickled | 1 porción / 1 serving=30 · 1 taza / 1 cup=95 | berenjena en vinagre · berenjenas encurtidas
+
+// Hinojo, ajo, kale, colirrábano y puerro.
+Hinojo salteado | Sautéed fennel | fndds:Fennel bulb, cooked | 1 porción / 1 serving=78 · 1 bulbo / 1 bulb=218 | hinojo braseado · hinojo al horno · hinojo a la plancha | crudo=Hinojo · aceite=incluido
+Ajo asado | Roasted garlic | fndds:Garlic, cooked | 1 diente / 1 clove=3 · 1 cucharadita / 1 tsp=5 | ajo cocido · ajo al horno · ajo salteado | crudo=Ajo
+Kale congelado | Frozen kale | sr:Kale, frozen, unprepared | ⅓ paquete / ⅓ package=94 · 1 paquete / 1 package=284 | col rizada congelada* (ES)
+Kale salteado | Sautéed kale | fndds:Kale, fresh, cooked, no added fat | 1 taza / 1 cup=130 · 1 porción / 1 serving=65 | col rizada salteada* (ES) · kale rehogado | crudo=Kale · aceite
+Colirrábano | Kohlrabi | sr:Kohlrabi, raw | 1 taza / 1 cup=135 · 1 rodaja / 1 slice=16 | kohlrabi · col rábano | desecho=54 hojas, tallos y cáscara/leaves, stems and peel
+Colirrábano cocido | Boiled kohlrabi | sr:Kohlrabi, cooked, boiled, drained, without salt | 1 taza en rodajas / 1 cup sliced=165 | kohlrabi cocido | crudo=Colirrábano
+Puerro salteado | Sautéed leeks | fndds:Leeks | 1 unidad / 1 leek=85 · 1 taza / 1 cup=170 · 1 rodaja / 1 slice=7 | poro salteado* (MX) · ajo porro salteado* (CL) · puerros salteados · puerro rehogado | crudo=Puerro · aceite=incluido
+
+// Hojas verdes para cocinar.
+Col berza | Collard greens | sr:Collards, raw | 1 taza picada / 1 cup chopped=36 | berzas · collards · hojas de berza | desecho
+Col berza cocida | Boiled collard greens | sr:Collards, cooked, boiled, drained, without salt | 1 taza picada / 1 cup chopped=190 | berzas cocidas · collards cocidos | crudo=Col berza
+Hojas de mostaza | Mustard greens | sr:Mustard greens, raw | 1 taza picadas / 1 cup chopped=56 | mostaza de hoja · mostaza china | desecho=7 base de los tallos/stem bases
+Hojas de mostaza cocidas | Boiled mustard greens | sr:Mustard greens, cooked, boiled, drained, without salt | 1 taza picadas / 1 cup chopped=140 | mostaza de hoja cocida | crudo=Hojas de mostaza
+Diente de león | Dandelion greens | sr:Dandelion greens, raw | 1 taza picado / 1 cup chopped=55 | hojas de diente de león · amargón · achicoria silvestre
+Diente de león cocido | Boiled dandelion greens | sr:Dandelion greens, cooked, boiled, drained, without salt | 1 taza picado / 1 cup chopped=105 | hojas de diente de león cocidas · amargón cocido | crudo=Diente de león
+Hojas de amaranto | Amaranth leaves | sr:Amaranth leaves, raw | 1 taza / 1 cup=28 · 1 hoja / 1 leaf=14 | hojas de kiwicha* (PE BO) · quintoniles · bledo · quelite de amaranto | desecho
+Hojas de amaranto cocidas | Boiled amaranth leaves | sr:Amaranth leaves, cooked, boiled, drained, without salt | 1 taza / 1 cup=132 | hojas de kiwicha cocidas* (PE BO) · quintoniles cocidos · bledo cocido | crudo=Hojas de amaranto
+Hojas de moringa | Moringa leaves | sr:Drumstick leaves, raw | 1 taza picadas / 1 cup chopped=21 | moringa · moringa fresca | desecho
+Hojas de moringa cocidas | Boiled moringa leaves | sr:Drumstick leaves, cooked, boiled, drained, without salt | 1 taza picadas / 1 cup chopped=42 | moringa cocida | crudo=Hojas de moringa
+Cenizo | Lambsquarters | sr:Lambsquarters, raw | 100 g / 100 g=100 | quelite cenizo* (MX) · quelites · quinhuilla
+Cenizo cocido | Boiled lambsquarters | sr:Lambsquarters, cooked, boiled, drained, without salt | 1 taza picado / 1 cup chopped=180 | quelite cenizo cocido* (MX) · quelites cocidos | crudo=Cenizo
+Acedera | Sorrel | sr:Dock, raw | 1 taza picada / 1 cup chopped=133 | romaza · vinagrera | desecho=30 tallos/stalks
+Acedera cocida | Boiled sorrel | sr:Dock, cooked, boiled, drained, without salt | 100 g / 100 g=100 | acedera hervida | crudo=Acedera
+Cardo | Cardoon | sr:Cardoon, raw | 1 taza en tiras / 1 cup shredded=178 | cardo de huerta · pencas de cardo | desecho=51 hojas y pencas duras/leaves and tough stalks
+Cardo cocido | Boiled cardoon | sr:Cardoon, cooked, boiled, drained, without salt | 100 g / 100 g=100 | cardo hervido · pencas de cardo cocidas | crudo=Cardo
+Borraja | Borage | sr:Borage, raw | 1 taza en trozos / 1 cup pieces=89 | borrajas | desecho
+Borraja cocida | Boiled borage | sr:Borage, cooked, boiled, drained, without salt | 100 g / 100 g=100 | borrajas cocidas · borraja hervida | crudo=Borraja
+
+// Otras: melón amargo, raíz de loto y chayote.
+Melón amargo | Bitter melon | sr:Balsam-pear (bitter gourd), pods, raw | 1 taza en trozos / 1 cup pieces=93 · 1 unidad / 1 bitter melon=124 | cundeamor · calabaza amarga · balsamina · karela
+Melón amargo cocido | Boiled bitter melon | sr:Balsam-pear (bitter gourd), pods, cooked, boiled, drained, without salt | 1 taza en trozos / 1 cup pieces=124 · ½ taza en trozos / ½ cup pieces=62 | cundeamor cocido | crudo=Melón amargo
+Melón amargo salteado | Stir-fried bitter melon | fndds:Bitter melon, cooked | 1 taza / 1 cup=130 · 1 porción / 1 serving=65 · 1 unidad / 1 bitter melon=120 | cundeamor salteado · calabaza amarga salteada | crudo=Melón amargo · aceite=incluido
+Raíz de loto | Lotus root | sr:Lotus root, raw | 10 rodajas / 10 slices=81 · 1 raíz / 1 root=115 | loto · rizoma de loto · renkon | desecho=21 cáscara y puntas/peel and ends
+Raíz de loto cocida | Boiled lotus root | sr:Lotus root, cooked, boiled, drained, without salt | 10 rodajas / 10 slices=89 · ½ taza / ½ cup=60 | loto cocido | crudo=Raíz de loto
+Raíz de loto salteada | Stir-fried lotus root | fndds:Lotus root, cooked | 1 taza / 1 cup=125 · 1 porción / 1 serving=63 · 1 rodaja / 1 slice=10 | loto salteado | crudo=Raíz de loto · aceite=incluido
+Chayote salteado | Sautéed chayote | fndds:Christophine, cooked | 1 taza / 1 cup=165 · 1 unidad / 1 chayote=230 · 1 porción / 1 serving=83 | güisquil salteado* (GT SV) · guatila salteada* (CO) · tayota salteada* (DO) · chayote guisado | crudo=Chayote · aceite=incluido
+
+// Hierbas frescas y hojas de parra (las de lata, para rellenar).
+Ciboulette | Chives | sr:Chives, raw | 1 cucharada picada / 1 tbsp chopped=3 · 1 cucharadita picada / 1 tsp chopped=1 | cebollino francés · cebollín francés · chives
+Eneldo fresco | Fresh dill | sr:Dill weed, fresh | 5 ramitas / 5 sprigs=1 · 1 taza de ramitas / 1 cup sprigs=8.9 | eneldo verde
+Epazote | Epazote | sr:Epazote, raw | 1 ramita / 1 sprig=2 · 1 cucharada / 1 tbsp=0.8 | paico · epazote fresco
+Hojas de parra | Grape leaves | sr:Grape leaves, canned | 1 hoja / 1 leaf=4 | hojas de parra en conserva · hojas de vid · hojas de uva
+
+# salsas
+// Condimentos.
+Rábano picante | Prepared horseradish | sr:Horseradish, prepared | 1 cucharadita / 1 tsp=5 · 1 cucharada / 1 tbsp=15 | raíz picante · rábano rusticano · horseradish
+Salsa de ajo | Garlic sauce | fndds:Garlic sauce | 1 cucharada / 1 tbsp=16 · 1 porción / 1 serving=32 · 1 envase individual / 1 dipping container=28 | alioli · ajonesa · toum · crema de ajo
+
+# platos
+// Los platos simples donde la verdura es lo principal. Lo rebozado y frito ya tiene el aceite contado.
+Alcachofas rellenas | Stuffed artichokes | fndds:Artichokes, stuffed | 1 unidad / 1 stuffed artichoke=250 | alcauciles rellenos* (AR UY) · alcachofa rellena
+Dip de alcachofa | Artichoke dip | fndds:Artichoke dip | 1 cucharada / 1 tbsp=15 · 1 porción / 1 serving=60 · 1 envase individual / 1 individual container=70 | dip de alcaucil* (AR UY) · dip de alcachofas · salsa de alcachofa
+Judías verdes rebozadas | Battered fried green beans | fndds:Fried green beans | 1 porción / 1 serving=73 · 1 taza / 1 cup=145 · 1 unidad / 1 bean=12 | ejotes rebozados* (MX GT HN SV) · chauchas rebozadas* (AR UY PY) · vainitas rebozadas* (PE VE EC) · habichuelas rebozadas* (CO) · porotos verdes rebozados* (CL) · vainicas rebozadas* (CR) · judías verdes fritas · judías verdes en tempura | aceite=incluido
+Judías verdes estilo Sichuan | Szechuan green beans | fndds:Green beans, cooked, Szechuan-style | 1 taza / 1 cup=185 · 1 porción / 1 serving=93 | ejotes estilo Sichuan* (MX GT HN SV) · chauchas estilo Sichuan* (AR UY PY) · vainitas estilo Sichuan* (PE VE EC) · habichuelas estilo Sichuan* (CO) · porotos verdes estilo Sichuan* (CL) · vainicas estilo Sichuan* (CR) · judías verdes salteadas al estilo chino | aceite=incluido
+Cazuela de judías verdes | Green bean casserole | fndds:Green bean casserole | 1 taza / 1 cup=230 · 1 porción / 1 serving=115 | cazuela de ejotes* (MX GT HN SV) · cazuela de chauchas* (AR UY PY) · cazuela de vainitas* (PE VE EC) · cazuela de habichuelas* (CO) · cazuela de porotos verdes* (CL) · cazuela de vainicas* (CR) · gratinado de judías verdes · green bean casserole
+Brócoli rebozado | Battered fried broccoli | fndds:Fried broccoli | 1 taza / 1 cup=85 · 1 porción / 1 serving=43 · 1 ramito / 1 floret=13 | brócoli frito · brócoli capeado · brócoli en tempura | aceite=incluido
+Cazuela de brócoli con arroz | Broccoli rice casserole | fndds:Broccoli casserole with rice | 1 taza / 1 cup=228 · 1 porción / 1 serving=114 | brócoli con arroz al horno · gratinado de brócoli con arroz · pastel de brócoli y arroz
+Repollo guisado con cerdo | Cabbage with ham hocks | fndds:Cabbage with ham hocks | 1 taza / 1 cup=200 · 1 porción / 1 serving=150 | col guisada con cerdo* (ES MX CU) · repollo con codillo · repollo con jamón
+Repollo relleno de carne y arroz | Stuffed cabbage rolls with beef and rice | fndds:Stuffed cabbage rolls with beef and rice | 1 unidad / 1 roll=103 · 1 porción / 1 serving=202 · 1 taza / 1 cup=162 | col rellena de carne y arroz* (ES MX CU) · rollos de repollo con carne y arroz · niños envueltos en repollo
+Coliflor rebozada | Battered fried cauliflower | fndds:Fried cauliflower | 1 taza / 1 cup=85 · 1 porción / 1 serving=43 · 1 ramito / 1 floret=25 | coliflor frita · coliflor capeada · coliflor en tempura | aceite=incluido
+Berenjena rebozada | Battered fried eggplant | fndds:Fried eggplant | 1 porción / 1 serving=110 · 1 taza / 1 cup=220 | berenjena frita · berenjenas rebozadas · berenjena capeada · berenjena en tempura | aceite=incluido
+Berenjena con queso y salsa de tomate | Eggplant with cheese and tomato sauce | fndds:Eggplant with cheese and tomato sauce | 1 taza / 1 cup=198 · 1 porción / 1 serving=99 | berenjena con queso y salsa de jitomate* (MX) · berenjenas al horno con queso · berenjena gratinada con tomate
+Hojas de parra rellenas de cordero y arroz | Stuffed grape leaves with lamb and rice | fndds:Stuffed grape leaves with lamb and rice | 1 unidad / 1 roll=21 · 1 porción / 1 serving=202 · 1 taza / 1 cup=162 | hojas de parra rellenas de borrego y arroz* (MX) · dolmas de cordero · niños envueltos en hoja de parra

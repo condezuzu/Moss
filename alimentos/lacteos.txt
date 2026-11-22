@@ -1,0 +1,221 @@
+// Más lácteos, quesos y bebidas vegetales (22/11/2026, lo pediste: «el máximo de comidas posibles»): las leches
+// que faltaban de cada tipo y el chocolate caliente, los yogures en sus versiones de grasa, las cremas y sus
+// sustitutos, los quesos light, sin grasa y bajos en sodio, los helados y pudines light y sin azúcar y las
+// malteadas, que USDA tenía solo en inglés. El formato es el de genericos.txt. Son variantes: al buscar salen
+// después de lo de siempre (la leche, el yogur, el queso cheddar, el helado de vainilla… siguen en genericos.txt).
+@variantes
+
+# lacteos
+// Leches. Lo que se toma lleva «ml»: la densidad sale de la taza de USDA. El vaso es de 200 ml.
+Leche baja en grasa | Low-fat milk (1%) | fndds:Milk, low fat (1%) | 1 vaso (200 ml) / 1 glass (200 ml)=206 · 1 taza (240 ml) / 1 cup (240 ml)=248 | leche 1% · leche 1 % de grasa · leche baja en grasa 1% | ml
+Leche deslactosada baja en grasa | Lactose-free low-fat milk (1%) | fndds:Milk, lactose free, low fat (1%) | 1 vaso (200 ml) / 1 glass (200 ml)=206 · 1 taza (240 ml) / 1 cup (240 ml)=248 | leche sin lactosa baja en grasa · leche deslactosada 1% · leche sin lactosa 1% | ml
+Leche descremada con calcio | Calcium-fortified skim milk | sr:Milk, fluid, nonfat, calcium fortified (fat free or skim) | 1 vaso (200 ml) / 1 glass (200 ml)=209 · 1 taza (240 ml) / 1 cup (240 ml)=251 | leche desnatada con calcio* (ES) · leche descremada extra calcio · leche descremada fortificada con calcio | ml
+// «Protein fortified» en USDA es leche con sólidos lácteos añadidos: 4 g de proteína cada 100 g, no los 6 de una «leche proteica» de marca.
+Leche descremada con proteína añadida | Protein-fortified skim milk | sr:Milk, nonfat, fluid, protein fortified, with added vitamin A and vitamin D (fat free and skim) | 1 vaso (200 ml) / 1 glass (200 ml)=208 · 1 taza (240 ml) / 1 cup (240 ml)=250 | leche desnatada con proteína añadida* (ES) · leche descremada fortificada con proteína · leche descremada con más proteína | ml
+Leche semidescremada con proteína añadida | Protein-fortified reduced fat milk | sr:Milk, reduced fat, fluid, 2% milkfat, protein fortified, with added vitamin A and vitamin D | 1 vaso (200 ml) / 1 glass (200 ml)=208 · 1 taza (240 ml) / 1 cup (240 ml)=250 | leche semidesnatada con proteína añadida* (ES) · leche semidescremada fortificada con proteína · leche 2% con más proteína | ml
+Leche baja en sodio | Low-sodium milk | sr:Milk, low sodium, fluid | 1 vaso (200 ml) / 1 glass (200 ml)=206 · 1 taza (240 ml) / 1 cup (240 ml)=248 | leche entera baja en sodio · leche reducida en sodio | ml
+Leche de oveja | Sheep milk | sr:Milk, sheep, fluid | 1 vaso (200 ml) / 1 glass (200 ml)=207 · 1 taza (240 ml) / 1 cup (240 ml)=249 |  | ml
+Leche de búfala | Buffalo milk | sr:Milk, indian buffalo, fluid | 1 vaso (200 ml) / 1 glass (200 ml)=206 · 1 taza (240 ml) / 1 cup (240 ml)=248 | leche de búfalo | ml
+Leche evaporada descremada | Fat-free evaporated milk | fndds:Milk, evaporated, fat free (skim) | ¼ taza / ¼ cup=63 · 1 taza / 1 cup=252 | leche evaporada desnatada* (ES) · leche evaporada sin grasa | ml
+Leche evaporada semidescremada | Reduced-fat evaporated milk | fndds:Milk, evaporated, reduced fat (2%) | ¼ taza / ¼ cup=63 · 1 taza / 1 cup=252 | leche evaporada semidesnatada* (ES) · leche evaporada light · leche evaporada baja en grasa | ml
+// La leche en polvo ya disuelta en agua, como se toma.
+Leche en polvo preparada | Reconstituted powdered milk | fndds:Milk, dry, reconstituted, whole | 1 vaso (200 ml) / 1 glass (200 ml)=206 · 1 taza (240 ml) / 1 cup (240 ml)=248 | leche en polvo reconstituida · leche en polvo entera preparada · leche en polvo con agua | ml
+Leche en polvo descremada preparada | Reconstituted nonfat dry milk | fndds:Milk, dry, reconstituted, nonfat | 1 vaso (200 ml) / 1 glass (200 ml)=206 · 1 taza (240 ml) / 1 cup (240 ml)=248 | leche en polvo desnatada preparada* (ES) · leche en polvo descremada reconstituida | ml
+Leche malteada | Malted milk | fndds:Milk, malted | 1 vaso (200 ml) / 1 glass (200 ml)=216 · 1 taza (240 ml) / 1 cup (240 ml)=260 | leche con malta · leche con extracto de malta | ml
+Leche saborizada | Flavored milk | sr:Beverages, milk beverage, reduced fat, flavored and sweetened, Ready-to-drink,  added calcium, vitamin A and vitamin D | 1 vaso (200 ml) / 1 glass (200 ml)=206 · 1 cajita (200 ml) / 1 carton (200 ml)=206 | leche de vainilla · leche sabor vainilla · leche de sabores | ml
+
+// Suero de mantequilla (buttermilk) y suero de leche (el del queso).
+Suero de mantequilla | Buttermilk | fndds:Buttermilk | 1 vaso (200 ml) / 1 glass (200 ml)=206 · 1 taza (240 ml) / 1 cup (240 ml)=248 | suero de manteca* (AR UY PY) · buttermilk · suero de leche cultivado · leche de mantequilla | ml
+Suero de mantequilla entero | Whole buttermilk | sr:Milk, buttermilk, fluid, whole | 1 vaso (200 ml) / 1 glass (200 ml)=207 · 1 taza (240 ml) / 1 cup (240 ml)=249 | suero de manteca entero* (AR UY PY) · buttermilk entero | ml
+Suero de mantequilla en polvo | Buttermilk powder | sr:Milk, buttermilk, dried | 1 cucharada / 1 tbsp=6.5 · ¼ taza / ¼ cup=30 | suero de manteca en polvo* (AR UY PY) · buttermilk en polvo
+Suero de leche líquido | Liquid whey | sr:Whey, sweet, fluid | 1 vaso (200 ml) / 1 glass (200 ml)=208 · 1 taza (240 ml) / 1 cup (240 ml)=250 | lactosuero · suero lácteo · suero de queso | ml
+Suero de leche en polvo | Whey powder | sr:Whey, sweet, dried | 1 cucharada / 1 tbsp=7.5 | lactosuero en polvo · suero lácteo en polvo · suero dulce en polvo
+
+// Leches saborizadas.
+Leche chocolatada entera | Whole chocolate milk | fndds:Chocolate milk, whole | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (200 ml) / 1 carton (200 ml)=210 | chocolatada entera* (AR UY) · leche entera con chocolate | ml
+Leche chocolatada baja en grasa | Low-fat chocolate milk (1%) | fndds:Chocolate milk, low fat (1%) | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (200 ml) / 1 carton (200 ml)=210 | chocolatada baja en grasa* (AR UY) · leche chocolatada 1% | ml
+Leche chocolatada descremada | Fat-free chocolate milk | fndds:Chocolate milk, fat free (skim) | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (200 ml) / 1 carton (200 ml)=210 | chocolatada descremada* (AR UY) · leche chocolatada desnatada* (ES) · leche chocolatada sin grasa | ml
+Leche chocolatada reducida en azúcar | Reduced-sugar chocolate milk | fndds:Chocolate milk, reduced sugar, reduced fat (2%) | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (200 ml) / 1 carton (200 ml)=210 | chocolatada reducida en azúcar* (AR UY) · leche chocolatada light · leche chocolatada con menos azúcar | ml
+Leche chocolatada descremada reducida en azúcar | Reduced-sugar fat-free chocolate milk | fndds:Chocolate milk, reduced sugar, fat free (skim) | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (200 ml) / 1 carton (200 ml)=210 | chocolatada descremada reducida en azúcar* (AR UY) · leche chocolatada desnatada reducida en azúcar* (ES) · leche chocolatada descremada light | ml
+Bebida láctea de chocolate | Chocolate dairy drink | fndds:Chocolate milk drink | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (200 ml) / 1 carton (200 ml)=210 | bebida achocolatada · bebida láctea sabor chocolate · bebida de chocolate con suero de leche | ml
+Leche de fresa entera | Whole strawberry milk | fndds:Strawberry milk, whole | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (200 ml) / 1 carton (200 ml)=210 | leche frutillada entera* (UY AR) · leche de frutilla entera* (CL PY BO EC) · leche entera sabor fresa | ml
+Leche de fresa descremada | Fat-free strawberry milk | fndds:Strawberry milk, fat free  (skim) | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (200 ml) / 1 carton (200 ml)=210 | leche frutillada descremada* (UY AR) · leche de frutilla descremada* (CL PY BO EC) · leche de fresa desnatada* (ES) · leche de fresa sin grasa | ml
+Leche de fresa reducida en azúcar | Reduced-sugar strawberry milk | fndds:Strawberry milk, reduced sugar | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (200 ml) / 1 carton (200 ml)=210 | leche frutillada reducida en azúcar* (UY AR) · leche de frutilla reducida en azúcar* (CL PY BO EC) · leche de fresa light · leche de fresa con menos azúcar | ml
+
+// Chocolate caliente. «Chocolate caliente» (con leche entera o semidescremada) está en genericos.txt.
+Chocolate caliente con leche descremada | Hot chocolate with skim milk | fndds:Hot chocolate / cocoa, made with lowfat (1%) or fat free (skim) milk | 1 taza (240 ml) / 1 cup (240 ml)=252 | cocoa con leche descremada* (UY) · chocolate caliente con leche desnatada* (ES) · chocolate caliente con leche baja en grasa | ml
+Chocolate caliente reducido en azúcar | Reduced-sugar hot chocolate | fndds:Hot chocolate / cocoa, reduced sugar, made with whole or reduced fat (2%) milk | 1 taza (240 ml) / 1 cup (240 ml)=252 | cocoa reducida en azúcar* (UY) · chocolate caliente con menos azúcar · chocolate caliente light | ml
+Chocolate caliente con crema batida | Hot chocolate with whipped cream | fndds:Hot chocolate / cocoa, with whipped cream | 1 taza (240 ml) / 1 cup (240 ml)=252 | cocoa con crema batida* (UY) · chocolate caliente con nata montada* (ES) · chocolate caliente con chantilly | ml
+Chocolate caliente con agua | Hot chocolate made with water | fndds:Hot chocolate / cocoa, dry mix, made with water | 1 taza (240 ml) / 1 cup (240 ml)=252 | cocoa con agua* (UY) · chocolate de sobre con agua · chocolate en agua | ml
+Chocolate caliente con bebida vegetal | Hot chocolate with plant-based milk | fndds:Hot chocolate / cocoa, made with non-dairy milk | 1 taza (240 ml) / 1 cup (240 ml)=252 | cocoa con leche vegetal* (UY) · chocolate caliente con leche vegetal · chocolate caliente con leche de almendras | ml
+
+// Bebidas vegetales. USDA no tiene la de cajú ni la de avena con sabor: «Bebida vegetal» es su promedio de las que no dicen de qué son.
+Leche de almendras de chocolate | Chocolate almond milk | fndds:Almond milk, chocolate | 1 vaso (200 ml) / 1 glass (200 ml)=206 | bebida de almendras de chocolate · leche de almendras con chocolate | ml
+Leche de almendras de chocolate sin azúcar | Unsweetened chocolate almond milk | sr:Beverages, chocolate almond milk, unsweetened, shelf-stable, fortified with vitamin D2 and E | 1 vaso (200 ml) / 1 glass (200 ml)=203 | bebida de almendras de chocolate sin azúcar | ml
+Leche de almendras de vainilla | Vanilla almond milk | sr:Beverages, almond milk, sweetened, vanilla flavor, ready-to-drink | 1 vaso (200 ml) / 1 glass (200 ml)=203 | bebida de almendras de vainilla · leche de almendras endulzada de vainilla | ml
+Bebida vegetal | Plant-based milk | fndds:Non-dairy milk, NFS | 1 vaso (200 ml) / 1 glass (200 ml)=206 | leche vegetal · leche no láctea · bebida vegetal sin lácteos | ml
+
+// Yogures. Los descremados de FNDDS son los endulzados con edulcorante; los de SR Legacy con azúcar lo dicen en el nombre.
+Yogur natural bajo en grasa | Low-fat plain yogurt | fndds:Yogurt, low fat milk, plain | 1 envase / 1 container=170 · 1 envase pequeño / 1 small container=113 · 1 taza / 1 cup=245 | yogur natural semidescremado · yogur natural semidesnatado (ES) · yogurt natural bajo en grasa
+Yogur descremado saborizado | Nonfat flavored yogurt | fndds:Yogurt, nonfat milk, flavors other than fruit | 1 envase / 1 container=170 · 1 envase pequeño / 1 small container=113 · 1 taza / 1 cup=245 | yogur desnatado saborizado* (ES) · yogur descremado de vainilla sin azúcar · yogur light de vainilla · yogur descremado de sabores
+Yogur descremado de vainilla con azúcar | Nonfat vanilla yogurt with sugar | sr:Yogurt, vanilla, non-fat | 1 envase / 1 container=227 · ½ envase / ½ container=113 · 1 taza / 1 cup=245 | yogur desnatado de vainilla con azúcar* (ES) · yogur descremado de vainilla azucarado
+Yogur descremado con frutas y azúcar | Nonfat fruit yogurt with sugar | sr:Yogurt, fruit variety, nonfat | 1 envase / 1 container=170 · 1 envase pequeño / 1 small container=125 · 1 envase grande / 1 large container=227 · 1 taza / 1 cup=245 | yogur desnatado con frutas y azúcar* (ES) · yogur descremado frutado con azúcar · yogur descremado con frutas azucarado
+Yogur descremado de chocolate | Nonfat chocolate yogurt | sr:Yogurt, chocolate, nonfat milk | 1 envase / 1 container=170 | yogur desnatado de chocolate* (ES) · yogurt de chocolate light
+Yogur griego bajo en grasa | Low-fat Greek yogurt | fndds:Yogurt, Greek, low fat milk, plain | 1 envase / 1 container=170 · 1 envase pequeño / 1 small container=150 · 1 taza / 1 cup=245 | yogur griego 2% · yogur griego semidescremado · yogurt griego bajo en grasa
+Yogur griego bajo en grasa con frutas | Low-fat Greek fruit yogurt | fndds:Yogurt, Greek, low fat milk, fruit | 1 envase / 1 container=150 · 1 envase grande / 1 large container=170 · 1 taza / 1 cup=245 | yogur griego 2% con frutas · yogur griego semidescremado con frutas
+Yogur griego bajo en grasa saborizado | Low-fat flavored Greek yogurt | fndds:Yogurt, Greek, low fat milk, flavors other than fruit | 1 envase / 1 container=150 · 1 envase grande / 1 large container=170 · 1 taza / 1 cup=245 | yogur griego bajo en grasa de vainilla · yogur griego 2% de vainilla
+Yogur griego descremado con frutas | Nonfat Greek fruit yogurt | fndds:Yogurt, Greek, nonfat milk, fruit | 1 envase / 1 container=150 · 1 envase grande / 1 large container=170 · 1 taza / 1 cup=245 | yogur griego desnatado con frutas* (ES) · yogurt griego light con frutas · yogur griego 0% con frutas
+Yogur griego descremado saborizado | Nonfat flavored Greek yogurt | fndds:Yogurt, Greek, nonfat milk, flavors other than fruit | 1 envase / 1 container=150 · 1 envase grande / 1 large container=170 · 1 taza / 1 cup=245 | yogur griego desnatado saborizado* (ES) · yogur griego descremado de vainilla · yogur griego 0% de vainilla
+Yogur griego saborizado | Flavored Greek yogurt | fndds:Yogurt, Greek, whole milk, flavors other than fruit | 1 envase / 1 container=150 · 1 envase grande / 1 large container=170 · 1 taza / 1 cup=245 | yogur griego de vainilla · yogur griego con miel · yogurt griego saborizado
+Yogur griego con avena | Greek yogurt with oats | fndds:Yogurt, Greek, with oats | 1 envase / 1 container=150 · 1 taza / 1 cup=245 | yogur griego con cereales · yogur con avena · yogurt griego con avena
+Yogur en tubo | Yogurt tube | fndds:Yogurt tube | 1 tubo / 1 tube=75 | tubito de yogur · yogur para chupar · yogur infantil en tubo
+Yogur vegetal de almendras | Almond milk yogurt | fndds:Yogurt, almond milk | 1 envase / 1 container=150 · 1 envase grande / 1 large container=170 · 1 taza / 1 cup=226 | yogur de almendras · yogur de leche de almendras · yogur sin lácteos de almendras
+Yogur vegetal de coco | Coconut milk yogurt | fndds:Yogurt, coconut milk | 1 envase / 1 container=150 · 1 envase grande / 1 large container=170 · 1 taza / 1 cup=226 | yogur de leche de coco · yogur sin lácteos de coco · yogur vegano de coco
+
+// Cremas. La de batir ligera (30 % de grasa) lleva su densidad: la primera taza de USDA es la ya batida.
+Crema para batir ligera | Light whipping cream | sr:Cream, fluid, light whipping | 1 cucharada / 1 tbsp=15 · 1 taza / 1 cup=239 | nata para montar ligera* (ES) · crema de leche para batir · crema de leche 30 % | densidad=1.01
+Crema para café sin grasa | Fat-free half and half | fndds:Cream, half and half, fat free | 1 cucharada / 1 tbsp=15 · 2 cucharadas / 2 tbsp=30 | media crema sin grasa* (MX) · half and half sin grasa · crema ligera sin grasa | ml
+Crema agria light | Light sour cream | fndds:Sour cream, light | 1 cucharada / 1 tbsp=15 · 2 cucharadas / 2 tbsp=30 | crema ácida light* (MX) · nata agria light (ES) · crema agria baja en grasa
+Crema agria sin grasa | Fat-free sour cream | fndds:Sour cream, fat free | 1 cucharada / 1 tbsp=15 · 2 cucharadas / 2 tbsp=30 | crema ácida sin grasa* (MX) · nata agria sin grasa (ES) · crema agria descremada
+Crema batida en aerosol | Aerosol whipped cream | sr:Cream, whipped, cream topping, pressurized | 2 cucharadas / 2 tbsp=6 · 1 taza / 1 cup=60 | nata montada en spray* (ES) · crema batida en spray · chantilly en aerosol · crema chantilly en aerosol
+// La que no es de leche (de aceite vegetal), ya batida, y la de sobre que se bate con leche.
+Crema vegetal batida | Whipped topping | fndds:Whipped topping | 2 cucharadas / 2 tbsp=9.4 · 1 porción / 1 serving=19 · 1 taza / 1 cup=75 | nata vegetal montada* (ES) · crema chantilly vegetal · cobertura batida vegetal · crema batida no láctea
+Crema vegetal batida light | Light whipped topping | sr:Whipped topping, frozen, low fat | 2 cucharadas / 2 tbsp=9.4 · 1 taza / 1 cup=75 | nata vegetal montada light* (ES) · crema chantilly vegetal light · cobertura batida vegetal light
+Crema chantilly de sobre | Whipped topping from mix | sr:Dessert topping, powdered, 1.5 ounce prepared with 1/2 cup milk | 2 cucharadas / 2 tbsp=8 · 1 taza / 1 cup=80 | nata montada de sobre* (ES) · chantilly de sobre preparada · chantilly en polvo preparado · crema chantilly instantánea
+
+// Sustitutos de crema para el café: «Sustituto de crema en polvo» está en genericos.txt.
+Sustituto de crema líquido | Liquid coffee creamer | fndds:Coffee creamer, liquid | 1 cucharada / 1 tbsp=15 · 2 cucharadas / 2 tbsp=30 | crema vegetal para café · crema líquida para café · coffee creamer líquido | ml
+Sustituto de crema líquido saborizado | Flavored liquid coffee creamer | fndds:Coffee creamer, liquid, flavored | 1 cucharada / 1 tbsp=15 · 2 cucharadas / 2 tbsp=30 | crema para café de vainilla · crema para café saborizada · crema líquida para café de sabores | ml
+Sustituto de crema líquido light | Light liquid coffee creamer | fndds:Coffee creamer, liquid, fat free | 1 cucharada / 1 tbsp=15 · 2 cucharadas / 2 tbsp=30 | sustituto de crema líquido sin grasa · crema vegetal para café light · crema líquida para café light | ml
+Sustituto de crema líquido saborizado sin grasa | Fat-free flavored liquid coffee creamer | fndds:Coffee creamer, liquid, fat free, flavored | 1 cucharada / 1 tbsp=15 · 2 cucharadas / 2 tbsp=30 | crema para café de vainilla sin grasa · crema para café saborizada sin grasa | ml
+Sustituto de crema en polvo saborizado | Flavored powdered coffee creamer | fndds:Coffee creamer, powder, flavored | 1 sobre / 1 packet=3 · 1 porción / 1 serving=4 | crema en polvo para café saborizada · crema en polvo para café de vainilla
+Sustituto de crema en polvo light | Light powdered coffee creamer | fndds:Coffee creamer, powder, fat free | 1 sobre / 1 packet=3 · 1 porción / 1 serving=4 | crema en polvo para café light · sustituto de crema en polvo sin grasa
+
+# quesos
+// Cheddar, colby y Monterey.
+Queso cheddar light | Reduced-fat cheddar | fndds:Cheese, Cheddar, reduced fat | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 · 1 taza rallado / 1 cup shredded=113 | cheddar light · cheddar bajo en grasa · cheddar reducido en grasa
+Queso cheddar sin grasa | Fat-free cheddar | fndds:Cheese, Cheddar, nonfat or fat free | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 · 1 taza rallado / 1 cup shredded=113 | cheddar sin grasa · cheddar descremado
+Queso cheddar bajo en sodio | Low-sodium cheddar | fndds:Cheese, Cheddar, reduced sodium | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 · 1 taza rallado / 1 cup shredded=113 | cheddar bajo en sodio · cheddar sin sal · cheddar reducido en sodio
+Queso colby | Colby cheese | fndds:Cheese, Colby | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 · 1 taza rallado / 1 cup shredded=113 | colby
+Queso colby jack | Colby Jack cheese | fndds:Cheese, Colby Jack | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 · 1 taza rallado / 1 cup shredded=113 | colby jack · cojack · queso marmolado
+Queso Monterey light | Reduced-fat Monterey Jack | fndds:Cheese, Monterey, reduced fat | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 · 1 taza rallado / 1 cup shredded=113 | monterey jack light · monterey jack bajo en grasa
+Queso brick | Brick cheese | fndds:Cheese, Brick | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 · 1 taza rallado / 1 cup shredded=113 | brick
+
+// Mozzarella. La fresca es la de leche entera y mucha humedad; la de leche entera y poca humedad, la de pizza.
+Queso mozzarella fresco | Fresh mozzarella | sr:Cheese, mozzarella, whole milk | 30 g / 30 g=30 · 1 taza rallado / 1 cup shredded=112 | muzzarella fresca* (AR UY) · mozzarella fresca · mozzarella en bola · bocconcini
+Queso mozzarella de leche entera | Whole-milk low-moisture mozzarella | sr:Cheese, mozzarella, whole milk, low moisture | 30 g / 30 g=30 | muzzarella de leche entera* (AR UY) · mozzarella entera · mozzarella para pizza · mozzarella en barra
+Queso mozzarella sin grasa | Fat-free mozzarella | fndds:Cheese, Mozzarella, nonfat or fat free | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 · 1 taza rallado / 1 cup shredded=113 | muzzarella sin grasa* (AR UY) · mozzarella sin grasa · mozzarella descremada
+Queso mozzarella bajo en sodio | Low-sodium mozzarella | fndds:Cheese, Mozzarella, reduced sodium | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 · 1 taza rallado / 1 cup shredded=113 | muzzarella baja en sodio* (AR UY) · mozzarella baja en sodio · mozzarella sin sal
+Queso en palitos | String cheese | fndds:Cheese, Mozzarella, part skim | 1 palito / 1 stick=28.35 | string cheese · palito de queso · queso en tiras · barrita de queso mozzarella
+
+// Suizo, provolone y muenster.
+Queso suizo light | Reduced-fat Swiss cheese | fndds:Cheese, Swiss, reduced fat | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 · 1 taza rallado / 1 cup shredded=108 | queso suizo bajo en grasa · emmental light
+Queso suizo sin grasa | Fat-free Swiss cheese | fndds:Cheese, Swiss, nonfat or fat free | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 · 1 taza rallado / 1 cup shredded=108 | queso suizo descremado · emmental sin grasa
+Queso suizo bajo en sodio | Low-sodium Swiss cheese | fndds:Cheese, Swiss, reduced sodium | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 · 1 taza rallado / 1 cup shredded=108 | queso suizo sin sal · queso suizo reducido en sodio
+Queso suizo procesado | Processed Swiss cheese | sr:Cheese, pasteurized process, swiss | 1 rebanada / 1 slice=21 · 30 g / 30 g=30 | queso suizo fundido · queso suizo en fetas (AR UY) · queso suizo en lonchas (ES) · queso suizo de sándwich
+Queso provolone light | Reduced-fat provolone | fndds:Cheese, provolone, reduced fat | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | provoleta light* (AR UY) · provolone light · provolone bajo en grasa
+Queso muenster light | Reduced-fat Muenster | fndds:Cheese, Muenster, reduced fat | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 · 1 taza rallado / 1 cup shredded=113 | muenster light · muenster bajo en grasa
+
+// Americano y procesados.
+Queso americano light | Reduced-fat American cheese | fndds:Cheese, American, reduced fat | 1 rebanada / 1 slice=21 | queso amarillo light* (MX CO VE PR DO) · queso americano bajo en grasa · queso de sándwich light
+Queso americano sin grasa | Fat-free American cheese | fndds:Cheese, American, nonfat or fat free | 1 rebanada / 1 slice=21 | queso amarillo sin grasa* (MX CO VE PR DO) · queso americano descremado · queso de sándwich sin grasa
+Queso americano bajo en sodio | Low-sodium American cheese | fndds:Cheese, American, reduced sodium | 1 rebanada / 1 slice=21 | queso amarillo bajo en sodio* (MX CO VE PR DO) · queso americano sin sal
+Queso procesado en barra | Processed cheese loaf | fndds:Cheese, processed cheese food | 30 g / 30 g=30 · 1 porción / 1 serving=21 | queso procesado para derretir · queso tipo velveeta · queso procesado en bloque
+Queso procesado para untar | Processed cheese spread | fndds:Cheese spread, American or Cheddar cheese base | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | queso cheddar para untar · queso untable tipo cheddar · queso fundido para untar
+Queso procesado para untar light | Reduced-fat processed cheese spread | fndds:Cheese spread, American or Cheddar cheese base, reduced fat | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | queso cheddar para untar light · queso untable tipo cheddar light · queso fundido para untar light
+
+// Queso crema y parecidos.
+Queso crema sin grasa | Fat-free cream cheese | fndds:Cream cheese, fat free | 1 cucharada / 1 tbsp=15 · 2 cucharadas / 2 tbsp=30 | queso untable sin grasa* (AR UY) · queso crema descremado · queso crema 0 % grasa
+Queso crema saborizado | Flavored cream cheese | fndds:Cream cheese, regular, flavored | 1 cucharada / 1 tbsp=15 · 2 cucharadas / 2 tbsp=30 | queso untable saborizado* (AR UY) · queso crema de sabores · queso crema con frutas · queso crema con finas hierbas
+Queso neufchâtel | Neufchâtel cheese | sr:Cheese, neufchatel | 30 g / 30 g=30 | neufchatel · queso crema reducido en grasa · queso crema con un tercio menos de grasa
+
+// Cottage. «Queso cottage» (el de 2 %) está en genericos.txt.
+Queso cottage entero | Full-fat cottage cheese | fndds:Cheese, cottage, creamed, large or small curd | ½ taza / ½ cup=105 · 1 taza / 1 cup=210 | cottage entero · cottage 4% · queso cottage cremoso
+Queso cottage bajo en grasa | Low-fat cottage cheese (1%) | sr:Cheese, cottage, lowfat, 1% milkfat | ½ taza / ½ cup=113 · 1 taza / 1 cup=226 | cottage 1% · cottage light · queso cottage light
+Queso cottage sin grasa | Fat-free cottage cheese | fndds:Cheese, cottage, dry curd | 1 porción / 1 serving=105 · 1 taza / 1 cup=145 | cottage sin grasa · cottage descremado · cottage 0% · queso cottage seco
+Queso cottage con frutas | Cottage cheese with fruit | sr:Cheese, cottage, creamed, with fruit | ½ taza / ½ cup=113 · 1 taza / 1 cup=226 | cottage con frutas · queso cottage con fruta
+Queso cottage bajo en sodio | Low-sodium cottage cheese | fndds:Cheese, cottage, lowfat, low sodium | ½ taza / ½ cup=113 · 1 taza / 1 cup=226 | cottage bajo en sodio · cottage sin sal · queso cottage sin sal agregada
+Queso cottage reducido en lactosa | Lactose-reduced cottage cheese | fndds:Cheese, cottage, lowfat, lactose reduced | ½ taza / ½ cup=113 · 1 taza / 1 cup=227 | cottage sin lactosa · cottage deslactosado · queso cottage sin lactosa
+
+// De cabra, rallados y otros tipos.
+Queso de cabra fresco | Soft goat cheese | sr:Cheese, goat, soft type | 30 g / 30 g=30 | queso de cabra blando · queso de cabra untable · chèvre · rulo de cabra (ES)
+Queso de cabra curado | Hard goat cheese | sr:Cheese, goat, hard type | 30 g / 30 g=30 | queso de cabra duro · queso de cabra madurado · queso de cabra añejo
+Queso rallado light | Reduced-fat grated parmesan | fndds:Cheese, Parmesan, dry grated, reduced fat | 1 cucharada / 1 tbsp=7 | parmesano rallado light · queso rallado bajo en grasa · queso rallado reducido en grasa
+Mezcla de quesos rallados | Mexican-style shredded cheese blend | fndds:Cheese, Mexican blend | ¼ taza / ¼ cup=28 · 1 taza / 1 cup=113 | mezcla mexicana de quesos · mezcla de cuatro quesos rallados · queso rallado para tacos · queso rallado para gratinar
+Mezcla de quesos rallados light | Reduced-fat Mexican-style cheese blend | fndds:Cheese, Mexican blend, reduced fat | ¼ taza / ¼ cup=28 · 1 taza / 1 cup=113 | mezcla mexicana de quesos light · mezcla de quesos rallados baja en grasa
+Queso seco | Dry white cheese | sr:Cheese, dry white, queso seco | 30 g / 30 g=30 · 1 taza rallado / 1 cup grated=97 | queso blanco seco · queso seco rallado · queso duro
+Queso Port Salut | Port Salut cheese | sr:Cheese, port de salut | 30 g / 30 g=30 · 1 rebanada / 1 slice=28 | port salut · queso por salut · saint paulin
+Queso tilsit | Tilsit cheese | sr:Cheese, tilsit | 30 g / 30 g=30 | tilsit · tilsiter
+Queso limburger | Limburger cheese | fndds:Cheese, Limburger | 30 g / 30 g=30 · 1 porción / 1 serving=21 | limburger
+Queso cheshire | Cheshire cheese | sr:Cheese, cheshire | 30 g / 30 g=30 | cheshire
+Queso gjetost | Gjetost cheese | sr:Cheese, gjetost | 30 g / 30 g=30 | gjetost · brunost · queso de suero caramelizado
+
+# grasas
+Mantequilla batida | Whipped butter | sr:Butter, whipped, with salt | 1 cucharada / 1 tbsp=9.4 · 1 porción individual / 1 pat=3.8 | manteca batida* (AR UY PY) · mantequilla aireada
+Mantequilla con miel | Honey butter | fndds:Honey butter | 1 cucharada / 1 tbsp=14 | manteca con miel* (AR UY PY) · mantequilla de miel
+
+# dulces
+// Helados light, sin grasa y sin azúcar. «Helado light» (el de vainilla) está en genericos.txt.
+Helado sin grasa | Fat-free ice cream | sr:Ice creams, vanilla, fat free | ½ taza / ½ cup=67 · 1 taza / 1 cup=134 | helado de vainilla sin grasa · helado descremado · helado 0 % grasa
+Helado light sin azúcar | No-sugar-added light ice cream | sr:Ice creams, vanilla, light, no sugar added | ½ taza / ½ cup=68 · 1 taza / 1 cup=136 | helado sin azúcar · helado de vainilla sin azúcar · helado sin azúcar añadida
+Helado sin grasa y sin azúcar | Fat-free no-sugar-added ice cream | sr:Fat free ice cream, no sugar added, flavors other than chocolate | ½ taza / ½ cup=68 · 1 taza / 1 cup=136 | helado sin grasa sin azúcar · helado 0 % grasa sin azúcar
+Helado de chocolate light | Light chocolate ice cream | fndds:Light ice cream, chocolate | ½ taza / ½ cup=68 · 1 taza / 1 cup=135 | helado de chocolate bajo en grasa · helado de chocolate dietético
+Helado de chocolate light sin azúcar | No-sugar-added light chocolate ice cream | sr:Ice creams, chocolate, light, no sugar added | ½ taza / ½ cup=72 · 1 taza / 1 cup=144 | helado de chocolate sin azúcar · helado de chocolate sin azúcar añadida
+Helado de chocolate sin grasa | Fat-free chocolate ice cream | sr:Milk dessert, frozen, milk-fat free, chocolate | ½ taza / ½ cup=69 · 1 taza / 1 cup=137 | helado de chocolate 0 % grasa · helado de chocolate descremado
+
+// Con agregados (galletas, chispas, nueces, salsa): USDA los junta en uno de vainilla y uno de chocolate.
+Helado de vainilla con galletas | Cookies and cream ice cream | fndds:Ice cream, vanilla, with additional ingredients | ½ taza / ½ cup=70 · 1 taza / 1 cup=140 · 1 envase individual / 1 individual container=75 | helado de vainilla con galletitas* (AR UY) · helado cookies and cream · helado de galleta · helado de vainilla con chispas de chocolate · helado de vainilla con caramelo
+Helado de chocolate con chispas | Chocolate ice cream with mix-ins | fndds:Ice cream, chocolate, with additional ingredients | ½ taza / ½ cup=70 · 1 taza / 1 cup=140 · 1 envase individual / 1 individual container=75 | helado de chocolate con trozos · helado de chocolate con brownie · helado de chocolate con nueces · helado rocky road
+
+// Soft, conos, bombones y sándwiches.
+Helado soft de chocolate | Chocolate soft-serve ice cream | fndds:Ice cream, soft serve, chocolate | ½ taza / ½ cup=88 · 1 taza / 1 cup=175 | helado de máquina de chocolate* (UY AR) · helado suave de chocolate
+Helado soft light | Light soft-serve ice cream | sr:Ice creams, vanilla, light, soft-serve | ½ taza / ½ cup=88 | helado de máquina light* (UY AR) · helado suave light · helado soft bajo en grasa
+Helado soft en cono | Soft-serve ice cream cone | fndds:Ice cream cone, soft serve, vanilla | 1 cono / 1 cone=125 | cucurucho de helado de máquina* (UY AR) · cono de helado soft · barquillo con helado soft
+Helado soft con galletas | Soft serve blended with cookies or candy | fndds:Soft serve, blended with candy or cookies, from fast food | 1 pequeño / 1 small=300 · 1 mediano / 1 medium=400 · 1 grande / 1 large=500 | helado de máquina con galletitas* (AR UY) · helado soft con dulces · helado soft con chocolate · helado batido con galletas
+Helado en cono grande | Ice cream in a waffle cone | fndds:Ice cream cone, scooped, vanilla, waffle cone | 1 cono / 1 cone=255 | cucurucho grande de helado* (UY AR) · helado en cono de waffle · helado en barquillo grande
+Cono helado envasado | Prepackaged ice cream cone | fndds:Ice cream cone, vanilla, prepackaged | 1 unidad / 1 cone=95 | cono de helado de paquete · cono helado con cobertura de chocolate · helado en cono envasado
+Bombón helado light | Light chocolate-covered ice cream bar | fndds:Light ice cream bar, vanilla, chocolate coated | 1 unidad / 1 bar=75 · 1 mini / 1 miniature=50 | helado bañado en chocolate light · paleta de helado con chocolate light
+Bombón helado con frutos secos | Chocolate-covered ice cream bar with nuts | sr:Frozen novelties, ice cream type, chocolate or caramel covered, with nuts | 1 unidad / 1 bar=54 | bombón helado con almendras · bombón helado con nueces · helado bañado en chocolate con almendras
+Sándwich helado | Ice cream sandwich | fndds:Ice cream sandwich, vanilla | 1 unidad / 1 sandwich=75 | sándwich de helado · helado sándwich · helado entre galletas
+Sándwich helado light | Light ice cream sandwich | sr:Ice cream sandwich, made with light ice cream, vanilla | 1 unidad / 1 sandwich=70 | sándwich de helado light · helado sándwich light
+Sándwich helado de galletas | Ice cream cookie sandwich | fndds:Ice cream cookie sandwich | 1 unidad / 1 sandwich=75 | sándwich helado de galletitas* (AR UY) · galletas con helado · sándwich de helado con galletas
+Sundae de caramelo | Caramel sundae | fndds:Ice cream sundae, caramel topping | 1 unidad / 1 sundae=180 | copa de helado con caramelo · sundae con salsa de caramelo
+Sundae de fresa | Strawberry sundae | fndds:Ice cream sundae, fruit topping | 1 unidad / 1 sundae=180 | sundae de frutilla* (AR UY CL PY BO EC) · sundae de frutas · copa de helado con frutas
+
+// Sherbet (sorbete con algo de leche), las paletas de chocolate y sin azúcar y el helado sin leche.
+Sorbete cremoso | Sherbet | fndds:Sherbet, all flavors | ½ taza / ½ cup=88 · 1 taza / 1 cup=175 | sherbet · sorbete con leche · sorbete de naranja cremoso
+Paleta helada de chocolate | Fudge pop | fndds:Fudgesicle | 1 unidad / 1 pop=65 | palito helado de chocolate* (AR UY) · polo de chocolate* (ES) · paleta de chocolate* (MX CO) · fudgesicle · helado de palito de chocolate
+Paleta helada de chocolate light | Light fudge pop | fndds:Fudgesicle, light | 1 unidad / 1 bar=45 | palito helado de chocolate light* (AR UY) · polo de chocolate light* (ES) · paleta de chocolate light* (MX CO) · fudgesicle light
+Paleta helada sin azúcar | Sugar-free popsicle | fndds:Popsicle, no sugar added | 1 unidad / 1 popsicle=50 | helado de agua sin azúcar* (AR UY) · polo sin azúcar* (ES) · paleta sin azúcar* (MX CO) · paleta helada light
+Helado vegano | Non-dairy frozen dessert | fndds:Frozen dessert, non-dairy | ½ taza / ½ cup=83 · 1 taza / 1 cup=165 | helado vegetal · helado sin lácteos · helado sin leche · postre helado vegetal
+
+// Yogur helado. «Yogur helado» (el de vainilla) está en genericos.txt.
+Yogur helado de chocolate | Chocolate frozen yogurt | fndds:Frozen yogurt, chocolate | ½ taza / ½ cup=88 · 1 taza / 1 cup=175 | frozen yogurt de chocolate · yogurt helado de chocolate
+Yogur helado soft | Soft-serve frozen yogurt | fndds:Frozen yogurt, soft serve, vanilla | ½ taza / ½ cup=88 · 1 taza / 1 cup=175 | yogur helado de máquina* (UY AR) · frozen yogurt soft · yogur helado suave
+Yogur helado sin azúcar | Sugar-free nonfat frozen yogurt | sr:Yogurt, frozen, flavors not chocolate, nonfat milk, with low-calorie sweetener | ½ taza / ½ cup=68 · 1 taza / 1 cup=136 | yogur helado descremado sin azúcar · yogur helado light · frozen yogurt sin azúcar
+Yogur helado en palito | Frozen yogurt bar | fndds:Frozen yogurt bar, vanilla | 1 unidad / 1 bar=65 | palito de yogur helado · paleta de yogur helado · polo de yogur helado (ES)
+Yogur helado en cono | Frozen yogurt cone | fndds:Frozen yogurt cone, vanilla | 1 cono / 1 cone=125 | cucurucho de yogur helado* (UY AR) · cono de yogur helado · barquillo con yogur helado
+
+// Pudines sin azúcar. «Pudín de chocolate» y «Pudín de vainilla» están en genericos.txt.
+Pudín de chocolate sin azúcar | Sugar-free chocolate pudding | fndds:Pudding, chocolate, ready-to-eat, sugar free | 1 envase / 1 snack cup=110 · ½ taza / ½ cup=130 | postre de chocolate sin azúcar (AR UY) · natillas de chocolate sin azúcar (ES) · pudín de chocolate light
+Pudín de vainilla sin azúcar | Sugar-free vanilla pudding | fndds:Pudding, flavors other than chocolate, ready-to-eat, sugar free | 1 envase / 1 snack cup=110 · ½ taza / ½ cup=130 | postre de vainilla sin azúcar (AR UY) · natillas de vainilla sin azúcar (ES) · pudín de vainilla light
+
+# bebidas
+// Malteadas. «Malteada» (la casera que no es de chocolate) está en genericos.txt.
+Malteada de chocolate | Chocolate milkshake | fndds:Milk shake, home recipe, chocolate | 1 vaso (200 ml) / 1 glass (200 ml)=189 · 1 malteada / 1 milkshake=280 | merengada de chocolate* (VE) · batido de helado de chocolate · milkshake de chocolate | ml
+Malteada light | Light milkshake | fndds:Milk shake, home recipe, flavors other than chocolate, light | 1 vaso (200 ml) / 1 glass (200 ml)=189 · 1 malteada / 1 milkshake=280 | merengada light* (VE) · batido de helado light · milkshake light | ml
+Malteada de chocolate light | Light chocolate milkshake | fndds:Milk shake, home recipe, chocolate, light | 1 vaso (200 ml) / 1 glass (200 ml)=189 · 1 malteada / 1 milkshake=280 | merengada de chocolate light* (VE) · milkshake de chocolate light | ml
+Malteada de comida rápida | Fast-food milkshake | fndds:Milk shake, fast food, flavors other than chocolate | 1 pequeña / 1 small=405 · 1 mediana / 1 medium=526 · 1 grande / 1 large=690 | merengada de comida rápida* (VE) · malteada de vainilla de comida rápida · malteada espesa · milkshake de comida rápida | ml
+Malteada de chocolate de comida rápida | Fast-food chocolate milkshake | fndds:Milk shake, fast food, chocolate | 1 pequeña / 1 small=405 · 1 mediana / 1 medium=526 · 1 grande / 1 large=690 | merengada de chocolate de comida rápida* (VE) · malteada espesa de chocolate · milkshake de chocolate de comida rápida | ml
+Malteada de fresa de comida rápida | Fast-food strawberry milkshake | sr:Beverages, shake, fast food, strawberry | 1 pequeña / 1 small=282 · 1 mediana / 1 medium=376 · 1 grande / 1 large=494 | malteada de frutilla de comida rápida* (AR UY CL PY BO EC) · merengada de fresa de comida rápida* (VE) · milkshake de fresa | ml
+// El batido de frutas con lácteos y proteína agregada, como el de las casas de smoothies.
+Smoothie de frutas con proteína | Fruit smoothie with protein | fndds:Fruit smoothie, with whole fruit and dairy, added protein | 1 vaso (200 ml) / 1 glass (200 ml)=183 · 1 porción / 1 serving=324 | smoothie proteico · batido de frutas con proteína · licuado con proteína | ml
+
+# salsas
+// «Salsa de queso» (la de frasco) está en genericos.txt.
+Salsa de queso casera | Homemade cheese sauce | sr:Cheese sauce, prepared from recipe | ¼ taza / ¼ cup=61 · 2 cucharadas / 2 tbsp=30 · 1 taza / 1 cup=243 | salsa de queso cheddar casera · salsa mornay · salsa blanca con queso
+Dip de queso picante | Spicy cheese dip (chile con queso) | fndds:Cheese dip with chili pepper | 2 cucharadas / 2 tbsp=30 · 1 porción / 1 serving=60 · 1 envase individual / 1 individual container=70 | chile con queso · salsa con queso · dip de queso con chile · queso dip
+
+# platos
+Fondue de queso | Cheese fondue | fndds:Cheese fondue | 1 porción / 1 serving=52 · 1 cucharada / 1 tbsp=13 | fondue · fondue de quesos
+Palitos de mozzarella fritos | Mozzarella sticks | fndds:Mozzarella sticks, breaded, baked, or fried | 1 unidad / 1 stick=44 · 1 porción / 1 serving=57 | bastones de muzzarella* (AR UY) · mozzarella sticks · palitos de mozzarella empanizados · dedos de queso · fingers de queso | aceite=incluido

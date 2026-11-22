@@ -1,0 +1,175 @@
+// Más legumbres, soja y frutos secos (22/11/2026, lo pediste: «el máximo de comidas posibles»): lo de USDA que
+// estaba en la base solo en inglés, con su nombre en español, sus porciones y los nombres de cada región. El
+// formato es el de genericos.txt. Lo que ya estaba (frijoles negros, lentejas, garbanzos, tofu, maní, almendras…)
+// sigue en genericos.txt. Son variantes: al buscar «frijoles» o «maní» salen después de los de siempre.
+@variantes
+
+# legumbres
+// En lata: «sin escurrir» es con su líquido, como lo cuenta la etiqueta. Los de genericos.txt van escurridos.
+Frijoles negros en lata sin escurrir | Canned black beans, undrained | sr:Beans, black turtle, mature seeds, canned | 1 taza / 1 cup=240 · ½ taza / ½ cup=120 | porotos negros en lata sin escurrir* (AR UY CL PY BO) · caraotas negras en lata sin escurrir* (VE) · habichuelas negras en lata sin escurrir* (PR DO) · judías negras en lata sin escurrir* (ES) · frijoles negros en lata con su líquido
+Frijoles negros en lata bajos en sodio | Low-sodium canned black beans | sr:Beans, black, mature seeds, canned, low sodium | 1 taza / 1 cup=240 · ½ taza / ½ cup=120 | porotos negros en lata bajos en sodio* (AR UY CL PY BO) · caraotas negras en lata bajas en sodio* (VE) · habichuelas negras en lata bajas en sodio* (PR DO) · judías negras en lata bajas en sodio* (ES) · frijoles negros bajos en sodio
+Frijoles rojos en lata sin escurrir | Canned red kidney beans, undrained | sr:Beans, kidney, red, mature seeds, canned, solids and liquids | 1 taza / 1 cup=256 · ½ taza / ½ cup=128 · 1 lata / 1 can=436 | porotos rojos en lata sin escurrir* (AR UY CL PY BO) · caraotas rojas en lata sin escurrir* (VE) · habichuelas rojas en lata sin escurrir* (PR DO) · alubias rojas en lata sin escurrir* (ES) · frijoles rojos en lata con su líquido
+Frijoles rojos en lata bajos en sodio | Low-sodium canned red kidney beans | sr:Beans, kidney, red, mature seeds, canned, solids and liquid, low sodium | 1 taza / 1 cup=256 · ½ taza / ½ cup=128 · 1 lata / 1 can=436 | porotos rojos en lata bajos en sodio* (AR UY CL PY BO) · caraotas rojas en lata bajas en sodio* (VE) · habichuelas rojas en lata bajas en sodio* (PR DO) · alubias rojas en lata bajas en sodio* (ES) · frijoles rojos bajos en sodio
+// Pintos escurridos: la taza es la que USDA midió para los mismos frijoles, enjuagados (esa descripción no trae fibra).
+Frijoles pintos en lata | Canned pinto beans | sr:Beans, pinto, canned, drained solids | 1 taza / 1 cup=169 · 1 lata escurrida / 1 can, drained=277 | porotos pintos en lata* (AR UY CL) · frijoles pintos de lata · frijoles pintos en conserva
+Frijoles pintos en lata sin escurrir | Canned pinto beans, undrained | sr:Beans, pinto, mature seeds, canned, solids and liquids | 1 taza / 1 cup=240 · ½ taza / ½ cup=120 · 1 lata / 1 can=442 | porotos pintos en lata sin escurrir* (AR UY CL) · frijoles pintos en lata con su líquido
+Frijoles pintos en lata bajos en sodio | Low-sodium canned pinto beans | sr:Beans, pinto, mature seeds, canned, solids and liquids, low sodium | 1 taza / 1 cup=240 · ½ taza / ½ cup=120 · 1 lata / 1 can=442 | porotos pintos en lata bajos en sodio* (AR UY CL) · frijoles pintos bajos en sodio
+Garbanzos en lata sin escurrir | Canned chickpeas, undrained | sr:Chickpeas (garbanzo beans, bengal gram), mature seeds, canned, solids and liquids | 1 taza / 1 cup=240 · ½ taza / ½ cup=120 · 1 lata / 1 can=448 | garbanzos en lata con su líquido · garbanzos en conserva sin escurrir
+Garbanzos en lata bajos en sodio | Low-sodium canned chickpeas | sr:Chickpeas (garbanzo beans, bengal gram), mature seeds, canned, solids and liquids, low sodium | 1 taza / 1 cup=240 · ½ taza / ½ cup=120 · 1 lata / 1 can=448 | garbanzos bajos en sodio · garbanzos en conserva bajos en sodio
+// Más tipos de frijoles. Los nombres de cada región siguen a los de «frijoles blancos».
+Frijoles blancos pequeños crudos | Dry navy beans | sr:Beans, navy, mature seeds, raw | ¼ taza / ¼ cup=52 · 1 taza / 1 cup=208 | porotos blancos pequeños crudos* (AR UY CL PY BO) · caraotas blancas pequeñas crudas* (VE) · alubias blancas pequeñas crudas* (ES) · frijoles navy crudos · frijoles blancos pequeños secos
+Frijoles blancos pequeños | Navy beans | sr:Beans, navy, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=182 | porotos blancos pequeños* (AR UY CL PY BO) · caraotas blancas pequeñas* (VE) · alubias blancas pequeñas* (ES) · frijoles navy · alubias navy · frijoles blancos pequeños cocidos | crudo=Frijoles blancos pequeños crudos
+Frijoles great northern crudos | Dry great northern beans | sr:Beans, great northern, mature seeds, raw | ¼ taza / ¼ cup=46 · 1 taza / 1 cup=183 | porotos great northern crudos* (AR UY CL PY BO) · frijoles blancos great northern crudos · frijoles great northern secos
+Frijoles great northern | Great northern beans | sr:Beans, great northern, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=177 | porotos great northern* (AR UY CL PY BO) · frijoles blancos great northern · frijoles great northern cocidos | crudo=Frijoles great northern crudos
+Frijoles rosados crudos | Dry pink beans | sr:Beans, pink, mature seeds, raw | ¼ taza / ¼ cup=53 · 1 taza / 1 cup=210 | porotos rosados crudos* (AR UY CL PY BO) · caraotas rosadas crudas* (VE) · habichuelas rosadas crudas* (PR DO) · alubias rosadas crudas* (ES) · frijoles rosados secos
+Frijoles rosados | Pink beans | sr:Beans, pink, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=169 | porotos rosados* (AR UY CL PY BO) · caraotas rosadas* (VE) · habichuelas rosadas* (PR DO) · alubias rosadas* (ES) · frijol rosado · frijoles rosados cocidos | crudo=Frijoles rosados crudos
+Frijoles cranberry crudos | Dry cranberry beans | sr:Beans, cranberry (roman), mature seeds, raw | ¼ taza / ¼ cup=49 · 1 taza / 1 cup=195 | porotos cranberry crudos* (AR UY CL PY BO) · frijoles borlotti crudos · frijol cargamanto crudo (CO) · frijol cacahuate crudo (MX) · frijoles cranberry secos
+Frijoles cranberry | Cranberry beans | sr:Beans, cranberry (roman), mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=177 | porotos cranberry* (AR UY CL PY BO) · frijoles borlotti · borlotti · frijol cargamanto (CO) · frijol cacahuate (MX) · frijoles cranberry cocidos | crudo=Frijoles cranberry crudos
+Frijoles cranberry en lata | Canned cranberry beans | sr:Beans, cranberry (roman), mature seeds, canned | 1 taza / 1 cup=260 · ½ taza / ½ cup=130 | porotos cranberry en lata* (AR UY CL PY BO) · frijoles borlotti en lata · borlotti en lata
+Frijoles amarillos crudos | Dry canary beans | sr:Beans, yellow, mature seeds, raw | ¼ taza / ¼ cup=49 · 1 taza / 1 cup=196 | porotos amarillos crudos* (AR UY CL PY BO) · caraotas amarillas crudas* (VE) · alubias amarillas crudas* (ES) · frijoles canarios crudos* (PE) · frijoles peruanos crudos* (MX) · frijol mayocoba crudo · frijoles amarillos secos
+Frijoles amarillos | Canary beans | sr:Beans, yellow, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=177 | porotos amarillos* (AR UY CL PY BO) · caraotas amarillas* (VE) · alubias amarillas* (ES) · frijoles canarios* (PE) · frijoles peruanos* (MX) · frijol mayocoba · frijoles amarillos cocidos | crudo=Frijoles amarillos crudos
+Frijoles adzuki crudos | Dry adzuki beans | sr:Beans, adzuki, mature seeds, raw | ¼ taza / ¼ cup=49 · 1 taza / 1 cup=197 | porotos aduki crudos* (AR UY CL PY BO) · judías azuki crudas* (ES) · azuki crudo · frijoles adzuki secos
+Frijoles adzuki | Adzuki beans | sr:Beans, adzuki, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=230 | porotos aduki* (AR UY CL PY BO) · judías azuki* (ES) · azuki · aduki · frijoles azuki · frijoles adzuki cocidos | crudo=Frijoles adzuki crudos
+Frijoles mungo crudos | Dry mung beans | sr:Mung beans, mature seeds, raw | ¼ taza / ¼ cup=52 · 1 taza / 1 cup=207 · 1 cucharada / 1 tbsp=13 | porotos mung crudos* (AR UY CL PY BO) · judías mungo crudas* (ES) · soja verde cruda (ES) · frijol mung crudo · frijoles mungo secos
+Frijoles mungo | Mung beans | sr:Mung beans, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=202 | porotos mung* (AR UY CL PY BO) · judías mungo* (ES) · soja verde (ES) · frijol mung · frijoles mungo cocidos | crudo=Frijoles mungo crudos
+Urad dal crudo | Dry urad dal (black gram) | sr:Mungo beans, mature seeds, raw | ¼ taza / ¼ cup=52 · 1 taza / 1 cup=207 | frijol urad crudo · lenteja urad cruda · gramo negro crudo
+Urad dal cocido | Cooked urad dal (black gram) | sr:Mungo beans, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=180 | frijol urad · lenteja urad · gramo negro | crudo=Urad dal crudo
+// Frijoles lima: secos y en lata, los pequeños y los verdes (tiernos), que se venden frescos, en lata o congelados.
+Frijoles lima en lata | Canned lima beans | sr:Lima beans, large, mature seeds, canned | 1 taza / 1 cup=241 · ½ taza / ½ cup=121 | porotos de manteca en lata* (AR UY PY) · pallares en lata* (PE CL) · judiones en lata (ES)
+Frijoles lima pequeños crudos | Dry baby lima beans | sr:Lima beans, thin seeded (baby), mature seeds, raw | ¼ taza / ¼ cup=51 · 1 taza / 1 cup=202 | porotos de manteca pequeños crudos* (AR UY PY) · pallares pequeños crudos* (PE CL) · pallar bebé crudo (PE) · frijoles lima baby crudos
+Frijoles lima pequeños | Baby lima beans | sr:Lima beans, thin seeded (baby), mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=182 | porotos de manteca pequeños* (AR UY PY) · pallares pequeños* (PE CL) · pallar bebé (PE) · frijoles lima baby · frijoles lima pequeños cocidos | crudo=Frijoles lima pequeños crudos
+Frijoles lima verdes crudos | Raw green lima beans | sr:Lima beans, immature seeds, raw | 1 taza / 1 cup=156 | porotos de manteca verdes crudos* (AR UY PY) · pallares verdes crudos* (PE CL) · frijoles lima frescos · frijoles lima tiernos crudos
+Frijoles lima verdes | Green lima beans | sr:Lima beans, immature seeds, cooked, boiled, drained, without salt | 1 taza / 1 cup=170 | porotos de manteca verdes* (AR UY PY) · pallares verdes* (PE CL) · frijoles lima tiernos · frijoles lima verdes cocidos | crudo=Frijoles lima verdes crudos
+Frijoles lima verdes en lata | Canned green lima beans | sr:Lima beans, immature seeds, canned, regular pack, solids and liquids | ½ taza / ½ cup=124 · 1 taza / 1 cup=248 · 1 lata / 1 can=454 | porotos de manteca verdes en lata* (AR UY PY) · pallares verdes en lata* (PE CL)
+Frijoles lima congelados | Frozen baby lima beans | sr:Lima beans, immature seeds, frozen, baby, unprepared | 1 taza / 1 cup=164 · 1 paquete / 1 package=284 | porotos de manteca congelados* (AR UY PY) · pallares congelados* (PE CL) · frijoles lima verdes congelados
+Frijoles lima congelados cocidos | Cooked frozen baby lima beans | sr:Lima beans, immature seeds, frozen, baby, cooked, boiled, drained, without salt | 1 taza / 1 cup=180 | porotos de manteca congelados cocidos* (AR UY PY) · pallares congelados cocidos* (PE CL) | crudo=Frijoles lima congelados
+Frijoles carita en lata | Canned black-eyed peas | sr:Cowpeas, common (blackeyes, crowder, southern), mature seeds, canned, plain | 1 taza / 1 cup=240 · ½ taza / ½ cup=120 | judías carillas en lata* (ES) · frijol de ojo negro en lata · caupí en lata
+Frijoles carita congelados | Frozen black-eyed peas | sr:Cowpeas (blackeyes), immature seeds, frozen, unprepared | 1 taza / 1 cup=160 · 1 paquete / 1 package=284 | judías carillas congeladas* (ES) · frijol de ojo negro congelado
+Frijoles carita congelados cocidos | Cooked frozen black-eyed peas | sr:Cowpeas (blackeyes), immature seeds, frozen, cooked, boiled, drained, without salt | 1 taza / 1 cup=170 | judías carillas congeladas cocidas* (ES) · frijol de ojo negro congelado cocido | crudo=Frijoles carita congelados
+// Gandules: secos y verdes.
+Gandules crudos | Dry pigeon peas | sr:Pigeon peas (red gram), mature seeds, raw | ¼ taza / ¼ cup=51 · 1 taza / 1 cup=205 | guandules crudos* (DO) · guandú crudo* (PA) · quinchonchos crudos* (VE) · guandul crudo (CO) · frijol de palo crudo (PE) · gandules secos · toor dal
+Gandules | Pigeon peas | sr:Pigeon peas (red gram), mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=168 | guandules* (DO) · guandú* (PA) · quinchonchos* (VE) · guandul (CO) · frijol de palo (PE) · gandules cocidos | crudo=Gandules crudos
+Gandules verdes crudos | Raw green pigeon peas | sr:Pigeonpeas, immature seeds, raw | 1 taza / 1 cup=154 | guandules verdes crudos* (DO) · guandú verde crudo* (PA) · quinchonchos verdes crudos* (VE) · gandules frescos
+Gandules verdes | Green pigeon peas | sr:Pigeonpeas, immature seeds, cooked, boiled, drained, without salt | 1 taza / 1 cup=153 | guandules verdes* (DO) · guandú verde* (PA) · quinchonchos verdes* (VE) · gandules verdes cocidos | crudo=Gandules verdes crudos
+// Habas secas, lentejas y altramuces.
+Habas secas crudas | Dry fava beans | sr:Broadbeans (fava beans), mature seeds, raw | ¼ taza / ¼ cup=38 · 1 taza / 1 cup=150 | habas secas sin cocer · habas deshidratadas
+Habas secas cocidas | Cooked dry fava beans | sr:Broadbeans (fava beans), mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=170 | habas secas hervidas | crudo=Habas secas crudas
+Habas en lata | Canned fava beans | sr:Broadbeans (fava beans), mature seeds, canned | 1 taza / 1 cup=256 · ½ taza / ½ cup=128 | habas en conserva · habas de lata
+Lentejas rojas crudas | Dry red lentils | sr:Lentils, pink or red, raw | ¼ taza / ¼ cup=48 · 1 taza / 1 cup=192 | lentejas coral · lentejas turcas (AR UY) · lentejas rosadas · lentejas rojas secas
+Lentejas germinadas | Sprouted lentils | sr:Lentils, sprouted, raw | 1 taza / 1 cup=77 | brotes de lentejas · germinados de lentejas
+Altramuces crudos | Dry lupini beans | sr:Lupins, mature seeds, raw | ¼ taza / ¼ cup=45 · 1 taza / 1 cup=180 | chochos crudos* (EC PE BO) · lupines crudos (AR CL UY) · lupinos crudos · altramuces secos
+// Refritos, horneados y para untar.
+Frijoles refritos sin grasa | Fat-free refried beans | sr:Refried beans, canned, fat-free | ½ taza / ½ cup=116 · 1 taza / 1 cup=231 · 1 lata / 1 can=445 | porotos refritos sin grasa · frijoles refritos light
+Frijoles refritos bajos en sodio | Low-sodium refried beans | sr:Refried beans, canned, traditional, reduced sodium | ½ taza / ½ cup=119 · 1 taza / 1 cup=238 · 1 cucharada / 1 tbsp=16 | porotos refritos bajos en sodio
+Frijoles refritos de restaurante | Restaurant refried beans | fndds:Refried beans, from fast food / restaurant | ½ taza / ½ cup=130 · 1 taza / 1 cup=260 | porotos refritos de restaurante · frijoles refritos con manteca
+Frijoles rojos volteados | Refried red beans | sr:Frijoles rojos volteados (Refried beans, red, canned) | ½ taza / ½ cup=117 · 1 taza / 1 cup=233 · 1 cucharada / 1 tbsp=15 | frijoles volteados · frijoles rojos refritos
+Dip de frijoles | Bean dip | fndds:Bean dip, made with refried beans | 2 cucharadas / 2 tbsp=30 · 1 cucharada / 1 tbsp=15 · 1 envase individual / 1 individual container=70 | dip de porotos* (AR UY CL) · dip de caraotas* (VE) · dip de habichuelas* (PR DO) · dip de frijoles refritos
+Frijoles horneados sin sal | No-salt-added baked beans | sr:Beans, baked, canned, no salt added | ½ taza / ½ cup=127 · 1 taza / 1 cup=253 | baked beans sin sal · porotos en salsa de tomate sin sal
+Hummus de sabores | Flavored hummus | fndds:Hummus, flavored | 2 cucharadas / 2 tbsp=30 · 1 cucharada / 1 tbsp=15 · 1 envase individual / 1 individual container=70 | hummus saborizado · hummus de pimiento · hummus de ajo · humus de sabores
+Hummus casero | Homemade hummus | sr:Hummus, home prepared | 2 cucharadas / 2 tbsp=30 · 1 cucharada / 1 tbsp=15 · 1 taza / 1 cup=246 | humus casero · hummus hecho en casa
+// Soja.
+Edamame hervido | Boiled edamame | sr:Edamame, frozen, prepared | 1 taza / 1 cup=155 · ½ taza / ½ cup=78 | edamame sin aceite · edamame congelado cocido | crudo=Edamame crudo
+Soja tostada | Soy nuts | fndds:Soy nuts | 1 bolsa pequeña / 1 small bag=28 · 1 bolsa mediana / 1 medium bag=57 · 1 taza / 1 cup=95 | soya tostada* (MX CO VE) · nueces de soja · porotos de soja tostados (AR UY) · soja crocante
+Tofu extra firme | Extra-firm tofu | sr:Tofu, extra firm, prepared with nigari | 100 g / 100 g=100 · ⅕ bloque / ⅕ block=91 | tofu extrafirme · tofu muy firme
+Tofu firme con nigari | Firm tofu (nigari) | sr:Tofu, firm, prepared with calcium sulfate and magnesium chloride (nigari) | 100 g / 100 g=100 · ¼ bloque / ¼ block=81 · ½ taza / ½ cup=126 | tofu firme en agua · tofu de nigari
+Tofu blando con nigari | Soft tofu (nigari) | sr:Tofu, soft, prepared with calcium sulfate and magnesium chloride (nigari) | 100 g / 100 g=100 · ¼ bloque / ¼ block=116 · 1 taza en cubos / 1 cup cubed=248 | tofu suave · tofu blando en agua
+Tofu frito | Fried tofu | sr:Tofu, fried | 100 g / 100 g=100 · 1 trozo / 1 piece=13 | tofu frito en cubos · cubos de tofu frito | crudo=Tofu firme · aceite=incluido
+Tofu empanizado frito | Breaded fried tofu | fndds:Soybean curd, breaded, fried | 1 rebanada / 1 slice=29 · 1 porción / 1 serving=39 | tofu apanado frito* (CO PE CL EC) · tofu empanado frito* (ES) · tofu rebozado · tofu empanado (AR UY) · tofu crujiente | crudo=Tofu firme con nigari · aceite=incluido
+Tempeh cocido | Cooked tempeh | sr:Tempeh, cooked | 100 g / 100 g=100 | tempeh hervido · tempe cocido | crudo=Tempeh
+Natto | Natto | sr:Natto | ½ taza / ½ cup=88 · 1 taza / 1 cup=175 | nattō · soja fermentada
+// Sustitutos vegetales de la carne.
+Salchicha vegetal | Veggie hot dog sausage | sr:Frankfurter, meatless | 1 unidad / 1 frank=70 · 1 taza en rodajas / 1 cup sliced=140 | vienesa vegetal* (UY CL) · salchicha vegana · salchicha vegetariana · salchicha de soja
+Salchicha vegetal de desayuno | Veggie breakfast sausage | sr:Sausage, meatless | 1 unidad / 1 link=25 · 1 medallón / 1 patty=38 · 1 rebanada / 1 slice=28 | salchicha vegana de desayuno · salchicha vegetariana de desayuno
+Pollo vegetal | Meatless chicken | sr:Chicken, meatless | 1 taza / 1 cup=168 · ½ taza / ½ cup=84 | pollo vegano · sustituto de pollo · pollo de soja · tiras vegetales tipo pollo
+Nuggets vegetales | Veggie nuggets | sr:Chicken, meatless, breaded, fried | 4 unidades / 4 pieces=144 · 1 unidad / 1 piece=36 | nuggets veganos · nuggets vegetarianos · nuggets de soja | aceite=incluido
+Albóndigas vegetales | Meatless meatballs | fndds:Meatball, meatless | 3 unidades / 3 meatballs=54 · 1 unidad / 1 meatball=18 · 1 taza / 1 cup=144 | albóndigas veganas · albóndigas vegetarianas · albóndigas de soja
+Filete vegetal | Vegetarian fillet | sr:Vegetarian fillets | 1 filete / 1 fillet=85 | filete vegano · filete vegetariano · filete de soja
+Fiambre vegetal | Meatless deli slices | sr:Luncheon slices, meatless | 2 rebanadas / 2 slices=28 · 1 rebanada / 1 slice=14 | jamón vegetal · fiambre vegano · embutido vegetal · lonchas vegetales (ES) · fetas vegetales (AR UY)
+Tocino vegetal | Meatless bacon | sr:Bacon, meatless | 2 tiras / 2 strips=10 · 1 tira / 1 strip=5 | panceta vegetal* (AR UY) · beicon vegetal* (ES) · tocineta vegetal* (CO VE) · tocino vegano · bacon vegetal
+Trocitos de tocino vegetal | Imitation bacon bits | sr:Bacon bits, meatless | 1 cucharada / 1 tbsp=7 | trocitos de panceta vegetal* (AR UY) · trocitos de beicon vegetal* (ES) · trocitos de tocineta vegetal* (CO VE) · bacon bits · bits de tocino
+Paté vegetal | Meatless sandwich spread | sr:Sandwich spread, meatless | 1 cucharada / 1 tbsp=15 · 2 cucharadas / 2 tbsp=30 | paté vegano · paté vegetariano · untable vegetal
+
+# frutos-secos
+// «Naturales» son los crudos, sin tostar. Con cáscara, el desecho es el de SR28 (ver genericos.txt).
+Almendras naturales | Raw almonds | sr:Nuts, almonds | 1 puñado / 1 handful=28 · 1 unidad / 1 almond=1.2 · 1 taza / 1 cup=143 | almendras crudas · almendras sin tostar · almendras con piel | desecho
+Almendras con miel | Honey roasted almonds | fndds:Almonds, honey roasted | 1 puñado / 1 handful=28 · 1 unidad / 1 almond=1.2 · 1 taza / 1 cup=141 | almendras tostadas con miel
+Crema de almendras sin sal | Unsalted almond butter | sr:Nuts, almond butter, plain, without salt added | 1 cucharada / 1 tbsp=16 · 2 cucharadas / 2 tbsp=32 | mantequilla de almendras sin sal · crema de almendras natural · crema de almendra sin sal
+Nueces naturales | Raw walnuts | sr:Nuts, walnuts, english | 1 puñado / 1 handful=28 · 1 mitad / 1 half=2 · 1 taza en mitades / 1 cup halves=100 · 1 taza picadas / 1 cup chopped=117 | nuez de Castilla natural* (MX) · nueces crudas · nueces peladas · nueces mariposa | desecho
+Nueces saladas | Salted roasted walnuts | sr:Nuts, walnuts, dry roasted, with salt added | 1 puñado / 1 handful=28 | nuez de Castilla salada* (MX) · nueces tostadas saladas · nueces tostadas con sal
+Nueces con miel | Honey roasted walnuts | fndds:Walnuts, honey roasted | 1 puñado / 1 handful=28 · 1 unidad / 1 walnut=2 · 1 taza / 1 cup=120 | nuez de Castilla con miel* (MX) · nueces tostadas con miel
+Nueces caramelizadas | Glazed walnuts | sr:Nuts, walnuts, glazed | 1 puñado / 1 handful=28 | nuez de Castilla caramelizada* (MX) · nueces glaseadas · nueces confitadas · nueces garrapiñadas
+Nueces negras | Black walnuts | sr:Nuts, walnuts, black, dried | 1 puñado / 1 handful=28 · 1 cucharada picada / 1 tbsp chopped=7.8 · 1 taza picada / 1 cup chopped=125 | nuez negra · nuez de nogal negro
+Castañas de cajú naturales | Raw cashews | sr:Nuts, cashew nuts, raw | 1 puñado / 1 handful=28 | nuez de la India natural* (MX) · anacardos naturales* (ES) · marañón natural* (CO PA CR) · merey natural* (VE) · castañas de cajú crudas · anacardos crudos · cajú crudo
+Castañas de cajú con miel | Honey roasted cashews | fndds:Cashews, honey roasted | 1 puñado / 1 handful=28 · 1 unidad / 1 cashew=1.5 · 1 taza / 1 cup=130 | nuez de la India con miel* (MX) · anacardos con miel* (ES) · marañón con miel* (CO PA CR) · merey con miel* (VE) · cajú con miel
+Crema de castañas de cajú | Cashew butter | fndds:Cashew butter | 1 cucharada / 1 tbsp=16 · 2 cucharadas / 2 tbsp=32 | crema de nuez de la India* (MX) · crema de anacardos* (ES) · crema de marañón* (CO PA CR) · crema de merey* (VE) · mantequilla de cajú · crema de cajú · pasta de cajú · mantequilla de anacardos
+Crema de castañas de cajú sin sal | Unsalted cashew butter | sr:Nuts, cashew butter, plain, without salt added | 1 cucharada / 1 tbsp=16 · 2 cucharadas / 2 tbsp=32 | crema de nuez de la India sin sal* (MX) · crema de anacardos sin sal* (ES) · crema de marañón sin sal* (CO PA CR) · crema de merey sin sal* (VE) · mantequilla de cajú sin sal · crema de cajú sin sal
+Nueces pecanas naturales | Raw pecans | sr:Nuts, pecans | 1 puñado / 1 handful=28 · 1 mitad / 1 half=1.5 · 1 taza en mitades / 1 cup halves=99 · 1 taza picadas / 1 cup chopped=109 | pecanas naturales* (AR UY) · nuez natural* (MX) · pacanas crudas (ES) · nueces pecanas crudas · pecanas crudas | desecho
+Nueces pecanas saladas | Salted pecans | fndds:Pecans, salted | 1 puñado / 1 handful=28 · 1 unidad / 1 pecan=1.5 · 1 taza / 1 cup=100 | pecanas saladas* (AR UY) · nuez salada* (MX) · pacanas saladas (ES)
+Nueces pecanas con miel | Honey roasted pecans | fndds:Pecans, honey roasted | 1 puñado / 1 handful=28 · 1 unidad / 1 pecan=1.5 · 1 taza / 1 cup=100 | pecanas con miel* (AR UY) · nuez con miel* (MX) · pacanas con miel (ES)
+Pistachos naturales | Raw pistachios | sr:Nuts, pistachio nuts, raw | 1 puñado / 1 handful=28 · 1 taza / 1 cup=123 | pistaches naturales* (MX) · pistachos crudos · pistachos sin tostar | desecho
+Pistachos salados | Salted pistachios | fndds:Pistachio nuts, salted | 1 puñado / 1 handful=28 · 1 taza / 1 cup=128 | pistaches salados* (MX) · pistachos tostados salados · pistachos con sal | desecho=47 cáscara/shell
+Macadamia natural | Raw macadamia nuts | sr:Nuts, macadamia nuts, raw | 1 puñado / 1 handful=28 · 1 taza / 1 cup=134 | macadamia cruda · macadamia sin sal · nueces de macadamia crudas
+Castañas crudas | Raw chestnuts | sr:Nuts, chestnuts, european, raw, peeled | 50 g / 50 g=50 · 100 g / 100 g=100 | castañas frescas · castañas peladas
+Castañas hervidas | Boiled chestnuts | sr:Nuts, chestnuts, european, boiled and steamed | 50 g / 50 g=50 · 100 g / 100 g=100 | castañas cocidas · castañas al vapor | crudo=Castañas crudas
+Castañas secas | Dried chestnuts | sr:Nuts, chestnuts, european, dried, peeled | 50 g / 50 g=50 · 100 g / 100 g=100 | castañas pilongas (ES) · castañas deshidratadas
+// Maní.
+Maní crudo | Raw peanuts | sr:Peanuts, all types, raw | 1 puñado / 1 handful=28 · 1 taza / 1 cup=146 | cacahuate crudo* (MX GT HN SV) · cacahuete crudo* (ES) · maní sin tostar · maní natural | desecho=26 cáscara/shell
+Maní hervido | Boiled peanuts | fndds:Peanuts, boiled | 1 puñado / 1 handful=28 · 1 taza / 1 cup=146 | cacahuates hervidos* (MX GT HN SV) · cacahuetes hervidos* (ES) · maní cocido | crudo=Maní crudo
+Maní tostado en seco | Dry-roasted peanuts | fndds:Peanuts, dry roasted, unsalted | 1 puñado / 1 handful=28 · 1 taza / 1 cup=146 | cacahuates tostados en seco* (MX GT HN SV) · cacahuetes tostados en seco* (ES) · maní tostado sin aceite · maní horneado
+Maní tostado en seco salado | Salted dry-roasted peanuts | fndds:Peanuts, dry roasted, salted | 1 puñado / 1 handful=28 · 1 taza / 1 cup=146 | cacahuates tostados en seco salados* (MX GT HN SV) · cacahuetes tostados en seco salados* (ES) · maní salado sin aceite
+Maní con miel | Honey roasted peanuts | fndds:Peanuts, honey roasted | 1 puñado / 1 handful=28 · 1 paquete / 1 package=50 · 1 taza / 1 cup=146 | cacahuates con miel* (MX GT HN SV) · cacahuetes con miel* (ES) · maní tostado con miel
+Mantequilla de maní sin sal | Unsalted peanut butter | sr:Peanut butter, smooth style, without salt | 1 cucharada / 1 tbsp=16 · 2 cucharadas / 2 tbsp=32 | crema de cacahuate sin sal* (MX) · crema de cacahuete sin sal* (ES) · pasta de maní sin sal* (AR UY) · mantequilla de maní natural
+Mantequilla de maní crujiente | Crunchy peanut butter | sr:Peanut butter, chunk style, with salt | 1 cucharada / 1 tbsp=16 · 2 cucharadas / 2 tbsp=32 | crema de cacahuate crujiente* (MX) · crema de cacahuete crujiente* (ES) · pasta de maní crocante* (AR UY) · mantequilla de maní con trozos · mantequilla de maní crunchy
+Mantequilla de maní light | Reduced-fat peanut butter | fndds:Peanut butter, reduced fat | 1 cucharada / 1 tbsp=16 · 2 cucharadas / 2 tbsp=32 | crema de cacahuate light* (MX) · crema de cacahuete light* (ES) · pasta de maní light* (AR UY) · mantequilla de maní reducida en grasa
+Mantequilla de maní baja en azúcar | Reduced-sugar peanut butter | fndds:Peanut butter, lower sugar | 1 cucharada / 1 tbsp=16 · 2 cucharadas / 2 tbsp=32 | crema de cacahuate baja en azúcar* (MX) · crema de cacahuete baja en azúcar* (ES) · pasta de maní baja en azúcar* (AR UY) · mantequilla de maní reducida en azúcar
+// Mezclas.
+Mix de frutos secos sin sal | Unsalted mixed nuts | fndds:Mixed nuts, with peanuts, unsalted | 1 puñado / 1 handful=28 · 1 paquete / 1 package=50 · 1 taza / 1 cup=142 | frutos secos sin sal · mezcla de frutos secos sin sal · nueces mixtas sin sal
+Mix de frutos secos sin maní | Mixed nuts without peanuts | fndds:Mixed nuts, without peanuts, salted | 1 puñado / 1 handful=28 · 1 paquete / 1 package=50 · 1 taza / 1 cup=142 | mix de frutos secos sin cacahuate* (MX GT HN SV) · mix de frutos secos sin cacahuete* (ES) · mezcla de frutos secos sin maní
+Mix de frutos secos con miel | Honey roasted mixed nuts | fndds:Mixed nuts, honey roasted | 1 puñado / 1 handful=28 · 1 paquete / 1 package=50 · 1 taza / 1 cup=142 | frutos secos con miel · mezcla de frutos secos con miel
+Mix de frutos secos con chocolate | Trail mix with chocolate | fndds:Trail mix with chocolate | 1 puñado / 1 handful=28 · 1 paquete / 1 package=50 · 1 taza / 1 cup=140 | mix con chocolate · mezcla de frutos secos con chocolate · trail mix con chocolate
+Mix de semillas | Mixed seeds | fndds:Mixed seeds | 2 cucharadas / 2 tbsp=18 · 1 puñado / 1 handful=28 · 1 taza / 1 cup=145 | mezcla de semillas · semillas mixtas · semillas surtidas
+// Semillas.
+Semillas de girasol saladas | Salted sunflower seeds | fndds:Sunflower seeds, plain, salted | 2 cucharadas / 2 tbsp=18 · 1 puñado / 1 handful=28 · 1 taza / 1 cup=144 | pipas saladas* (ES) · pipas con sal · semillas de girasol con sal | desecho=46 cáscara/shell
+Crema de semillas de girasol | Sunflower seed butter | sr:Seeds, sunflower seed butter, with salt added | 1 cucharada / 1 tbsp=16 · 2 cucharadas / 2 tbsp=32 | crema de pipas de girasol* (ES) · mantequilla de girasol · mantequilla de semillas de girasol · pasta de girasol
+Semillas de calabaza saladas | Salted pumpkin seeds | fndds:Pumpkin seeds, salted | 2 cucharadas / 2 tbsp=18 · 1 puñado / 1 handful=28 · 1 taza / 1 cup=144 | pepitas saladas* (MX) · semillas de zapallo saladas* (AR UY) · pepitas de calabaza saladas | desecho=26 cáscara/shell
+Semillas de calabaza con cáscara | Whole roasted pumpkin seeds | sr:Seeds, pumpkin and squash seeds, whole, roasted, without salt | 1 puñado / 1 handful=28 · 1 taza / 1 cup=64 | pepitas con cáscara* (MX) · semillas de zapallo con cáscara* (AR UY) · semillas de calabaza enteras tostadas
+Sésamo integral | Whole sesame seeds | sr:Seeds, sesame seeds, whole, dried | 1 cucharada / 1 tbsp=9 · 1 taza / 1 cup=144 | ajonjolí integral* (MX CO VE) · sésamo con cáscara · sésamo sin pelar · semillas de sésamo integral
+Sésamo tostado | Toasted sesame seeds | sr:Seeds, sesame seeds, whole, roasted and toasted | 10 g / 10 g=10 · 30 g / 30 g=30 | ajonjolí tostado* (MX CO VE) · semillas de sésamo tostadas
+// El tahini de genericos.txt (FNDDS) da 697 kcal; este es el de SR Legacy, «el más común», con 595.
+Tahini tostado | Roasted tahini | sr:Seeds, sesame butter, tahini, from roasted and toasted kernels (most common type) | 1 cucharada / 1 tbsp=15 · 2 cucharadas / 2 tbsp=30 | tahini de sésamo tostado · tahín tostado · pasta de sésamo tostado · pasta de ajonjolí tostado (MX CO VE)
+Linaza molida | Ground flaxseed | sr:Seeds, flaxseed | 1 cucharada / 1 tbsp=7 · 1 cucharadita / 1 tsp=2.5 | semillas de lino molidas* (AR UY ES) · lino molido · harina de linaza · harina de lino
+
+# cereales
+// Harinas de legumbres y de frutos secos, con las demás harinas.
+Harina de soja | Soy flour | sr:Soy flour, full-fat, raw | ¼ taza / ¼ cup=21 · 1 taza / 1 cup=84 · 1 cucharada / 1 tbsp=5.2 | harina de soya* (MX CO VE) · harina de soja entera
+Harina de soja desgrasada | Defatted soy flour | sr:Soy flour, defatted | ¼ taza / ¼ cup=26 · 1 taza / 1 cup=105 · 1 cucharada / 1 tbsp=6.6 | harina de soya desgrasada* (MX CO VE)
+Harina de maní desgrasada | Defatted peanut flour | sr:Peanut flour, defatted | ¼ taza / ¼ cup=15 · 1 taza / 1 cup=60 | harina de cacahuate desgrasada* (MX GT HN SV) · harina de cacahuete desgrasada* (ES) · harina de maní · maní en polvo · mantequilla de maní en polvo
+// El gluten con el que se hace el seitán (USDA no tiene el seitán hecho).
+
+# lacteos
+Yogur de soja | Soy yogurt | fndds:Yogurt, soy | 1 envase / 1 container=150 · 1 envase grande / 1 large container=170 · 1 taza / 1 cup=245 | yogur de soya* (MX CO VE) · yogurt de soja · yogur vegetal
+
+# bebidas
+Leche de soja de vainilla | Vanilla soy milk | sr:Soymilk, original and vanilla, with added calcium, vitamins A and D | 1 vaso (200 ml) / 1 glass (200 ml)=205 · 1 taza / 1 cup=243 | leche de soya de vainilla* (MX CO VE) · bebida de soja sabor vainilla · leche de soja original con calcio | ml
+Leche de soja light | Light soy milk | sr:Soymilk, original and vanilla, light, with added calcium, vitamins A and D | 1 vaso (200 ml) / 1 glass (200 ml)=205 · 1 taza / 1 cup=243 | leche de soya light* (MX CO VE) · bebida de soja light | ml
+Leche de soja con chocolate | Chocolate soy milk | fndds:Soy milk, chocolate | 1 vaso (200 ml) / 1 glass (200 ml)=206 · 1 taza / 1 cup=244 | leche de soya con chocolate* (MX CO VE) · bebida de soja con chocolate · leche de soja chocolatada | ml
+Leche de soja light con chocolate | Light chocolate soy milk | sr:Soymilk, chocolate and other flavors, light, with added calcium, vitamins A and D | 1 vaso (200 ml) / 1 glass (200 ml)=205 · 1 taza / 1 cup=243 | leche de soya light con chocolate* (MX CO VE) · bebida de soja light con chocolate | ml
+
+# suplementos
+Proteína aislada de soja | Soy protein isolate | sr:Soy protein isolate | 30 g / 30 g=30 | proteína aislada de soya* (MX CO VE) · aislado de soja · proteína de soja aislada
+
+# snacks
+Chips de soja | Soy chips | fndds:Soy chips | 1 bolsa pequeña / 1 small bag=28 · 1 bolsa mediana / 1 medium bag=57 · 1 taza / 1 cup=30 | chips de soya* (MX CO VE) · chips proteicos · crisps de soja
+Chips de frijol | Bean chips | fndds:Bean chips | 1 bolsa pequeña / 1 small bag=28 · 1 bolsa mediana / 1 medium bag=57 · 1 taza / 1 cup=30 | chips de porotos* (AR UY CL) · chips de legumbres
+Arvejas con wasabi | Wasabi peas | fndds:Wasabi peas | 1 porción / 1 serving=30 · 1 taza / 1 cup=120 | guisantes con wasabi* (ES) · chícharos con wasabi* (MX) · alverjas con wasabi* (CO) · arvejas wasabi
+
+# platos
+Chili vegetariano | Vegetarian chili | fndds:Chili, vegetarian | 1 taza / 1 cup=255 | chili sin carne · chili vegano · chili de frijoles
+Frijoles con tomate | Beans with tomatoes | fndds:Beans and tomatoes, no added fat | 1 taza / 1 cup=255 · ½ taza / ½ cup=127 | porotos con tomate* (AR UY CL) · caraotas con tomate* (VE) · habichuelas con tomate* (PR DO) · frijoles guisados con tomate
+Curry de lentejas con arroz | Lentil curry with rice | fndds:Lentil curry with rice | 1 taza / 1 cup=200 | dal con arroz · lentejas al curry con arroz
+Pupusa de frijoles | Bean pupusa | fndds:Pupusa, with beans | 1 unidad / 1 pupusa=130 | pupusa de frijol · pupusa de frijoles refritos
+Tofu salteado con verduras | Tofu and vegetable stir-fry | fndds:Tofu and vegetables including carrots, broccoli, and/or dark-green leafy; no potatoes, with soy-based sauce | 1 taza / 1 cup=217 · 1 porción / 1 serving=163 | tofu con verduras · salteado de tofu · wok de tofu
+Hot dog vegetal | Veggie hot dog | fndds:Hot dog sandwich, vegetarian, on bun | 1 unidad / 1 hot dog=115 | perro caliente vegetal* (CO VE) · completo vegetal* (CL) · pancho vegetal* (AR UY PY) · hot dog vegetariano · hot dog vegano · perrito caliente vegetal (ES)
+Hamburguesa vegetal con pan | Veggie burger on a bun | fndds:Veggie burger, on bun | 1 unidad / 1 burger=160 | hamburguesa vegetariana · hamburguesa vegana con pan · hamburguesa de soja con pan
+Hamburguesa vegetal con pan y queso | Veggie cheeseburger | fndds:Veggie burger, on bun, with cheese | 1 unidad / 1 burger=181 | hamburguesa vegetariana con queso · hamburguesa vegetal con queso
+Sándwich de mantequilla de maní | Peanut butter sandwich | fndds:Peanut butter sandwich, with regular peanut butter, on white bread | 1 unidad / 1 sandwich=92 · 1 sándwich abierto / 1 open-faced sandwich=46 | sándwich de crema de cacahuate* (MX) · sándwich de crema de cacahuete* (ES) · sándwich de pasta de maní* (AR UY) · pan con mantequilla de maní

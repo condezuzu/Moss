@@ -1,0 +1,122 @@
+// Más papas, otros tubérculos, plátano de cocinar y maíz dulce (22/11/2026, lo pediste: «el máximo de comidas
+// posibles»): las variedades de papa y sus formas (al horno, al microondas, en puré, fritas, hash browns, en lata),
+// la batata, la yuca y otras raíces, el maíz como verdura y sus platos simples, que USDA tenía solo en inglés. El
+// formato es el de genericos.txt. De lo que FNDDS repite según la grasa, solo «no added fat» (con «aceite»: la app
+// pregunta). Son variantes: al buscar salen después de lo de siempre (la papa, la batata, el maíz dulce… siguen
+// en genericos.txt).
+@variantes
+
+# tuberculos
+// Papas: las variedades. El desecho es el de «Papa»: la cáscara, si se pela.
+Papa blanca | White potato | sr:Potatoes, white, flesh and skin, raw | 1 mediana / 1 medium=213 · 1 grande / 1 large=369 · ½ taza en cubos / ½ cup diced=75 | patata blanca* (ES) · papa blanca cruda | desecho=25 cáscara
+Papa roja | Red potato | sr:Potatoes, red, flesh and skin, raw | 1 mediana / 1 medium=213 · 1 pequeña / 1 small=170 · 1 grande / 1 large=369 · ½ taza en cubos / ½ cup diced=75 | patata roja* (ES) · papa roja cruda · papa colorada · papa rosada | desecho=25 cáscara
+Papa roja al horno | Baked red potato | sr:Potatoes, red, flesh and skin, baked | 1 mediana / 1 medium=173 · 1 pequeña / 1 small=138 · 1 grande / 1 large=299 | patata roja asada* (ES) · papa roja asada | crudo=Papa roja
+Papa russet | Russet potato | sr:Potatoes, russet, flesh and skin, raw | 1 mediana / 1 medium=213 · 1 pequeña / 1 small=170 · 1 grande / 1 large=369 · ½ taza en cubos / ½ cup diced=75 | patata russet* (ES) · papa russet cruda · papa para hornear | desecho=25 cáscara
+Papa russet al horno | Baked russet potato | sr:Potatoes, Russet, flesh and skin, baked | 1 mediana / 1 medium=173 · 1 pequeña / 1 small=138 · 1 grande / 1 large=299 | patata russet asada* (ES) · papa russet asada | crudo=Papa russet
+
+// Papas: otras formas de cocinarlas. «Papa hervida» y «Papa al horno» (con cáscara) están en genericos.txt.
+Papa hervida con cáscara | Boiled potato with skin | fndds:Potato, boiled, from fresh,  peel eaten, no added fat | 1 mediana / 1 medium=170 · 1 pequeña / 1 small=130 · 1 grande / 1 large=300 · 1 papa baby / 1 baby potato=60 · 1 taza / 1 cup=160 | patata cocida con piel* (ES) · papa cocida con cáscara · papa hervida con piel · papines hervidos · papas cambray hervidas · papas baby hervidas | crudo=Papa
+Papa al horno sin cáscara | Baked potato without skin | sr:Potatoes, baked, flesh, without salt | 1 papa / 1 potato=156 · ½ taza / ½ cup=61 | patata asada sin piel* (ES) · papa asada sin cáscara · papa al horno pelada | crudo=Papa
+Papa al microondas | Microwaved potato | sr:Potatoes, microwaved, cooked in skin, flesh and skin, without salt | 1 papa / 1 potato=202 | patata al microondas* (ES) · papa cocida en microondas · papa en microondas | crudo=Papa
+Papas en cubos al horno | Roasted diced potatoes | fndds:Potato, roasted, from fresh, peel not eaten, no added fat | 1 taza / 1 cup=160 · 1 papa mediana / 1 medium potato=170 · 1 papa pequeña / 1 small potato=130 · 1 papa grande / 1 large potato=300 | patatas en dados al horno* (ES) · papas en dados al horno · papas asadas en cubos · papas doradas al horno | crudo=Papa · aceite
+// Papas salteadas: las «home fries», doradas en sartén con su aceite.
+Papas salteadas | Home fries | fndds:Potato, home fries, from fresh | 1 taza / 1 cup=200 · 1 papa / 1 potato=100 | patatas salteadas* (ES) · papas doradas · papas a la sartén · papas cocidas salteadas | crudo=Papa · aceite=incluido
+Papas en lata | Canned potatoes | sr:Potatoes, canned, drained solids | 1 taza / 1 cup=180 · 1 papa / 1 potato=35 | patatas en lata* (ES) · papas en conserva · papas enlatadas · papines en lata
+
+// Purés. «Puré de papas» (con leche y mantequilla) está en genericos.txt, y los copos sin preparar, en uruguay-almacen.txt.
+Puré de papas con leche | Mashed potatoes with milk | sr:Potatoes, mashed, home-prepared, whole milk added | 1 taza / 1 cup=210 · ½ taza / ½ cup=105 | puré de patatas con leche* (ES) · puré de papas sin mantequilla · puré casero con leche
+Puré de papas instantáneo preparado | Prepared instant mashed potatoes | sr:Potatoes, mashed, dehydrated, prepared from flakes without milk, whole milk and butter added | 1 taza / 1 cup=210 · ½ taza / ½ cup=105 | puré de patatas instantáneo preparado* (ES) · puré de sobre preparado · puré de copos preparado · puré instantáneo con leche y mantequilla | crudo=Puré de papas instantáneo
+Puré de papas envasado | Ready-to-eat mashed potatoes | sr:Potatoes, mashed, ready-to-eat | 1 taza / 1 cup=229 · ½ taza / ½ cup=115 | puré de patatas envasado* (ES) · puré de papas refrigerado · puré de papas listo para calentar · puré de papas comprado
+
+// Papas fritas: «Papas fritas» (las de restaurante) está en genericos.txt. Las congeladas sin cocinar se llaman
+// «prefritas», como en la bolsa.
+Papas fritas caseras | Homemade french fries | fndds:Potato, french fries, from fresh, fried | 1 porción / 1 serving=110 · 1 taza / 1 cup=60 · 10 papas / 10 fries=50 | patatas fritas caseras* (ES) · papas a la francesa caseras* (MX) · papas fritas hechas en casa · papas bastón fritas | crudo=Papa · aceite=incluido
+Papas fritas al horno caseras | Homemade oven fries | fndds:Potato, french fries, from fresh, baked | 1 porción / 1 serving=110 · 1 taza / 1 cup=60 · 10 papas / 10 fries=50 | patatas fritas al horno caseras* (ES) · papas a la francesa al horno caseras* (MX) · papas bastón al horno · papas fritas sin freír · papas en freidora de aire | crudo=Papa · aceite=incluido
+Papas prefritas congeladas | Frozen french fries | sr:Potatoes, french fried, all types, salt added in processing, frozen, unprepared | 10 papas / 10 fries=89 · 1 paquete (255 g) / 1 package (9 oz)=255 | patatas prefritas congeladas* (ES) · papas a la francesa congeladas* (MX) · papas fritas congeladas · papas congeladas para freír · papas bastón congeladas
+Papas fritas congeladas al horno | Oven-baked frozen fries | fndds:Potato, french fries, from frozen, baked | 1 porción / 1 serving=110 · 1 taza / 1 cup=60 · 10 papas / 10 fries=50 | patatas fritas congeladas al horno* (ES) · papas a la francesa congeladas al horno* (MX) · papas prefritas al horno · papas congeladas al horno · papas congeladas en freidora de aire | crudo=Papas prefritas congeladas · aceite=incluido
+Papas en gajos congeladas | Frozen potato wedges | sr:Potatoes, french fried, wedge cut, frozen, unprepared | 1 porción / 1 serving=85 | patatas gajo congeladas* (ES) · papas gajo · papas en cuña congeladas · papas rústicas congeladas · potato wedges
+Papas rejilla congeladas | Frozen waffle fries | sr:Potatoes, french fried, cross cut, frozen, unprepared | 1 porción / 1 serving=85 | patatas rejilla congeladas* (ES) · papas waffle · papas en rejilla · papas corte waffle
+
+// Los «tater tots»: bocaditos de papa rallada, prefritos y congelados (parecidos a las papas noisette).
+Tots de papa congelados | Frozen potato tots | sr:Potato puffs, frozen, unprepared | 10 unidades / 10 pieces=91 · 1 taza / 1 cup=120 | tots de patata congelados* (ES) · tater tots congelados · bocaditos de papa rallada congelados · papas noisette congeladas
+Tots de papa al horno | Baked potato tots | fndds:Potato tots, frozen, baked | 1 porción / 1 serving=65 · 10 unidades / 10 pieces=80 · 1 taza / 1 cup=130 | tots de patata al horno* (ES) · tater tots · tater tots al horno · bocaditos de papa rallada · papas tots · papas noisette al horno | crudo=Tots de papa congelados · aceite=incluido
+Tots de papa fritos | Fried potato tots | fndds:Potato tots, frozen, fried | 1 porción / 1 serving=65 · 10 unidades / 10 pieces=80 · 1 taza / 1 cup=130 | tots de patata fritos* (ES) · tater tots fritos · bocaditos de papa rallada fritos · papas noisette fritas | crudo=Tots de papa congelados · aceite=incluido
+
+// Hash browns: papa rallada y dorada en sartén, como el rösti.
+Hash browns caseros | Homemade hash browns | fndds:Potato, hash brown, from fresh | 1 porción / 1 serving=80 · 1 taza / 1 cup=160 | hash browns · rösti · papas hash brown · papa rallada dorada · papas ralladas a la sartén | crudo=Papa · aceite=incluido
+Hash browns congelados | Frozen hash browns | sr:Potatoes, hash brown, frozen, plain, unprepared | ½ taza / ½ cup=105 · 1 taza / 1 cup=210 | papa rallada congelada · hash browns sin cocinar · papas hash brown congeladas
+Hash browns congelados fritos | Pan-fried frozen hash browns | sr:Potatoes, hash brown, frozen, plain, prepared, pan fried in canola oil | 1 taza / 1 cup=150 · 1 unidad pequeña / 1 small patty=29 | hash browns congelados a la sartén · papa rallada congelada frita · rösti congelado | crudo=Hash browns congelados · aceite=incluido
+Hash brown de comida rápida | Fast-food hash brown | fndds:Potato, hash brown, from fast food | 1 unidad / 1 patty=55 · 1 porción / 1 serving=80 · 1 taza / 1 cup=160 | hash brown de restaurante · hash brown de desayuno · papa hash brown | crudo=Papa · aceite=incluido
+
+// Batata: otras formas. «Batata frita» (la casera) está en uruguay.txt. Las fritas congeladas de USDA quedaron afuera:
+// sus calorías no cierran con sus macros (182 kcal contra 231).
+Batata frita de restaurante | Restaurant sweet potato fries | fndds:Sweet potato fries, fast food / restaurant | 1 porción / 1 serving=90 · 1 taza / 1 cup=60 · 10 unidades / 10 fries=50 | boniato frito de restaurante* (UY CU) · camote frito de restaurante* (MX PE CL EC GT HN SV NI CR) · batatas fritas de restaurante | crudo=Batata · aceite=incluido
+Batata congelada | Frozen sweet potato | sr:Sweet potato, frozen, unprepared | 1 taza en cubos / 1 cup cubes=176 | boniato congelado* (UY CU) · camote congelado* (MX PE CL EC GT HN SV NI CR) · batata en cubos congelada
+Batata congelada al horno | Baked frozen sweet potato | sr:Sweet potato, frozen, cooked, baked, without salt | 1 taza en cubos / 1 cup cubes=176 | boniato congelado al horno* (UY CU) · camote congelado al horno* (MX PE CL EC GT HN SV NI CR) · batata en cubos congelada al horno | crudo=Batata congelada
+Batata en lata | Canned sweet potato | sr:Sweet potato, canned, vacuum pack | 1 taza en trozos / 1 cup pieces=200 · 1 taza en puré / 1 cup mashed=255 | boniato en lata* (UY CU) · camote en lata* (MX PE CL EC GT HN SV NI CR) · batata en conserva
+Puré de batata en lata | Canned mashed sweet potato | sr:Sweet potato, canned, mashed | 1 taza / 1 cup=255 · ½ taza / ½ cup=128 | puré de boniato en lata* (UY CU) · puré de camote en lata* (MX PE CL EC GT HN SV NI CR) · puré de batata envasado
+Batata en almíbar | Sweet potato in syrup | sr:Sweet potato, canned, syrup pack, drained solids | 1 taza / 1 cup=196 · ½ taza / ½ cup=98 | boniato en almíbar* (UY CU) · camote en almíbar* (MX PE CL EC GT HN SV NI CR) · batatas en almíbar · batata en lata en almíbar
+
+// Yuca, plátano y otras raíces. La yautía blanca (Xanthosoma) no es la malanga o taro de genericos.txt; USDA la tiene solo cruda.
+Yuca frita | Cassava fries | fndds:Yuca fries | 1 porción / 1 serving=70 · 1 taza / 1 cup=140 | mandioca frita* (AR UY PY BO) · yuquitas fritas · yuca frita en bastones | crudo=Yuca · aceite=incluido
+Plátano maduro al horno | Baked ripe plantain | sr:Plantains, yellow, baked | 1 taza / 1 cup=139 · 10 rodajas / 10 slices=105 | plátano maduro asado · maduro al horno · maduro asado · plátano macho maduro al horno (MX) | crudo=Plátano maduro
+Yautía blanca | Yautia | sr:Yautia (tannier), raw | 1 taza en rodajas / 1 cup sliced=135 · 1 raíz / 1 root=305 | quequisque* (NI) · tiquisque* (CR) · otoe* (PA) · malanga blanca · ocumo blanco · tannia | desecho
+Topinambur | Jerusalem artichoke | sr:Jerusalem-artichokes, raw | 1 taza en rodajas / 1 cup sliced=150 | tupinambo · pataca · aguaturma · alcachofa de Jerusalén · papa de Jerusalén | desecho
+Poi | Poi | sr:Poi | 1 taza / 1 cup=240 · ½ taza / ½ cup=120 | puré de taro · pasta de taro
+// El fufu de África occidental: la masa de yuca o plátano, cocida y batida.
+Fufu | Fufu | fndds:Fufu | 1 porción / 1 serving=120 · 1 taza / 1 cup=240 | fufú · foufou · foofoo · masa de yuca
+
+# cereales
+// USDA no tiene la fécula (el almidón solo): la harina es la papa entera, seca y molida.
+Harina de papa | Potato flour | sr:Potato flour | ¼ taza / ¼ cup=40 · 1 taza / 1 cup=160 · 1 cucharada / 1 tbsp=10 | harina de patata* (ES) · papa en polvo
+
+# panes
+Casabe | Cassava bread | fndds:Casabe, cassava bread | 1 unidad (15 cm) / 1 piece (6 in)=100 | cazabe · casabe de yuca · torta de casabe
+
+# verduras
+// Maíz dulce: el blanco, el congelado y el de lata. El desecho de la mazorca, como en «Maíz dulce» (el marlo).
+Maíz dulce blanco | White sweet corn | sr:Corn, sweet, white, raw | 1 mazorca mediana / 1 medium ear=90 · 1 taza de granos / 1 cup kernels=154 · 1 mazorca pequeña / 1 small ear=73 · 1 mazorca grande / 1 large ear=143 | choclo blanco* (AR UY CL PE BO EC PY) · elote blanco* (MX GT HN SV NI CR) · mazorca blanca* (CO ES) · jojoto blanco* (VE) · maíz blanco tierno | desecho=45 marlo
+Maíz dulce blanco cocido | Boiled white sweet corn | sr:Corn, sweet, white, cooked, boiled, drained, without salt | 1 mazorca mediana / 1 medium ear=103 · 1 taza de granos / 1 cup kernels=157 · 1 mazorca pequeña / 1 small ear=89 · 1 mazorca grande / 1 large ear=116 | choclo blanco cocido* (AR UY CL PE BO EC PY) · elote blanco cocido* (MX GT HN SV NI CR) · mazorca blanca cocida* (CO ES) · jojoto blanco cocido* (VE) | crudo=Maíz dulce blanco · desecho
+Maíz en lata escurrido | Drained canned corn | sr:Corn, sweet, yellow, canned, whole kernel, drained solids | ½ taza / ½ cup=82 · 1 taza / 1 cup=164 · 1 lata escurrida / 1 can, drained=211 | choclo en lata escurrido* (AR UY CL PE BO EC PY) · elote en lata escurrido* (MX GT HN SV NI CR) · maíz en grano en lata · granos de maíz en lata · maíz en conserva escurrido
+Maíz en lata sin sal | No-salt-added canned corn | sr:Corn, sweet, yellow, canned, vacuum pack, no salt added | ½ taza / ½ cup=105 · 1 lata / 1 can=340 | choclo en lata sin sal* (AR UY CL PE BO EC PY) · elote en lata sin sal* (MX GT HN SV NI CR) · maíz en conserva sin sal · maíz en lata sin sal agregada
+Maíz congelado | Frozen corn | sr:Corn, sweet, yellow, frozen, kernels cut off cob, unprepared | 1 taza / 1 cup=136 · ½ taza / ½ cup=68 · 1 paquete (284 g) / 1 package (10 oz)=284 | choclo congelado* (AR UY CL PE BO EC PY) · elote congelado* (MX GT HN SV NI CR) · maíz en grano congelado · granos de maíz congelados · maíz dulce congelado
+Maíz congelado cocido | Boiled frozen corn | sr:Corn, sweet, yellow, frozen, kernels cut off cob, boiled, drained, without salt | 1 taza / 1 cup=165 · ½ taza / ½ cup=83 | choclo congelado cocido* (AR UY CL PE BO EC PY) · elote congelado cocido* (MX GT HN SV NI CR) · maíz congelado hervido | crudo=Maíz congelado
+Maíz congelado al microondas | Microwaved frozen corn | sr:Corn, yellow, whole kernel, frozen, microwaved | 1 taza / 1 cup=141 · ½ taza / ½ cup=71 | choclo congelado al microondas* (AR UY CL PE BO EC PY) · elote congelado al microondas* (MX GT HN SV NI CR) · maíz al microondas | crudo=Maíz congelado
+
+# platos
+// Papa al horno con algo encima (la papa entera, grande, como la sirven).
+Papa al horno con mantequilla | Baked potato with butter | fndds:Potato, baked, peel not eaten, with butter | 1 mediana / 1 medium=315 · 1 pequeña / 1 small=260 · 1 grande / 1 large=445 · 1 taza / 1 cup=160 | patata asada con mantequilla* (ES) · papa al horno con manteca* (AR UY PY) · papa asada con mantequilla
+Papa al horno con queso | Baked potato with cheese | fndds:Potato, baked, peel not eaten, with cheese | 1 mediana / 1 medium=315 · 1 pequeña / 1 small=260 · 1 grande / 1 large=445 · 1 taza / 1 cup=160 | patata asada con queso* (ES) · papa asada con queso · papa rellena de queso
+Papa al horno con crema agria | Baked potato with sour cream | fndds:Potato, baked, peel not eaten, with sour cream | 1 mediana / 1 medium=315 · 1 pequeña / 1 small=260 · 1 grande / 1 large=445 · 1 taza / 1 cup=160 | patata asada con crema agria* (ES) · papa al horno con crema ácida* (MX) · papa asada con crema agria
+Papa al horno con verduras | Baked potato with vegetables | fndds:Potato, baked, peel not eaten, with vegetables | 1 mediana / 1 medium=315 · 1 pequeña / 1 small=260 · 1 grande / 1 large=445 · 1 taza / 1 cup=160 | patata asada con verduras* (ES) · papa asada con verduras · papa rellena de verduras
+Papa al horno con chili | Baked potato with chili | fndds:Potato, baked, peel not eaten, with chili | 1 mediana / 1 medium=315 · 1 pequeña / 1 small=260 · 1 grande / 1 large=445 · 1 taza / 1 cup=160 | patata asada con chili* (ES) · papa asada con chili · papa al horno con chili con carne
+Papa al horno con carne | Baked potato with meat | fndds:Potato, baked, peel not eaten, with meat | 1 mediana / 1 medium=315 · 1 pequeña / 1 small=260 · 1 grande / 1 large=445 · 1 taza / 1 cup=160 | patata asada con carne* (ES) · papa asada con carne · papa al horno rellena de carne
+
+// Purés con algo.
+Puré de papas con queso | Cheesy mashed potatoes | fndds:Potato, mashed, from fresh, made with milk, with cheese | 1 taza / 1 cup=250 · 1 porción / 1 serving=125 | puré de patatas con queso* (ES) · puré con queso
+Puré de papas con gravy | Mashed potatoes with gravy | fndds:Potato, mashed, from fresh, made with milk, with gravy | 1 taza / 1 cup=250 · 1 porción / 1 serving=125 | puré de patatas con gravy* (ES) · puré de papas con salsa de carne · puré con salsa gravy · puré con jugo de carne
+
+// Ensaladas de papa: «Ensalada de papas» (con huevo y mayonesa) está en genericos.txt.
+Ensalada de papas con mayonesa | Potato salad with mayonnaise | fndds:Potato salad, made with mayonnaise | 1 taza / 1 cup=275 · 1 porción / 1 serving=138 | ensalada de patatas con mayonesa* (ES) · ensalada de papa sin huevo · papas con mayonesa
+Ensalada de papas con mayonesa light | Potato salad with light mayonnaise | fndds:Potato salad, made with light mayonnaise | 1 taza / 1 cup=275 · 1 porción / 1 serving=138 | ensalada de patatas con mayonesa light* (ES) · ensalada de papa light · papas con mayonesa light
+Ensalada de papas con vinagreta | Potato salad with vinaigrette | fndds:Potato salad, made with Italian dressing | 1 taza / 1 cup=275 · 1 porción / 1 serving=138 | ensalada de patatas con vinagreta* (ES) · ensalada de papa con aceite y vinagre · ensalada de papa con aderezo italiano
+Ensalada de papas alemana | German potato salad | fndds:Potato salad, German style | 1 taza / 1 cup=175 · 1 porción / 1 serving=88 | ensalada de patatas alemana* (ES) · ensalada alemana de papa · kartoffelsalat
+
+// Otros platos de papa. «Papas gratinadas» (con queso) está en uruguay.txt; estas son las de salsa blanca, sin queso.
+Papas con salsa blanca | Scalloped potatoes | sr:Potatoes, scalloped, home-prepared with butter | 1 taza / 1 cup=245 · ½ taza / ½ cup=123 | patatas con salsa blanca* (ES) · papas con bechamel · papas escalopadas · papas en salsa blanca al horno
+Papas guisadas | Stewed potatoes | fndds:Stewed potatoes | 1 taza / 1 cup=250 · 1 porción / 1 serving=125 | patatas guisadas* (ES) · papas estofadas · guiso de papas
+Papas guisadas con tomate | Stewed potatoes with tomato | fndds:Stewed potatoes with tomatoes | 1 taza / 1 cup=250 · 1 porción / 1 serving=125 | patatas guisadas con tomate* (ES) · papas guisadas con jitomate* (MX) · papas en salsa de tomate · papas entomatadas
+Papas salteadas con verduras | Home fries with vegetables | fndds:Potato, home fries, with vegetables | 1 taza / 1 cup=200 · 1 papa / 1 potato=100 | patatas salteadas con verduras* (ES) · papas salteadas con cebolla y pimiento · papas O'Brien · papas a la sartén con verduras | aceite=incluido
+Papas fritas con queso | Cheese fries | fndds:Potato, french fries, with cheese | 1 porción / 1 serving=130 · 1 taza / 1 cup=92 | patatas fritas con queso* (ES) · papas a la francesa con queso* (MX) · papas fritas con cheddar · papas con cheddar · cheese fries | aceite=incluido
+Papas fritas con chili y queso | Chili cheese fries | fndds:Potato, french fries, with chili and cheese | 1 porción / 1 serving=227 · 1 taza / 1 cup=124 | patatas fritas con chili y queso* (ES) · papas a la francesa con chili y queso* (MX) · papas con chili con carne y queso · chili cheese fries | aceite=incluido
+// Las cáscaras de papa («potato skins»): la mitad de una papa al horno, vaciada, con lo de encima y gratinada.
+Cáscaras de papa con queso | Cheese potato skins | fndds:Potato skins, with cheese | 1 porción / 1 serving=113 · cáscaras de 1 papa mediana / skins from 1 medium potato=45 · cáscaras de 1 papa pequeña / skins from 1 small potato=35 · cáscaras de 1 papa grande / skins from 1 large potato=70 | cáscaras de patata con queso* (ES) · pieles de patata con queso · potato skins con queso · cascaritas de papa con queso
+Cáscaras de papa con queso y tocino | Loaded potato skins | fndds:Potato skins, with cheese and bacon | 1 porción / 1 serving=113 · cáscaras de 1 papa mediana / skins from 1 medium potato=45 · cáscaras de 1 papa pequeña / skins from 1 small potato=35 · cáscaras de 1 papa grande / skins from 1 large potato=70 | cáscaras de patata con queso y beicon* (ES) · cáscaras de papa con queso y panceta ahumada* (AR UY) · cáscaras de papa con queso y tocineta* (CO VE) · pieles de patata con queso y bacon · potato skins
+// Tortitas: las de puré (como las tortitas de papa mexicanas) y las de papa rallada (los latkes).
+Tortitas de papa | Potato patties | fndds:Potato patty | 1 unidad / 1 patty=55 · 1 porción / 1 serving=80 | tortitas de patata* (ES) · tortitas de puré de papa · tortitas de papa fritas | aceite=incluido
+Tortitas de papa rallada | Potato pancakes | fndds:Potato pancake | 1 mediana / 1 medium=70 · 1 pequeña / 1 small=25 · 1 grande / 1 large=130 · 1 mini / 1 miniature=10 | tortitas de patata rallada* (ES) · latkes · panqueques de papa · tortillitas de papa rallada | aceite=incluido
+
+// Batata y maíz.
+Batata glaseada | Candied sweet potatoes | fndds:Sweet potato, candied | 1 porción / 1 serving=100 · 1 trozo / 1 piece=45 · 1 taza / 1 cup=250 | boniato glaseado* (UY CU) · camote glaseado* (MX PE CL EC GT HN SV NI CR) · batata confitada · batata caramelizada · camote enmielado (MX) · batatas acarameladas
+Budín de maíz | Corn pudding | fndds:Corn, scalloped or pudding | 1 porción / 1 serving=107 · 1 taza / 1 cup=214 | budín de choclo* (AR UY CL PE BO EC PY) · budín de elote* (MX GT HN SV NI CR) · pudín de maíz · budín de maíz salado
+Buñuelos de maíz | Corn fritters | fndds:Fritter, corn | 1 unidad / 1 fritter=35 · 1 porción / 1 serving=70 · 1 taza / 1 cup=105 | buñuelos de choclo* (AR UY CL PE BO EC PY) · buñuelos de elote* (MX GT HN SV NI CR) · frituras de maíz · torrejas de choclo (PE) · tortitas de elote (MX) | aceite=incluido
