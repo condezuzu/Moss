@@ -7,7 +7,8 @@ import { requireOptionalNativeModule } from 'expo';
 import { useSyncExternalStore } from 'react';
 import { AppState, Linking, Platform } from 'react-native';
 
-import { acceso, cuentaParaElRegalo, DIAS_DE_PRUEBA, esDeRegalo, porMes, PRECIOS, PRODUCTOS, tieneAcceso, type Acceso, type Plan, type Suscripcion } from '@/dominio/premium';
+import type { ClaveDia } from '@/dominio/fechas';
+import { acceso, cuentaParaElRegalo, DIAS_DE_PRUEBA, esDeRegalo, finDelRegalo, hastaDelRegalo, porMes, PRECIOS, PRODUCTOS, regaloVigente, tieneAcceso, type Acceso, type Plan, type Suscripcion } from '@/dominio/premium';
 import { idioma } from '@/textos';
 import { CON_PREMIUM, PREMIUM_SALE } from './banderas';
 
@@ -72,7 +73,7 @@ export type EstadoDePremium = {
   ultima: Suscripcion | null;
   /** Cuándo se le preguntó a Apple: con esto se cuentan los días de prueba. */
   leido: number;
-  /** Si la cuenta es de antes de que se prendiera. */
+  /** Si la cuenta es de antes de que se prendiera: tiene el regalo mientras dura (finDelRegaloActual). */
   regalo: boolean;
   productos: Partial<Record<Plan, Producto>>;
   /** Si no se pudieron traer los precios: no hay conexión con la App Store, y sin precio no se puede comprar. */
@@ -193,7 +194,19 @@ export const contestoApple = (): Promise<unknown> => Promise.race([arranque ?? P
 /** Avisa cuando cambia lo que se sabe: al contestar Apple, al comprar, al vencer. */
 export const alCambiarPremium = suscribir;
 
-export const accesoDe = (e: EstadoDePremium): Acceso => acceso({ suscripcion: e.suscripcion, regalo: e.regalo, ultima: e.ultima, sinConexion: e.sinPrecios, ahora: Date.now() });
+/** El último día del regalo de quien tenía cuenta de antes; sin regalo, null. */
+export const finDelRegaloDe = (e: EstadoDePremium): ClaveDia | null => (e.regalo && PREMIUM_SALE ? finDelRegalo(PREMIUM_SALE) : null);
+export const finDelRegaloActual = () => finDelRegaloDe(estado);
+/** Cuándo termina el regalo, en milisegundos; sin regalo, null. */
+export function hastaDelRegaloActual(): number | null {
+  const fin = finDelRegaloActual();
+  return fin ? hastaDelRegalo(fin) : null;
+}
+
+export function accesoDe(e: EstadoDePremium): Acceso {
+  const fin = finDelRegaloDe(e);
+  return acceso({ suscripcion: e.suscripcion, regalo: !!fin && regaloVigente(fin, Date.now()), ultima: e.ultima, sinConexion: e.sinPrecios, ahora: Date.now() });
+}
 export const accesoActual = (): Acceso => accesoDe(estado);
 /** Si ya se sabe si hay acceso: hasta que Apple y la cuenta contestan, no (y sin compras en esta build, sí). */
 export const seSabeElAcceso = () => !tienda || estado.listo;

@@ -27,11 +27,11 @@ import { DIAS } from '@/dominio/recordatorios';
 import { aguaDelDia, recientes, totalDelDia, vigentes } from '@/dominio/registros';
 import { AGUA_META_ML, bajoAlFinal, horaDeLaTarde, loQueFaltaHoy, QUE_FALTA, type FaltaConHora } from '@/dominio/loQueFalta';
 import { habitualDe, margenParaDormirte } from '@/dominio/sinReloj';
-import { avisoDePrueba, avisosHasta } from '@/dominio/premium';
+import { avisoDelRegalo, avisoDePrueba, avisosHasta } from '@/dominio/premium';
 import { despiertoDeLaNoche, deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
-import { accesoActual, hayPremium, seSabeElAcceso, suscripcionActual } from '@/lib/premium';
+import { accesoActual, finDelRegaloActual, hastaDelRegaloActual, hayPremium, seSabeElAcceso, suscripcionActual } from '@/lib/premium';
 import { entrenosDelDia } from '@/salud/convertir';
-import { duracion, metaDelDia } from '@/secciones/comida/datos';
+import { duracion, fechaLarga, metaDelDia } from '@/secciones/comida/datos';
 import { suenoDe } from '@/secciones/persona';
 import { t } from '@/textos';
 
@@ -267,7 +267,7 @@ export function programarAvisos(e: Para): Promise<void> {
 /**
  * Los avisos que ya llegaron y ya no dicen nada salen del centro de notificaciones y de la pantalla
  * bloqueada: «¿Anotaste la cena?» con la cena anotada, «pesarse» con el peso de hoy, y los de días
- * anteriores (salvo el del fin de la prueba).
+ * anteriores (salvo el del fin de la prueba o del regalo).
  */
 async function sacarLosQueYaNoDicenNada(e: Para): Promise<void> {
   const llegados = await Notifications.getPresentedNotificationsAsync().catch(() => [] as Notifications.Notification[]);
@@ -309,11 +309,14 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   } : {};
   const ajustes: Avisos = { ...conLoDeFabrica(e.avisos, noSueleDe(e), cuidados), ...apagados, comidas: e.recordatorios ?? [] };
   const finDePrueba = avisoDePrueba(suscripcionActual(), Date.now());
+  // De regalo, unos días antes de que termine, y nada después (salvo que se suscriba antes).
+  const finDelRegalo = accesoActual() === 'regalo' ? finDelRegaloActual() : null;
+  const avisoDeRegalo = finDelRegalo ? avisoDelRegalo(finDelRegalo, Date.now()) : null;
   // Cancelada, nada después de que vence: sin acceso no suena, aunque Moss no se abra para borrarlo.
-  const hasta = avisosHasta(suscripcionActual(), accesoActual());
+  const hasta = avisosHasta(suscripcionActual(), accesoActual(), hastaDelRegaloActual());
   const elegido = algunAviso({ avisos: ajustes, recordatorios: e.recordatorios });
   const conFalta = conLoQueFalta(ajustes, elegido);
-  if ((!elegido && !conFalta && finDePrueba === null) || !(await Notifications.getPermissionsAsync()).granted) return;
+  if ((!elegido && !conFalta && finDePrueba === null && avisoDeRegalo === null) || !(await Notifications.getPermissionsAsync()).granted) return;
   await prepararCategorias();
   const ahora = new Date();
   // Hoy y ahora, del mismo instante: justo al corte, el almacén todavía puede tener el día anterior.
@@ -387,6 +390,13 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
     await Notifications.scheduleNotificationAsync({
       content: { title: 'Moss', body: t('recordatorios.pruebaTermina'), data: { tipo: 'prueba' } },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(finDePrueba) },
+    }).catch(() => {});
+  }
+  // Dos días antes del último día del regalo, como dice la bienvenida («Moss te avisa unos días antes»).
+  if (finDelRegalo && avisoDeRegalo !== null && !vieja()) {
+    await Notifications.scheduleNotificationAsync({
+      content: { title: t('recordatorios.regaloTermina.titulo'), body: t('recordatorios.regaloTermina.texto', { fecha: fechaLarga(finDelRegalo) }), data: { tipo: 'prueba' } },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(avisoDeRegalo) },
     }).catch(() => {});
   }
 }

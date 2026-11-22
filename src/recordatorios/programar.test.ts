@@ -20,8 +20,8 @@ const programadas: { content: { title: string; body: string; data: { tipo: strin
 /** Los avisos que ya llegaron (el centro de notificaciones) y los que Moss sacó de ahí. */
 let mockLlegados: { date: number; request: { identifier: string; content: { data: Record<string, unknown> } } }[] = [];
 const mockSacados: string[] = [];
-/** Lo que dice Apple, para cada test: de fábrica, que hay acceso y ninguna suscripción. */
-let mockPremium: { sabe: boolean; hay: boolean; suscripcion: Suscripcion | null; acceso: Acceso } = { sabe: true, hay: true, suscripcion: null, acceso: 'regalo' };
+/** Lo que dice Apple, para cada test: de fábrica, que hay acceso y ninguna suscripción. `fin`, el último día del regalo, si se sabe. */
+let mockPremium: { sabe: boolean; hay: boolean; suscripcion: Suscripcion | null; acceso: Acceso; fin?: string } = { sabe: true, hay: true, suscripcion: null, acceso: 'regalo' };
 
 jest.mock('expo-notifications', () => ({
   setNotificationHandler: jest.fn(),
@@ -49,6 +49,9 @@ jest.mock('@/lib/premium', () => ({
   hayPremium: () => mockPremium.hay,
   suscripcionActual: () => mockPremium.suscripcion,
   accesoActual: () => mockPremium.acceso,
+  finDelRegaloActual: () => mockPremium.fin ?? null,
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  hastaDelRegaloActual: () => (mockPremium.fin ? (require('@/dominio/premium') as typeof import('@/dominio/premium')).hastaDelRegalo(mockPremium.fin) : null),
   hayCompras: () => false,
 }));
 
@@ -218,6 +221,22 @@ describe('los avisos que se programan', () => {
     mockPremium = { ...mockPremium, acceso: 'regalo' };
     await programarAvisos(estado());
     expect(programadas.some((p) => p.trigger.date.getTime() >= vence)).toBe(true);
+  });
+
+  it('de regalo, nada después de que termina, y dos días antes de su último día avisa que elijas un plan', async () => {
+    // El último día del regalo es el jueves 5: después de esa medianoche no hay acceso.
+    mockPremium = { ...mockPremium, fin: '2026-11-05' };
+    await programarAvisos(estado());
+    const termina = new Date(2026, 10, 6).getTime();
+    const delRegalo = programadas.filter((p) => p.content.title === t('recordatorios.regaloTermina.titulo'));
+    expect(delRegalo).toHaveLength(1);
+    expect(delRegalo[0].trigger.date).toEqual(new Date(2026, 10, 3, 10));
+    expect(delRegalo[0].content.data.tipo).toBe('prueba');
+    expect(programadas.every((p) => p.trigger.date.getTime() < termina)).toBe(true);
+    // Ya suscripto, el regalo no cuenta: ni el aviso ni el corte.
+    mockPremium = { ...mockPremium, acceso: 'activa' };
+    await programarAvisos(estado());
+    expect(programadas.some((p) => p.content.title === t('recordatorios.regaloTermina.titulo'))).toBe(false);
   });
 
   it('suenan a la hora del reloj (calendario), no «dentro de tantos segundos»: así siguen la zona horaria', async () => {

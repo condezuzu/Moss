@@ -59,8 +59,9 @@ ni terceros.
   en rojo arriba del precio asusta a quien nunca pagó. Para quien venció va a la vista, debajo del título.
 - **Los productos se llaman `uy.moss.suscripcion.anual` y `.mensual`.** Los de antes
   (`uy.moss.premium.*`) nunca se crearon, y un Product ID no se puede cambiar ni volver a usar.
-- **El regalo se dice una vez**, con una pantalla: «Para ti, Moss sigue gratis». Quien ya usa Moss va
-  a ver en la tienda que ahora es de pago, y no tiene que preguntarse nada.
+- **El regalo se dice una vez**, con una pantalla: desde el 22/11/2026, «¡Felicidades!» con los 3 meses y hasta qué
+  día (más abajo, «El regalo pasa a ser de 3 meses»). Quien ya usa Moss va a ver en la tienda que ahora es de pago, y
+  no tiene que preguntarse nada.
 
 ## El orden de la entrada
 
@@ -268,7 +269,7 @@ para las suscripciones y el derecho a arrepentirse.
 5. Probar con la cuenta de sandbox (el paso 7).
 6. Publicar `docs/` con la fecha de ese día, y mandar la versión con los dos productos.
 
-## El regalo pasa a ser de 3 meses (22/11/2026, para aprobar)
+## El regalo pasa a ser de 3 meses (22/11/2026, aprobado y en la app)
 
 Lo pediste: quien ya tenía cuenta no la tiene gratis para siempre, sino **3 meses** («son amigos nada más»), con una
 bienvenida que lo diga y un pase de lo nuevo. En la galería (escenario `bienvenida`), para aprobar:
@@ -282,6 +283,13 @@ bienvenida que lo diga y un pase de lo nuevo. En la galería (escenario `bienven
   suscripción.
 - **Lo que cambia afuera de la app:** la cláusula «Si ya tenías cuenta» de los términos, y la ficha de la 1.1, que
   dice «sigue gratis»: por eso el camino A (sacarla de revisión, corregir, build 9 y reenviar), que va al final.
+
+**En la app (22/11/2026):** `finDelRegalo` en `src/dominio/premium.ts` (el mismo número de día, tres meses después de
+`PREMIUM_SALE`; ese día también es de regalo) y `regaloVigente`: con el regalo vencido y sin suscripción, la cuenta queda
+como nueva, con la pantalla de pago y sus 7 días. La bienvenida y el pase, en `src/secciones/premium/Premium.tsx` (una
+vez por teléfono, con la clave `moss:bienvenidaDelRegalo`); «Regalo hasta el…» en Perfil, y en Tu suscripción, «Mira lo
+nuevo» otra vez. Moss avisa dos días antes del último día, a las 10 («Elige tu plan de Moss»), y los demás avisos no
+suenan después. Los términos dicen los 3 meses (`docs/`, 22/11/2026).
 
 ## Cómo se mandó (21/11/2026)
 

@@ -7,77 +7,6 @@
 // Las cuentas del precio son las de la app (src/dominio/premium.ts). La hoja de Apple es un dibujo.
 
 const Suscripcion = (() => {
-  // Los textos de la bienvenida y del pase, hasta que pasen a src/textos (22/11/2026, para aprobar).
-  const TEXTOS_NUEVOS = {
-    es: {
-      suscripcion: {
-        bienvenida: {
-          titulo: '¡Felicidades!',
-          antes: 'Usaste Moss mientras se hacía. Por eso tienes ',
-          meses: '{n} meses completamente gratis',
-          despuesDeMeses: '.',
-          hoy: 'Hoy',
-          fecha: '{num} de {mes}',
-          despues: 'Después, si quieres seguir, eliges un plan. Moss te avisa unos días antes.',
-          verLoNuevo: 'Mira lo nuevo',
-          ahoraNo: 'Ahora no',
-        },
-        novedades: {
-          titulo: 'Lo nuevo',
-          cuenta: '{n} de {total}',
-          siguiente: 'Siguiente',
-          empezar: 'Empezar',
-          widgets: { titulo: 'Widgets nuevos', texto: 'Hoy, Anotar y Agua: lo que te queda y anotar, sin abrir Moss.' },
-          comida: { titulo: 'Copia, mueve o borra con un gesto', texto: 'Mantén apretado un alimento para copiarlo o moverlo, y deslízalo para borrarlo.' },
-          buscar: { titulo: 'Más fácil de encontrar', texto: 'Primero sale lo que se vende en tu país, y lo que carga la comunidad queda para todos.' },
-          sueno: { titulo: 'Tu sueño, más claro', texto: 'Tu deuda en una palabra y tu periodo de melatonina: el rato en que más fácil te duermes.' },
-          energia: { titulo: 'Tu energía del día', texto: 'Con tu sueño y lo que comes, Moss te dice cómo vienes hoy y cuál es tu mejor momento.' },
-          musculos: { titulo: 'Con Ascent, tus músculos', texto: 'Si entrenas con Ascent, ves qué músculo necesita más y qué hacer hoy.' },
-        },
-        perfil: { regaloHasta: 'Regalo hasta el {fecha}' },
-        hoja: { regaloHasta: 'Usaste Moss mientras se hacía: la tienes gratis hasta el {fecha}. Después, si quieres seguir, eliges un plan. Moss te avisa unos días antes.' },
-      },
-    },
-    en: {
-      suscripcion: {
-        bienvenida: {
-          titulo: 'Congratulations!',
-          antes: 'You used Moss while it was being built. That’s why you get ',
-          meses: '{n} months completely free',
-          despuesDeMeses: '.',
-          hoy: 'Today',
-          fecha: '{mes} {num}',
-          despues: 'After that, if you want to keep going, you pick a plan. Moss lets you know a few days before.',
-          verLoNuevo: 'See what’s new',
-          ahoraNo: 'Not now',
-        },
-        novedades: {
-          titulo: 'What’s new',
-          cuenta: '{n} of {total}',
-          siguiente: 'Next',
-          empezar: 'Start',
-          widgets: { titulo: 'New widgets', texto: 'Today, Log and Water: see what’s left and log it without opening Moss.' },
-          comida: { titulo: 'Copy, move or delete in one gesture', texto: 'Press and hold a food to copy or move it, and swipe it to delete it.' },
-          buscar: { titulo: 'Easier to find', texto: 'What’s sold in your country comes first, and what the community adds is there for everyone.' },
-          sueno: { titulo: 'Your sleep, clearer', texto: 'Your debt in one word, and your melatonin window: when you fall asleep most easily.' },
-          energia: { titulo: 'Your energy for the day', texto: 'From your sleep and what you eat, Moss tells you how you’re doing today and your best time.' },
-          musculos: { titulo: 'With Ascent, your muscles', texto: 'If you train with Ascent, see which muscle needs more and what to do today.' },
-        },
-        perfil: { regaloHasta: 'Gift until {fecha}' },
-        hoja: { regaloHasta: 'You used Moss while it was being built: it’s free for you until {fecha}. After that, if you want to keep going, you pick a plan. Moss lets you know a few days before.' },
-      },
-    },
-  };
-  function completar(destino, origen) {
-    Object.entries(origen).forEach(([k, v]) => {
-      if (v && typeof v === 'object' && !Array.isArray(v)) {
-        if (!destino[k] || typeof destino[k] !== 'object') destino[k] = {};
-        completar(destino[k], v);
-      } else if (destino[k] == null) destino[k] = v;
-    });
-  }
-  if (typeof TEXTOS !== 'undefined' && TEXTOS) ['es', 'en'].forEach((i) => { if (TEXTOS[i]) completar(TEXTOS[i], TEXTOS_NUEVOS[i]); });
-
   const CSS = `
 .tel .sb { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; color: var(--tinta); background: radial-gradient(120% 60% at 50% 0%, rgba(30, 42, 84, 0.95), rgba(9, 12, 26, 1) 70%), #090c1a; animation: sb-entra 0.42s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 .sb[hidden] { display: none; }
@@ -194,7 +123,7 @@ const Suscripcion = (() => {
 .sb-hoja-texto.chico { font-size: 12.5px; color: rgba(239, 230, 207, 0.62); }
 .sb-hoja-cuerpo .sb-principal { margin-top: 16px; }
 .sb-hoja-cuerpo .sb-enlaces { margin-top: 8px; }
-/* La bienvenida de quien ya tenía cuenta: tres meses de regalo (22/11/2026, para aprobar). */
+/* La bienvenida de quien ya tenía cuenta: tres meses de regalo (aprobada el 22/11/2026, en la app). */
 .sb-bienvenida { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: calc(var(--arriba) + 6px) 28px calc(var(--abajo) + 18px); text-align: center; overflow: hidden; }
 .sb-bv-cielo { position: absolute; inset: 0; pointer-events: none; }
 .sb-bv-cielo i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #f6e3a6; opacity: 0; animation: sb-bv-titila 3.2s ease-in-out infinite; }
@@ -536,9 +465,9 @@ const Suscripcion = (() => {
       pintar();
     }
 
-    // ---------------------------------------------------------------- la bienvenida y lo nuevo (22/11/2026, para aprobar)
+    // ---------------------------------------------------------------- la bienvenida y lo nuevo (aprobados el 22/11/2026, en la app)
     // Quien ya tenía cuenta tiene Moss de regalo tres meses desde el día en que pasó a ser de pago (en la galería,
-    // hoy). La cuenta va a src/dominio/premium.ts cuando se apruebe.
+    // hoy; en la app, finDelRegalo de src/dominio/premium.ts).
     const MESES_DE_REGALO = 3;
     const finDelRegalo = () => { const p = u.partes(Datos.HOY); return new Date(p.anio, p.mes + MESES_DE_REGALO, p.num); };
     const diaDe = (f, corto) => tx(corto ? 'fecha.corta' : 'suscripcion.bienvenida.fecha', { num: f.getDate(), mes: tx((corto ? 'fecha.mesesCortos.' : 'fecha.meses.') + f.getMonth()) });

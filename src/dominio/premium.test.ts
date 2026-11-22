@@ -1,6 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { acceso, ahorroDelAnual, avisoDePrueba, avisosHasta, cuentaDeMossDesde, cuentaParaElRegalo, DIA_DEL_AVISO, DIAS_DE_PRUEBA, diasDePrueba, esDeRegalo, planDe, porMes, PRECIOS, PRODUCTOS, tieneAcceso, type Suscripcion } from './premium';
+import {
+  acceso, ahorroDelAnual, avisoDelRegalo, avisoDePrueba, avisosHasta, cuentaDeMossDesde, cuentaParaElRegalo, DIA_DEL_AVISO, DIAS_DE_PRUEBA, diasDePrueba, esDeRegalo, finDelRegalo,
+  hastaDelRegalo, MESES_DE_REGALO, planDe, porMes, PRECIOS, PRODUCTOS, regaloVigente, tieneAcceso, type Suscripcion,
+} from './premium';
 
 const DIA = 86_400_000;
 const AHORA = Date.parse('2026-12-10T12:00:00Z');
@@ -103,6 +106,40 @@ describe('el regalo', () => {
   });
 });
 
+describe('el regalo dura 3 meses', () => {
+  // En la hora del teléfono: el regalo termina a la medianoche de ahí.
+  const local = (a: number, m: number, d: number, h = 0, min = 0) => new Date(a, m - 1, d, h, min).getTime();
+
+  it('hasta el mismo número de día, tres meses después del día en que Moss pasó a ser de pago', () => {
+    expect(MESES_DE_REGALO).toBe(3);
+    expect(finDelRegalo('2026-11-14')).toBe('2027-02-14');
+    expect(finDelRegalo('2026-10-31')).toBe('2027-01-31');
+    expect(finDelRegalo('2027-12-31')).toBe('2028-03-31');
+  });
+
+  it('si ese mes es más corto, su último día', () => {
+    expect(finDelRegalo('2026-11-30')).toBe('2027-02-28');
+    expect(finDelRegalo('2027-11-30')).toBe('2028-02-29');
+  });
+
+  it('el último día también es de regalo, y a la medianoche termina', () => {
+    expect(hastaDelRegalo('2027-02-14')).toBe(local(2027, 2, 15));
+    expect(regaloVigente('2027-02-14', local(2027, 2, 14, 23, 59))).toBe(true);
+    expect(regaloVigente('2027-02-14', local(2027, 2, 15))).toBe(false);
+    expect(regaloVigente('2027-02-14', local(2026, 11, 22))).toBe(true);
+  });
+
+  it('avisa dos días antes del último, a las 10', () => {
+    expect(avisoDelRegalo('2027-02-14', local(2026, 11, 22))).toBe(local(2027, 2, 12, 10));
+    expect(avisoDelRegalo('2027-02-14', local(2027, 2, 12, 10, 1))).toBeNull();
+  });
+
+  it('los avisos de quien la tiene de regalo suenan hasta que termina', () => {
+    expect(avisosHasta(null, 'regalo', hastaDelRegalo('2027-02-14'))).toBe(local(2027, 2, 15));
+    expect(avisosHasta({ ...prueba, renueva: false }, 'regalo', local(2027, 2, 15))).toBe(local(2027, 2, 15));
+  });
+});
+
 describe('la prueba', () => {
   it('son 7 días, y el aviso es el día 5, como dice la pantalla', () => {
     expect(DIAS_DE_PRUEBA).toBe(7);
@@ -139,7 +176,7 @@ describe('hasta cuándo suenan los avisos', () => {
     expect(avisosHasta({ ...pagando, renueva: false }, 'activa')).toBe(pagando.vence);
   });
 
-  it('renovándose, sin saber si renueva o de regalo, sin fin', () => {
+  it('renovándose, sin saber si renueva, o de regalo sin saber cuándo termina, sin fin', () => {
     expect(avisosHasta(prueba, 'prueba')).toBeNull();
     expect(avisosHasta({ ...pagando, renueva: null }, 'activa')).toBeNull();
     expect(avisosHasta({ ...prueba, renueva: false }, 'regalo')).toBeNull();

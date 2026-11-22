@@ -7,22 +7,23 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
+import { Image } from 'expo-image';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { ActionSheetIOS, ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type AlertButton, type ViewStyle } from 'react-native';
-import Animated, { Easing, FadeIn, FadeOut, ReduceMotion, SlideInDown, SlideOutDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+import { ActionSheetIOS, ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type AlertButton, type ScrollViewInstance, type ViewStyle } from 'react-native';
+import Animated, { Easing, FadeIn, FadeInUp, FadeOut, ReduceMotion, SlideInDown, SlideOutDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { elAlmacen } from '@/almacen';
-import { claveDelDia } from '@/dominio/fechas';
-import { ahorroDelAnual, DIA_DEL_AVISO, DIAS_DE_PRUEBA, diasDePrueba, planDe, porMes, PRECIOS, tieneAcceso, type Plan } from '@/dominio/premium';
+import { claveDelDia, partesDe, type ClaveDia } from '@/dominio/fechas';
+import { ahorroDelAnual, DIA_DEL_AVISO, DIAS_DE_PRUEBA, diasDePrueba, MESES_DE_REGALO, planDe, porMes, PRECIOS, tieneAcceso, type Plan } from '@/dominio/premium';
 import type { Tramo } from '@/dominio/sueno';
-import { accesoActual, accesoDe, administrarSuscripcion, comprar, contestoApple, hayCompras, leerPrecios, precioDeRespaldo, restaurar, seSabeElAcceso, suscripcionActual, useEstadoDePremium, type EstadoDePremium } from '@/lib/premium';
+import { accesoActual, accesoDe, administrarSuscripcion, comprar, contestoApple, finDelRegaloDe, hayCompras, leerPrecios, precioDeRespaldo, restaurar, seSabeElAcceso, suscripcionActual, useEstadoDePremium, type EstadoDePremium } from '@/lib/premium';
 import { abrirPagina } from '@/lib/sitio';
 import { pedirPermisoDeAvisos, programarAvisos } from '@/recordatorios/programar';
-import { lista, plural, t } from '@/textos';
+import { idioma, lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
-import { COLOR_DE_MACRO, MACROS } from '../comida/comunes';
-import { duracion, fechaLarga, numero, useNumeros } from '../comida/datos';
+import { COLOR_DE_MACRO, Icono, MACROS } from '../comida/comunes';
+import { duracion, fechaDiaMes, fechaLarga, numero, useNumeros } from '../comida/datos';
 import { Luna } from '../comida/Luna';
 import { Hipnograma } from '../graficos/Graficos';
 import { anunciar } from '../anuncio';
@@ -43,10 +44,10 @@ const NOCHE_CORTA: { desde: number; hasta: number; dormido: number; tramos: Tram
   ],
 };
 
-/** El regalo se dice una vez, en este teléfono. */
-const REGALO_AVISADO = 'moss:regaloAvisado';
+/** La bienvenida del regalo se ve una vez, en este teléfono. La clave es nueva: la del regalo para siempre nadie la vio. */
+const REGALO_AVISADO = 'moss:bienvenidaDelRegalo';
 
-type Vista = 'pago' | 'listo' | 'restaurada' | 'regalo';
+type Vista = 'pago' | 'listo' | 'restaurada' | 'regalo' | 'novedades';
 type Pedido = { abierta: boolean; vista: Vista; vez: number; despues?: () => void; alOlvidar?: () => void };
 let pedido: Pedido = { abierta: false, vista: 'pago', vez: 0 };
 const oyentes = new Set<() => void>();
@@ -90,6 +91,11 @@ function cerrar() {
   pedido = { abierta: false, vista: 'pago', vez: pedido.vez + 1 };
   oyentes.forEach((o) => o());
   despues?.();
+}
+
+/** «Mira lo nuevo» otra vez, desde Tu suscripción. */
+export function verLoNuevo() {
+  cambiar({ abierta: true, vista: 'novedades', vez: pedido.vez + 1 });
 }
 
 /** Se borró la cuenta o se cerró la sesión desde acá: vuelve la entrada, desde el principio. */
@@ -449,6 +455,173 @@ function ListoDeLaCompra({ e }: { e: EstadoDePremium }) {
   );
 }
 
+// ------------------------------------------------------------------ el regalo de 3 meses (galería 58, aprobada el 22/11/2026)
+/** «14 de febrero». */
+function diaYMes(dia: ClaveDia): string {
+  const p = partesDe(dia);
+  return t('suscripcion.bienvenida.fecha', { num: p.dia, mes: lista('fecha.meses')[p.mes] });
+}
+
+/** El cielo de la bienvenida: [x %, y %, demora en segundos], como en la galería. */
+const ESTRELLAS_DEL_REGALO: [number, number, number][] = [[12, 18, 0], [84, 12, 0.9], [22, 34, 1.7], [70, 30, 0.4], [8, 62, 2.3], [90, 58, 1.2], [30, 84, 2.8], [76, 80, 0.7], [50, 8, 2]];
+
+function Titila({ x, y, demora, reducido }: { x: number; y: number; demora: number; reducido: boolean }) {
+  const brillo = useSharedValue(reducido ? 0.45 : 0);
+  useEffect(() => {
+    if (reducido) return;
+    const vaivien = { duration: 1600, easing: Easing.inOut(Easing.ease) };
+    brillo.set(withDelay(demora * 1000, withRepeat(withSequence(withTiming(0.8, vaivien), withTiming(0, vaivien)), -1)));
+  }, [brillo, demora, reducido]);
+  const estilo = useAnimatedStyle(() => ({ opacity: brillo.get(), transform: [{ scale: 0.6 + 0.5 * brillo.get() }] }));
+  return <Animated.View style={[st.bvPunto, { left: `${x}%`, top: `${y}%` }, estilo]} />;
+}
+
+/** La estrella nace girando y pasando un poco de su tamaño. */
+function EstrellaQueNace({ reducido }: { reducido: boolean }) {
+  const k = useSharedValue(reducido ? 1 : 0);
+  useEffect(() => {
+    if (!reducido) k.set(withDelay(150, withTiming(1, { duration: 900, easing: Easing.bezier(0.2, 0.9, 0.3, 1.25) })));
+  }, [k, reducido]);
+  const estilo = useAnimatedStyle(() => ({ opacity: Math.min(1, k.get()), transform: [{ rotate: `${-135 + 180 * k.get()}deg` }, { scale: k.get() }] }));
+  return <Animated.View style={[st.bvEstrella, estilo]} />;
+}
+
+/** Uno de los tres meses de la línea: se llena después del anterior. */
+function MesQueSeLlena({ demora, reducido }: { demora: number; reducido: boolean }) {
+  const k = useSharedValue(reducido ? 1 : 0);
+  useEffect(() => {
+    if (!reducido) k.set(withDelay(demora, withTiming(1, { duration: 400 })));
+  }, [k, demora, reducido]);
+  const estilo = useAnimatedStyle(() => ({ width: `${k.get() * 100}%` }));
+  return (
+    <View style={st.bvMes}>
+      <Animated.View style={[st.bvMesLleno, LLENO, estilo]} />
+    </View>
+  );
+}
+const LLENO = degradado('linear-gradient(90deg, #e8c46a, #f6e3a6)');
+
+/** «¡Felicidades!»: quien ya tenía cuenta, una vez. Cada cosa entra después de la anterior. */
+function Bienvenida({ fin }: { fin: ClaveDia }) {
+  const insets = useSafeAreaInsets();
+  const reducido = useReducedMotion();
+  const entra = (ms: number) => (reducido ? FadeIn.delay(Math.min(ms, 300)).duration(250) : FadeInUp.delay(ms).duration(600)).reduceMotion(ReduceMotion.Never);
+  return (
+    <View style={[st.bv, { paddingTop: insets.top + 6, paddingBottom: insets.bottom + 18 }]}>
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        {ESTRELLAS_DEL_REGALO.map(([x, y, d]) => <Titila key={`${x}-${y}`} x={x} y={y} demora={d} reducido={reducido} />)}
+      </View>
+      <EstrellaQueNace reducido={reducido} />
+      <Animated.Text entering={entra(500)} style={st.bvTitulo} accessibilityRole="header">{t('suscripcion.bienvenida.titulo')}</Animated.Text>
+      <Animated.Text entering={entra(750)} style={st.bvTexto}>
+        {t('suscripcion.bienvenida.antes')}
+        <Text style={st.bvResaltado}>{t('suscripcion.bienvenida.meses', { n: MESES_DE_REGALO })}</Text>
+        {t('suscripcion.bienvenida.despuesDeMeses')}
+      </Animated.Text>
+      <Animated.View entering={entra(950)} style={st.bvMeses}>
+        <View style={st.bvLinea}>{[1100, 1450, 1800].map((d) => <MesQueSeLlena key={d} demora={d} reducido={reducido} />)}</View>
+        <View style={st.bvExtremos}>
+          <Text style={st.bvExtremo}>{t('suscripcion.bienvenida.hoy')}</Text>
+          <Text style={[st.bvExtremo, st.bvResaltado]}>{diaYMes(fin)}</Text>
+        </View>
+      </Animated.View>
+      <Animated.Text entering={entra(1500)} style={st.bvChico}>{t('suscripcion.bienvenida.despues')}</Animated.Text>
+      <Animated.View entering={entra(1700)} style={st.bvBoton}>
+        <Pressable onPress={() => cambiar({ vista: 'novedades' })} style={({ pressed }) => [st.principal, pressed && st.principalApretado]} accessibilityRole="button">
+          <Text style={st.principalTexto}>{t('suscripcion.bienvenida.verLoNuevo')}</Text>
+        </Pressable>
+      </Animated.View>
+      <Animated.View entering={entra(1800)}>
+        <Pressable onPress={cerrar} style={st.bvNo} accessibilityRole="button" hitSlop={6}>
+          <Text style={st.bvNoTexto}>{t('suscripcion.bienvenida.ahoraNo')}</Text>
+        </Pressable>
+      </Animated.View>
+    </View>
+  );
+}
+
+/** Lo nuevo, en el orden en que se cuenta: capturas de la app de verdad (assets/novedades). */
+const NOVEDADES = ['widgets', 'comida', 'buscar', 'sueno', 'energia', 'musculos'] as const;
+const FOTOS_DE_LO_NUEVO = {
+  es: {
+    widgets: require('../../../assets/novedades/es-widgets.jpg'), comida: require('../../../assets/novedades/es-comida.jpg'), buscar: require('../../../assets/novedades/es-buscar.jpg'),
+    sueno: require('../../../assets/novedades/es-sueno.jpg'), energia: require('../../../assets/novedades/es-energia.jpg'), musculos: require('../../../assets/novedades/es-musculos.jpg'),
+  },
+  en: {
+    widgets: require('../../../assets/novedades/en-widgets.jpg'), comida: require('../../../assets/novedades/en-comida.jpg'), buscar: require('../../../assets/novedades/en-buscar.jpg'),
+    sueno: require('../../../assets/novedades/en-sueno.jpg'), energia: require('../../../assets/novedades/en-energia.jpg'), musculos: require('../../../assets/novedades/en-musculos.jpg'),
+  },
+} as const;
+
+function PuntoDelPase({ actual, alTocar, nombre }: { actual: boolean; alTocar: () => void; nombre: string }) {
+  const estilo = useAnimatedStyle(() => ({
+    backgroundColor: withTiming(actual ? colores.oroClaro : 'rgba(239, 230, 207, 0.25)', { duration: 300 }),
+    transform: [{ scale: withTiming(actual ? 1.25 : 1, { duration: 300 }) }],
+  }), [actual]);
+  return (
+    <Pressable onPress={alTocar} hitSlop={6} accessibilityRole="button" accessibilityLabel={nombre} accessibilityState={{ selected: actual }}>
+      <Animated.View style={[st.pasePunto, estilo]} />
+    </Pressable>
+  );
+}
+
+/** «Mira lo nuevo»: deslizar pasa a la de al lado, y un toque en la mitad derecha de la foto avanza y en la izquierda vuelve. */
+function Pase() {
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const reducido = useReducedMotion();
+  const tira = useRef<ScrollViewInstance>(null);
+  const [hoja, setHoja] = useState(0);
+  const total = NOVEDADES.length;
+  const fotos = FOTOS_DE_LO_NUEVO[idioma() === 'en' ? 'en' : 'es'];
+  const ir = (n: number) => {
+    const k = Math.max(0, Math.min(total - 1, n));
+    setHoja(k);
+    tira.current?.scrollTo({ x: k * width, animated: !reducido });
+  };
+  return (
+    <Animated.View entering={FadeIn.duration(360).reduceMotion(ReduceMotion.Never)} style={[st.pase, { paddingTop: insets.top + 4, paddingBottom: insets.bottom + 12 }]}>
+      <View style={st.paseCab}>
+        <Text style={st.paseRotulo}>{t('suscripcion.novedades.titulo')}</Text>
+        <View style={st.paseDerecha}>
+          <Text style={st.paseCuenta}>{t('suscripcion.novedades.cuenta', { n: hoja + 1, total })}</Text>
+          <Pressable onPress={cerrar} style={st.paseCerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} hitSlop={6}>
+            <Icono nombre="xmark" tam={14} color="rgba(239, 230, 207, 0.7)" peso="semibold" />
+          </Pressable>
+        </View>
+      </View>
+      <ScrollView
+        ref={tira}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={(ev) => setHoja(Math.round(ev.nativeEvent.contentOffset.x / width))}
+        style={st.paseVentana}
+      >
+        {NOVEDADES.map((clave) => (
+          <View key={clave} style={[st.paseHoja, { width }]}>
+            <Pressable onPress={(ev) => ir(hoja + (ev.nativeEvent.locationX > (width - 52) / 2 ? 1 : -1))} style={st.paseFoto} accessible={false}>
+              <Image source={fotos[clave]} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="top" accessibilityIgnoresInvertColors />
+            </Pressable>
+            <View style={st.paseTextos}>
+              <Text style={st.paseTitulo} accessibilityRole="header">{t(`suscripcion.novedades.${clave}.titulo`)}</Text>
+              <Text style={st.paseTexto}>{t(`suscripcion.novedades.${clave}.texto`)}</Text>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+      <View style={st.pasePie}>
+        <View style={st.pasePuntos}>
+          {NOVEDADES.map((clave, i) => <PuntoDelPase key={clave} actual={i === hoja} alTocar={() => ir(i)} nombre={t(`suscripcion.novedades.${clave}.titulo`)} />)}
+        </View>
+        <Pressable onPress={() => (hoja < total - 1 ? ir(hoja + 1) : cerrar())} style={({ pressed }) => [st.principal, pressed && st.principalApretado]} accessibilityRole="button">
+          <Text style={st.principalTexto}>{t(hoja === total - 1 ? 'suscripcion.novedades.empezar' : 'suscripcion.novedades.siguiente')}</Text>
+        </Pressable>
+      </View>
+    </Animated.View>
+  );
+}
+
 /** Va una sola vez, en Secciones, arriba de todo. Sin compras en esta build, no hay nada. */
 export function PantallaPremium({ conSecciones }: { conSecciones: boolean }) {
   const e = useEstadoDePremium();
@@ -457,6 +630,7 @@ export function PantallaPremium({ conSecciones }: { conSecciones: boolean }) {
   const acceso = accesoDe(e);
   const conAcceso = tieneAcceso(acceso);
   const sinAcceso = conSecciones && e.listo && !conAcceso;
+  const fin = finDelRegaloDe(e);
 
   useEffect(() => {
     // Mientras se la mira llegó el acceso: Ask to Buy aprobado, otro aparato, o la cuenta dijo que es de regalo.
@@ -464,7 +638,7 @@ export function PantallaPremium({ conSecciones }: { conSecciones: boolean }) {
   }, [p.abierta, p.vista, e.listo, conAcceso, acceso]);
 
   useEffect(() => {
-    // Quien ya estaba, una vez: Moss ahora es de pago y para esa persona sigue gratis. No hace nada más.
+    // Quien ya estaba, una vez: Moss ahora es de pago y para esa persona es gratis 3 meses. No hace nada más.
     if (!hayCompras() || !conSecciones || !e.listo || acceso !== 'regalo') return;
     let vigente = true;
     AsyncStorage.getItem(REGALO_AVISADO).then((visto) => {
@@ -487,7 +661,8 @@ export function PantallaPremium({ conSecciones }: { conSecciones: boolean }) {
       {p.vista === 'pago' && <Pago key={p.vez} e={e} />}
       {p.vista === 'listo' && <ListoDeLaCompra e={e} />}
       {p.vista === 'restaurada' && <Listo titulo={t('suscripcion.restaurada.titulo')} texto={t('suscripcion.restaurada.texto')} />}
-      {p.vista === 'regalo' && <Listo titulo={t('suscripcion.regalo.titulo')} texto={t('suscripcion.regalo.texto')} />}
+      {p.vista === 'regalo' && fin && <Bienvenida fin={fin} />}
+      {p.vista === 'novedades' && <Pase />}
     </Animated.View>
   );
 }
@@ -496,7 +671,8 @@ export function PantallaPremium({ conSecciones }: { conSecciones: boolean }) {
 /** Lo que dice la fila de Perfil. */
 export function valorDeSuscripcion(e: EstadoDePremium): string {
   const acceso = accesoDe(e);
-  if (acceso === 'regalo') return t('suscripcion.perfil.regalo');
+  const fin = finDelRegaloDe(e);
+  if (acceso === 'regalo' && fin) return t('suscripcion.perfil.regaloHasta', { fecha: fechaDiaMes(fin) });
   if (acceso === 'prueba' && e.suscripcion) return plural('suscripcion.perfil.prueba', diasDePrueba(e.suscripcion, e.leido));
   const s = e.suscripcion ?? e.ultima;
   return acceso === 'activa' && s ? t(`suscripcion.perfil.${planDe(s)}`) : t('suscripcion.perfil.vencida');
@@ -533,9 +709,18 @@ export function HojaDeSuscripcion({ alCerrar }: { alCerrar: () => void }) {
   const plan = s ? planDe(s) : null;
   const p = losPrecios(e);
   const cancelada = s?.renueva === false;
+  const fin = finDelRegaloDe(e);
   return (
     <HojaModal abierta titulo={t('suscripcion.titulo')} alCerrar={alCerrar}>
-      {acceso === 'regalo' ? <Parrafo>{t('suscripcion.hoja.regalo')}</Parrafo> : (
+      {acceso === 'regalo' && fin ? (
+        <>
+          <Parrafo>{t('suscripcion.hoja.regaloHasta', { fecha: diaYMes(fin) })}</Parrafo>
+          {/* Lo nuevo se puede volver a mirar desde acá: la hoja se va y el pase sube. */}
+          <Pressable onPress={() => { alCerrar(); verLoNuevo(); }} style={({ pressed }) => [st.principal, st.hojaBoton, pressed && st.principalApretado]} accessibilityRole="button">
+            <Text style={st.principalTexto}>{t('suscripcion.bienvenida.verLoNuevo')}</Text>
+          </Pressable>
+        </>
+      ) : (
         <>
           <FilaDeLaHoja titulo={t('suscripcion.hoja.estado')} valor={valorDeEstado(e)} />
           {plan && <FilaDeLaHoja titulo={t('suscripcion.hoja.plan')} valor={t(`suscripcion.${plan}.nombre`)} />}
@@ -640,4 +825,35 @@ const st = StyleSheet.create({
   hojaTitulo: { fontFamily: letras.texto, fontSize: 14, color: 'rgba(239, 230, 207, 0.6)' },
   hojaValor: { flexShrink: 1, textAlign: 'right', fontFamily: letras.texto, fontSize: 14, color: colores.pergamino },
   hojaBoton: { marginTop: 16 },
+  bv: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 28, overflow: 'hidden' },
+  bvPunto: { position: 'absolute', width: 3, height: 3, borderRadius: 1.5, backgroundColor: '#f6e3a6' },
+  bvEstrella: { width: 22, height: 22, backgroundColor: colores.oroClaro, shadowColor: colores.oroClaro, shadowOpacity: 0.85, shadowRadius: 18, shadowOffset: { width: 0, height: 0 } },
+  bvTitulo: { marginTop: 16, textAlign: 'center', fontFamily: 'CormorantGaramond_500Medium', fontSize: 34, lineHeight: 37, color: '#fbf2d9' },
+  bvTexto: { textAlign: 'center', fontFamily: letras.textoLiviano, fontSize: 15.5, lineHeight: 22, color: 'rgba(239, 230, 207, 0.86)' },
+  bvResaltado: { fontFamily: letras.textoMedio, color: colores.oroClaro },
+  bvMeses: { width: '100%', maxWidth: 300, marginTop: 14, marginBottom: 2, gap: 7 },
+  bvLinea: { flexDirection: 'row', gap: 5 },
+  bvMes: { flex: 1, height: 5, borderRadius: 3, backgroundColor: 'rgba(239, 230, 207, 0.14)', overflow: 'hidden' },
+  bvMesLleno: { height: '100%', borderRadius: 3 },
+  bvExtremos: { flexDirection: 'row', justifyContent: 'space-between' },
+  bvExtremo: { fontFamily: letras.texto, fontSize: 11.5, color: 'rgba(239, 230, 207, 0.62)' },
+  bvChico: { textAlign: 'center', fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17.5, color: 'rgba(239, 230, 207, 0.62)' },
+  bvBoton: { alignSelf: 'stretch', marginTop: 16 },
+  bvNo: { paddingVertical: 10, paddingHorizontal: 14 },
+  bvNoTexto: { fontFamily: letras.texto, fontSize: 14, color: 'rgba(239, 230, 207, 0.7)' },
+  pase: { flex: 1 },
+  paseCab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingLeft: 20, paddingRight: 14, paddingBottom: 8 },
+  paseRotulo: { fontFamily: letras.texto, fontSize: 10.5, letterSpacing: 1.6, textTransform: 'uppercase', color: colores.oroClaro },
+  paseDerecha: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  paseCuenta: { fontFamily: letras.texto, fontSize: 12, color: 'rgba(239, 230, 207, 0.55)', fontVariant: ['tabular-nums'] },
+  paseCerrar: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
+  paseVentana: { flex: 1 },
+  paseHoja: { flex: 1, alignItems: 'center', gap: 12, paddingHorizontal: 26 },
+  paseFoto: { flex: 1, aspectRatio: 603 / 1311, maxWidth: '100%', borderRadius: 22, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.16)', overflow: 'hidden', backgroundColor: '#03050c' },
+  paseTextos: { minHeight: 92, gap: 5 },
+  paseTitulo: { textAlign: 'center', fontFamily: 'CormorantGaramond_500Medium', fontSize: 23, lineHeight: 26, color: '#fbf2d9' },
+  paseTexto: { textAlign: 'center', fontFamily: letras.textoLiviano, fontSize: 14, lineHeight: 19.5, color: 'rgba(239, 230, 207, 0.8)' },
+  pasePie: { gap: 12, paddingHorizontal: 20, paddingTop: 10 },
+  pasePuntos: { flexDirection: 'row', justifyContent: 'center', gap: 9 },
+  pasePunto: { width: 7, height: 7, borderRadius: 3.5 },
 });

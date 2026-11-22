@@ -4386,6 +4386,10 @@
     },
     "conPlan": "{hora}: {plan}",
     "pruebaTermina": "Tu prueba de Moss termina en dos días",
+    "regaloTermina": {
+      "titulo": "Elige tu plan de Moss",
+      "texto": "Tu regalo termina el {fecha}. Lo que anotaste queda como está."
+    },
     "conviene": {
       "antes": {
         "titulo": "Tu comida antes de entrenar",
@@ -4746,10 +4750,6 @@
       "titulo": "Encontramos tu suscripción",
       "texto": "Sigue todo como lo dejaste."
     },
-    "regalo": {
-      "titulo": "Para ti, Moss sigue gratis",
-      "texto": "Ya usabas Moss antes de que fuera de pago. No tienes que hacer nada: no se te va a cobrar."
-    },
     "perfil": {
       "titulo": "Suscripción",
       "prueba": {
@@ -4758,8 +4758,8 @@
       },
       "anual": "Anual",
       "mensual": "Mensual",
-      "regalo": "De regalo",
-      "vencida": "Terminó"
+      "vencida": "Terminó",
+      "regaloHasta": "Regalo hasta el {fecha}"
     },
     "hoja": {
       "estado": "Estado",
@@ -4770,12 +4770,53 @@
       "termina": "Termina",
       "activa": "Activa",
       "cancelada": "Cancelaste: sigues con todo hasta esa fecha y no se te cobra más.",
-      "regalo": "Ya usabas Moss antes de que fuera de pago: para ti sigue gratis. No tienes que hacer nada.",
       "administrar": "Administrar en Ajustes",
-      "administrarTexto": "Para cambiar de plan o cancelar. Los cobros y los reembolsos los gestiona Apple."
+      "administrarTexto": "Para cambiar de plan o cancelar. Los cobros y los reembolsos los gestiona Apple.",
+      "regaloHasta": "Usaste Moss mientras se hacía: la tienes gratis hasta el {fecha}. Después, si quieres seguir, eliges un plan. Moss te avisa unos días antes."
     },
     "borrarConSuscripcion": "Tu suscripción la cobra Apple: borrar la cuenta no la cancela. Cancélala antes en Ajustes, o se seguirá cobrando.",
-    "administrarSuscripcion": "Administrar suscripción"
+    "administrarSuscripcion": "Administrar suscripción",
+    "bienvenida": {
+      "titulo": "¡Felicidades!",
+      "antes": "Usaste Moss mientras se hacía. Por eso tienes ",
+      "meses": "{n} meses completamente gratis",
+      "despuesDeMeses": ".",
+      "hoy": "Hoy",
+      "fecha": "{num} de {mes}",
+      "despues": "Después, si quieres seguir, eliges un plan. Moss te avisa unos días antes.",
+      "verLoNuevo": "Mira lo nuevo",
+      "ahoraNo": "Ahora no"
+    },
+    "novedades": {
+      "titulo": "Lo nuevo",
+      "cuenta": "{n} de {total}",
+      "siguiente": "Siguiente",
+      "empezar": "Empezar",
+      "widgets": {
+        "titulo": "Widgets nuevos",
+        "texto": "Hoy, Anotar y Agua: lo que te queda y anotar, sin abrir Moss."
+      },
+      "comida": {
+        "titulo": "Copia, mueve o borra con un gesto",
+        "texto": "Mantén apretado un alimento para copiarlo o moverlo, y deslízalo para borrarlo."
+      },
+      "buscar": {
+        "titulo": "Más fácil de encontrar",
+        "texto": "Primero sale lo que se vende en tu país, y lo que carga la comunidad queda para todos."
+      },
+      "sueno": {
+        "titulo": "Tu sueño, más claro",
+        "texto": "Tu deuda en una palabra y tu periodo de melatonina: el rato en que más fácil te duermes."
+      },
+      "energia": {
+        "titulo": "Tu energía del día",
+        "texto": "Con tu sueño y lo que comes, Moss te dice cómo vienes hoy y cuál es tu mejor momento."
+      },
+      "musculos": {
+        "titulo": "Con Ascent, tus músculos",
+        "texto": "Si entrenas con Ascent, ves qué músculo necesita más y qué hacer hoy."
+      }
+    }
   },
   "cuidados": {
     "intro": "Si tienes algo de esto, márcalo: Moss ajusta tu dieta a lo que recomiendan las guías y deja de proponerte lo que podría no convenirte. Puedes cambiarlo cuando quieras.",

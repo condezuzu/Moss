@@ -1,7 +1,9 @@
 // La suscripción (D40, spec/suscripcion.md): toda Moss es de pago, con 7 días de prueba. Acá, quién entra y
 // lo que sale de eso. Con acceso se tiene todo; sin acceso, la pantalla de pago: nada se bloquea por partes.
-// Quien tenía cuenta antes de que se prendiera la tiene de regalo (lo decidiste el 31/10/2026): usó Moss
-// cuando era gratis.
+// Quien tenía cuenta antes de que se prendiera la tiene de regalo: usó Moss cuando era gratis. El regalo dura
+// 3 meses desde ese día, igual para todos (lo pediste el 22/11/2026; antes, desde el 31/10, era para siempre).
+
+import { partesDe, sumarDias, type ClaveDia } from './fechas';
 
 const DIA = 86_400_000;
 
@@ -57,11 +59,43 @@ export function cuentaParaElRegalo(deLaSesion: string | null | undefined, guarda
   return deLaSesion || guardada || null;
 }
 
-/** Si la cuenta es de antes de que se prendiera. `saleEl` es AAAA-MM-DD; sin cuenta, no. */
+/** Si la cuenta es de antes de que se prendiera. `saleEl` es AAAA-MM-DD; sin cuenta, no. Vigente, mientras dura el regalo (regaloVigente). */
 export function esDeRegalo(cuentaCreada: string | null | undefined, saleEl: string): boolean {
   if (!cuentaCreada) return false;
   const creada = Date.parse(cuentaCreada);
   return Number.isFinite(creada) && creada < Date.parse(`${saleEl}T00:00:00Z`);
+}
+
+export const MESES_DE_REGALO = 3;
+/** Moss avisa que termina el regalo dos días antes de su último día, a esta hora. */
+const AVISO_DEL_REGALO = { dias: 2, hora: 10 };
+
+/**
+ * El último día del regalo: el mismo número de día, tres meses después del día en que Moss pasó a ser de pago
+ * (del 14/11 al 14/2; del 30/11, el último de febrero). Ese día también es de regalo.
+ */
+export function finDelRegalo(saleEl: ClaveDia): ClaveDia {
+  const p = partesDe(saleEl);
+  const mes = p.mes + MESES_DE_REGALO;
+  const anio = p.anio + Math.floor(mes / 12);
+  const enElMes = ((mes % 12) + 12) % 12;
+  const ultimo = new Date(Date.UTC(anio, enElMes + 1, 0)).getUTCDate();
+  return `${anio}-${String(enElMes + 1).padStart(2, '0')}-${String(Math.min(p.dia, ultimo)).padStart(2, '0')}`;
+}
+
+/** Cuándo termina el regalo, en milisegundos: la medianoche, en la hora del teléfono, después de su último día. */
+export function hastaDelRegalo(fin: ClaveDia): number {
+  const p = partesDe(sumarDias(fin, 1));
+  return new Date(p.anio, p.mes, p.dia).getTime();
+}
+
+export const regaloVigente = (fin: ClaveDia, ahora: number) => ahora < hastaDelRegalo(fin);
+
+/** Cuándo avisar que termina el regalo, en milisegundos, o null si ya pasó. */
+export function avisoDelRegalo(fin: ClaveDia, ahora: number): number | null {
+  const p = partesDe(sumarDias(fin, -AVISO_DEL_REGALO.dias));
+  const en = new Date(p.anio, p.mes, p.dia, AVISO_DEL_REGALO.hora).getTime();
+  return en > ahora ? en : null;
 }
 
 /** Cuántos días de prueba quedan, contando el de hoy. */
@@ -77,10 +111,11 @@ export function avisoDePrueba(s: Suscripcion | null, ahora: number): number | nu
 /**
  * Hasta cuándo pueden sonar los avisos que se programan, en milisegundos. Con la prueba o la suscripción
  * cancelada, hasta que vence: después no hay acceso y no suena nada, aunque Moss no se abra para borrarlos.
- * De regalo o renovándose, null: sin fin.
+ * De regalo, hasta que termina el regalo (`regaloHasta`, en milisegundos). Renovándose, null: sin fin.
  */
-export function avisosHasta(s: Suscripcion | null, a: Acceso): number | null {
-  return a !== 'regalo' && s?.renueva === false ? s.vence : null;
+export function avisosHasta(s: Suscripcion | null, a: Acceso, regaloHasta: number | null = null): number | null {
+  if (a === 'regalo') return regaloHasta;
+  return s?.renueva === false ? s.vence : null;
 }
 
 export const planDe = (s: Suscripcion): Plan => (s.producto === PRODUCTOS.anual ? 'anual' : 'mensual');

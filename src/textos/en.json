@@ -4386,6 +4386,10 @@
     },
     "conPlan": "{hora}: {plan}",
     "pruebaTermina": "Your Moss trial ends in two days",
+    "regaloTermina": {
+      "titulo": "Pick your Moss plan",
+      "texto": "Your gift ends on {fecha}. Everything you’ve logged stays as it is."
+    },
     "conviene": {
       "antes": {
         "titulo": "Your pre-workout meal",
@@ -4746,10 +4750,6 @@
       "titulo": "We found your subscription",
       "texto": "Everything is just as you left it."
     },
-    "regalo": {
-      "titulo": "For you, Moss stays free",
-      "texto": "You were using Moss before it became paid. There’s nothing to do: you won’t be charged."
-    },
     "perfil": {
       "titulo": "Subscription",
       "prueba": {
@@ -4758,8 +4758,8 @@
       },
       "anual": "Yearly",
       "mensual": "Monthly",
-      "regalo": "On us",
-      "vencida": "Ended"
+      "vencida": "Ended",
+      "regaloHasta": "Gift until {fecha}"
     },
     "hoja": {
       "estado": "Status",
@@ -4770,12 +4770,53 @@
       "termina": "Ends",
       "activa": "Active",
       "cancelada": "You canceled: you keep everything until that date and won’t be charged again.",
-      "regalo": "You were using Moss before it became paid: for you it stays free. There’s nothing to do.",
       "administrar": "Manage in Settings",
-      "administrarTexto": "To change plans or cancel. Apple handles charges and refunds."
+      "administrarTexto": "To change plans or cancel. Apple handles charges and refunds.",
+      "regaloHasta": "You used Moss while it was being built: it’s free for you until {fecha}. After that, if you want to keep going, you pick a plan. Moss lets you know a few days before."
     },
     "borrarConSuscripcion": "Apple bills your subscription: deleting your account doesn’t cancel it. Cancel it first in Settings, or you’ll keep being charged.",
-    "administrarSuscripcion": "Manage subscription"
+    "administrarSuscripcion": "Manage subscription",
+    "bienvenida": {
+      "titulo": "Congratulations!",
+      "antes": "You used Moss while it was being built. That’s why you get ",
+      "meses": "{n} months completely free",
+      "despuesDeMeses": ".",
+      "hoy": "Today",
+      "fecha": "{mes} {num}",
+      "despues": "After that, if you want to keep going, you pick a plan. Moss lets you know a few days before.",
+      "verLoNuevo": "See what’s new",
+      "ahoraNo": "Not now"
+    },
+    "novedades": {
+      "titulo": "What’s new",
+      "cuenta": "{n} of {total}",
+      "siguiente": "Next",
+      "empezar": "Start",
+      "widgets": {
+        "titulo": "New widgets",
+        "texto": "Today, Log and Water: see what’s left and log it without opening Moss."
+      },
+      "comida": {
+        "titulo": "Copy, move or delete in one gesture",
+        "texto": "Press and hold a food to copy or move it, and swipe it to delete it."
+      },
+      "buscar": {
+        "titulo": "Easier to find",
+        "texto": "What’s sold in your country comes first, and what the community adds is there for everyone."
+      },
+      "sueno": {
+        "titulo": "Your sleep, clearer",
+        "texto": "Your debt in one word, and your melatonin window: when you fall asleep most easily."
+      },
+      "energia": {
+        "titulo": "Your energy for the day",
+        "texto": "From your sleep and what you eat, Moss tells you how you’re doing today and your best time."
+      },
+      "musculos": {
+        "titulo": "With Ascent, your muscles",
+        "texto": "If you train with Ascent, see which muscle needs more and what to do today."
+      }
+    }
   },
   "cuidados": {
     "intro": "If any of these applies to you, mark it: Moss adjusts your diet to what the guidelines recommend and stops suggesting what may not suit you. You can change it anytime.",
