@@ -26,6 +26,8 @@
 // códigos ISO 3166-1 separados por espacio. Lo que no lo dice se vende en todos lados: los genéricos, los
 // platos de cada lugar (que se buscan por su nombre) y las cadenas globales. Afuera de esos países, la
 // búsqueda lo pone después de lo genérico y de lo que sí se vende ahí (src/comida/buscar.ts).
+// «@variantes», en una línea sola: lo que sigue en ese archivo son variantes de lo de siempre (el pan de
+// cebolla, el bagel de huevo; panes.txt). Al buscar salen después, salvo que se escriba su nombre entero.
 
 # frutas
 Manzana | Apple | sr:Apples, raw, with skin | 1 mediana / 1 medium=182 · 1 pequeña / 1 small=149 · 1 grande / 1 large=223 · 1 taza en trozos / 1 cup chopped=125 |  | desecho

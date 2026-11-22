@@ -1,0 +1,132 @@
+// Más panes (22/11/2026, lo pediste: «hasta cualquier tipo de pan»): lo de USDA que estaba en la base solo en
+// inglés, con su nombre en español, sus porciones y los nombres de cada región. El formato es el de
+// genericos.txt. Cada tipo de pan va una vez (de las variantes «sin especificar» de USDA, ninguna) y tostado
+// solo en los más comunes. Lo que ya estaba (pan blanco, integral, francés, pita, naan…) sigue en genericos.txt
+// y en uruguay-almacen.txt. Son variantes: al buscar «pan» salen después de los de siempre.
+@variantes
+
+# panes
+// De molde y de panadería.
+Pan blanco casero | Homemade white bread | fndds:Bread, white, made from home recipe or purchased at a bakery | 1 rebanada / 1 slice=44 · 1 rebanada fina / 1 thin slice=33 · 1 rebanada gruesa / 1 thick slice=55 | pan blanco de panadería
+Pan integral casero | Homemade whole wheat bread | fndds:Bread, whole wheat, made from home recipe or purchased at bakery | 1 rebanada / 1 slice=44 · 1 rebanada fina / 1 thin slice=33 · 1 rebanada gruesa / 1 thick slice=55 | pan integral de panadería
+Pan blanco con fibra | White bread with added fiber | fndds:Bread, white, special formula, added fiber | 1 rebanada / 1 slice=28 · 1 rebanada gruesa / 1 thick slice=43 | pan blanco de grano entero · pan blanco integral
+Pan de trigo | Wheat bread | sr:Bread, wheat | 1 rebanada / 1 slice=29 | pan de trigo de molde
+Pan de trigo partido | Cracked wheat bread | sr:Bread, cracked-wheat | 1 rebanada / 1 slice=25 · 1 rebanada grande / 1 large slice=30 | pan de trigo quebrado
+Pan de trigo germinado | Sprouted wheat bread | sr:Bread, wheat, sprouted | 1 rebanada / 1 slice=38 | pan de granos germinados · pan germinado · pan Ezequiel
+Pan italiano | Italian bread | sr:Bread, Italian | 1 rebanada / 1 slice=29 | ciabatta · chapata* (ES) · pan de campo
+Pan cubano | Cuban bread | fndds:Bread, Cuban | 1 rebanada / 1 slice=20 · 1 rebanada gruesa / 1 thick slice=30 |
+Pan de agua | Puerto Rican water bread | fndds:Bread, native, water, Puerto Rican style | 1 rebanada / 1 slice=25 | pan criollo
+Pan sobao | Puerto Rican soft lard bread | fndds:Bread, lard, Puerto Rican style | 1 rebanada / 1 slice=25 | pan de manteca (PR)
+Pan negro | Black bread | fndds:Bread, black | 1 rebanada / 1 slice=28 · 1 rebanada gruesa / 1 thick slice=43 | pan ruso · pan negro de centeno
+Pan pumpernickel | Pumpernickel bread | sr:Bread, pumpernickel | 1 rebanada / 1 slice=26 · 1 rebanada fina / 1 thin slice=20 | pumpernickel · pan alemán de centeno
+Pan de centeno marmolado | Marble rye bread | fndds:Bread, marble rye and pumpernickel | 1 rebanada / 1 slice=32 · 1 rebanada fina / 1 thin slice=25 | pan de centeno y pumpernickel
+Pan de cebada | Barley bread | fndds:Bread, barley | 1 rebanada / 1 slice=28 · 1 rebanada gruesa / 1 thick slice=43 |
+Pan de salvado de avena | Oat bran bread | sr:Bread, oat bran | 1 rebanada / 1 slice=30 | pan de salvado
+Pan de salvado de arroz | Rice bran bread | sr:Bread, rice bran | 1 rebanada / 1 slice=27 |
+Pan de arroz | Rice bread | fndds:Bread, rice | 1 rebanada / 1 slice=28 · 1 rebanada gruesa / 1 thick slice=43 | pan de harina de arroz
+Pan de soja | Soy bread | fndds:Bread, soy | 1 rebanada / 1 slice=28 · 1 rebanada gruesa / 1 thick slice=43 | pan de soya* (MX CO VE)
+Pan proteico | High-protein bread | sr:Bread, protein (includes gluten) | 1 rebanada / 1 slice=19 | pan de proteína · pan alto en proteína · pan de gluten
+Pan de girasol | Sunflower bread | fndds:Bread, sunflower meal | 1 rebanada / 1 slice=28 · 1 rebanada gruesa / 1 thick slice=43 | pan con semillas de girasol · pan de semillas
+Pan de cebolla | Onion bread | fndds:Bread, onion | 1 rebanada / 1 slice=31 · 1 rebanada gruesa / 1 thick slice=43 |
+Pan de batata | Sweet potato bread | fndds:Bread, sweet potato | 1 rebanada / 1 slice=28 · 1 rebanada gruesa / 1 thick slice=43 | pan de camote* (MX PE CL EC GT HN SV NI CR) · pan de boniato* (UY CU)
+Pan de verduras | Vegetable bread | fndds:Bread, vegetable | 1 rebanada / 1 slice=44 | pan con vegetales
+Pan con queso | Cheese loaf bread | sr:Bread, cheese | 1 rebanada / 1 slice=48 | pan de molde con queso · pan saborizado con queso
+Pan de canela | Cinnamon bread | sr:Bread, cinnamon | 1 rebanada / 1 slice=28 |
+Pan de maíz y melaza | Cornmeal and molasses bread | fndds:Bread, cornmeal and molasses | 1 rebanada / 1 slice=32 · 1 rebanada gruesa / 1 thick slice=43 | pan anadama
+Jalá | Challah | sr:Bread, egg | 1 rebanada / 1 slice=40 | pan de huevo · challah · pan trenzado · jalah
+Pan de soda irlandés | Irish soda bread | fndds:Bread, Irish soda | 1 rebanada / 1 slice=74 | pan de soda · soda bread
+Pan multicereal con pasas | Multigrain raisin bread | fndds:Bread, multigrain, with raisins | 1 rebanada / 1 slice=36 · 1 rebanada fina / 1 thin slice=24 | pan de cereales con pasas
+Pan integral con pasas | Whole wheat raisin bread | fndds:Bread, whole wheat, with raisins | 1 rebanada / 1 slice=36 · 1 rebanada fina / 1 thin slice=24 |
+Pan sin gluten integral | Gluten-free whole grain bread | sr:Bread, gluten-free, whole grain, made with tapioca starch and brown rice flour | 1 rebanada / 1 slice=25 | pan sin TACC integral (AR UY) · pan integral sin gluten
+
+// Con menos calorías.
+Pan integral light | Reduced-calorie wheat bread | sr:Bread, reduced-calorie, wheat | 1 rebanada / 1 slice=21 | pan integral bajo en calorías · pan integral liviano
+Pan de centeno light | Reduced-calorie rye bread | sr:Bread, reduced-calorie, rye | 1 rebanada / 1 slice=23 · 1 rebanada gruesa / 1 thick slice=32 | pan de centeno bajo en calorías
+Pan de avena light | Reduced-calorie oatmeal bread | sr:Bread, reduced-calorie, oatmeal | 1 rebanada / 1 slice=23 | pan de avena bajo en calorías
+Pan multicereal light | Reduced-calorie multigrain bread | fndds:Bread, multigrain, reduced calorie and/or high fiber | 1 rebanada / 1 slice=36 · 1 rebanada fina / 1 thin slice=24 | pan multicereal bajo en calorías · pan de cereales con fibra
+
+// Tostados: por 100 g tienen más de todo, porque perdieron agua. La rebanada tostada pesa menos.
+Pan de centeno tostado | Rye toast | sr:Bread, rye, toasted | 1 rebanada / 1 slice=24 · 1 rebanada grande / 1 large slice=29 | tostada de centeno
+Pan multicereal tostado | Multigrain toast | sr:Bread, multi-grain, toasted (includes whole-grain) | 1 rebanada / 1 slice=24 · 1 rebanada grande / 1 large slice=38 | tostada multicereal · tostada de cereales
+Pan francés tostado | Toasted French bread | fndds:Bread, French or Vienna, toasted | 1 rebanada / 1 slice=29 | baguette tostada · tostada de pan francés
+Pan de masa madre tostado | Sourdough toast | fndds:Bread, sour dough, toasted | 1 rebanada / 1 slice=28 · 1 rebanada gruesa / 1 thick slice=39 | tostada de masa madre
+Pan de pasas tostado | Raisin toast | sr:Bread, raisin, enriched, toasted | 1 rebanada / 1 slice=24 | tostada de pan de pasas
+Pan de avena tostado | Oatmeal toast | sr:Bread, oatmeal, toasted | 1 rebanada / 1 slice=25 | tostada de pan de avena
+Pan sin gluten tostado | Gluten-free toast | fndds:Bread, gluten free, toasted | 1 rebanada / 1 slice=25 · 1 rebanada gruesa / 1 thick slice=39 | tostada sin gluten · tostada sin TACC (AR UY)
+
+// Planos y del mundo.
+Naan integral | Whole wheat naan | sr:Bread, naan, whole wheat, commercially prepared, refrigerated | 1 unidad / 1 piece=106 | pan naan integral
+Chapati integral | Whole wheat chapati | sr:Bread, chapati or roti, whole wheat, commercially prepared, frozen | 1 unidad / 1 piece=43 | roti integral
+Paratha | Paratha | fndds:Bread, paratha | 1 unidad / 1 paratha=70 | pan paratha
+Puri | Puri | fndds:Bread, puri | 1 unidad / 1 puri=36 | poori · pan frito indio
+Quesadilla salvadoreña | Salvadoran quesadilla (sweet cheese bread) | sr:Bread, salvadoran sweet cheese (quesadilla salvadorena) | 1 porción / 1 serving=55 | pan dulce de queso
+
+// Dulces, tipo budín: van por rebanada.
+Pan de calabaza | Pumpkin bread | fndds:Bread, pumpkin | 1 rebanada / 1 slice=60 | budín de calabaza* (AR UY PY) · budín de zapallo (AR UY) · queque de zapallo (CL PE)
+Pan de calabacín | Zucchini bread | fndds:Bread, zucchini | 1 rebanada / 1 slice=40 | pan de zucchini · pan de calabacita* (MX) · budín de zapallito* (AR UY)
+Pan de nueces | Nut bread | fndds:Bread, nut | 1 rebanada / 1 slice=49 | budín de nueces* (AR UY PY) · queque de nueces (CL PE)
+Pan de frutas | Fruit bread | fndds:Bread, fruit | 1 rebanada / 1 slice=41 | pan con frutas · budín de frutas (AR UY PY)
+
+// Palitos y relleno.
+Palitos de pan blandos | Soft breadsticks | fndds:Breadsticks, soft, NFS | 1 mediano / 1 medium stick=43 · 1 pequeño / 1 small stick=28 · 1 grande / 1 large stick=53 | palitos de pan suaves · bastones de pan
+Palitos de pan con queso | Cheese breadsticks | fndds:Breadsticks, soft, stuffed or topped with melted cheese | 1 mediano / 1 medium stick=61 · 1 pequeño / 1 small stick=40 | palitos de queso · bastones de pan con queso
+Grisines integrales | Whole wheat breadsticks | fndds:Breadsticks, hard, whole wheat | 5 unidades / 5 sticks=50 · 1 unidad / 1 stick=10 | palitos de pan integrales · colines integrales (ES)
+Relleno de pan | Bread stuffing | fndds:Bread stuffing | ½ taza / ½ cup=100 · 1 taza / 1 cup=200 | relleno para pavo · stuffing
+
+// Panecillos.
+Panecillo integral | Whole wheat roll | fndds:Roll, whole wheat | 1 mediano / 1 medium roll=43 · 1 pequeño / 1 small roll=28 · 1 grande / 1 large roll=52 | pancito integral* (AR UY PY CL) · bollo integral
+Panecillo multicereal | Multigrain roll | fndds:Roll, multigrain | 1 mediano / 1 medium roll=43 · 1 pequeño / 1 small roll=28 · 1 grande / 1 large roll=52 | pancito multicereal* (AR UY PY CL) · pancito de cereales
+Panecillo de centeno | Rye roll | fndds:Roll, rye | 1 mediano / 1 medium roll=36 · 1 pequeño / 1 small roll=28 | pancito de centeno* (AR UY PY CL)
+Panecillo de avena | Oatmeal roll | fndds:Roll, oatmeal | 1 mediano / 1 medium roll=36 · 1 pequeño / 1 small roll=28 | pancito de avena* (AR UY PY CL)
+Panecillo de salvado | Bran roll | fndds:Roll, bran, NS as to type of bran | 1 mediano / 1 medium roll=36 · 1 pequeño / 1 small roll=28 | pancito de salvado* (AR UY PY CL)
+Panecillo pumpernickel | Pumpernickel roll | fndds:Roll, pumpernickel | 1 mediano / 1 medium roll=36 · 1 pequeño / 1 small roll=28 |
+Panecillo de masa madre | Sourdough roll | fndds:Roll, sour dough | 1 mediano / 1 medium roll=45 · 1 pequeño / 1 small roll=34 · 1 grande / 1 large roll=57 | pancito de masa madre* (AR UY PY CL)
+Panecillo francés | French roll | sr:Rolls, french | 1 unidad / 1 roll=38 | pancito francés* (AR UY PY CL) · mignon (AR) · pan miñón
+Panecillo crujiente | Hard roll | sr:Rolls, hard (includes kaiser) | 1 unidad / 1 roll=57 | pan kaiser · pancito crocante · bollo kaiser
+Panecillo de huevo | Egg roll (bread) | sr:Rolls, dinner, egg | 1 unidad / 1 roll=35 | pancito de huevo* (AR UY PY CL)
+Panecillo de queso | Cheese roll | fndds:Roll, cheese | 1 unidad / 1 roll=41 | pancito de queso* (AR UY PY CL) · pancito saborizado
+Panecillo de ajo | Garlic roll | fndds:Roll, garlic | 1 mediano / 1 medium roll=35 · 1 pequeño / 1 small roll=28 | pancito de ajo* (AR UY PY CL)
+Panecillo sin gluten | Gluten-free roll | fndds:Roll, gluten free | 1 mediano / 1 medium roll=43 · 1 pequeño / 1 small roll=28 · 1 grande / 1 large roll=52 | pancito sin gluten · pancito sin TACC* (AR UY)
+Pan para sándwich largo | Sub roll | fndds:Roll, white, hoagie, submarine | 1 mediano / 1 medium=106 · 1 pequeño / 1 small=73 · 1 grande / 1 large=153 | pan de submarino · pan tipo sub · pan flauta para sándwich
+Pan de hamburguesa integral | Whole wheat hamburger bun | fndds:Roll, whole wheat, hamburger bun | 1 unidad / 1 bun=52 · 1 pequeño / 1 small bun=28 | pan integral para hamburguesa
+Pan de hamburguesa multicereal | Multigrain hamburger bun | fndds:Roll, multigrain, hamburger bun | 1 unidad / 1 bun=52 · 1 pequeño / 1 small bun=28 | pan de hamburguesa con semillas
+Pan de hot dog integral | Whole wheat hot dog bun | fndds:Roll, whole wheat, hot dog bun | 1 unidad / 1 bun=45 | pan de pancho integral* (AR UY) · pan de salchicha integral
+Rollo dulce | Sweet roll | fndds:Roll, sweet, no frosting | 1 mediano / 1 medium=90 · 1 pequeño / 1 small=54 | bollo dulce · pan dulce en rollo
+Rollo dulce glaseado | Frosted sweet roll | fndds:Roll, sweet, frosted | 1 unidad / 1 roll=90 · 1 pequeño / 1 small=54 | bollo dulce glaseado
+Rollo de canela sin glaseado | Cinnamon roll, no frosting | fndds:Roll, sweet, cinnamon bun, no frosting | 1 mediano / 1 medium=90 · 1 pequeño / 1 small=54 | rol de canela sin glaseado* (MX) · cinnamon roll sin glaseado
+
+// Bagels y muffins ingleses.
+Bagel integral | Whole wheat bagel | fndds:Bagel, whole wheat | 1 unidad / 1 bagel=105 · 1 pequeño / 1 small=69 · 1 mini / 1 miniature=26 |
+Bagel multicereal | Multigrain bagel | fndds:Bagel, multigrain | 1 unidad / 1 bagel=105 · 1 pequeño / 1 small=69 · 1 mini / 1 miniature=26 | bagel de cereales
+Bagel de salvado de avena | Oat bran bagel | fndds:Bagel, oat bran | 1 unidad / 1 bagel=105 · 1 pequeño / 1 small=69 · 1 mini / 1 miniature=26 | bagel de avena
+Bagel pumpernickel | Pumpernickel bagel | fndds:Bagel, pumpernickel | 1 unidad / 1 bagel=105 · 1 pequeño / 1 small=69 · 1 mini / 1 miniature=26 | bagel de centeno
+Bagel con pasas | Raisin bagel | fndds:Bagel, with raisins | 1 unidad / 1 bagel=105 · 1 pequeño / 1 small=69 · 1 mini / 1 miniature=26 |
+Bagel de canela y pasas | Cinnamon raisin bagel | sr:Bagels, cinnamon-raisin | 1 pequeño / 1 small=69 · 1 mini / 1 miniature=26 | bagel de canela
+Bagel de huevo | Egg bagel | sr:Bagels, egg | 1 pequeño / 1 small=69 · 1 mini / 1 miniature=26 |
+Chips de bagel | Bagel chips | fndds:Bagel chips | 5 unidades / 5 chips=25 · 1 bolsa chica / 1 small bag=45 | bagel chips
+Muffin inglés integral | Whole wheat English muffin | fndds:Muffin, English, whole wheat | 1 unidad / 1 muffin=58 |
+Muffin inglés multicereal | Multigrain English muffin | fndds:Muffin, English, multigrain | 1 unidad / 1 muffin=58 | muffin inglés de cereales
+Muffin inglés de salvado de avena | Oat bran English muffin | fndds:Muffin, English, oat bran | 1 unidad / 1 muffin=58 | muffin inglés de avena
+Muffin inglés con pasas | Raisin English muffin | fndds:Muffin, English, with raisins | 1 unidad / 1 muffin=58 |
+Muffin inglés de canela y pasas | Cinnamon raisin English muffin | sr:Muffins, English, raisin-cinnamon (includes apple-cinnamon) | 1 unidad / 1 muffin=57 |
+Muffin inglés tostado | Toasted English muffin | sr:Muffins, English, plain, toasted, enriched, with calcium propionate (includes sourdough) | 1 unidad / 1 muffin=52 |
+
+// Bísquets: el panecillo de mantequilla de Estados Unidos y de México.
+Bísquet | Biscuit | fndds:Biscuit, NFS | 1 unidad / 1 biscuit=45 | bisquet · biscuit · panecillo de mantequilla
+Bísquet casero | Homemade biscuit | fndds:Biscuit, home recipe | 1 unidad / 1 biscuit=45 | bisquet casero · biscuit casero
+Bísquet de queso | Cheese biscuit | fndds:Biscuit, cheese | 1 unidad / 1 biscuit=45 | bisquet de queso · biscuit de queso
+Bísquet integral | Wheat biscuit | fndds:Biscuit, wheat | 1 unidad / 1 biscuit=45 | bisquet integral
+
+// Croissants.
+Croissant de mantequilla | Butter croissant | sr:Croissants, butter | 1 mediano / 1 medium=57 · 1 mini / 1 mini=28 · 1 pequeño / 1 small=42 | croissant de manteca* (AR UY PY) · cuerno de mantequilla* (MX) · cruasán de mantequilla* (ES)
+Croissant de queso | Cheese croissant | sr:Croissants, cheese | 1 mediano / 1 medium=57 · 1 pequeño / 1 small=42 · 1 grande / 1 large=67 | medialuna de queso* (AR UY) · cuerno de queso* (MX) · cruasán de queso* (ES)
+Croissant de manzana | Apple croissant | sr:Croissants, apple | 1 mediano / 1 medium=57 | medialuna de manzana* (AR UY) · cruasán de manzana* (ES)
+
+// De maíz, para tacos y para la ensalada.
+Muffin de maíz | Cornbread muffin | fndds:Cornbread muffin, stick, round | 1 mediano / 1 medium=113 · 1 pequeño / 1 small=66 · 1 mini / 1 miniature=17 | panecillo de maíz · muffin de pan de maíz
+Tortilla crujiente para tacos | Hard taco shell | fndds:Taco shell, corn | 1 mediana / 1 medium=28 · 1 pequeña / 1 small=18 | taco shell · concha para tacos · tortilla dura para tacos
+Tortilla crujiente de harina para tacos | Flour taco shell | fndds:Taco shell, flour | 1 unidad / 1 shell=45 · 1 pequeña / 1 small=33 | taco shell de harina · concha de harina para tacos
+Totopos horneados | Baked tortilla chips | sr:Tortilla chips, low fat, baked without fat | 30 g / 30 g=28 | nachos horneados* (AR UY CL ES PE CO) · chips de maíz horneados
+Totopos con sabor | Flavored tortilla chips | fndds:Tortilla chips, flavored | 1 bolsa chica / 1 small bag=28 · 1 bolsa mediana / 1 medium bag=57 | nachos saborizados* (AR UY CL ES PE CO) · chips de maíz con sabor
+Crutones | Croutons | sr:Croutons, plain | ½ taza / ½ cup=15 · 1 taza / 1 cup=30 | picatostes* (ES) · crotones · cubitos de pan tostado
+Crutones sazonados | Seasoned croutons | sr:Croutons, seasoned | ½ taza / ½ cup=20 · 1 taza / 1 cup=40 | picatostes sazonados* (ES) · crotones sazonados

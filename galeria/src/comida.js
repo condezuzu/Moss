@@ -1407,7 +1407,7 @@ const Comida = (() => {
       const normal = Buscar.normalizar(texto);
       const trigramas = new Set();
       normal.split(' ').forEach((p) => { for (let k = 0; k + 3 <= p.length; k++) trigramas.add(p.slice(k, k + 3)); });
-      return { alimento: a.id, idioma: i, region: region || null, principal, texto, palabras: normal.split(' '), trigramas, rango: 0, marca: a.m, orden: a.b, paises: a.n };
+      return { alimento: a.id, idioma: i, region: region || null, principal, texto, palabras: normal.split(' '), trigramas, rango: 0, marca: a.m, orden: a.b, paises: a.n, variante: a.e };
     });
     const corpus = ALIMENTOS.flatMap(textosDe);
     function buscar(texto) {

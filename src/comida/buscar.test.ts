@@ -55,6 +55,19 @@ describe('buscar alimentos', () => {
     expect(nombres.every((n) => n.startsWith('Pan '))).toBe(true);
   });
 
+  it('las variantes («@variantes») salen después de lo de siempre', async () => {
+    const esVariante = (id: number) => (db.prepare('SELECT variante FROM alimentos WHERE id = ?').get(id) as { variante: number | null }).variante === 1;
+    const lista = await buscar('pan', { limite: 200 });
+    const nombres = lista.map((r) => r.nombre);
+    const primeraVariante = lista.findIndex((r) => esVariante(r.id));
+    expect(primeraVariante).toBeGreaterThan(nombres.indexOf('Pan integral'));
+    expect(primeraVariante).toBeGreaterThan(nombres.indexOf('Pan de centeno'));
+    expect(nombres).toContain('Pan de cebolla');
+    // Escrita entera, la variante es lo primero.
+    expect((await primero('pan de cebolla')).nombre).toBe('Pan de cebolla');
+    expect((await primero('bagel integral')).nombre).toBe('Bagel integral');
+  });
+
   it('cada región con su nombre', async () => {
     expect(await primero('aguacate')).toMatchObject({ id: idDe('Aguacate'), nombre: 'Palta' });
     expect(await primero('palta', { region: 'MX' })).toMatchObject({ id: idDe('Aguacate'), nombre: 'Aguacate', coincide: 'palta' });

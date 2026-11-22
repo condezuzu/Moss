@@ -63,6 +63,8 @@ function alimentosCurados() {
       u: microsDe(a), w: a.verificado && a.segunda ? [a.verificado, a.segunda] : null, f: a.fuente, o: a.atribucion, m: a.marca, b: a.orden_marca,
       // Dónde se vende, si no es en todos lados: ["AR", "PY", "UY"].
       ...(a.paises ? { n: a.paises.split(' ') } : {}),
+      // Las variantes de lo de siempre, que al buscar salen después.
+      ...(a.variante ? { e: 1 } : {}),
       p: [], d: 0, t: [], porcion: a.porcion,
     }]));
   for (const p of db.prepare(`SELECT p.id, p.alimento, p.es, p.en, p.gramos FROM porciones p JOIN alimentos a ON a.id = p.alimento WHERE a.nombre_es IS NOT NULL ORDER BY p.id`).all()) {

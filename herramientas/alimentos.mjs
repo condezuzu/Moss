@@ -25,7 +25,7 @@ import { fileURLToPath } from 'node:url';
 import { inflateRawSync } from 'node:zlib';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
-const ESQUEMA = 6;
+const ESQUEMA = 7;
 
 // Los micronutrientes, con su número de nutriente en FNDDS (el viejo) y su id en SR Legacy. Las
 // unidades son las de USDA: mg, salvo el selenio, la vitamina A (RAE), la D, la K, el folato (DFE)
@@ -321,7 +321,8 @@ function queSeDesecha(descripcion) {
  * alimentos/*.txt (genericos.txt primero): una línea por alimento, con los campos separados por
  * « | »: nombre en español | nombre en inglés | de dónde sale | porciones | alias | detalles.
  * Las líneas «# categoría» abren una categoría; las que empiezan con «//» son comentarios, y las de
- * «@paises», dónde se vende lo de ese archivo (leerPaises).
+ * «@paises», dónde se vende lo de ese archivo (leerPaises). Lo que sigue a una línea «@variantes» son
+ * variantes de lo de siempre (el pan de cebolla, el bagel de huevo): al buscar salen después (buscar.ts).
  * Con SOLO=archivo.txt se arma con genericos.txt y ese archivo nada más (para revisar uno), y con
  * CARPETA=otra/carpeta, con los archivos de otra carpeta (los de un commit, por ejemplo).
  * verificacion.txt no es de alimentos: lo lee leerVerificacion().
@@ -338,11 +339,13 @@ function leerCurados() {
     let categoria = null;
     const paises = { archivo: null, marcas: new Map() };
     const delArchivo = [];
+    let variante = false;
     readFileSync(join(carpeta, archivo), 'utf8').split(/\r?\n/).forEach((linea, i) => {
       const donde = `${archivo}:${i + 1}`;
       if (!linea.trim() || linea.startsWith('//')) return;
       if (linea.startsWith('@')) {
-        leerPaises(linea, donde, paises);
+        if (linea.trim() === '@variantes') variante = true;
+        else leerPaises(linea, donde, paises);
         return;
       }
       if (linea.startsWith('# ')) {
@@ -355,7 +358,7 @@ function leerCurados() {
       const [es, en, origen, porciones, alias = '', detalles = ''] = campos;
       if (!es || !en) throw new Error(`${donde}: falta el nombre`);
       delArchivo.push({
-        donde, categoria, es, en, origen,
+        donde, categoria, es, en, origen, variante,
         // «1 mediana=118», o con el inglés: «1 mediana / 1 medium=118».
         porciones: porciones.split(' · ').filter(Boolean).map((x) => {
           const corte = x.lastIndexOf('=');
@@ -589,7 +592,7 @@ for (const g of curados) {
     continue;
   }
   usados.set(alimento.id, g.donde);
-  Object.assign(alimento, { es: g.es, en: g.en, categoria: g.categoria, propias: g.porciones, detalles: g.detalles, donde: g.donde, paises: g.paises ?? null });
+  Object.assign(alimento, { es: g.es, en: g.en, categoria: g.categoria, propias: g.porciones, detalles: g.detalles, donde: g.donde, paises: g.paises ?? null, variante: g.variante });
   for (const a of g.alias) for (const region of a.regiones) alias.push({ alimento: alimento.id, texto: a.texto, region, principal: a.principal && region !== null });
 }
 
@@ -626,7 +629,7 @@ for (const g of recetas) {
     errores.push(`${g.donde}: «${g.es}» ya es otro alimento (${usados.get(porEspanol.get(g.es).id)})`);
     continue;
   }
-  const plato = { id, fuente: 'receta', descripcion: g.en, ...valores, es: g.es, en: g.en, categoria: g.categoria, propias: g.porciones, detalles: g.detalles, donde: g.donde, paises: g.paises ?? null };
+  const plato = { id, fuente: 'receta', descripcion: g.en, ...valores, es: g.es, en: g.en, categoria: g.categoria, propias: g.porciones, detalles: g.detalles, donde: g.donde, paises: g.paises ?? null, variante: g.variante };
   alimentos.set(id, plato);
   porEspanol.set(g.es, plato);
   usados.set(id, g.donde);
@@ -801,6 +804,8 @@ db.exec(`
     -- Dónde se vende, en códigos ISO 3166-1 separados por espacio («AR PY UY»); null, en todos lados.
     -- Lo dice su archivo de alimentos/, con «@paises» o «paises=».
     paises TEXT,
+    -- 1 en las variantes de lo de siempre («@variantes» en su archivo): al buscar salen después.
+    variante INTEGER,
     -- Los micronutrientes, en las unidades de USDA (herramientas/alimentos.mjs, MICROS); lo que no se sabe, null.
     ${CLAVES_MICROS.map((k) => `${k} REAL`).join(', ')}
   );
@@ -824,7 +829,7 @@ db.exec(`
 `);
 db.exec('BEGIN');
 const COLUMNAS = ['id', 'fuente', 'descripcion', 'nombre_es', 'nombre_en', 'categoria', 'kcal', 'proteina', 'carbohidratos', 'grasas', 'fibra', 'azucares', 'saturadas', 'sodio', 'alcohol',
-  'porcion', 'marca', 'orden_marca', 'densidad', 'desecho', 'desecho_es', 'desecho_en', 'aceite', 'crudo', 'atribucion', 'fuente_texto', 'aproximado', 'verificado', 'segunda', 'paises', ...CLAVES_MICROS];
+  'porcion', 'marca', 'orden_marca', 'densidad', 'desecho', 'desecho_es', 'desecho_en', 'aceite', 'crudo', 'atribucion', 'fuente_texto', 'aproximado', 'verificado', 'segunda', 'paises', 'variante', ...CLAVES_MICROS];
 const ponerAlimento = db.prepare(`INSERT INTO alimentos (${COLUMNAS.join(', ')}) VALUES (${COLUMNAS.map(() => '?').join(', ')})`);
 const ponerPorcion = db.prepare('INSERT INTO porciones (alimento, en, es, gramos) VALUES (?, ?, ?, ?)');
 const ponerAlias = db.prepare('INSERT INTO alias VALUES (?, ?, ?, ?)');
@@ -840,7 +845,7 @@ for (const a of [...alimentos.values()].sort((x, y) => x.id - y.id)) {
     a.id, a.fuente, a.descripcion, a.es ?? null, a.en ?? null, a.categoria ?? null, redondo(a.kcal), redondo(a.proteina), redondo(a.carbohidratos), redondo(a.grasas),
     tal(a.fibra), tal(a.azucares), tal(a.saturadas), tal(a.sodio), tal(a.alcohol), null,
     a.marca ?? null, a.ordenMarca ?? null, a.densidad ?? null, a.desecho ?? null, a.queDesecho?.es ?? null, a.queDesecho?.en ?? null, a.aceite ?? null, a.crudo ?? null, a.atribucion ?? null, a.fuenteTexto ?? null, a.aproximado ?? null,
-    a.verificado ?? null, a.segunda ?? null, a.paises ?? null, ...CLAVES_MICROS.map((k) => fino(a[k])),
+    a.verificado ?? null, a.segunda ?? null, a.paises ?? null, a.variante ? 1 : null, ...CLAVES_MICROS.map((k) => fino(a[k])),
   );
   // De los curados: primero sus porciones (la primera es la de siempre); de USDA, solo las que
   // tienen traducción. Una porción propia sin inglés toma el de la de USDA que pesa lo mismo.
