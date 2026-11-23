@@ -812,8 +812,9 @@
   // Cuánto tiene que moverse el dedo, y más de costado que para abajo, para que el gesto sea de las
   // pestañas y no de una lista o de la cámara del cielo.
   const DECIDE_PX = 14;
-  // Cuánto se oscurece el cielo detrás de cada sección, de 0 a 1. En Sueño deja ver un poco la noche.
-  const VELO = [0.8, 0.8, 0.8, 0.7, 0, 0.8];
+  // Cuánto se oscurece el cielo detrás de cada sección, de 0 a 1. En Sueño deja ver un poco la noche; en Inicio, el
+  // cielo estrellado (23/11/2026, para aprobar: se veía negro).
+  const VELO = [0.45, 0.8, 0.8, 0.7, 0, 0.8];
 
   // cubic-bezier(0.16, 1, 0.3, 1), la curva de Ascent: sale rápido y frena largo.
   function bezier(x1, y1, x2, y2) {
@@ -1131,6 +1132,11 @@
 
   // Los botones de la galería para las secciones nuevas.
   const accionesSeccion = {
+    // Lo que pediste el 23/11, para aprobar: el nombre de la estrella al tocarla, Inicio con el cielo y los picos.
+    nombreEstrella: () => { cerrarHojas(); pestanas.ir(4); setTimeout(() => escena.tocarPorNombre('Escribir'), 520); },
+    inicioCielo: () => { cerrarHojas(); inicio.primerDia(false); pestanas.ir(0); inicio.subir(); },
+    priorizar: () => { cerrarHojas(); ponerAparato(false); pestanas.ir(3, true); sueno.ponerEstado('datos'); sueno.verNoche(0); setTimeout(() => sueno.bajarA('.sn-priorizar'), 260); },
+    picosEnergia: () => { cerrarHojas(); inicio.primerDia(false); pestanas.ir(0); inicio.subir(); setTimeout(() => inicio.abrirEnergia(), 420); },
     // «Para hoy», al final de Inicio (2/11).
     paraHoy: () => { cerrarHojas(); inicio.primerDia(false); pestanas.ir(0, true); inicio.bajar(); },
     mas: () => { cerrarHojas(); comida.empezarCuenta(); comida.contarToque(); mas.abrir(); },

@@ -145,11 +145,12 @@ section.item p { margin: 0; max-width: 64ch; }
 .cab-cuenta { margin-top: 8px; font: 400 12px/1 var(--texto); color: rgba(239, 230, 207, 0.6); letter-spacing: 0.02em; }
 .cab.completa .cab-cuenta { color: var(--oro); letter-spacing: 0.18em; text-transform: uppercase; font-size: 10.5px; }
 
-.etq { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; white-space: nowrap; font: 400 11.5px/1.15 var(--texto); color: rgba(239, 230, 207, 0.64); text-shadow: 0 0 8px #03050c, 0 0 3px #03050c; transition: color 0.35s; will-change: transform; }
-.etq[data-lado='abajo'] { translate: -50% 0; }
-.etq[data-lado='arriba'] { translate: -50% -100%; }
-.etq[data-lado='der'] { translate: 0 -50%; align-items: flex-start; }
-.etq[data-lado='izq'] { translate: -100% -50%; align-items: flex-end; }
+.etq { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; white-space: nowrap; font: 400 13px/1.15 var(--texto); color: rgba(239, 230, 207, 0.9); text-shadow: 0 0 8px #03050c, 0 0 3px #03050c; opacity: 0; scale: 0.82; pointer-events: none; transition: color 0.35s, opacity 0.2s ease, scale 0.32s cubic-bezier(0.16, 1, 0.3, 1); will-change: translate, scale, opacity; }
+/* Sin nombre hasta tocarla: el nombre crece desde la estrella. */
+.etq.visible { opacity: 1; scale: 1; }
+.etq[data-lado='abajo'] { transform-origin: 50% 0; }
+.etq[data-lado='arriba'] { transform-origin: 50% 100%; }
+@media (prefers-reduced-motion: reduce) { .etq { scale: 1; transition: color 0.35s, opacity 0.2s ease; } }
 .etq.encendida { color: #f3dc9b; }
 .etq-nombre { display: inline-flex; align-items: center; gap: 5px; }
 .etq svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; opacity: 0.85; flex: none; }
@@ -606,6 +607,10 @@ button.gc-fila { cursor: pointer; }
 .in-energia-dia { margin-top: 14px; }
 /* La curva de tu energía hoy: el área suave, la línea que se dibuja al aparecer, el nombre de cada tramo y ahora. */
 .in-energia-dia .curva { position: relative; height: 56px; margin-bottom: 4px; }
+.in-energia-dia .picos { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; margin-bottom: 8px; font: 400 11.5px/1.25 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.in-energia-dia .picos b { font-weight: 500; color: rgba(239, 230, 207, 0.85); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.in-energia-dia .picos b.actual { color: var(--tinta); text-shadow: 0 0 10px color-mix(in srgb, var(--e-color) 60%, transparent); }
+.in-energia-dia .picos span { color: rgba(239, 230, 207, 0.35); }
 .in-energia-dia .curva svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .pagina-app .in-energia-dia .curva path.area { fill: color-mix(in srgb, var(--e-color) 14%, transparent); stroke: none; }
 .pagina-app .in-energia-dia .curva path.linea { fill: none; stroke: color-mix(in srgb, var(--e-color) 85%, transparent); stroke-width: 1.6; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 1; animation: in-energia-traza 1.1s 0.15s cubic-bezier(0.3, 0.6, 0.2, 1) forwards; }
@@ -2080,6 +2085,14 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
       <h2><span class="n">1.1</span>Lo nuevo, para aprobar</h2>
       <p>Lo que pediste el 2/11 a la noche (lo que dictaste mirando la galería) y el 3/11, para aprobar: probalo acá y, si te cierra, se programa. La app no cambia hasta que lo apruebes. Lo que no es visual ya está en la rama <b>mejoras-1.1</b> y va por OTA cuando Apple apruebe la 1.0: las marcas nuevas (con los productos de código uruguayo), el arreglo de «Si voy muy bajo en algo» (apagarlo no se guardaba) y lo de la tanda anterior.</p>
       <div class="panel">
+        <div class="grupo"><span>Lo que pediste el 23/11, para aprobar: las estrellas de Hábitos sin nombre (el primer toque lo muestra y el segundo marca el hábito), Inicio sobre el cielo estrellado, «Picos de energía:» con sus horas arriba de la curva y, abajo de todo en Sueño, «Qué priorizar cada noche»: 17 puntos de lo que más ayuda a lo que menos, cada uno con su explicación y en qué se basa</span>
+          <div class="controles">
+            <button class="boton principal" type="button" data-seccion="nombreEstrella">El nombre al tocar una estrella</button>
+            <button class="boton" type="button" data-seccion="inicioCielo">Inicio con el cielo</button>
+            <button class="boton" type="button" data-seccion="picosEnergia">Picos de energía</button>
+            <button class="boton" type="button" data-seccion="priorizar">Qué priorizar cada noche</button>
+          </div>
+        </div>
         <div class="grupo"><span>El regalo de 3 meses y la bienvenida (aprobado el 22/11 y en la app): quien ya tenía cuenta ve una vez «¡Felicidades!», con sus 3 meses gratis y hasta qué día, y «Mira lo nuevo», un pase de seis capturas de la app de verdad. En Perfil, el regalo dice hasta cuándo</span>
           <div class="controles">
             <button class="boton principal" type="button" data-seccion="pagoRegalo">La bienvenida</button>

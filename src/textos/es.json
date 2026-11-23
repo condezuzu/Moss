@@ -33,6 +33,7 @@
     "horasMinutos": "{h} h {m} min",
     "tuUniverso": "Tu universo",
     "globito": "Toca una estrella para marcar su hábito",
+    "globitoDosToques": "Toca una estrella para ver su hábito, y otra vez para marcarlo",
     "seEnciendeConAscent": "Se enciende sola con Ascent",
     "lector": {
       "lleva": "llevas {valor}",
@@ -1333,7 +1334,8 @@
       "curva": {
         "pico": "Tu mejor momento",
         "bajon": "Bajón",
-        "segundoPico": "Otro pico"
+        "segundoPico": "Otro pico",
+        "picos": "Picos de energía:"
       },
       "hoy": "Hoy",
       "estosDias": "Estos días",
@@ -2414,6 +2416,109 @@
     "esperaAparato": {
       "estimada": "Tu noche de {aparato} todavía no llegó: llega cuando se sincroniza (en muchos anillos, al abrir su app). Mientras, esta es la estimada con tu teléfono.",
       "sinEstimar": "Tu noche de {aparato} todavía no llegó: llega cuando se sincroniza (en muchos anillos, al abrir su app). El teléfono tampoco tiene lo suficiente para estimarla."
+    },
+    "priorizar": {
+      "titulo": "Qué priorizar cada noche",
+      "bajada": "De lo que más ayuda a lo que menos. Toca uno para ver por qué.",
+      "verTodos": "Ver los {n}",
+      "verMenos": "Ver menos",
+      "basa": "En qué se basa",
+      "basaTexto": "Cada punto sale de guías clínicas, consensos de expertos y estudios con personas, y va ordenado por cuánto ayuda y cuán firme es la evidencia. Lo que no se sostiene no está: comidas «para dormir», gafas para la luz azul, el modo nocturno, el ruido blanco y las mantas con peso.",
+      "pie": "Son consejos para personas sanas. Si duermes mal casi todas las noches desde hace meses, lo que más ayuda es la terapia cognitivo-conductual para el insomnio: háblalo con un médico. Si roncas fuerte o alguien te ha visto dejar de respirar dormido, también.",
+      "hoy": {
+        "acostarse": "Esta noche, a la cama a las {hora}.",
+        "cafe": "Hoy, hasta las {hora}.",
+        "fuerte": "Hoy, lo fuerte hasta las {hora}.",
+        "cena": "Hoy, antes de las {hora}.",
+        "ducha": "Buen momento: a las {hora}."
+      },
+      "puntos": {
+        "tiempo": {
+          "titulo": "Tiempo para dormir",
+          "texto": "Acuéstate con tiempo para dormir lo que necesitas: la mayoría de los adultos necesita de 7 a 9 horas. Dormir menos varias noches seguidas se acumula, aunque no lo notes.",
+          "base": "AASM y Sleep Research Society, 2015 · National Sleep Foundation, 2015"
+        },
+        "cafe": {
+          "titulo": "El último café",
+          "texto": "La cafeína dura horas en el cuerpo: un café, hasta unas 9 horas antes de acostarte; uno grande o un preentreno, hasta 13. Más tarde, aunque te duermas, duermes menos y más liviano.",
+          "base": "Gardiner y otros, 2023 (metaanálisis de 24 estudios)"
+        },
+        "alcohol": {
+          "titulo": "Alcohol, no para dormir",
+          "texto": "El alcohol puede ayudarte a dormirte, pero hace más liviana la segunda mitad de la noche y te quita sueño REM, ya desde unas dos copas. No hay una hora segura: cuanto menos, mejor.",
+          "base": "Gardiner y otros, 2025 (27 estudios) · Landolt y otros, 1996"
+        },
+        "despertar": {
+          "titulo": "Levántate a la misma hora",
+          "texto": "Despertarte a una hora parecida todos los días, también el fin de semana, ordena tu reloj y hace más fácil dormirte de noche. Si en la semana dormiste poco, recuperar una o dos horas los días libres puede ayudar.",
+          "base": "National Sleep Foundation, 2023 (consenso) · Windred y otros, 2024 (60.977 personas)"
+        },
+        "luz": {
+          "titulo": "Luz baja de noche",
+          "texto": "En las horas antes de acostarte, luz baja y cálida: lámparas en vez de la luz del techo. La luz de una casa iluminada atrasa tu melatonina y la hora en que te da sueño; los expertos aconsejan bajarla desde 3 horas antes, y cuanto antes, mejor.",
+          "base": "Brown y otros, 2022 (consenso de 18 expertos) · Gooley y otros, 2011"
+        },
+        "levantate": {
+          "titulo": "Si no te duermes, levántate",
+          "texto": "Si sientes que llevas un buen rato sin dormirte (unos 20 minutos, sin mirar el reloj), levántate, haz algo tranquilo con poca luz y vuelve cuando tengas sueño. Así la cama sigue siendo el lugar donde te duermes, no donde das vueltas.",
+          "base": "American Academy of Sleep Medicine, 2008 y 2021 (control de estímulos, de la terapia para el insomnio) · Tang y otros, 2007"
+        },
+        "moverte": {
+          "titulo": "Muévete de día",
+          "texto": "Moverte casi todos los días te ayuda a dormirte antes y a dormir mejor. Lo intenso, que termine al menos 2 horas antes de acostarte (mejor 4); caminar o estirar, a cualquier hora.",
+          "base": "Kline y otros, 2021 (revisión para las guías de actividad física de EE. UU.) · Frimpong y otros, 2021"
+        },
+        "fresca": {
+          "titulo": "Una habitación fresca",
+          "texto": "Duerme en una habitación fresca, de unos 16 a 20 °C con tu ropa de cama de siempre. Lo que más quita sueño es el calor: por encima de 25 °C, y más con humedad, te despiertas más y duermes menos.",
+          "base": "National Sleep Foundation · Okamoto-Mizuno y Mizuno, 2012 · Baniassadi y otros, 2023"
+        },
+        "oscura": {
+          "titulo": "Oscura y en silencio",
+          "texto": "Que tu habitación esté lo más oscura posible, con cortinas que tapen o un antifaz, y en silencio. Si entra ruido de afuera, los tapones funcionan mejor que el ruido blanco o rosa, que en un estudio quitó sueño REM.",
+          "base": "Brown y otros, 2022 · revisión para la OMS, 2018 · Basner y otros, 2026"
+        },
+        "manana": {
+          "titulo": "Luz de día temprano",
+          "texto": "Sal un rato a la luz de día por la mañana: afuera hay mucha más luz que adentro, y eso ayuda a que te dé sueño a tu hora. Quienes pasan más tiempo afuera de día se despiertan con más facilidad y tienen menos insomnio.",
+          "base": "Brown y otros, 2022 · Burns y otros, 2021 (unas 400.000 personas)"
+        },
+        "nicotina": {
+          "titulo": "Sin nicotina tarde",
+          "texto": "Si fumas o vapeas, evita hacerlo en las 4 horas antes de acostarte. La nicotina es un estimulante: se asocia a tardar más en dormirte y a una noche más cortada.",
+          "base": "Zhang y otros, 2006 (6.400 personas) · Spadola y otros, 2019"
+        },
+        "cena": {
+          "titulo": "La cena, con tiempo",
+          "texto": "Haz tu última comida grande al menos 2 horas antes de acostarte, o 3 si tienes reflujo; después, si tienes hambre, algo ligero. Ningún alimento ha demostrado de verdad que ayude a dormir.",
+          "base": "Guía del American College of Gastroenterology, 2022 · Wilson, St-Onge y Tasali, 2022"
+        },
+        "ducha": {
+          "titulo": "Ducha tibia antes",
+          "texto": "Una ducha o un baño con el agua bien tibia (40 a 42 °C), de al menos 10 minutos, 1 a 2 horas antes de acostarte, te ayuda a dormirte antes. Al salir, el cuerpo suelta calor y su temperatura baja, como le pasa al empezar a dormir.",
+          "base": "Haghayegh y otros, 2019 (metaanálisis)"
+        },
+        "pantallas": {
+          "titulo": "Pantallas tranquilas",
+          "texto": "De las pantallas, lo que más parece pesar no es la luz azul sino lo que te mantiene despierto: redes, juegos, series que enganchan o trabajo. Antes de dormir, algo tranquilo, con el brillo bajo y fuera de la cama; el modo nocturno, por sí solo, no cambió el sueño en un estudio.",
+          "base": "National Sleep Foundation, 2024 (consenso) · Duraccio y otros, 2021"
+        },
+        "cabeza": {
+          "titulo": "La cabeza tranquila",
+          "texto": "Si algo te da vueltas, escribe cinco minutos lo que tienes pendiente para mañana, bien concreto: en un estudio, quienes lo hicieron se durmieron antes. En la última hora, algo que te calme: leer, respirar despacio o una relajación.",
+          "base": "Scullin y otros, 2018 · Rusch y otros, 2019 (metaanálisis de 18 ensayos)"
+        },
+        "siesta": {
+          "titulo": "Siesta corta y temprano",
+          "texto": "Si duermes siesta, que sea de 10 a 20 minutos y al menos 7 horas antes de acostarte. Más larga o más tarde, te puede costar dormirte de noche y despertarte aturdido.",
+          "base": "Brooks y Lack, 2006 · Mograss y otros, 2022"
+        },
+        "calor": {
+          "titulo": "Sin calor en la cama",
+          "texto": "Usa pijama y ropa de cama que no te hagan sudar. Si tienes los pies fríos, unos calcetines pueden ayudarte a dormirte antes: calentar la piel de los pies facilita el sueño.",
+          "base": "Raymann y otros, 2007 · Ko y Lee, 2018 (estudios pequeños)"
+        }
+      }
     }
   },
   "perfil": {

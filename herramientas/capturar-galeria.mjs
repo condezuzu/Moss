@@ -49,7 +49,7 @@ const habitos = (accion, arg) => pagina.evaluate(([a, x]) => window.__habitos(a,
 // Lo que depende de los cuadros del cielo (el flum, las etiquetas de las estrellas) puede atrasarse
 // varios segundos con el render por software: se espera a que pase en lugar de un tiempo fijo.
 const esperarA = (condicion, arg) => pagina.waitForFunction(condicion, arg, { polling: 200, timeout: 30000 });
-const etiquetasUbicadas = () => esperarA(() => [...document.querySelectorAll('.etiquetas .etq')].every((e) => e.style.transform));
+const etiquetasUbicadas = () => esperarA(() => [...document.querySelectorAll('.etiquetas .etq')].every((e) => e.style.translate));
 const hojaAbierta = (clase) => esperarA((c) => {
   const h = document.querySelector('.' + c);
   return !!h && !h.hidden && !h.classList.contains('saliendo') && h.getAnimations().every((a) => a.playState !== 'running');
@@ -167,6 +167,10 @@ const pasos = {
   },
   async tocar() {
     await alCielo();
+    // El primer toque muestra el nombre de la estrella; el segundo marca el hábito (23/11/2026).
+    await pagina.evaluate(() => window.__tocar('Escribir'));
+    await pagina.waitForTimeout(500);
+    await foto('toque-nombre');
     await pagina.evaluate(() => window.__tocar('Escribir'));
     await pagina.waitForTimeout(90);
     await foto('toque-90ms');
@@ -2580,6 +2584,33 @@ const pasos = {
     await pagina.evaluate((x) => window.__avisosBloqueo(x), { modo: 'dia', idioma: 'es', dia: 'tarde', hora: hora(17, 5), desayuno: 'directo' });
     await pagina.click('.ab-cerrar');
     await pagina.waitForTimeout(400);
+  },
+
+  // Qué priorizar cada noche (23/11, para aprobar): abajo de todo en Sueño, un punto abierto, los 17, en qué se basa y
+  // en inglés.
+  async priorizar() {
+    const espera = (ms = 600) => pagina.waitForTimeout(ms);
+    await seccion('priorizar');
+    await espera(1400);
+    await foto('priorizar');
+    await pagina.click('.sn-priorizar .sn-pr-fila');
+    await espera(700);
+    await foto('priorizar-abierto');
+    await pagina.click('.sn-priorizar .sn-pr-ver');
+    await espera(700);
+    await sueno('bajar', '.sn-pr-ver');
+    await espera(700);
+    await foto('priorizar-todos');
+    await pagina.evaluate(() => [...document.querySelectorAll('.sn-priorizar .cm-enlace')].pop().click());
+    await espera(700);
+    await sueno('bajar', '.sn-pr-pie');
+    await espera(700);
+    await foto('priorizar-basa');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await seccion('priorizar');
+    await espera(1400);
+    await foto('priorizar-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
   },
 
   // El sueño rehecho, tanda 2 (17/11, para aprobar; spec/sueno.md y spec/avisos.md): la tarjeta de la deuda con su

@@ -33,6 +33,7 @@
     "horasMinutos": "{h} h {m} min",
     "tuUniverso": "Your universe",
     "globito": "Tap a star to mark its habit",
+    "globitoDosToques": "Tap a star to see its habit, and tap again to check it off",
     "seEnciendeConAscent": "Lights up on its own with Ascent",
     "lector": {
       "lleva": "{valor} so far",
@@ -1333,7 +1334,8 @@
       "curva": {
         "pico": "Your best time",
         "bajon": "Dip",
-        "segundoPico": "Second peak"
+        "segundoPico": "Second peak",
+        "picos": "Energy peaks:"
       },
       "hoy": "Today",
       "estosDias": "These days",
@@ -2414,6 +2416,109 @@
     "esperaAparato": {
       "estimada": "Your night from {aparato} hasn't arrived yet: it comes when it syncs (with many rings, when you open its app). Until then, this is the estimate from your phone.",
       "sinEstimar": "Your night from {aparato} hasn't arrived yet: it comes when it syncs (with many rings, when you open its app). Your phone doesn't have enough to estimate it either."
+    },
+    "priorizar": {
+      "titulo": "What to prioritize each night",
+      "bajada": "From what helps most to what helps least. Tap one to see why.",
+      "verTodos": "See all {n}",
+      "verMenos": "See fewer",
+      "basa": "What it's based on",
+      "basaTexto": "Each point comes from clinical guidelines, expert consensus and studies in people, ordered by how much it helps and how solid the evidence is. What doesn't hold up isn't here: foods “for sleep”, blue-light glasses, night mode, white noise and weighted blankets.",
+      "pie": "These are tips for healthy people. If you've slept badly most nights for months, what helps most is cognitive behavioral therapy for insomnia: talk to a doctor. Also if you snore loudly or someone has seen you stop breathing in your sleep.",
+      "hoy": {
+        "acostarse": "Tonight, bed at {hora}.",
+        "cafe": "Today, until {hora}.",
+        "fuerte": "Today, hard training until {hora}.",
+        "cena": "Today, before {hora}.",
+        "ducha": "Good time: {hora}."
+      },
+      "puntos": {
+        "tiempo": {
+          "titulo": "Time to sleep",
+          "texto": "Go to bed early enough to sleep what you need: most adults need 7 to 9 hours. Sleeping less several nights in a row adds up, even if you don't notice it.",
+          "base": "AASM and Sleep Research Society, 2015 · National Sleep Foundation, 2015"
+        },
+        "cafe": {
+          "titulo": "Your last coffee",
+          "texto": "Caffeine stays in your body for hours: a coffee, up to about 9 hours before bed; a large one or a pre-workout, up to 13. Later than that, even if you fall asleep, you sleep less and more lightly.",
+          "base": "Gardiner et al., 2023 (meta-analysis of 24 studies)"
+        },
+        "alcohol": {
+          "titulo": "Alcohol isn't a sleep aid",
+          "texto": "Alcohol can help you fall asleep, but it makes the second half of the night lighter and takes away REM sleep, from about two drinks. There's no safe time: the less, the better.",
+          "base": "Gardiner et al., 2025 (27 studies) · Landolt et al., 1996"
+        },
+        "despertar": {
+          "titulo": "Get up at the same time",
+          "texto": "Waking up at a similar time every day, weekends too, keeps your body clock steady and makes it easier to fall asleep at night. If you slept little during the week, catching up an hour or two on days off can help.",
+          "base": "National Sleep Foundation, 2023 (consensus) · Windred et al., 2024 (60,977 people)"
+        },
+        "luz": {
+          "titulo": "Dim light at night",
+          "texto": "In the hours before bed, low, warm light: lamps instead of ceiling lights. A brightly lit home delays your melatonin and the time you get sleepy; experts advise dimming it from 3 hours before, and the earlier, the better.",
+          "base": "Brown et al., 2022 (consensus of 18 experts) · Gooley et al., 2011"
+        },
+        "levantate": {
+          "titulo": "Can't sleep? Get up",
+          "texto": "If you feel you've been awake a good while (about 20 minutes, without checking the clock), get up, do something calm in low light and come back when you're sleepy. That way your bed stays the place where you fall asleep, not where you toss and turn.",
+          "base": "American Academy of Sleep Medicine, 2008 and 2021 (stimulus control, from insomnia therapy) · Tang et al., 2007"
+        },
+        "moverte": {
+          "titulo": "Move during the day",
+          "texto": "Moving almost every day helps you fall asleep sooner and sleep better. Hard exercise should end at least 2 hours before bed (4 is better); walking or stretching, any time.",
+          "base": "Kline et al., 2021 (review for the U.S. physical activity guidelines) · Frimpong et al., 2021"
+        },
+        "fresca": {
+          "titulo": "A cool room",
+          "texto": "Sleep in a cool room, around 16 to 20 °C (61 to 68 °F) with your usual bedding. Heat is what costs the most sleep: above 25 °C (77 °F), and more so with humidity, you wake up more and sleep less.",
+          "base": "National Sleep Foundation · Okamoto-Mizuno and Mizuno, 2012 · Baniassadi et al., 2023"
+        },
+        "oscura": {
+          "titulo": "Dark and quiet",
+          "texto": "Keep your room as dark as you can, with blackout curtains or a sleep mask, and quiet. If noise gets in from outside, earplugs work better than white or pink noise, which took away REM sleep in one study.",
+          "base": "Brown et al., 2022 · review for the WHO, 2018 · Basner et al., 2026"
+        },
+        "manana": {
+          "titulo": "Daylight early",
+          "texto": "Get outside in daylight for a while in the morning: there's far more light outdoors than indoors, and it helps you get sleepy at your usual time. People who spend more time outside during the day wake up more easily and have less insomnia.",
+          "base": "Brown et al., 2022 · Burns et al., 2021 (about 400,000 people)"
+        },
+        "nicotina": {
+          "titulo": "No nicotine late",
+          "texto": "If you smoke or vape, avoid it in the 4 hours before bed. Nicotine is a stimulant: it's linked to taking longer to fall asleep and a more broken night.",
+          "base": "Zhang et al., 2006 (6,400 people) · Spadola et al., 2019"
+        },
+        "cena": {
+          "titulo": "Dinner with time to spare",
+          "texto": "Have your last big meal at least 2 hours before bed, or 3 if you have reflux; after that, if you're hungry, something light. No food has really been shown to help you sleep.",
+          "base": "American College of Gastroenterology guideline, 2022 · Wilson, St-Onge and Tasali, 2022"
+        },
+        "ducha": {
+          "titulo": "A warm shower before",
+          "texto": "A shower or bath with quite warm water (40 to 42 °C, 104 to 108 °F) for at least 10 minutes, 1 to 2 hours before bed, helps you fall asleep sooner. Afterwards your body gives off heat and its temperature drops, as it does when sleep begins.",
+          "base": "Haghayegh et al., 2019 (meta-analysis)"
+        },
+        "pantallas": {
+          "titulo": "Calm screens",
+          "texto": "With screens, what seems to matter most isn't blue light but what keeps you up: social media, games, bingeable shows or work. Before sleep, something calm, with low brightness and out of bed; night mode alone didn't change sleep in one study.",
+          "base": "National Sleep Foundation, 2024 (consensus) · Duraccio et al., 2021"
+        },
+        "cabeza": {
+          "titulo": "A quiet mind",
+          "texto": "If something's on your mind, spend five minutes writing down tomorrow's to-dos, very specifically: in one study, people who did fell asleep sooner. In the last hour, something that calms you: reading, slow breathing or a relaxation exercise.",
+          "base": "Scullin et al., 2018 · Rusch et al., 2019 (meta-analysis of 18 trials)"
+        },
+        "siesta": {
+          "titulo": "Short, early naps",
+          "texto": "If you nap, keep it to 10 to 20 minutes and at least 7 hours before bed. Longer or later, it can make it harder to fall asleep at night and leave you groggy.",
+          "base": "Brooks and Lack, 2006 · Mograss et al., 2022"
+        },
+        "calor": {
+          "titulo": "Not too warm in bed",
+          "texto": "Wear pajamas and use bedding that don't make you sweat. If your feet are cold, socks can help you fall asleep sooner: warming the skin of your feet makes sleep easier.",
+          "base": "Raymann et al., 2007 · Ko and Lee, 2018 (small studies)"
+        }
+      }
     }
   },
   "perfil": {

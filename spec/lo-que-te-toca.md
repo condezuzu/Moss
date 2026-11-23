@@ -3,7 +3,7 @@
 Todo lo que no puedo hacer yo: aprobar, decidir, entrar con tus cuentas, tocar el iPhone y lo de Ascent.
 Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar hecho: no lo puedo ver desde acá.
 
-Galería (versión 56): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
+Galería (versión 59): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 
 ## 0. El lanzamiento y la 1.1 (desde el 14/11/2026): dónde quedé
 
@@ -129,6 +129,16 @@ especias y suplementos. Cada uno con su nombre en cada país (spec/nutricion.md,
 de lo de siempre: «pan» da primero el blanco y el integral. Salieron por aire el 23/11 con la 1.1. La base pesa 14,9 MB
 (subí el tope a 16).
 **Te toca:** probar la búsqueda en el iPhone.
+
+**Lo que pediste el 23/11 mirándola en el iPhone, por aire el mismo día** (production e0c5396d y preview fa193e51, commit
+f1b1f7a, huella 27c0c152, revisado en el paquete): la bienvenida dice «Usaste Moss durante su desarrollo. Como regalo, te
+daremos 3 meses completamente gratis» y la diapositiva de los músculos, «según lo que registras». En Ascent, «Sugerencias
+para hoy» va justo arriba de «Esta semana», sin el entrenamiento si ya entrenaste, con los macros en que enfocarte y cuántas
+horas dormir y a qué hora acostarte; «Al día» en lugar de «Va bien»; los fatigados con «faltan 2 días»; y las últimas
+marcas de todos los ejercicios, con piernas, pecho y espalda primero y en negrita (spec/musculos-compartido.md, «Cambiada
+el 23/11/2026»). De paso, dos bugs que ya estaban: la hora de acostarse de las sugerencias salía corrida 18 horas, y en
+inglés decía «Sets of 8 a 12 reps». A la sesión de Ascent le pasé el orden, los textos y qué copiar. **Te toca:** mirarla
+en el iPhone (abrir Moss dos veces) y, en el chat de Ascent, decirle que la publique cuando la tenga.
 
 La suscripción: **mandada a revisión el 21/11/2026** (lo pediste, sin build de prueba).
 - **Qué se mandó:** la versión 1.1.0 con la build 8, las dos suscripciones (anual y mensual) y su grupo, todo en un

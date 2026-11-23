@@ -493,7 +493,20 @@ const SeccionInicio = (() => {
       const caja = el('div', 'in-energia-dia');
       caja.setAttribute('aria-hidden', 'true');
       const curva = e.dia && e.dia.curva;
-      if (curva) caja.appendChild(dibujoDeLaCurva(curva, x, e));
+      if (curva) {
+        // «Picos de energía:» con sus horas, arriba de la curva (23/11/2026: «Tu mejor momento» y «Otro pico» no se
+        // entendían). El de ahora, resaltado.
+        const picos = curva.tramos.filter((z) => z.que === 'pico' || z.que === 'segundoPico');
+        if (picos.length) {
+          const titulo = el('div', 'picos', tx('inicio.energia.curva.picos'));
+          picos.forEach((z, k) => {
+            if (k) titulo.append(el('span', null, '·'));
+            titulo.append(el('b', e.dia.tramo === z.que ? 'actual' : null, `${Avisos.horaDeReloj(z.desde)}–${Avisos.horaDeReloj(z.hasta)}`));
+          });
+          caja.appendChild(titulo);
+        }
+        caja.appendChild(dibujoDeLaCurva(curva, x, e));
+      }
       const pista = el('div', 'pista');
       const hecho = el('i', 'hecho');
       hecho.style.width = x(e.ahora);
@@ -528,8 +541,8 @@ const SeccionInicio = (() => {
       caja.append(pista, horas);
       return caja;
     }
-    // La curva de tu energía hoy (Energia.curvaDelDia), en el mismo eje que la tira: el mejor momento, el bajón y el
-    // segundo pico, con su nombre, y dónde estás ahora. Se dibuja de izquierda a derecha al aparecer.
+    // La curva de tu energía hoy (Energia.curvaDelDia), en el mismo eje que la tira: los picos (sus horas van arriba),
+    // el bajón con su nombre y dónde estás ahora. Se dibuja de izquierda a derecha al aparecer.
     function dibujoDeLaCurva(curva, x, e) {
       const W = 300, H = 56, base = 50;
       const D = curva.puntos[0].t, C = curva.puntos[curva.puntos.length - 1].t;
@@ -538,8 +551,8 @@ const SeccionInicio = (() => {
       const linea = curva.puntos.map((p, i) => `${i ? 'L' : 'M'}${X(p.t).toFixed(1)} ${Y(p.nivel).toFixed(1)}`).join(' ');
       const caja = el('div', 'curva');
       caja.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><path class="area" d="${linea} L${W} ${base} L0 ${base} Z"/><path class="linea" pathLength="1" d="${linea}"/></svg>`;
-      // El nombre de cada tramo, sobre su centro.
-      [['pico', 'pico'], ['bajon', 'bajon'], ['segundoPico', 'segundoPico']].forEach(([que, clave]) => {
+      // El nombre del bajón, sobre su centro.
+      [['bajon', 'bajon']].forEach(([que, clave]) => {
         const t = curva.tramos.find((z) => z.que === que);
         if (!t) return;
         // «actual» y no «ahora»: esa clase ya es la rayita de la tira.

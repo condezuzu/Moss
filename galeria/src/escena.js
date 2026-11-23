@@ -36,6 +36,8 @@ const Escena = (() => {
   const SEPARACION = 60;
   // Hasta que se toca una estrella por primera vez, Hábitos muestra cómo se marca un hábito.
   const GUARDADO_GLOBITO = 'moss-galeria-globito';
+  // El nombre de una estrella, después de tocarla: cuánto se queda.
+  const NOMBRE_MS = 4000;
 
   const CALIDADES = {
     // densidad: qué fracción de las celdas de 64 px tiene una estrella que titila (vivo.glsl).
@@ -239,12 +241,29 @@ const Escena = (() => {
     dom.globito.style.borderColor = 'rgba(232, 196, 106, 0.32)';
     dom.globito.style.paddingRight = '16px';
     dom.globito.style.pointerEvents = 'none';
+    // Dice los dos toques: en dos líneas si hace falta, sin cortarse.
+    dom.globito.style.whiteSpace = 'normal';
+    dom.globito.style.width = 'max-content';
+    dom.globito.style.textAlign = 'center';
+    dom.globito.style.borderRadius = '20px';
     let etiquetas = [];
     let etiquetasUniverso = [];
     let temporizadorAviso = 0;
     let accionDelAviso = null;
     let globitoPendiente = true;
     try { globitoPendiente = !localStorage.getItem(GUARDADO_GLOBITO); } catch (_) { /* sin guardado, se muestra */ }
+    // Las estrellas van sin nombre (23/11/2026: los de todas se pisaban y se cortaban con el borde). El primer toque
+    // muestra el de esa estrella; el segundo, mientras se ve, marca el hábito. Se va a los 4 s o al tocar el cielo.
+    let conNombre = -1;
+    let temporizadorNombre = 0;
+    // Hasta dónde llega la cabecera: más arriba, el nombre va abajo de la estrella.
+    let techo = 0;
+    function mostrarNombre(i) {
+      clearTimeout(temporizadorNombre);
+      conNombre = i;
+      etiquetas.forEach((el, k) => el.classList.toggle('visible', k === i));
+      if (i >= 0) temporizadorNombre = setTimeout(() => mostrarNombre(-1), NOMBRE_MS);
+    }
 
     // `accion`: un botón al lado del texto ({ texto, alTocar }); el de un hábito de comida lleva a Comida.
     function avisar(texto, accion) {
@@ -283,6 +302,8 @@ const Escena = (() => {
 
     function armarEtiquetas() {
       dom.etiquetas.innerHTML = '';
+      conNombre = -1;
+      techo = dom.cab.offsetTop + dom.cab.offsetHeight + 6;
       etiquetas = e.habitos.map((h) => {
         const el = document.createElement('div');
         el.className = 'etq';
@@ -304,6 +325,7 @@ const Escena = (() => {
         el.classList.toggle('encendida', h.encendido);
         el.classList.toggle('es-auto', !!h.auto);
         el._ancho = 0;
+        el._alto = 0;
       });
     }
 
@@ -317,7 +339,7 @@ const Escena = (() => {
       dom.luzTxt.textContent = tx('cielo.luzDeHoy');
       dom.cab.setAttribute('aria-label', [dom.dia.textContent, dom.nombre.textContent,
         e.completo ? tx('cielo.completa') : tx('cielo.encendidas', { n: hechos, total: e.habitos.length }), luzDelDia(hechos) + ' ' + tx('cielo.luzDeHoy')].join(', '));
-      dom.globito.querySelector('.aviso-txt').textContent = tx('cielo.globito');
+      dom.globito.querySelector('.aviso-txt').textContent = tx('cielo.globitoDosToques');
       const f = opciones.frase;
       dom.frase.textContent = nombreDe(f.texto);
       dom.cita.textContent = nombreDe(f.autor);
@@ -546,7 +568,7 @@ const Escena = (() => {
     }
 
     // La estrella de hoy más cerca del punto (en píxeles del lienzo) dentro de un radio generoso y,
-    // lejos de todas, la de la etiqueta tocada; o -1. Solo en Hábitos.
+    // lejos de todas, la del nombre que se ve, si se tocó el nombre; o -1. Solo en Hábitos.
     function estrellaEn(px, py) {
       const c = e.constelacion;
       if (!c || e.modo !== 'hoy' || e.viaje || e.paginaPx !== 0) return -1;
@@ -557,18 +579,24 @@ const Escena = (() => {
         if (d < dist) { dist = d; mejor = i; }
       });
       if (mejor >= 0) return mejor;
+      if (conNombre < 0 || !etiquetas[conNombre]) return -1;
       const r = contenedor.getBoundingClientRect();
-      return etiquetas.findIndex((el) => {
-        const q = el.getBoundingClientRect();
-        return q.width > 0 && px >= q.left - r.left - 6 && px <= q.right - r.left + 6 && py >= q.top - r.top - 6 && py <= q.bottom - r.top + 6;
-      });
+      const q = etiquetas[conNombre].getBoundingClientRect();
+      return q.width > 0 && px >= q.left - r.left - 6 && px <= q.right - r.left + 6 && py >= q.top - r.top - 6 && py <= q.bottom - r.top + 6 ? conNombre : -1;
     }
 
     function tocar(px, py) {
       const mejor = estrellaEn(px, py);
-      if (mejor < 0) return;
+      if (mejor < 0) { mostrarNombre(-1); return; }
       const c = e.constelacion;
       const h = e.habitos[mejor];
+      // El primer toque dice qué hábito es; el segundo lo marca.
+      if (mejor !== conNombre) {
+        mostrarNombre(mejor);
+        e.haptico('suave');
+        return;
+      }
+      mostrarNombre(mejor);
       quitarGlobito();
       // Los de comida se encienden solos con lo anotado: tocarlos dice qué los enciende y lleva a Comida.
       if (h.auto === 'comida') {
@@ -1073,17 +1101,14 @@ const Escena = (() => {
       if (c) {
         etiquetas.forEach((el, i) => {
           const [sx, sy] = posPantalla(c.pos[i][0], c.pos[i][1], 1);
-          let lado = c.lado[i];
-          if (!el._ancho) el._ancho = el.offsetWidth;
-          // Si del lado elegido no entra en la pantalla, va abajo.
-          if (lado === 'der' && sx + 22 + el._ancho > e.cssAncho - 8) lado = 'abajo';
-          if (lado === 'izq' && sx - 22 - el._ancho < 8) lado = 'abajo';
-          let x = sx, y = sy + 22;
-          if (lado === 'der') { x = sx + 22; y = sy; }
-          if (lado === 'izq') { x = sx - 22; y = sy; }
-          if (lado === 'abajo') x = clamp(x, 8 + el._ancho / 2, e.cssAncho - 8 - el._ancho / 2);
+          if (!el._ancho) { el._ancho = el.offsetWidth; el._alto = el.offsetHeight; }
+          // Arriba de la estrella; si ahí la tapa la cabecera, abajo. Siempre entero dentro de la pantalla.
+          const lado = sy - 20 - el._alto < techo + e.cam.y * e.escalaCss ? 'abajo' : 'arriba';
+          const x = clamp(sx, 12 + el._ancho / 2, e.cssAncho - 12 - el._ancho / 2);
+          const y = lado === 'arriba' ? sy - 20 : sy + 20;
           if (el.dataset.lado !== lado) el.dataset.lado = lado;
-          el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+          // Con `translate` y no `transform`: el `scale` de cuando aparece va después y crece desde la estrella.
+          el.style.translate = `calc(${x.toFixed(1)}px - 50%) calc(${y.toFixed(1)}px - ${lado === 'arriba' ? 100 : 0}%)`;
         });
       }
       if (e.universo) {
@@ -1213,7 +1238,7 @@ const Escena = (() => {
     // ---------------------------------------------------------------- API para la galería
     return {
       ponerConstelacion(datos, habitos) { ponerConstelacion(datos, habitos); avivar(VIVO_AL_LLEGAR); },
-      // Para las capturas automáticas: el mismo camino que un toque, sin coordenadas.
+      // Para las capturas automáticas: el mismo camino que un toque, sin coordenadas (el primero muestra el nombre).
       tocarPorNombre(texto) {
         const i = e.habitos.findIndex((h) => nombreDe(h.nombre).includes(texto));
         if (i < 0) return false;

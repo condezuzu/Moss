@@ -343,6 +343,29 @@ const SeccionSueno = (() => {
   .sueno .sn-carta.sn-entra, .sueno .sn-noches.sn-entra, .sueno .sn-noches.sn-animar .sn-noche-barra > i, .sn-dd.sn-animar .sn-dd-col i.sobra, .sn-dd.sn-animar .sn-dd-col i.falta,
   .sueno .sn-rangos.sn-animar .sn-rango-pista i, .sn-arco .revela.animar, .sn-lectura.cambia, .sn-camino-listo, .sn-simular, .sueno .pg-como:not([hidden]) { animation: none; }
 }
+/* Qué priorizar cada noche (23/11, para aprobar): de lo que más ayuda a lo que menos; cada punto se abre al tocarlo. */
+.sn-pr-bajada { margin: 2px 0 6px; font: 400 13px/1.4 var(--texto); color: rgba(239, 230, 207, 0.55); }
+.sn-pr-lista { list-style: none; margin: 0; padding: 0; }
+.sn-pr-punto { border-top: 1px solid rgba(239, 230, 207, 0.08); }
+.sn-pr-lista > .sn-pr-punto:first-child { border-top: 0; }
+.sn-pr-fila { appearance: none; background: none; border: 0; width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 0; text-align: left; color: var(--tinta); font: 400 15px/1.3 var(--texto); cursor: pointer; }
+.sn-pr-n { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 500 11px/1 var(--texto); color: rgba(239, 230, 207, 0.72); background: rgba(239, 230, 207, 0.07); font-variant-numeric: tabular-nums; }
+.sn-pr-fila > span:nth-child(2) { flex: 1; }
+.sn-pr-fila svg { flex: none; width: 14px; height: 14px; stroke: rgba(239, 230, 207, 0.45); fill: none; stroke-width: 1.8; transition: rotate 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.sn-pr-punto.abierto .sn-pr-fila svg { rotate: 90deg; }
+/* Abrir y cerrar crece y se achica (filas de 0 a su alto), nunca de golpe. */
+.sn-pr-abre { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.24s ease; }
+.sn-pr-abre > div { overflow: hidden; min-height: 0; }
+.sn-pr-punto.abierto > .sn-pr-abre, .sn-pr-abre.abierto { grid-template-rows: 1fr; opacity: 1; }
+.sn-pr-mas { padding: 0 0 12px 36px; }
+.sn-pr-mas p { margin: 0 0 8px; font: 400 14px/1.45 var(--texto); color: rgba(239, 230, 207, 0.74); }
+.sn-pr-mas p.hoy { color: var(--tinta); font-weight: 500; }
+.sn-pr-mas small { display: block; font: 400 11.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.45); }
+.sn-pr-resto > div > .sn-pr-lista > .sn-pr-punto:first-child { border-top: 1px solid rgba(239, 230, 207, 0.08); }
+.sn-pr-ver { margin-top: 4px; }
+.sn-pr-basa-texto { margin: 0; padding: 4px 0 6px; font: 400 13px/1.45 var(--texto); color: rgba(239, 230, 207, 0.62); }
+.sn-pr-pie { margin: 12px 0 0; font: 400 12px/1.45 var(--texto); color: rgba(239, 230, 207, 0.48); }
+@media (prefers-reduced-motion: reduce) { .sn-pr-abre { transition: opacity 0.2s ease; } .sn-pr-fila svg { transition: none; } }
 `;
 
   function crear(tel, opciones) {
@@ -716,6 +739,8 @@ const SeccionSueno = (() => {
         cont.appendChild(afinar());
       }
       cont.appendChild(fuentes(noche));
+      // Abajo de todo, lo que conviene cuidar cada noche (23/11, para aprobar).
+      cont.appendChild(priorizar());
       cont.appendChild(el('p', 'sn-pie', tx('sueno.noMedico')));
       cont.scrollTop = arriba;
     }
@@ -1714,6 +1739,78 @@ const SeccionSueno = (() => {
     }
 
     // ------------------------------------------------------------ de dónde sale cada dato
+    // ------------------------------------------------------------ qué priorizar cada noche (23/11, para aprobar)
+    // Lo pediste mirando Sueño en el iPhone: abajo de todo, lo que conviene cuidar cada noche, de lo que más ayuda a lo
+    // que menos (spec/estudio/priorizar-cada-noche.md). Cada punto se abre al tocarlo, con la hora de hoy cuando Moss la
+    // sabe (tu periodo de melatonina) y en qué se basa; los primeros cinco a la vista y el resto con «Ver los 17».
+    const PRIORIZAR = ['tiempo', 'cafe', 'alcohol', 'despertar', 'luz', 'levantate', 'moverte', 'fresca', 'oscura', 'manana', 'nicotina', 'cena', 'ducha', 'pantallas', 'cabeza', 'siesta', 'calor'];
+    const A_LA_VISTA = 5;
+    function priorizar() {
+      const c = carta('sn-priorizar', tx('sueno.priorizar.titulo'));
+      c.appendChild(el('p', 'sn-pr-bajada', tx('sueno.priorizar.bajada')));
+      // La hora de hoy, desde la de acostarte (minutos desde las 18 del día anterior, como el periodo).
+      const p = periodoDeHoy();
+      const reflujo = !!(opciones.reflujo && opciones.reflujo());
+      const cama = p ? p.acostarse + 18 * 60 : null;
+      const corte = cama === null ? null : AlrededorDelEntreno.corteDeCafeina(cama, null);
+      const HOY = {
+        tiempo: cama === null ? null : ['acostarse', cama],
+        cafe: corte === null ? null : ['cafe', corte],
+        moverte: cama === null ? null : ['fuerte', cama - LoQueConviene.FIN_DE_LO_FUERTE],
+        cena: cama === null ? null : ['cena', cama - LoQueFalta.cercaDeLaCama(reflujo)],
+        ducha: cama === null ? null : ['ducha', cama - 90],
+      };
+      const abrible = (clase, armar, abierto, alCambiar) => {
+        const caja = el('div', 'sn-pr-abre ' + clase + (abierto ? ' abierto' : ''));
+        const dentro = el('div');
+        armar(dentro);
+        caja.appendChild(dentro);
+        return [caja, (abre) => { caja.classList.toggle('abierto', abre); alCambiar(abre); }];
+      };
+      const punto = (clave, i) => {
+        const li = el('li', 'sn-pr-punto' + (s.prAbierto === clave ? ' abierto' : ''));
+        const fila = boton('sn-pr-fila', `<span class="sn-pr-n">${i + 1}</span><span></span>${icono('adelante')}`, () => {
+          const abre = s.prAbierto !== clave;
+          // De a uno: abrir otro cierra el que estaba.
+          c.querySelectorAll('.sn-pr-punto.abierto').forEach((x) => { if (x !== li) { x.classList.remove('abierto'); x.querySelector('.sn-pr-fila').setAttribute('aria-expanded', 'false'); } });
+          s.prAbierto = abre ? clave : null;
+          li.classList.toggle('abierto', abre);
+          fila.setAttribute('aria-expanded', String(abre));
+        });
+        fila.children[1].textContent = tx(`sueno.priorizar.puntos.${clave}.titulo`);
+        fila.setAttribute('aria-expanded', String(s.prAbierto === clave));
+        const abre = el('div', 'sn-pr-abre');
+        const dentro = el('div');
+        const mas = el('div', 'sn-pr-mas');
+        mas.appendChild(el('p', null, tx(`sueno.priorizar.puntos.${clave}.texto`)));
+        const hoy = HOY[clave];
+        if (hoy) mas.appendChild(el('p', 'hoy', tx(`sueno.priorizar.hoy.${hoy[0]}`, { hora: u.horaMin(hoy[1]) })));
+        mas.appendChild(el('small', null, `${tx('sueno.priorizar.basa')}: ${tx(`sueno.priorizar.puntos.${clave}.base`)}`));
+        dentro.appendChild(mas);
+        abre.appendChild(dentro);
+        li.append(fila, abre);
+        return li;
+      };
+      const lista = el('ul', 'sn-pr-lista');
+      PRIORIZAR.slice(0, A_LA_VISTA).forEach((k, i) => lista.appendChild(punto(k, i)));
+      c.appendChild(lista);
+      // El resto, con «Ver los 17»: crece debajo, sin saltar.
+      const verTexto = () => (s.prTodos ? tx('sueno.priorizar.verMenos') : tx('sueno.priorizar.verTodos', { n: PRIORIZAR.length }));
+      const [resto, abrirResto] = abrible('sn-pr-resto', (d) => {
+        const l = el('ul', 'sn-pr-lista');
+        PRIORIZAR.slice(A_LA_VISTA).forEach((k, i) => l.appendChild(punto(k, i + A_LA_VISTA)));
+        d.appendChild(l);
+      }, !!s.prTodos, (abre) => { s.prTodos = abre; ver.querySelector('span').textContent = verTexto(); ver.classList.toggle('abierto', abre); });
+      const ver = boton('cm-enlace sn-pr-ver' + (s.prTodos ? ' abierto' : ''), `<span>${verTexto()}</span>${icono('adelante')}`, () => abrirResto(!s.prTodos));
+      c.append(resto, ver);
+      // En qué se basa, de la lista entera, y el pie: cuándo ir al médico.
+      const [basaTexto, abrirBasa] = abrible('sn-pr-basa', (d) => d.appendChild(el('p', 'sn-pr-basa-texto', tx('sueno.priorizar.basaTexto'))), !!s.prBasa,
+        (abre) => { s.prBasa = abre; basa.classList.toggle('abierto', abre); });
+      const basa = boton('cm-enlace' + (s.prBasa ? ' abierto' : ''), `<span>${tx('sueno.priorizar.basa')}</span>${icono('adelante')}`, () => abrirBasa(!s.prBasa));
+      c.append(basa, basaTexto, el('p', 'sn-pr-pie', tx('sueno.priorizar.pie')));
+      return c;
+    }
+
     function fuentes(n) {
       const c = carta('sn-fuentes', tx('sueno.fuentes'));
       if (!hayNoches()) {
