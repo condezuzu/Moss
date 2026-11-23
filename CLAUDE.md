@@ -228,6 +228,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | [spec/catalogo.md](spec/catalogo.md) | el catálogo por cantidad de estrellas, fuentes y licencias |
 | [spec/fluidez.md](spec/fluidez.md) | que ande fluido en un iPhone viejo: la revisión del dibujo de la app del 5/11/2026, lo que se arregló y lo que falta, del más al menos importante |
 | [spec/detalles.md](spec/detalles.md) | los detalles de app profesional (6/11/2026): la búsqueda de bugs por áreas, el teclado (deslizar para bajarlo, «Listo» en los de números), lo que se arregló, lo que está en la galería para aprobar, lo que decidís vos y lo que va en la próxima build |
+| [spec/bugs.md](spec/bugs.md) | la búsqueda de bugs del 23/11/2026: 34 hallazgos por gravedad, en tres tandas (lo que más se nota, la sincronización y lo chico), lo que se verificó y lo que es para decidir |
 | [spec/lo-que-te-toca.md](spec/lo-que-te-toca.md) | lo que hace el dueño y no Claude: aprobar en la galería, las decisiones abiertas, los pasos cuando Apple aprueba, la próxima build, App Store Connect, Ascent y lo del iPhone (al 5/11/2026; se actualiza al cerrar cada tanda) |
 
 ## Dónde está cada cosa

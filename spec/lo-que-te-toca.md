@@ -170,6 +170,14 @@ Falta (vos):
 
 La app no cambia hasta que digas. Sección 1.1, salvo que diga otra.
 
+**Del 23/11** (galería 59, el primer grupo)
+- **Las estrellas de Hábitos sin nombre:** el primer toque muestra el de esa estrella, arriba o abajo y siempre entero; el segundo marca el hábito. El globito de la primera vez lo explica (escenario `tocar`).
+- **Inicio sobre el cielo estrellado:** el velo de Inicio baja de 0,8 a 0,45 (escenario `inicio`).
+- **«Picos de energía:»** con sus horas, arriba de la curva, en lugar de «Tu mejor momento» y «Otro pico» (escenario `energia`).
+- **«Qué priorizar cada noche»,** abajo de todo en Sueño: 17 puntos de lo que más ayuda a lo que menos, con su explicación, la hora de hoy y en qué se basa (spec/estudio/priorizar-cada-noche.md; escenario `priorizar`).
+
+**La búsqueda de bugs (23/11):** 34 hallazgos en spec/bugs.md, en tres tandas. Decí si arranco con la tanda A (lo que más se nota) y lo de «Para decidir» (la siesta de 20 o 30 minutos, las luces).
+
 **Del 9/11**
 - **La base de la comunidad:** el sello «Verificado por la comunidad», en oro, y «¿De dónde sale esto?» con cuántas personas lo cargaron (escenario `ventana`, la barra de proteína de maní). Ya está programado: si no te gusta, se cambia antes de la OTA (spec/nutricion.md, «La base de la comunidad»).
 
