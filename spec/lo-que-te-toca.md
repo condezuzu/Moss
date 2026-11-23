@@ -137,8 +137,9 @@ para hoy» va justo arriba de «Esta semana», sin el entrenamiento si ya entren
 horas dormir y a qué hora acostarte; «Al día» en lugar de «Va bien»; los fatigados con «faltan 2 días»; y las últimas
 marcas de todos los ejercicios, con piernas, pecho y espalda primero y en negrita (spec/musculos-compartido.md, «Cambiada
 el 23/11/2026»). De paso, dos bugs que ya estaban: la hora de acostarse de las sugerencias salía corrida 18 horas, y en
-inglés decía «Sets of 8 a 12 reps». A la sesión de Ascent le pasé el orden, los textos y qué copiar. **Te toca:** mirarla
-en el iPhone (abrir Moss dos veces) y, en el chat de Ascent, decirle que la publique cuando la tenga.
+inglés decía «Sets of 8 a 12 reps». A la sesión de Ascent le pasé el orden, los textos y qué copiar; **Ascent la publicó por aire el 23/11 con tu sí** (su main
+30b3128, builds 7 y 10). **Te toca:** mirarla en el iPhone (abrir Moss dos veces). Las metas de Ascent («cómo llegar»)
+esperan que elijas A o B en su galería (sección 27).
 
 La suscripción: **mandada a revisión el 21/11/2026** (lo pediste, sin build de prueba).
 - **Qué se mandó:** la versión 1.1.0 con la build 8, las dos suscripciones (anual y mensual) y su grupo, todo en un
@@ -176,7 +177,7 @@ La app no cambia hasta que digas. Sección 1.1, salvo que diga otra.
 - **«Picos de energía:»** con sus horas, arriba de la curva, en lugar de «Tu mejor momento» y «Otro pico» (escenario `energia`).
 - **«Qué priorizar cada noche»,** abajo de todo en Sueño: 17 puntos de lo que más ayuda a lo que menos, con su explicación, la hora de hoy y en qué se basa (spec/estudio/priorizar-cada-noche.md; escenario `priorizar`).
 
-**La búsqueda de bugs (23/11):** 34 hallazgos en spec/bugs.md, en tres tandas. **La tanda A está arreglada y por aire** (production ff4d611f, preview e1243622, commit 46cafd9, huella 27c0c152), con un test por arreglo. Te toca: decir si sigo con la tanda B (la sincronización; «Borrar mis datos» lleva una migración con tu sí), lo de «Para decidir» (la siesta de 20 o 30 minutos, las luces) y cómo elegir un plan con el regalo (un «Ahora no» en la pantalla de pago o «Elegir un plan» en Tu suscripción, para la galería).
+**La búsqueda de bugs (23/11):** 34 hallazgos en spec/bugs.md, en tres tandas. **La tanda A está arreglada y por aire** (production ff4d611f, preview e1243622, commit 46cafd9, huella 27c0c152), con un test por arreglo. **La tanda B también, por aire el 23/11** (production 711452ae, preview a6c82501, commit 402c885). **Te toca:** el sí para aplicar la migración 0018 (la marca de «Borrar mis datos») en la base real; decir si sigo con la tanda C; lo de «Para decidir» (la siesta de 20 o 30 minutos, las luces) y cómo elegir un plan con el regalo (un «Ahora no» en la pantalla de pago o «Elegir un plan» en Tu suscripción, para la galería).
 
 **Del 9/11**
 - **La base de la comunidad:** el sello «Verificado por la comunidad», en oro, y «¿De dónde sale esto?» con cuántas personas lo cargaron (escenario `ventana`, la barra de proteína de maní). Ya está programado: si no te gusta, se cambia antes de la OTA (spec/nutricion.md, «La base de la comunidad»).
