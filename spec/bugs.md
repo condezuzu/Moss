@@ -84,8 +84,8 @@ corrida 18 horas (04:25 en vez de 22:25: el periodo de melatonina cuenta desde l
 **Estado:** del 16 al 24 arreglados, cada uno con su test que fallaba antes (2027 tests en total), y también el aviso
 doble que encontró la tanda A (un hábito marcado antes de su hora): en una simulación de 20.000 días al azar, de 1.256
 con algún aviso doble a ninguno. La migración `0018_borrados.sql` (la marca de «Borrar mis datos») está probada en la
-base local y **falta aplicarla en la real, con tu sí**; sin ella la app anda igual, solo que no se entera de los
-borrados de otro teléfono. Cómo quedó:
+base local y **aplicada en la real el 23/11, con tu sí** (comprobado solo leyendo: la tabla con RLS, que la app la
+lee y no la escribe, y que «Borrar mis datos» deja la marca y «Borrar la cuenta» la quita). Cómo quedó:
 - **16:** con sesión, la entrada espera hasta 8 s a que baje lo de la cuenta; si llega su perfil, quedan el suyo, sus
   metas y sus hábitos. Si no llega, el perfil del cuestionario se guarda con la hora más vieja: cuando llegue el de la
   cuenta, gana ese. Esos segundos no muestran nada nuevo.
