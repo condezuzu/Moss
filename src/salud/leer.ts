@@ -142,6 +142,7 @@ export async function leerSalud(ahora: Date = new Date(), elegida: string | null
     aparatos,
     lecturas: { frecuencia: lecturasDe(frecuencia), variabilidad: lecturasDe(variabilidad), respiracion: lecturasDe(respiracion), reposo: ultimaPorDia(reposo) },
     pesos: primeraPorDia(pesos, corte),
+    pesadoEn: primeraPorDia(pesos, corte, 'en'),
     pasosRecientes: pasosDe(recientes),
     entrenamientos: entrenos.flatMap((w) => entrenoDeSalud(w, corte) ?? []),
   };

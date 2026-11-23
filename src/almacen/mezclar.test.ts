@@ -104,6 +104,18 @@ describe('mezclar lo que baja de la cuenta', () => {
     expect(ganadores({ ...nada(), favoritos: [fav(true, a(2))] }, { ...nada(), favoritos: [fav(false, a(1))] }).favoritos).toEqual([]);
   });
 
+  it('con la misma hora gana lo que llega, como en la cuenta (así todos quedan con el suyo); lo mismo no es un cambio', () => {
+    // Los hábitos de ejemplo de cada teléfono van con la misma hora, la más vieja.
+    const local: Datos = { ...nada(), habitos: [{ ...habito('ejemplo-1', a(0)), nombre: 'Leer' }], marcas: [marca('leer', true, a(5))], perfil: perfil(165, a(3)) };
+    const remoto: Datos = { ...nada(), habitos: [{ ...habito('ejemplo-1', a(0)), nombre: 'Read' }], marcas: [marca('leer', false, a(5))], perfil: perfil(170, a(3)) };
+    const g = ganadores(local, remoto);
+    expect([g.habitos.map((h) => h.nombre), g.marcas, g.perfil?.alturaCm]).toEqual([['Read'], [marca('leer', false, a(5))], 170]);
+    // Lo mismo, aunque llegue con las claves en otro orden.
+    const alReves = <T extends object>(x: T) => Object.fromEntries(Object.entries(x).reverse()) as T;
+    const igual: Datos = { ...nada(), habitos: local.habitos.map(alReves), marcas: local.marcas.map(alReves), perfil: alReves(local.perfil!) };
+    expect(sinCambios(ganadores(local, igual))).toBe(true);
+  });
+
   it('si la cuenta no trae nada nuevo, no hay nada que guardar', () => {
     const datos: Datos = {
       habitos: [habito('leer', a(1))], periodos: [periodo(1, 'lyra')], marcas: [marca('leer', true, a(2))], logros: [{ id: 'primeraLuz', desde: '2026-10-21' }],

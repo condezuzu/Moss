@@ -459,6 +459,22 @@ describe('el cuestionario, el peso y las metas', () => {
     expect(hoy(otra.almacen).hechos).toEqual([]);
   });
 
+  it('si al borrar el teléfono no se pudo abrir la base, la próxima vez se vuelve a intentar', async () => {
+    const repositorio = repositorioEnMemoria();
+    let aperturas = 0;
+    const almacen = crearAlmacen({
+      abrir: async () => {
+        if (++aperturas === 2) throw new Error('sin base');
+        return repositorio;
+      },
+      catalogo, ahora: () => new Date('2026-10-21T15:00:00Z'), zona: () => 'America/Montevideo', sembrar: TRES, nuevaSemilla: () => 'semilla',
+    });
+    await almacen.iniciar();
+    await expect(almacen.olvidarTodo()).rejects.toThrow('sin base');
+    await almacen.iniciar();
+    expect(almacen.estado().listo).toBe(true);
+  });
+
   it('lo de Salud enciende solos los hábitos que llegaron a su meta, y completa los días sin peso', async () => {
     const pasos = { ...habito('pasos', 0), fuente: { tipo: 'salud' as const, dato: 'pasos' as const, meta: 8000 } };
     const dormir = { ...habito('dormir', 1), fuente: { tipo: 'salud' as const, dato: 'sueno' as const, meta: 420 } };
@@ -990,7 +1006,7 @@ describe('lo que baja de la cuenta', () => {
     const { almacen, repositorio } = await armar();
     await almacen.esperar();
     await repositorio.subidoHasta((await repositorio.pendientes()).hasta);
-    expect(almacen.mezclar({ ...nada(), marcas: [{ habito: 'leer', dia: '2026-10-21', hecho: true, momento: '2026-10-21T16:00:00.000Z', origen: 'toque' }] })).toBe(true);
+    expect(await almacen.mezclar({ ...nada(), marcas: [{ habito: 'leer', dia: '2026-10-21', hecho: true, momento: '2026-10-21T16:00:00.000Z', origen: 'toque' }] })).toBe(true);
     expect(hoy(almacen)).toMatchObject({ hechos: ['leer'], luz: 3 });
     await almacen.esperar();
     const pendientes = await repositorio.pendientes();
@@ -1005,7 +1021,7 @@ describe('lo que baja de la cuenta', () => {
     await almacen.esperar();
     await repositorio.subidoHasta((await repositorio.pendientes()).hasta);
     const deAlla: Registro = { ...r, id: 'otro', nombre: 'Mate', actualizado: '2026-10-21T16:00:00.000Z' };
-    expect(almacen.mezclar({ ...nada(), registros: [borrado(r, '2026-10-21T16:00:00.000Z'), deAlla] })).toBe(true);
+    expect(await almacen.mezclar({ ...nada(), registros: [borrado(r, '2026-10-21T16:00:00.000Z'), deAlla] })).toBe(true);
     expect(delDia(almacen.estado().registros.values(), '2026-10-21').map((x) => x.nombre)).toEqual(['Mate']);
     await almacen.esperar();
     expect((await repositorio.pendientes()).registros).toEqual([]);
@@ -1016,7 +1032,7 @@ describe('lo que baja de la cuenta', () => {
     almacen.marcar('leer', true, 'toque');
     const e = almacen.estado();
     const version = e.version;
-    expect(almacen.mezclar({ ...nada(), habitos: e.habitos, periodos: [...e.periodos].reverse(), marcas: [...e.marcas.values()], dias: [...e.dias.values()], logros: e.logros, semilla: e.semilla })).toBe(false);
+    expect(await almacen.mezclar({ ...nada(), habitos: e.habitos, periodos: [...e.periodos].reverse(), marcas: [...e.marcas.values()], dias: [...e.dias.values()], logros: e.logros, semilla: e.semilla })).toBe(false);
     expect(almacen.estado().version).toBe(version);
   });
 });
@@ -1036,7 +1052,7 @@ describe('volver a entrar a una cuenta que ya tenía todo', () => {
 
   it('el cuestionario no pisa lo que el cuestionario no pregunta, ni las metas de la cuenta', async () => {
     const { almacen } = await armar();
-    almacen.mezclar(deLaCuenta());
+    await almacen.mezclar(deLaCuenta());
     const meta = almacen.responderCuestionario(respuestas);
     const e = almacen.estado();
     expect(e.perfil).toMatchObject({ estilo: 'keto', pesoMeta: 75, diaDelControl: 1, semana: { altos: [6, 0], extra: 300 }, alturaCm: 172 });
@@ -1048,15 +1064,23 @@ describe('volver a entrar a una cuenta que ya tenía todo', () => {
   it('con un objetivo distinto, las metas de Moss se mueven como en Progreso', async () => {
     const { almacen } = await armar();
     const cuenta = deLaCuenta();
-    almacen.mezclar({ ...cuenta, metas: [{ ...cuenta.metas[0], motivo: 'control' }] });
+    await almacen.mezclar({ ...cuenta, metas: [{ ...cuenta.metas[0], motivo: 'control' }] });
     const meta = almacen.responderCuestionario({ ...respuestas, objetivo: 'bajar' });
     expect(meta).toMatchObject({ desde: '2026-10-21', motivo: 'objetivo', gasto: 2300 });
     expect(almacen.estado().metas).toHaveLength(2);
   });
 
+  it('si la cuenta no llegó a bajar (sin red), el perfil del cuestionario no le gana al de la cuenta que llega después', async () => {
+    const { almacen } = await armar();
+    almacen.responderCuestionario(respuestas, 'manual', undefined, true);
+    expect(almacen.estado().perfil?.actualizado).toBe(new Date(0).toISOString());
+    await almacen.mezclar(deLaCuenta());
+    expect(almacen.estado().perfil).toMatchObject({ estilo: 'keto', pesoMeta: 75, diaDelControl: 1, alturaCm: 180 });
+  });
+
   it('sin cuestionario, terminar la entrada solo la da por hecha: el perfil, las metas y los hábitos quedan', async () => {
     const { almacen, repositorio } = await armar();
-    almacen.mezclar(deLaCuenta());
+    await almacen.mezclar(deLaCuenta());
     const antes = almacen.estado();
     almacen.terminarEntrada();
     const e = almacen.estado();
@@ -1149,6 +1173,55 @@ describe('el control y los pesos de Salud que llegan después', () => {
     const pesos = almacen.estado().pesos;
     expect(pesos.map((p) => [p.fecha, p.kg, p.origen])).toEqual([['2026-10-19', 70.6, 'salud'], ['2026-10-20', 70, 'salud'], ['2026-10-21', 70.9, 'manual']]);
   });
+
+  it('el peso de Salud va con la hora en que te pesaste: el que anotaste después a mano en otro teléfono le gana', async () => {
+    const { almacen } = await armar();
+    const pesada = '2026-10-21T10:05:00.000Z';
+    almacen.ponerSalud({ ...salud([['2026-10-21', 70.2]]), pesadoEn: new Map([['2026-10-21', Date.parse(pesada)]]) });
+    expect(almacen.estado().pesos).toEqual([expect.objectContaining({ kg: 70.2, origen: 'salud', momento: pesada })]);
+    // A las 11 (antes de que este teléfono leyera Salud, a las 15) lo anotaste a mano en el otro.
+    await almacen.mezclar({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [{ fecha: '2026-10-21', kg: 70.9, origen: 'manual', momento: '2026-10-21T11:00:00.000Z' }], semilla: null, ...sinComida() });
+    expect(almacen.estado().pesos.map((p) => [p.kg, p.origen])).toEqual([[70.9, 'manual']]);
+  });
+
+  it('la pesada más temprana que trae Salud después corrige la de la noche aunque sea de antes: su hora es la de la anterior más un milisegundo', async () => {
+    const { almacen } = await armar();
+    const noche = Date.parse('2026-10-21T01:30:00.000Z');
+    almacen.ponerSalud({ ...salud([['2026-10-20', 71.2]]), pesadoEn: new Map([['2026-10-20', noche]]) });
+    almacen.ponerSalud({ ...salud([['2026-10-20', 70.0]]), pesadoEn: new Map([['2026-10-20', Date.parse('2026-10-20T10:05:00.000Z')]]) });
+    expect(almacen.estado().pesos).toEqual([expect.objectContaining({ kg: 70, momento: new Date(noche + 1).toISOString() })]);
+  });
+});
+
+describe('con el reloj de otro teléfono adelantado', () => {
+  const nada = (): Datos => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], semilla: null, ...sinComida() });
+  /** Una hora después de la de este teléfono (las 15). */
+  const adelantada = '2026-10-21T16:00:00.000Z';
+  const respuestas: Cuestionario = { edad: 36, sexo: 'm', alturaCm: 178, pesoKg: 80, actividad: 'algo', objetivo: 'mantener', ritmo: 'recomendado' };
+
+  it('borrar, cambiar o deshacer acá le gana igual a su versión, en lo comido, las marcas, los hábitos y el perfil', async () => {
+    const { almacen } = await armar();
+    const [r] = almacen.registrar([alfajor()], { comida: 'snack' });
+    almacen.responderCuestionario(respuestas);
+    const deAlla = almacen.estado();
+    await almacen.mezclar({
+      ...nada(), registros: [{ ...r, nombre: 'Alfajor triple', actualizado: adelantada }], marcas: [{ habito: 'leer', dia: '2026-10-21', hecho: true, momento: adelantada, origen: 'toque' }],
+      habitos: deAlla.habitos.map((h) => ({ ...h, nombre: `${h.nombre}!`, actualizado: adelantada })), perfil: { ...deAlla.perfil!, alturaCm: 180, actualizado: adelantada },
+    });
+    almacen.borrarRegistro(r.id);
+    almacen.marcar('leer', false, 'deshacer');
+    almacen.archivarHabito('agua');
+    almacen.ponerDatos({ alturaCm: 177 });
+    const e = almacen.estado();
+    expect([
+      e.registros.get(r.id)!.actualizado, e.marcas.get('leer|2026-10-21')!.momento, e.habitos.find((h) => h.id === 'agua')!.actualizado!, e.perfil!.actualizado,
+    ].every((hora) => hora > adelantada)).toBe(true);
+    // Y la versión adelantada, si vuelve a bajar, ya no lo pisa.
+    expect(await almacen.mezclar({
+      ...nada(), registros: [{ ...r, actualizado: adelantada }], marcas: [{ habito: 'leer', dia: '2026-10-21', hecho: true, momento: adelantada, origen: 'toque' }],
+      perfil: { ...deAlla.perfil!, alturaCm: 180, actualizado: adelantada },
+    })).toBe(false);
+  });
 });
 
 describe('tu nombre', () => {
@@ -1195,12 +1268,12 @@ describe('tu nombre', () => {
     almacen.ponerNombre('Agustín Conde', true);
     await almacen.esperar();
     await repositorio.subidoHasta((await repositorio.pendientes()).hasta);
-    expect(almacen.mezclar({ ...nada(), nombre: hace('2026-10-20T10:00:00.000Z') })).toBe(true);
+    expect(await almacen.mezclar({ ...nada(), nombre: hace('2026-10-20T10:00:00.000Z') })).toBe(true);
     expect(almacen.estado().nombre?.valor).toBe('Agus');
     await almacen.esperar();
     expect((await repositorio.pendientes()).nombre).toBeNull();
     almacen.ponerNombre('Agustín');
-    expect(almacen.mezclar({ ...nada(), nombre: hace('2026-10-20T11:00:00.000Z') })).toBe(false);
+    expect(await almacen.mezclar({ ...nada(), nombre: hace('2026-10-20T11:00:00.000Z') })).toBe(false);
     expect(almacen.estado().nombre?.valor).toBe('Agustín');
   });
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  aceptadaSinCambios, actividadDeLosPasos, actividadDelMovimiento, aparatoQueFalta, conNochesDeMoss, deLasSenales, despertarAnclado, estadoDelCargador, estimarNoche, habitualDe, instanteDe, MARGEN, MARGENES, margenParaDormirte, nocheDeMoss,
+  aceptadaSinCambios, actividadDeLosPasos, actividadDelMovimiento, aparatoQueFalta, conNochesDeMoss, deLasSenales, despertarAnclado, estadoDelCargador, estimarNoche, habitualDe, instanteDe, MARGEN, MARGENES, margenParaDormirte, moverDespertar, moverDormirse, nocheDeMoss,
   quePreguntar, sinLasRestas,
   type Actividad, type Estimacion, type Habitual, type Senal,
 } from './sinReloj';
@@ -631,5 +631,16 @@ describe('lo que guarda el teléfono', () => {
       { desde: hora('2026-10-21 23:00'), hasta: hora('2026-10-21 23:02'), tipo: 'pasos' },
       { desde: hora('2026-10-22 00:58'), hasta: hora('2026-10-22 01:00'), tipo: 'pasos' },
     ]);
+  });
+});
+
+describe('el editor de la hora', () => {
+  it('una noche dura entre una hora y 18, como la acepta la cuenta; lo que ya estaba fuera queda, pero no se aleja', () => {
+    // En minutos desde las 18 del día anterior: de 20:00 a 14:00 son 18 horas.
+    expect([moverDormirse(125, 1200, -5), moverDormirse(120, 1200, -5), moverDespertar(120, 1195, 5), moverDespertar(120, 1200, 5)]).toEqual([120, 120, 1200, 1200]);
+    // Lo de siempre: desde las 18 de ayer y hasta las 18 de hoy, con una hora al menos entre las dos.
+    expect([moverDormirse(0, 480, -5), moverDormirse(420, 480, 5), moverDespertar(420, 480, -5), moverDespertar(0, 300, 5)]).toEqual([0, 420, 480, 305]);
+    // Una de 24 horas (de antes) no se alarga, y se puede acortar.
+    expect([moverDespertar(0, 1440, 5), moverDespertar(0, 1440, -5), moverDormirse(0, 1440, -5)]).toEqual([1440, 1435, 0]);
   });
 });

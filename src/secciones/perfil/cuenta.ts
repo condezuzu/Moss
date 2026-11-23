@@ -7,7 +7,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import { File, Paths } from 'expo-file-system';
 import { Alert, Platform, Share } from 'react-native';
 
-import { elAlmacen, sinSincronizar, subirLoQueFalta } from '@/almacen';
+import { elAlmacen, salirAProposito, sinSincronizar, subirLoQueFalta } from '@/almacen';
 import { buzon } from '@/almacen/buzonDeMoss';
 import { csvDeMetas, csvDePesos, csvDeRegistros } from '@/dominio/exportar';
 import { borrarMiSesion } from '@/lib/llavero';
@@ -198,7 +198,7 @@ async function borrarLaCuentaAhora(alListo?: () => void): Promise<boolean | null
     await borrarMiSesion();
     // Solo esta sesión: si el usuario de Auth también es la cuenta de Ascent, sus sesiones siguen. Los
     // otros teléfonos con Moss salen solos al ver que la cuenta ya no tiene Apple (almacen/index.ts).
-    await supabase().auth.signOut({ scope: 'local' }).catch(() => {});
+    await salirAProposito(() => supabase().auth.signOut({ scope: 'local' })).catch(() => {});
     await borrarElTelefono();
     return true;
   });
@@ -279,7 +279,7 @@ async function cerrarSesionAhora(aunqueSePierda: boolean, alListo?: () => void):
   if ((await laSesion()) === undefined) return 'sinConexion';
   return sinSincronizar(async () => {
     // Solo esta sesión: Ascent y los otros teléfonos con la misma cuenta siguen adentro.
-    await supabase().auth.signOut({ scope: 'local' }).catch(() => {});
+    await salirAProposito(() => supabase().auth.signOut({ scope: 'local' })).catch(() => {});
     // Si la sesión quedó, no se borra nada: seguiría sincronizando el teléfono vacío.
     if ((await laSesion()) !== null) return 'sinConexion';
     alListo?.();

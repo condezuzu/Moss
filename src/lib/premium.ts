@@ -147,7 +147,8 @@ async function esperarLosPrecios(precios: Promise<void>): Promise<void> {
 const CUENTA_GUARDADA = 'moss:cuentaDeMoss';
 /** La que está guardada; undefined mientras no se leyó. */
 let guardada: string | null | undefined;
-let vez = 0;
+/** Una sola lectura: con dos, la primera en terminar ya tiene que dejar el regalo puesto. */
+let leyendoGuardada: Promise<void> | undefined;
 
 /**
  * Quien tenía cuenta antes de que se prendiera, con cada cambio de sesión (lo avisa el almacén): así
@@ -155,17 +156,17 @@ let vez = 0;
  * cerró la sesión o se borró la cuenta, y lo guardado se olvida.
  */
 export async function cuentaDePremium(creada: string | null | undefined, salio = false): Promise<void> {
-  const esta = ++vez;
   if ((creada || salio) && (creada || null) !== guardada) {
     guardada = creada || null;
     (creada ? AsyncStorage.setItem(CUENTA_GUARDADA, creada) : AsyncStorage.removeItem(CUENTA_GUARDADA)).catch(() => {});
   }
   if (!PREMIUM_SALE) return;
   if (guardada === undefined) {
-    const leida = await AsyncStorage.getItem(CUENTA_GUARDADA).catch(() => null);
-    // Mientras se leía llegó otra sesión: vale esa.
-    if (esta !== vez) return;
-    guardada = leida;
+    leyendoGuardada ??= AsyncStorage.getItem(CUENTA_GUARDADA).catch(() => null).then((leida) => {
+      // Mientras se leía llegó otra sesión (una cuenta o una salida): vale esa, que ya está en guardada.
+      if (guardada === undefined) guardada = leida;
+    });
+    await leyendoGuardada;
   }
   const regalo = esDeRegalo(cuentaParaElRegalo(creada, guardada, salio), PREMIUM_SALE);
   if (regalo !== estado.regalo) cambiar({ regalo });

@@ -1,15 +1,23 @@
 // La sesión que Moss deja para Ascent en el llavero compartido (spec/ascent.md, D27): con tu nombre
-// de Moss, que va aparte del perfil. Y el reloj que cambia de día a la hora elegida. Lo del teléfono va de mentira.
+// de Moss, que va aparte del perfil. La sesión con la cuenta (cuándo se sale de verdad, lo que falta subir y la
+// espera de la entrada). Y el reloj que cambia de día a la hora elegida. Lo del teléfono va de mentira.
 
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Session } from '@supabase/supabase-js';
 
-import { cambiarDeDiaAlCorte, compartirLaSesion } from './index';
+import { cambiarDeDiaAlCorte, compartirLaSesion, esperarLaCuenta, salirAProposito, sincronizarConLaCuenta, subirLoQueFalta } from './index';
+import type { Almacen } from './almacen';
+import { sinComida, type Pendientes } from './repositorio';
 
 const mockDejar = jest.fn();
 const mockBorrar = jest.fn(async () => {});
 let mockEstado: { perfil: object | null; nombre: { valor: string; actualizado: string } | null } = { perfil: null, nombre: null };
 let mockConAscent = true;
+// La cuenta de mentira: Supabase avisa cada cambio de sesión a quien lo oye, y la suscripción anota si se salió.
+let mockConSupabase = false;
+let mockAvisar: (evento: string, sesion: unknown) => void = () => {};
+const mockCuentaDePremium = jest.fn(async (_creada: unknown, _salio?: boolean) => {});
+let mockPrimeraBajada: Promise<void> = Promise.resolve();
 
 jest.mock('@/lib/banderas', () => ({
   get CON_ASCENT() {
@@ -18,19 +26,35 @@ jest.mock('@/lib/banderas', () => ({
 }));
 jest.mock('@/lib/llavero', () => ({ dejarMiSesion: (s: unknown) => mockDejar(s), borrarMiSesion: () => mockBorrar() }));
 jest.mock('./almacen', () => ({ crearAlmacen: () => ({ estado: () => mockEstado }) }));
-jest.mock('@/comida/catalogoLocal', () => ({}));
+jest.mock('@/comida/catalogoLocal', () => ({ actualizarCatalogo: async () => {} }));
 jest.mock('@/datos/catalogo', () => ({ catalogo: [] }));
-jest.mock('@/lib/supabase', () => ({ haySupabase: () => false }));
+jest.mock('@/lib/supabase', () => ({
+  haySupabase: () => mockConSupabase,
+  supabase: () => ({
+    auth: {
+      onAuthStateChange: (oyente: (evento: string, sesion: unknown) => void) => {
+        mockAvisar = oyente;
+        return { data: { subscription: { unsubscribe: () => {} } } };
+      },
+      signOut: async () => ({ error: null }),
+    },
+  }),
+}));
+jest.mock('@/lib/premium', () => ({ cuentaDePremium: (creada: unknown, salio?: boolean) => mockCuentaDePremium(creada, salio) }));
 jest.mock('@/recordatorios/programar', () => ({}));
-jest.mock('@/secciones/perfil/cuentaApple', () => ({}));
+jest.mock('@/secciones/perfil/cuentaApple', () => ({ yaNoEsDeMoss: () => false }));
 jest.mock('@/salud/leer', () => ({}));
 jest.mock('@/salud/nocheSinReloj', () => ({}));
 jest.mock('@/textos', () => ({ idioma: () => 'es' }));
 jest.mock('./abrir', () => ({}));
-jest.mock('./buzonDeMoss', () => ({}));
-jest.mock('./remoto', () => ({}));
+jest.mock('./buzonDeMoss', () => ({ avisarSesion: () => {} }));
+jest.mock('./remoto', () => ({ remotoSupabase: () => ({}) }));
 jest.mock('./semilla', () => ({}));
-jest.mock('./sincronizar', () => ({}));
+jest.mock('./sincronizar', () => ({
+  crearSincronizador: () => ({
+    arrancar: () => {}, parar: () => {}, terminar: async () => {}, vuelta: async () => true, alVolver: () => {}, deOtraCuenta: () => false, primeraBajada: () => mockPrimeraBajada,
+  }),
+}));
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 jest.mock('@react-native-async-storage/async-storage', () => require('@react-native-async-storage/async-storage/jest/async-storage-mock'));
 
@@ -64,6 +88,64 @@ describe('la sesión para Ascent', () => {
     expect(mockDejar).toHaveBeenCalledWith(expect.objectContaining({ nombre: '' }));
     compartirLaSesion('SIGNED_OUT', null);
     expect(mockBorrar).toHaveBeenCalled();
+  });
+});
+
+describe('la sesión con la cuenta', () => {
+  const unRato = () => new Promise((listo) => setTimeout(listo, 0));
+  /** Un almacén de mentira con algo sin subir, o no. */
+  const almacenCon = (sinSubir: boolean) => {
+    const pendientes: Pendientes = { ...sinComida(), habitos: [], periodos: null, marcas: [], dias: [], logros: [], perfil: null, metas: [], pesos: [], semilla: sinSubir ? 'semilla' : null, hasta: 1 };
+    return { enCola: async (tarea: (r: { pendientes: () => Promise<Pendientes> }) => unknown) => tarea({ pendientes: async () => pendientes }) } as unknown as Almacen;
+  };
+  const salio = () => mockCuentaDePremium.mock.calls.at(-1)?.[1];
+
+  beforeEach(() => {
+    mockConSupabase = true;
+    mockCuentaDePremium.mockClear();
+    mockPrimeraBajada = Promise.resolve();
+  });
+
+  it('una sesión que se corta sola no es salir: la cuenta no se olvida; cerrar sesión, sí', async () => {
+    const cuenta = sincronizarConLaCuenta(almacenCon(false));
+    mockAvisar('SIGNED_IN', sesion);
+    await unRato();
+    // supabase-js también avisa SIGNED_OUT cuando el servidor ya no acepta la renovación.
+    mockAvisar('SIGNED_OUT', null);
+    await unRato();
+    expect(salio()).toBe(false);
+    await salirAProposito(async () => mockAvisar('SIGNED_OUT', null));
+    await unRato();
+    expect(salio()).toBe(true);
+    cuenta.parar();
+  });
+
+  it('sin sesión, lo que falta subir no se da por subido: cerrar sesión avisa antes de perderlo', async () => {
+    const cuenta = sincronizarConLaCuenta(almacenCon(true));
+    mockAvisar('SIGNED_OUT', null);
+    await unRato();
+    await expect(subirLoQueFalta()).rejects.toThrow();
+    cuenta.parar();
+    const nada = sincronizarConLaCuenta(almacenCon(false));
+    await expect(subirLoQueFalta()).resolves.toBeUndefined();
+    nada.parar();
+  });
+
+  it('la entrada espera lo que ya tenía la cuenta, pero no más que el tope', async () => {
+    const cuenta = sincronizarConLaCuenta(almacenCon(false));
+    // Sin sesión no hay nada que esperar.
+    expect(await esperarLaCuenta(10)).toBe(true);
+    mockPrimeraBajada = new Promise(() => {});
+    mockAvisar('SIGNED_IN', sesion);
+    await unRato();
+    expect(await esperarLaCuenta(10)).toBe(false);
+    cuenta.parar();
+    mockPrimeraBajada = Promise.resolve();
+    const otra = sincronizarConLaCuenta(almacenCon(false));
+    mockAvisar('SIGNED_IN', sesion);
+    await unRato();
+    expect(await esperarLaCuenta(10)).toBe(true);
+    otra.parar();
   });
 });
 

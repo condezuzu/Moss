@@ -25,8 +25,19 @@ export type Datos = ListasDeComida & {
   nombre?: Nombre | null;
 };
 
-// Todas las horas son ISO en UTC (remoto.ts las normaliza al bajar): compararlas como texto es compararlas en el tiempo.
-const masNueva = (llega: string | undefined, local: string | undefined) => (llega ?? '') > (local ?? '');
+/** Una versión como texto, con las claves en orden: la misma con las claves en otro orden es la misma. */
+const comoTexto = (x: unknown) =>
+  JSON.stringify(x, (_clave, v: unknown) => (v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => (a < b ? -1 : 1))) : v));
+
+/**
+ * Si gana la que llega. Todas las horas son ISO en UTC (remoto.ts las normaliza al bajar): compararlas como texto es
+ * compararlas en el tiempo. Con la misma hora gana la que llega, como en Supabase (al_recibir deja pasar el empate):
+ * así todos los teléfonos quedan con la de la cuenta. La misma versión no es un cambio.
+ */
+function masNueva<T>(llega: T, local: T, hora: (x: T) => string | undefined): boolean {
+  const [a, b] = [hora(llega) ?? '', hora(local) ?? ''];
+  return a > b || (a === b && comoTexto(llega) !== comoTexto(local));
+}
 
 /** De cada clave, gana la que llega si el teléfono no la tiene o si `gana(llega, local)`. */
 function porClave<T>(locales: T[], remotos: T[], clave: (x: T) => string, gana: (llega: T, local: T) => boolean): T[] {
@@ -40,8 +51,11 @@ function porClave<T>(locales: T[], remotos: T[], clave: (x: T) => string, gana: 
 /** De lo que se come también gana lo más nuevo, y un borrado es un cambio más: si es lo último, gana. */
 function deComida<C extends Coleccion>(c: C, local: Datos, remoto: Datos): DeComida[C][] {
   const clave = DE_COMIDA[c].clave as (x: DeComida[C]) => string;
-  return porClave(local[c] as DeComida[C][], remoto[c] as DeComida[C][], clave, (r, l) => masNueva(r.actualizado, l.actualizado));
+  return porClave(local[c] as DeComida[C][], remoto[c] as DeComida[C][], clave, (r, l) => masNueva(r, l, (x) => x.actualizado));
 }
+
+const actualizado = (x: { actualizado?: string }) => x.actualizado;
+const momento = (x: { momento: string }) => x.momento;
 
 export function ganadores(local: Datos, remoto: Datos): Cambios {
   return {
@@ -52,14 +66,14 @@ export function ganadores(local: Datos, remoto: Datos): Cambios {
     agua: deComida('agua', local, remoto),
     medidas: deComida('medidas', local, remoto),
     noches: deComida('noches', local, remoto),
-    habitos: porClave(local.habitos, remoto.habitos, (h) => h.id, (r, l) => masNueva(r.actualizado, l.actualizado)),
-    marcas: porClave(local.marcas, remoto.marcas, (m) => claveDeMarca(m.habito, m.dia), (r, l) => masNueva(r.momento, l.momento)),
-    dias: porClave(local.dias, remoto.dias, (d) => d.clave, (r, l) => masNueva(r.actualizado, l.actualizado)),
-    metas: porClave(local.metas, remoto.metas, (m) => m.desde, (r, l) => masNueva(r.momento, l.momento)),
-    pesos: porClave(local.pesos, remoto.pesos, (p) => p.fecha, (r, l) => masNueva(r.momento, l.momento)),
-    perfil: remoto.perfil && (!local.perfil || masNueva(remoto.perfil.actualizado, local.perfil.actualizado)) ? remoto.perfil : null,
+    habitos: porClave(local.habitos, remoto.habitos, (h) => h.id, (r, l) => masNueva(r, l, actualizado)),
+    marcas: porClave(local.marcas, remoto.marcas, (m) => claveDeMarca(m.habito, m.dia), (r, l) => masNueva(r, l, momento)),
+    dias: porClave(local.dias, remoto.dias, (d) => d.clave, (r, l) => masNueva(r, l, actualizado)),
+    metas: porClave(local.metas, remoto.metas, (m) => m.desde, (r, l) => masNueva(r, l, momento)),
+    pesos: porClave(local.pesos, remoto.pesos, (p) => p.fecha, (r, l) => masNueva(r, l, momento)),
+    perfil: remoto.perfil && (!local.perfil || masNueva(remoto.perfil, local.perfil, actualizado)) ? remoto.perfil : null,
     // Tu nombre va aparte del perfil, con su hora: el que trae Apple tiene la más vieja y le gana cualquier otro.
-    nombre: remoto.nombre && (!local.nombre || masNueva(remoto.nombre.actualizado, local.nombre.actualizado)) ? remoto.nombre : null,
+    nombre: remoto.nombre && (!local.nombre || masNueva(remoto.nombre, local.nombre, actualizado)) ? remoto.nombre : null,
     // Un logro nunca se pierde. Si los dos teléfonos lo ganaron, queda la fecha que guardó la cuenta (la del que subió primero).
     logros: porClave(local.logros, remoto.logros, (l) => l.id, (r, l) => r.desde !== l.desde),
     // Los períodos y la semilla son de la cuenta: un teléfono usa los suyos solo hasta conocerlos.

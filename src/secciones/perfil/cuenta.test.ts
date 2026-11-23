@@ -36,10 +36,12 @@ class MockArchivo {
 }
 
 jest.mock('expo-file-system', () => ({ Paths: { cache: 'cache' }, File: MockArchivo }));
+const mockSalirAProposito = jest.fn((hacer: () => Promise<unknown>) => hacer());
 jest.mock('@/almacen', () => ({
   elAlmacen: () => ({ olvidarTodo: () => mockOlvidar(), paraExportar: async () => ({ registros: [], pesos: [], metas: [] }) }),
   sinSincronizar: (hacer: () => Promise<unknown>) => hacer(),
   subirLoQueFalta: () => mockSubir(),
+  salirAProposito: (hacer: () => Promise<unknown>) => mockSalirAProposito(hacer),
 }));
 jest.mock('@/almacen/buzonDeMoss', () => ({ buzon: () => ({ vaciar: async () => {} }) }));
 jest.mock('@/lib/llavero', () => ({ borrarMiSesion: async () => {} }));
@@ -197,6 +199,16 @@ describe('el velo mientras se borra o se sale', () => {
     expect(pasos.slice(3)).toEqual(['empezar', 'dejar', 'pregunta: perfil.errorBorrar']);
     expect(mockOlvidar).not.toHaveBeenCalled();
     alerta.mockRestore();
+  });
+
+  it('cerrar sesión y borrar la cuenta salen a propósito: así la cuenta se olvida, y no cuando la sesión se corta sola', async () => {
+    mockSalirAProposito.mockClear();
+    mockSubir.mockResolvedValue(undefined);
+    mockLeerSesion.mockResolvedValueOnce(conSesion('lucia@ejemplo.com')).mockResolvedValueOnce(sinSesion());
+    expect(await otraVez().cerrarSesion()).toBe('listo');
+    mockLeerSesion.mockResolvedValue(conSesion('lucia@ejemplo.com'));
+    expect(await otraVez().borrarLaCuenta()).toBe(true);
+    expect(mockSalirAProposito).toHaveBeenCalledTimes(2);
   });
 
   it('al borrar, «Listo» llega cuando lo de la cuenta ya se borró; si falla, no llega ni se vacía el teléfono', async () => {

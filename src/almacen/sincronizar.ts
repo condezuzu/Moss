@@ -8,6 +8,9 @@
 //   baja lo que cambió en la cuenta desde la última vez.
 // - Si algo falla (sin conexión), no se pierde nada: queda pendiente y se reintenta cada vez más
 //   espaciado.
+// - «Borrar mis datos» deja una marca en la cuenta (supabase/moss/0018_borrados.sql): si es posterior a
+//   la que había cuando este teléfono conoció la cuenta, se borraron en otro teléfono. Entonces olvida lo
+//   suyo antes de subir nada y vuelve a bajar de cero.
 
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { DIAS_DE_COMIDA, DIAS_DE_MARCAS, type Almacen } from './almacen';
@@ -23,6 +26,8 @@ export interface Remoto {
    * pide desde ahí.
    */
   bajar(desde: string | null, marcasDesde: ClaveDia, comidaDesde: ClaveDia): Promise<{ datos: Datos; hasta: string | null }>;
+  /** La hora del último «Borrar mis datos» de la cuenta (una hora del servidor), o null si nunca se borró. */
+  borrado?(): Promise<string | null>;
 }
 
 export type Opciones = {
@@ -36,9 +41,13 @@ export type Opciones = {
   reintento?: number;
 };
 
-/** Los ajustes de la sincronización: de quién son los datos del teléfono y hasta dónde bajó. */
+/**
+ * Los ajustes de la sincronización: de quién son los datos del teléfono, hasta dónde bajó y la marca de «Borrar mis
+ * datos» que tenía la cuenta cuando este teléfono la conoció ('' sin marca).
+ */
 const DUENO = 'usuario';
 const BAJADO = 'bajado';
+const BORRADO = 'borrado';
 
 const ULTIMO_REINTENTO = 5 * 60_000;
 
@@ -55,6 +64,9 @@ export function crearSincronizador({ almacen, remoto, usuario, espera = 3000, re
   let reloj: ReturnType<typeof setTimeout> | undefined;
   let dejarDeOir: (() => void) | undefined;
   let cola: Promise<unknown> = Promise.resolve();
+  // Hasta que el teléfono conoce la cuenta (o sabe que sus datos son de otra): la entrada lo espera.
+  let alConocerla: () => void = () => {};
+  const conociendola = new Promise<void>((listo) => (alConocerla = listo));
 
   // Una vuelta por vez: subir y bajar nunca se cruzan.
   const enOrden = <T>(tarea: () => Promise<T>): Promise<T> => {
@@ -65,7 +77,7 @@ export function crearSincronizador({ almacen, remoto, usuario, espera = 3000, re
 
   async function subir() {
     const p = await almacen.enCola((r) => r.pendientes());
-    if (sinCambios(p)) return;
+    if (sinCambios(p) || soltado) return;
     await remoto.subir(p);
     if (soltado) return;
     await almacen.enCola((r) => r.subidoHasta(p.hasta));
@@ -77,9 +89,22 @@ export function crearSincronizador({ almacen, remoto, usuario, espera = 3000, re
     const { datos, hasta } = await remoto.bajar(desde, sumarDias(hoy, -DIAS_DE_MARCAS), sumarDias(hoy, -DIAS_DE_COMIDA));
     // De acá en adelante todo entra a la cola en el mismo instante: nunca detrás de un borrado que llegó antes.
     if (soltado) return;
-    almacen.mezclar(datos);
-    // En la cola, después de lo mezclado: si la app se cierra antes de guardarlo, la próxima vez se vuelve a bajar.
+    // Lo bajado se da por bajado solo si quedó guardado: si no, la próxima vez se vuelve a pedir.
+    await almacen.mezclar(datos);
     if (hasta && hasta !== desde) await almacen.enCola((r) => r.guardarAjuste(BAJADO, hasta));
+  }
+
+  /** La marca de «Borrar mis datos» de la cuenta: '' sin marca; undefined si no se supo (sin conexión, o la base sin 0018_borrados.sql). */
+  const marcaDeBorrado = (): Promise<string | undefined> => (remoto.borrado ? remoto.borrado().then((en) => en ?? '', () => undefined) : Promise.resolve(undefined));
+
+  /** Si se borraron los datos de la cuenta en otro teléfono después de que este la conoció. */
+  async function seBorraronEnOtroLado(): Promise<boolean> {
+    const marca = await marcaDeBorrado();
+    if (marca === undefined) return false;
+    const vista = await almacen.enCola((r) => r.leerAjuste(BORRADO));
+    // Un teléfono que ya sincronizaba antes de que existiera la marca toma la de ahora: borrarle los datos por las dudas sería peor.
+    if (vista === null) await almacen.enCola((r) => r.guardarAjuste(BORRADO, marca));
+    return vista !== null && marca > vista;
   }
 
   /** Devuelve false si los datos del teléfono son de otra cuenta, o si se paró: entonces no se toca nada. */
@@ -90,22 +115,35 @@ export function crearSincronizador({ almacen, remoto, usuario, espera = 3000, re
       const dueno = await almacen.enCola((r) => r.leerAjuste(DUENO));
       if (dueno && dueno !== usuario) {
         deOtraCuenta = true;
+        alConocerla();
         console.warn('Los datos de este teléfono son de otra cuenta: no se sincronizan.');
         return false;
       }
       if (!dueno) {
+        // La marca antes que los datos: si se borra justo en el medio, la próxima vez se olvida de más, nunca de menos.
+        const marca = await marcaDeBorrado();
         await bajar();
         if (soltado) return false;
+        if (marca !== undefined) await almacen.enCola((r) => r.guardarAjuste(BORRADO, marca));
         await almacen.enCola((r) => r.guardarAjuste(DUENO, usuario));
         conBajada = false;
       }
       conocida = true;
+      alConocerla();
+    }
+    if (conBajada && (await seBorraronEnOtroLado())) {
+      // Antes de subir nada: lo de este teléfono es de antes del borrado. Como al borrar la cuenta, y otra vez desde cero.
+      if (soltado) return false;
+      await almacen.olvidarTodo();
+      conocida = false;
+      return vuelta(false);
     }
     // Si la subida falla, igual baja lo nuevo; el error sale al final, para reintentar más tarde.
     const errores: unknown[] = [];
     await subir().catch((error: unknown) => errores.push(error));
     if (conBajada) {
       await bajar();
+      if (soltado) return false;
       // Lo mezclado puede haber rearmado el día de hoy.
       if (!errores.length) await subir();
     }
@@ -167,5 +205,10 @@ export function crearSincronizador({ almacen, remoto, usuario, espera = 3000, re
     },
     /** Para mostrarlo en Ajustes cuando exista: el teléfono tiene datos de otra cuenta y no sincroniza. */
     deOtraCuenta: () => deOtraCuenta,
+    /**
+     * Cuando el teléfono ya conoce la cuenta: bajó todo la primera vez (con su dueño guardado) o ya la conocía. También
+     * si sus datos son de otra cuenta: de esa no va a llegar nada.
+     */
+    primeraBajada: () => conociendola,
   };
 }

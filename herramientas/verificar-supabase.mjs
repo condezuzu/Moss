@@ -22,6 +22,8 @@
 // - que borrar la cuenta de Moss (moss.borrar_cuenta, solo con la clave de servicio) y «borrar mis
 //   datos» borran en cada tabla de Moss con usuario, y que borrar el usuario de Auth borra todo en
 //   cascada;
+// - que «borrar mis datos» deja su marca, que lee solo su dueño (0018_borrados.sql), y que con ella el
+//   otro teléfono de la cuenta olvida lo suyo sin volver a subirlo;
 // - que el teléfono baja el catálogo del servidor;
 // - y la app de verdad (src/almacen) sincronizando varios teléfonos contra esta base, uno de
 //   ellos con el repositorio SQLite del iPhone;
@@ -446,6 +448,8 @@ comprobar((await como(B, 'select * from moss.periodos')).rows.length === 1, 'ree
 
 await como(A, `insert into moss.pesos (fecha, kg, origen, momento) values ('2026-10-21', 74.5, 'manual', now())`);
 await como(B, 'select moss.borrar_mis_datos()');
+const marcaDeB = async () => (await como(B, 'select extract(epoch from en) as s from moss.borrados')).rows;
+const primeraMarca = await marcaDeB();
 comprobar((await como(A, 'select * from moss.habitos')).rows.length === 1, '«borrar mis datos» no toca a nadie más');
 comprobar((await como(B, 'select * from moss.habitos')).rows.length === 0, '«borrar mis datos» borra lo propio');
 comprobar((await como(B, 'select * from moss.registros')).rows.length === 0 && (await como(A, 'select * from moss.registros')).rows.length === 1, '«borrar mis datos» también borra lo comido, y solo lo propio');
@@ -455,6 +459,15 @@ await como(B, 'select moss.borrar_mis_datos()');
 comprobar((await como(B, 'select * from moss.medidas')).rows.length === 0 && (await como(A, 'select * from moss.medidas')).rows.length === 1, '«borrar mis datos» también borra las medidas, y solo las propias');
 comprobar((await como(B, 'select * from moss.noches')).rows.length === 0 && (await como(A, 'select * from moss.noches')).rows.length === 1, '«borrar mis datos» también borra las noches, y solo las propias');
 comprobar(await falla('anon', 'select moss.borrar_mis_datos()'), 'sin sesión no se puede borrar nada');
+// La marca de «borrar mis datos» (0018_borrados.sql): con la hora del último borrado, para que se enteren los otros teléfonos.
+const segundaMarca = await marcaDeB();
+comprobar(
+  primeraMarca.length === 1 && segundaMarca.length === 1 && Number(segundaMarca[0].s) > Number(primeraMarca[0].s)
+    && (await como(A, 'select * from moss.borrados')).rows.length === 0 && await falla('anon', 'select * from moss.borrados')
+    && await falla(B, `insert into moss.borrados (usuario, en) values ('${B}', now())`) && await falla(B, 'update moss.borrados set en = now()')
+    && await falla(B, 'delete from moss.borrados'),
+  '«borrar mis datos» deja su marca con la hora del último borrado; la lee solo su dueño y nadie la escribe ni la borra desde la app',
+);
 
 // Tu nombre (0009_perfil.sql): en la fila del perfil, con su propia hora. Una cuenta solo para esto.
 const E = '00000000-0000-4000-8000-00000000000e';
@@ -502,7 +515,8 @@ const tablasConUsuario = (await db.query(`select table_name as t from informatio
 const definicion = async (firma) => (await db.query(`select pg_get_functiondef($1::regprocedure) as d`, [firma])).rows[0].d;
 for (const firma of ['moss.borrar_cuenta(uuid)', 'moss.borrar_mis_datos()']) {
   const texto = await definicion(firma);
-  const faltan = tablasConUsuario.filter((t) => !new RegExp(`delete from moss\\.${t}\\b`).test(texto));
+  // «Borrar mis datos» no borra su marca: la deja (0018_borrados.sql).
+  const faltan = tablasConUsuario.filter((t) => !(firma === 'moss.borrar_mis_datos()' && t === 'borrados') && !new RegExp(`delete from moss\\.${t}\\b`).test(texto));
   comprobar(!faltan.length && tablasConUsuario.length >= 15, `${firma} borra en cada tabla de Moss con usuario (${tablasConUsuario.length})${faltan.length ? `: faltan ${faltan.join(', ')}` : ''}`);
 }
 /** Cuántas filas de Moss tiene una cuenta, en todas las tablas con usuario y en el vínculo. */
@@ -650,6 +664,7 @@ async function telefono(usuario, semillaPropia, conSQLite = false) {
       espia.bajada = await remoto.bajar(...argumentos);
       return espia.bajada;
     },
+    borrado: () => remoto.borrado(),
   };
   return { almacen, espia, sinc: crearSincronizador({ almacen, remoto: espia, usuario }) };
 }
@@ -870,6 +885,42 @@ comprobar(
   'app: de lo comido, un teléfono nuevo baja solo los últimos cuatro meses; lo viejo queda en la cuenta',
 );
 comprobar(c.almacen.estado().nombre?.valor === 'Agus' && !(await c.almacen.enCola((r) => r.pendientes())).nombre, 'app: un teléfono nuevo baja tu nombre, sin volver a subirlo');
+
+// «Borrar mis datos» en un teléfono llega al otro (0018_borrados.sql). Una cuenta solo para esto.
+const F = '00000000-0000-4000-8000-00000000000f';
+await db.exec(`insert into auth.users (id) values ('${F}')`);
+const enLaDeF = async (donde) => Number((await db.query(`select count(*) as n from moss.marcas where usuario = $1 and ${donde}`, [F])).rows[0].n);
+pasa();
+const fa = await telefono(F, 'semilla-fa');
+fa.almacen.marcar('meditar', true, 'toque');
+fa.almacen.responderCuestionario({ edad: 30, sexo: 'f', alturaCm: 165, pesoKg: 60, actividad: 'algo', objetivo: 'mantener', ritmo: 'recomendado' });
+await fa.sinc.vuelta();
+const fb = await telefono(F, 'semilla-fb');
+await fb.sinc.vuelta();
+const fbLaConocia = fb.almacen.estado().perfil?.alturaCm === 165 && hechosDeHoy(fb) === 'meditar';
+// Marcado en fb antes de enterarse: es de antes del borrado.
+pasa();
+fb.almacen.marcar('leer', true, 'toque');
+// fa borra sus datos como Perfil: en la cuenta, su teléfono de cero y una sincronización nueva, que sigue usándose.
+pasa();
+await fa.sinc.terminar();
+await clienteDe(F).rpc('borrar_mis_datos');
+await fa.almacen.olvidarTodo();
+const faDeNuevo = crearSincronizador({ almacen: fa.almacen, remoto: fa.espia, usuario: F });
+await faDeNuevo.vuelta();
+pasa();
+fa.almacen.marcar('agua', true, 'toque');
+await faDeNuevo.vuelta();
+await fb.sinc.vuelta();
+pasa();
+fb.almacen.marcar('meditar', true, 'toque');
+await fb.sinc.vuelta();
+await faDeNuevo.vuelta();
+comprobar(
+  fbLaConocia && fb.almacen.estado().perfil === null && !fb.almacen.estado().entradaHecha && (await enLaDeF(`habito = 'leer'`)) === 0
+    && hechosDeHoy(fa) === 'meditar,agua' && hechosDeHoy(fb) === 'meditar,agua' && (await enLaDeF('hecho')) === 2,
+  'app: «borrar mis datos» en un teléfono llega al otro: olvida lo suyo sin volver a subirlo y baja lo nuevo; el que borró no olvida dos veces',
+);
 
 const intruso = crearSincronizador({ almacen: a.almacen, remoto: remotoSupabase(clienteDe(B)), usuario: B });
 const sincronizo = await intruso.vuelta();

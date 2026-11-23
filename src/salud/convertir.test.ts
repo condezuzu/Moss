@@ -94,6 +94,9 @@ describe('de Salud al dominio', () => {
     expect(primeraPorDia([kg(70.4, local('2026-10-23', '02:00')), kg(70.1, local('2026-10-23', '07:00'))], CORTE_DE_FABRICA))
       .toEqual(new Map([['2026-10-22', 70.4], ['2026-10-23', 70.1]]));
     expect(primeraPorDia([kg(Number.NaN, local('2026-10-22', '07:00'))], CORTE_DE_FABRICA)).toEqual(new Map());
+    // Y cuándo: con esa hora se guarda (no con la de ahora).
+    expect(primeraPorDia([kg(71.2, local('2026-10-22', '22:30')), kg(70.0, local('2026-10-22', '07:05'))], CORTE_DE_FABRICA, 'en'))
+      .toEqual(new Map([['2026-10-22', local('2026-10-22', '07:05').getTime()]]));
   });
 });
 

@@ -29,7 +29,7 @@
 
 import { CON_HORA, horasCorridas, type Comida } from './comidas';
 import { claveDeMarca, type Marca } from './dias';
-import { diaDeLaSemana, diasEntre, sumarDias, type ClaveDia, type DiaSemana } from './fechas';
+import { diaDeLaSemana, diasEntre, minutosEnElDia, sumarDias, type ClaveDia, type DiaSemana } from './fechas';
 import { tocaElDia, type Fuente, type Habito } from './habitos';
 import type { Conviene } from './loQueConviene';
 import type { FaltaConHora, Falta } from './loQueFalta';
@@ -402,8 +402,11 @@ export type DelDia = {
    * antes es de la noche de ese día: con el corte a las 4, leer a las 0:30 es la 1470, y mira la marca de ese día.
    */
   corte?: number;
-  /** Las marcas del almacén, por claveDeMarca: un hábito hecho no avisa. */
-  marcas?: ReadonlyMap<string, Pick<Marca, 'hecho'>>;
+  /**
+   * Las marcas del almacén, por claveDeMarca: un hábito hecho no avisa. Con `momento`, lo marcado antes de que sonara
+   * nunca sonó, y no atrasa a nadie.
+   */
+  marcas?: ReadonlyMap<string, Pick<Marca, 'hecho'> & Partial<Pick<Marca, 'momento'>>>;
   /** Las comidas ya anotadas ese día, sin lo planificado: no avisan. */
   anotadas?: ReadonlySet<Comida>;
   /** El día de la semana del control (control.ts): ese día, pesarse avisa aunque no sea cada día. */
@@ -529,20 +532,45 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
     if (!h || !esDeEntrenar(h)) return false;
     return op.eventos?.entrenamiento != null || (op.sesiones ?? []).some((s) => s.inicio <= a.minutos);
   };
-  const falta = (a: Aviso) =>
-    !a.sobra && !(a.habito && op.marcas?.get(claveDeMarca(a.habito, dia))?.hecho) && !yaEntreno(a)
+  // Cuándo se marcó el hábito, en la cuenta del día: sin marcar, nunca; marcado sin saber cuándo, desde siempre.
+  const marcado = (a: Aviso): number => {
+    const marca = a.habito ? op.marcas?.get(claveDeMarca(a.habito, dia)) : undefined;
+    if (!marca?.hecho) return Infinity;
+    const minutos = marca.momento ? minutosEnElDia(new Date(marca.momento), dia) : NaN;
+    return Number.isFinite(minutos) ? minutos : -Infinity;
+  };
+  // `hasta`: lo marcado antes de ese minuto ya está hecho; sin él, todo lo marcado.
+  const falta = (a: Aviso, hasta = Infinity) =>
+    !a.sobra && !(marcado(a) < hasta) && !yaEntreno(a)
     && !(a.comida && (op.anotadas?.has(a.comida) || yaPasoLaComida(a.comida)))
     && !(a.tipo === 'pesarse' && (op.pesado || op.anotadas?.has('desayuno')));
-  const yaPaso = (a: Aviso) => op.ahora !== undefined && a.minutos <= op.ahora;
   // Nada suena más tarde que en el plan entero, con lo hecho y lo que no suena adentro: lo que sonó un rato antes
   // porque después venía algo que importa más no vuelve a sonar a su hora si eso se hace después, y si se hizo antes,
   // suena igual a esa hora. Lo hecho antes de su hora sí deja de atrasar a los que esperaban.
   const enElPlan = new Map(acomodar(plan.avisos, categoria).map((a) => [a.id, a.minutos]));
   // Lo de después de un evento y lo que falta buscan su hueco entre todo lo acomodado, también lo que ya
   // sonó y después se hizo: así, al reprogramar, cada uno sale siempre en el mismo lugar.
-  const puestos = acomodar(plan.avisos.filter((a) => falta(a) || yaPaso(a)), categoria)
+  const lugares = (hasta: number, sono: (a: Aviso) => boolean) => acomodar(plan.avisos.filter((a) => falta(a, hasta) || sono(a)), categoria)
     .map((a) => ({ ...a, minutos: Math.min(a.minutos, enElPlan.get(a.id) ?? a.minutos) }));
-  const quedan = puestos.filter(falta);
+  // Lo hecho sonó si llegó a su lugar antes de que lo marcaras: el que tenía en ese momento, con lo marcado antes. Si lo
+  // marcaste antes, nunca sonó y no atrasa a nadie, ni antes ni después de su hora (si no, lo que esperaba sonaría dos veces).
+  const sonaron = new Map<string, boolean>();
+  const sonoAntes = (a: Aviso): boolean => {
+    const m = marcado(a);
+    const sono = sonaron.get(a.id)
+      ?? (lugares(m, (b) => (Number.isFinite(marcado(b)) && marcado(b) < m ? sonoAntes(b) : b.minutos <= m)).find((b) => b.id === a.id)?.minutos ?? Infinity) <= m;
+    sonaron.set(a.id, sono);
+    return sono;
+  };
+  // Lo que ya sonó: lo hecho, si sonó antes de que lo marcaras (lo de después de un evento, en el lugar que tiene); lo
+  // demás, o lo marcado sin saber cuándo, si ya pasó su hora.
+  const yaPaso = (a: Aviso, sonoAlMarcarlo = sonoAntes) => {
+    if (op.ahora === undefined) return false;
+    const m = marcado(a);
+    return Number.isFinite(m) && m <= op.ahora ? sonoAlMarcarlo(a) : a.minutos <= op.ahora;
+  };
+  const puestos = lugares(Infinity, (a) => yaPaso(a));
+  const quedan = puestos.filter((a) => falta(a));
   for (const e of conEvento) {
     const paso = op.eventos?.[e.evento];
     if (paso == null) continue;
@@ -552,7 +580,7 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
     if (!valido(aviso) || !plan.eventos.has(aviso.id)) continue;
     const puesto = { ...aviso, minutos: hueco(aviso.minutos, puestos, true) };
     const suena = falta(puesto);
-    if (suena || yaPaso(puesto)) puestos.push(puesto);
+    if (suena || yaPaso(puesto, (a) => a.minutos <= marcado(a))) puestos.push(puesto);
     if (suena) quedan.push(puesto);
   }
   // Lo que falta va aparte del máximo, con su propio tope: busca su hueco, sin correr a nadie. Si tendría

@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 
 import { crearAlmacen } from '../almacen/almacen';
-import { repositorioEnMemoria } from '../almacen/repositorio';
+import { repositorioEnMemoria, sinComida } from '../almacen/repositorio';
 import type { Constelacion } from '../datos/catalogo';
 import datos from '../datos/constelaciones.json';
 import type { Movimiento } from '../dominio/sinReloj';
@@ -87,6 +87,37 @@ describe('la noche de anoche, sin reloj', () => {
     await estimarAnoche(a, instante);
     const hora = a.estado().noches.get('2026-10-22')?.hora;
     expect([hora?.origen, hora?.dormirse, hora?.despertar]).toEqual(['estimada', iso(21, 23, 25), iso(22, 7, 20)]);
+  });
+
+  it('lo estimado no le gana a lo que hiciste a mano en otro teléfono: la cara y la hora confirmada llegan igual', async () => {
+    mockMovimiento = [];
+    const instante = el(22, 9);
+    const a = almacenCon(() => instante);
+    await a.iniciar();
+    a.anotarUso('abrir', el(21, 23, 0).getTime());
+    a.anotarUso('cerrar', el(21, 23, 10).getTime());
+    a.anotarUso('abrir', el(22, 7, 20).getTime());
+    await estimarAnoche(a, instante);
+    expect(a.estado().noches.get('2026-10-22')?.hora?.origen).toBe('estimada');
+    // A las 8, en el otro teléfono, dijiste cómo dormiste y confirmaste la hora: llega después de estimarla acá.
+    const delOtro: NochePropia = {
+      fecha: '2026-10-22', cara: 4, hora: { dormirse: iso(21, 23, 30), despertar: iso(22, 7, 0), origen: 'confirmada', confianza: 'alta' }, actualizado: iso(22, 8),
+    };
+    await a.mezclar({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], semilla: null, ...sinComida(), noches: [delOtro] });
+    expect(a.estado().noches.get('2026-10-22')).toMatchObject({ cara: 4, hora: { origen: 'confirmada' } });
+  });
+
+  it('estimarla otra vez no pisa la cara: va con la hora de la anterior más un milisegundo', async () => {
+    mockMovimiento = [];
+    const instante = el(22, 9);
+    const a = almacenCon(() => instante);
+    await a.iniciar();
+    a.ponerCara('2026-10-22', 3);
+    a.anotarUso('abrir', el(21, 23, 0).getTime());
+    a.anotarUso('cerrar', el(21, 23, 10).getTime());
+    a.anotarUso('abrir', el(22, 7, 20).getTime());
+    await estimarAnoche(a, instante);
+    expect(a.estado().noches.get('2026-10-22')).toMatchObject({ cara: 3, hora: { origen: 'estimada' }, actualizado: new Date(instante.getTime() + 1).toISOString() });
   });
 });
 

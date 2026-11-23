@@ -104,3 +104,28 @@ describe('al volver a Moss', () => {
     expect(premium.suscripcionActual()).toEqual(renovada);
   });
 });
+
+describe('la cuenta guardada', () => {
+  beforeEach(() => {
+    jest.resetModules();
+  });
+
+  it('dos sesiones vacías mientras se lee: al terminar la primera, el regalo ya está', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const almacenamiento = require('@react-native-async-storage/async-storage') as typeof import('@react-native-async-storage/async-storage').default;
+    // Cada lectura termina cuando se la deja: en el teléfono, dos lecturas no terminan juntas.
+    const lecturas: ((cuenta: string | null) => void)[] = [];
+    jest.mocked(almacenamiento.getItem).mockImplementation(() => new Promise((listo) => { lecturas.push(listo); }));
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const premium = require('./premium') as typeof import('./premium');
+    // Sin conexión y con el token vencido: la sesión llega vacía, al arrancar y en el aviso del almacén.
+    const primera = premium.cuentaDePremium(null);
+    const segunda = premium.cuentaDePremium(null);
+    lecturas[0]('2026-10-01T12:00:00Z');
+    await primera;
+    expect(premium.finDelRegaloActual()).toBe('2027-02-14');
+    lecturas.slice(1).forEach((leer) => leer('2026-10-01T12:00:00Z'));
+    await segunda;
+    expect(premium.finDelRegaloActual()).toBe('2027-02-14');
+  });
+});

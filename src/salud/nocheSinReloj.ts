@@ -1,7 +1,8 @@
 // Sin reloj, cada mañana (spec/sueno.md, «Sin reloj»): arma la noche de anoche con lo que guardó el
 // teléfono (los pasos de Salud, el movimiento, cuándo usaste Moss y lo que avisaron los Atajos y el
 // despertador) y la guarda como estimada, con tu margen para dormirte (src/dominio/sinReloj.ts). No pisa
-// lo que confirmaste ni la noche de un reloj o un anillo, y nunca escribe en Salud. Con un reloj o un anillo
+// lo que confirmaste (tampoco en otro teléfono: lo estimado va con una hora vieja, ponerHoraDeLaNoche) ni
+// la noche de un reloj o un anillo, y nunca escribe en Salud. Con un reloj o un anillo
 // también, desde temprano (lo pediste el 21/11/2026: siempre hay una noche): muchos escriben la suya recién al
 // sincronizar su app, y cuando llega, gana (conNochesDeMoss).
 
@@ -90,7 +91,7 @@ export async function estimarAnoche(a: Almacen, ahora = new Date()): Promise<voi
   oyentes.forEach((o) => o());
   // Solo si cambió: cada cambio sube a la cuenta.
   if (antes?.hora && antes.hora.dormirse === est.hora.dormirse && antes.hora.despertar === est.hora.despertar && antes.hora.confianza === est.hora.confianza) return;
-  a.ponerHoraDeLaNoche(clave, est.hora);
+  a.ponerHoraDeLaNoche(clave, est.hora, true);
 }
 
 /**
@@ -118,7 +119,7 @@ export async function rehacerLasNoches(a: Almacen, ahora = new Date(), leerPasos
     if (antes.hora.origen !== 'estimada' && !(aceptadaSinCambios(antes.hora) && sinRestas)) continue;
     const conSenales = i < DIAS_CON_SENALES ? await estimar(e, clave, ahora, pasos) : null;
     const hora = conSenales && sirve(conSenales.estimacion) ? conSenales.hora : sinRestas;
-    if (hora && (hora.dormirse !== antes.hora.dormirse || hora.despertar !== antes.hora.despertar)) a.ponerHoraDeLaNoche(clave, hora);
+    if (hora && (hora.dormirse !== antes.hora.dormirse || hora.despertar !== antes.hora.despertar)) a.ponerHoraDeLaNoche(clave, hora, true);
   }
   a.marcarSuenoRehecho();
 }

@@ -42,6 +42,11 @@ const horas = (estas: Partial<Record<Comida, number>>) => ({ horaDeComida: (c: C
 /** A qué hora suena cada cosa. */
 const resumen = (lista: Notificacion[]) => lista.map((x): [number, string[]] => [x.minutos, [x.aviso.id]]);
 const hecho = (habito: string, dia = VIERNES) => new Map([[claveDeMarca(habito, dia), { hecho: true }]]);
+/** Hecho y marcado a esa hora del día, en el reloj del teléfono (Marca.momento): «24:10» son las 0:10 del día siguiente. */
+const hechoA = (habito: string, hora: string, dia = VIERNES) => {
+  const [anio, mes, d] = dia.split('-').map(Number);
+  return new Map([[claveDeMarca(habito, dia), { hecho: true, momento: new Date(anio, mes - 1, d, 0, h(hora)).toISOString() }]]);
+};
 const aLas = (habito: string, hora: string) => ({ habito, cuando: { tipo: 'hora' as const, minutos: h(hora) }, dias: [] });
 
 describe('la hora de dormir', () => {
@@ -392,6 +397,46 @@ describe('los avisos de un día', () => {
     const ajustes: Avisos = { habitos: [aLas('leer', '21:10')] };
     expect(resumen(delDia(ajustes, { ahora: h('20:00'), conviene: [luces] }))).toEqual([[h('20:50'), ['luces']], [h('21:10'), ['habito:leer:0']]]);
     expect(delDia(ajustes, { ahora: h('20:52'), conviene: [luces], marcas: hecho('leer') })).toEqual([]);
+  });
+
+  it('lo marcado antes de que sonara nunca sonó: tampoco atrasa a nadie pasada su hora, y nada suena dos veces', () => {
+    const ajustes: Avisos = { habitos: [aLas('leer', '13:30')], comidas: ['almuerzo'] };
+    // Leyó a las 13:00: el almuerzo, a las 13:45.
+    expect(resumen(delDia(ajustes, { ahora: h('13:00'), marcas: hechoA('leer', '13:00') }))).toEqual([[h('13:45'), ['comida:almuerzo']]]);
+    // Pasadas las 13:30, leer sigue sin haber sonado: el almuerzo no se corre a las 13:50, ni vuelve a sonar.
+    expect(resumen(delDia(ajustes, { ahora: h('13:40'), marcas: hechoA('leer', '13:00') }))).toEqual([[h('13:45'), ['comida:almuerzo']]]);
+    expect(delDia(ajustes, { ahora: h('13:47'), marcas: hechoA('leer', '13:00') })).toEqual([]);
+    // Si sonó a las 13:30 y leyó después, sí ocupa su lugar: el almuerzo sigue a las 13:50, también al reprogramar en el momento.
+    expect(resumen(delDia(ajustes, { ahora: h('13:35'), marcas: hechoA('leer', '13:35') }))).toEqual([[h('13:50'), ['comida:almuerzo']]]);
+    expect(resumen(delDia(ajustes, { ahora: h('13:47'), marcas: hechoA('leer', '13:35') }))).toEqual([[h('13:50'), ['comida:almuerzo']]]);
+  });
+
+  it('lo mismo con las luces: leer marcado antes de su hora no las vuelve a correr cuando pasa', () => {
+    const luces: Aviso = { id: 'luces', tipo: 'luces', minutos: h('21:05') };
+    const ajustes: Avisos = { habitos: [aLas('leer', '21:00')] };
+    expect(resumen(delDia(ajustes, { ahora: h('20:00'), conviene: [luces] }))).toEqual([[h('21:00'), ['habito:leer:0']], [h('21:20'), ['luces']]]);
+    expect(resumen(delDia(ajustes, { ahora: h('20:30'), conviene: [luces], marcas: hechoA('leer', '20:30') }))).toEqual([[h('21:05'), ['luces']]]);
+    // Las luces sonaron a las 21:05: a las 21:07 no vuelven a las 21:20.
+    expect(delDia(ajustes, { ahora: h('21:07'), conviene: [luces], marcas: hechoA('leer', '20:30') })).toEqual([]);
+  });
+
+  it('y de noche: estirar a las 0:30, marcado a las 0:10, no corre a leer cuando pasa su hora', () => {
+    const ajustes: Avisos = { habitos: [aLas('estirar', '0:30'), aLas('leer', '0:40')] };
+    // Con el día que empieza a las 4, las dos son de la noche del viernes.
+    const noche = { corte: 4 * 60 };
+    expect(resumen(delDia(ajustes, { ...noche, ahora: h('23:00') }))).toEqual([[h('24:30'), ['habito:estirar:0']], [h('24:50'), ['habito:leer:0']]]);
+    expect(resumen(delDia(ajustes, { ...noche, ahora: h('24:10'), marcas: hechoA('estirar', '24:10') }))).toEqual([[h('24:40'), ['habito:leer:0']]]);
+    // Leer sonó a las 0:40: a las 0:42 no vuelve a las 0:50.
+    expect(delDia(ajustes, { ...noche, ahora: h('24:42'), marcas: hechoA('estirar', '24:10') })).toEqual([]);
+  });
+
+  it('lo que sonó un rato antes y se marcó antes de su hora sigue ocupando su lugar: lo de después no se pierde', () => {
+    const luces: Aviso = { id: 'luces', tipo: 'luces', minutos: h('22:45') };
+    const ajustes: Avisos = { dormir: { encendido: true }, habitos: [aLas('leer', '22:50')] };
+    // Leer suena un rato antes, a las 22:40, por el de dormir (23:00); las luces esperan a las 23:20.
+    expect(resumen(delDia(ajustes, { ahora: h('22:00'), conviene: [luces] }))).toEqual([[h('22:40'), ['habito:leer:0']], [h('23:00'), ['dormir']], [h('23:20'), ['luces']]]);
+    // Leyó a las 22:45, después de que sonara y antes de las 22:50: las luces siguen a las 23:20.
+    expect(resumen(delDia(ajustes, { ahora: h('22:45'), conviene: [luces], marcas: hechoA('leer', '22:45') }))).toEqual([[h('23:00'), ['dormir']], [h('23:20'), ['luces']]]);
   });
 
   it('el máximo se cuenta sobre el plan del día: lo hecho o lo anotado no deja entrar lo que no entraba', () => {

@@ -23,6 +23,7 @@ import { abrirRepositorio } from './abrir';
 import { crearAlmacen, type Almacen } from './almacen';
 import { avisarSesion, buzon } from './buzonDeMoss';
 import { remotoSupabase } from './remoto';
+import { sinCambios } from './repositorio';
 import { habitosDeEjemplo } from './semilla';
 import { crearSincronizador, type Sincronizador } from './sincronizar';
 
@@ -54,13 +55,34 @@ export const arrancarLoDePremium = () =>
   arrancarPremium(async () => (haySupabase() ? cuentaDeMossDesde((await supabase().auth.getSession()).data.session?.user) : null));
 
 /** La sincronización con la cuenta mientras la app está abierta: Perfil la frena antes de borrar el teléfono. */
-let deLaCuenta: { subirLoQueFalta(): Promise<void>; soltar(): Promise<void>; retomar(): void; deOtraCuenta(): boolean } | undefined;
+let deLaCuenta: {
+  subirLoQueFalta(): Promise<void>; soltar(): Promise<void>; retomar(): void; deOtraCuenta(): boolean; primeraBajada(): Promise<void> | undefined;
+} | undefined;
 
 /** El teléfono tiene datos de otra cuenta y por eso no sincroniza (sincronizar.ts): Perfil lo dice. */
 export const datosDeOtraCuenta = (): boolean => deLaCuenta?.deOtraCuenta() ?? false;
 
 /** Lo más que se espera a la vuelta que esté en camino antes de borrar: después, lo que vuelva ya no se toca igual. */
 const ESPERA_AL_SOLTAR = 15_000;
+
+/** Lo más que la entrada espera lo que ya tenía la cuenta antes de guardar el cuestionario: sin red, no queda colgada. */
+const ESPERA_DE_LA_CUENTA = 8000;
+
+/**
+ * Cerrar sesión o borrar la cuenta (cuenta.ts), mientras se sale. Supabase avisa SIGNED_OUT también cuando la sesión
+ * se corta sola (el servidor ya no acepta renovarla): eso no es salir, y no se olvida nada de la cuenta.
+ */
+let saliendo = false;
+
+/** Sale de la cuenta a propósito: el SIGNED_OUT que llegue mientras tanto es salir de verdad. */
+export async function salirAProposito<T>(salir: () => Promise<T>): Promise<T> {
+  saliendo = true;
+  try {
+    return await salir();
+  } finally {
+    saliendo = false;
+  }
+}
 
 // Quién está en la cuenta, para lo de Ascent (src/almacen/ascent.ts): sin sesión no hay vínculo.
 // undefined hasta que Supabase dice si hay sesión: así lo guardado de Ascent no parpadea al abrir, y
@@ -98,9 +120,9 @@ export function compartirLaSesion(evento: AuthChangeEvent, sesion: Session | nul
 
 /**
  * Con sesión, sincroniza con la cuenta; sin sesión, el almacén anda solo. Hasta que exista la
- * pantalla de la cuenta (la entrada), nunca hay sesión.
+ * pantalla de la cuenta (la entrada), nunca hay sesión. Exportada para los tests.
  */
-function sincronizarConLaCuenta(a: Almacen) {
+export function sincronizarConLaCuenta(a: Almacen) {
   if (!haySupabase()) {
     usuarioDeLaCuenta = null;
     oyentesDeLaSesion.forEach((o) => o(null));
@@ -126,6 +148,8 @@ function sincronizarConLaCuenta(a: Almacen) {
     // como si no hubiera sesión, así nada de este teléfono la vuelve a llenar.
     const borradaEnOtroLado = Boolean(sesion && yaNoEsDeMoss(sesion.user));
     const deMoss = borradaEnOtroLado ? null : sesion;
+    // Se mira ya: signOut avisa antes de terminar, y después `saliendo` vuelve a ser falso.
+    const salio = (evento === 'SIGNED_OUT' && saliendo) || borradaEnOtroLado;
     // Se anota ya: cerrar sesión sabe al terminar si la sesión sigue.
     usuarioDeLaSesion = deMoss?.user.id ?? null;
     compartirLaSesion(evento, deMoss);
@@ -135,7 +159,7 @@ function sincronizarConLaCuenta(a: Almacen) {
       if (borradaEnOtroLado) cliente.auth.signOut({ scope: 'local' }).catch(() => {});
       // La fecha viene del servidor con cada sesión y cada renovación, y queda guardada: anda sin conexión.
       // Sin conexión y con el token vencido la sesión llega vacía: solo salir de la cuenta la olvida.
-      cuentaDePremium(cuentaDeMossDesde(deMoss?.user), evento === 'SIGNED_OUT' || borradaEnOtroLado).catch(() => {});
+      cuentaDePremium(cuentaDeMossDesde(deMoss?.user), salio).catch(() => {});
       seguir();
       const ahora = usuarioDeLaSesion;
       if (usuarioDeLaCuenta === ahora) return;
@@ -145,7 +169,12 @@ function sincronizarConLaCuenta(a: Almacen) {
   });
   deLaCuenta = {
     async subirLoQueFalta() {
-      await actual?.sincronizador.vuelta(false);
+      if (actual) {
+        await actual.sincronizador.vuelta(false);
+        return;
+      }
+      // Sin sincronización (la sesión se cortó sola) lo que falta no tiene cómo subir: no se da por subido.
+      if (!sinCambios(await a.enCola((r) => r.pendientes()))) throw new Error('Sin sesión: lo último no subió');
     },
     async soltar() {
       suelta = true;
@@ -160,6 +189,7 @@ function sincronizarConLaCuenta(a: Almacen) {
       seguir();
     },
     deOtraCuenta: () => actual?.sincronizador.deOtraCuenta() ?? false,
+    primeraBajada: () => actual?.sincronizador.primeraBajada(),
   };
   return {
     alVolver: () => {
@@ -190,9 +220,23 @@ export async function sinSincronizar<T>(tarea: () => Promise<T>): Promise<T> {
   }
 }
 
-/** Sube ya lo que falta subir. Tira un error si no se pudo (sin conexión). */
+/** Sube ya lo que falta subir. Tira un error si no se pudo (sin conexión, o sin sesión). */
 export async function subirLoQueFalta(): Promise<void> {
   await deLaCuenta?.subirLoQueFalta();
+}
+
+/**
+ * Con sesión, hasta que el teléfono conoce la cuenta (la primera bajada, sincronizar.ts): la entrada lo espera antes de
+ * guardar el cuestionario, así su perfil, más nuevo, no pisa el que ya tenía la cuenta. true si ya la conoce (o no hay
+ * sesión); false si pasó el tope sin saberlo.
+ */
+export async function esperarLaCuenta(tope = ESPERA_DE_LA_CUENTA): Promise<boolean> {
+  const primera = deLaCuenta?.primeraBajada();
+  if (!primera) return true;
+  let reloj: ReturnType<typeof setTimeout> | undefined;
+  const llego = await Promise.race([primera.then(() => true), new Promise<boolean>((listo) => (reloj = setTimeout(listo, tope, false)))]);
+  clearTimeout(reloj);
+  return llego;
 }
 
 /**

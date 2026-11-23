@@ -70,9 +70,10 @@ export function ultimaPorDia(muestras: DeSalud[]): Map<ClaveDia, number> {
 
 /**
  * El peso de cada día de Moss: el primero, el de la mañana en ayunas (D34), que varía menos de un día a otro
- * (Cheuvront y otros, 2004). Lo de antes de la hora de corte es del día anterior, como todo en Moss (D32).
+ * (Cheuvront y otros, 2004). Lo de antes de la hora de corte es del día anterior, como todo en Moss (D32). Con
+ * `dato` en 'en', en lugar del valor, cuándo se midió (en ms).
  */
-export function primeraPorDia(muestras: DeSalud[], corte: number): Map<ClaveDia, number> {
+export function primeraPorDia(muestras: DeSalud[], corte: number, dato: 'valor' | 'en' = 'valor'): Map<ClaveDia, number> {
   const porDia = new Map<ClaveDia, { en: number; valor: number }>();
   for (const s of muestras) {
     if (typeof s.quantity !== 'number' || !Number.isFinite(s.quantity)) continue;
@@ -80,7 +81,7 @@ export function primeraPorDia(muestras: DeSalud[], corte: number): Map<ClaveDia,
     const antes = porDia.get(dia);
     if (!antes || s.startDate.getTime() < antes.en) porDia.set(dia, { en: s.startDate.getTime(), valor: s.quantity });
   }
-  return new Map([...porDia].map(([d, x]) => [d, x.valor]));
+  return new Map([...porDia].map(([d, x]) => [d, x[dato]]));
 }
 
 /** Las muestras de pasos, con cuándo y cuántos: sin reloj, dicen cuándo estabas despierto. */
@@ -106,6 +107,8 @@ export type LoDeSalud = {
   pasosRecientes: { desde: number; hasta: number; pasos: number }[];
   /** El primer peso de cada día de Moss, en kg. */
   pesos: Map<ClaveDia, number>;
+  /** Cuándo se tomó cada uno de esos pesos, en ms: el peso se guarda con esa hora. */
+  pesadoEn?: Map<ClaveDia, number>;
   /** Los entrenamientos de las últimas dos semanas; sin pedirlos todavía (quien pasó la entrada antes del 18/11/2026), ninguno. */
   entrenamientos?: EntrenoDeSalud[];
 };

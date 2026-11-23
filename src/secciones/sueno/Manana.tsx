@@ -10,7 +10,7 @@ import Animated, { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated
 
 import { elAlmacen } from '@/almacen';
 import type { ClaveDia } from '@/dominio/fechas';
-import { aparatoQueFalta, deLasSenales, despertarAnclado, habitualDe, instanteDe, quePreguntar } from '@/dominio/sinReloj';
+import { aparatoQueFalta, deLasSenales, despertarAnclado, habitualDe, instanteDe, moverDespertar, moverDormirse, quePreguntar } from '@/dominio/sinReloj';
 import type { Cara, Noche, NochePropia, OrigenDeNoche } from '@/dominio/sueno';
 import { useSenales } from '@/salud/anclas';
 import { DESDE_LAS } from '@/salud/nocheSinReloj';
@@ -60,10 +60,10 @@ export function EditorDeHora({ desde, hasta, alGuardar, alCancelar, soloDormirse
   const [a, setA] = useState(Math.round(desde / 5) * 5);
   const [b, setB] = useState(Math.round(hasta / 5) * 5);
   const [cambiadas, setCambiadas] = useState(false);
-  // Entre las 18 de ayer y las 18 de hoy, con una hora al menos entre las dos. Mantener apretado un
-  // botón repite, y en el tope se frena (BotonDePaso). VoiceOver dice la hora nueva.
+  // Entre las 18 de ayer y las 18 de hoy, con una hora al menos y 18 a lo sumo entre las dos (sinReloj.ts). Mantener
+  // apretado un botón repite, y en el tope se frena (BotonDePaso). VoiceOver dice la hora nueva.
   const moverA = (d: number) => {
-    const nueva = Math.max(Math.min(0, a), Math.min(b - 60, a + d));
+    const nueva = moverDormirse(a, b, d);
     if (nueva === a) return false;
     setCambiadas(true);
     setA(nueva);
@@ -71,7 +71,7 @@ export function EditorDeHora({ desde, hasta, alGuardar, alCancelar, soloDormirse
     return true;
   };
   const moverB = (d: number) => {
-    const nueva = Math.min(Math.max(24 * 60, b), Math.max(a + 60, b + d));
+    const nueva = moverDespertar(a, b, d);
     if (nueva === b) return false;
     setCambiadas(true);
     setB(nueva);

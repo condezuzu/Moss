@@ -441,6 +441,18 @@ export function quePreguntar(clave: ClaveDia, confianza: Confianza, desde?: Clav
 /** Un momento de la noche (minutos desde las 18 del día anterior a `clave`) en milisegundos. */
 export const instanteDe = (clave: ClaveDia, zona: number, minutos: number) => ceroDe(clave, zona) + minutos * MIN;
 
+/** Lo más que dura una noche, en minutos: más larga, la cuenta no la acepta (el CHECK de supabase/moss/0005_noches.sql). */
+const NOCHE_MAS_LARGA = 18 * 60;
+
+/**
+ * Las horas del editor de la mañana (en minutos desde las 18), movidas `d` minutos: entre las 18 de ayer y las 18 de
+ * hoy, con una hora al menos y 18 a lo sumo entre las dos. Lo que ya estaba fuera queda, pero no se aleja.
+ */
+export const moverDormirse = (dormirse: number, despertar: number, d: number) =>
+  Math.max(Math.min(dormirse, Math.max(0, despertar - NOCHE_MAS_LARGA)), Math.min(despertar - 60, dormirse + d));
+export const moverDespertar = (dormirse: number, despertar: number, d: number) =>
+  Math.min(Math.max(despertar, Math.min(24 * 60, dormirse + NOCHE_MAS_LARGA)), Math.max(dormirse + 60, despertar + d));
+
 /** La fuente de las noches de Moss. */
 export const MOSS: Fuente = { id: 'moss', nombre: 'Moss', tipo: 'moss' };
 

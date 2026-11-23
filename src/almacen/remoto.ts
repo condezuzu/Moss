@@ -1,7 +1,7 @@
-// Supabase tal como lo usa la sincronización: subir lo pendiente y bajar lo que cambió. Las filas
-// llevan los nombres de supabase/moss/ (de 0001_esquema.sql a 0007_plan.sql, y tu nombre en
-// 0009_perfil.sql). El usuario no viaja: lo pone la base con la sesión, y RLS no deja ver ni tocar
-// lo de nadie más.
+// Supabase tal como lo usa la sincronización: subir lo pendiente, bajar lo que cambió y leer la marca
+// de «Borrar mis datos». Las filas llevan los nombres de supabase/moss/ (de 0001_esquema.sql a
+// 0007_plan.sql, tu nombre en 0009_perfil.sql y la marca en 0018_borrados.sql). El usuario no viaja:
+// lo pone la base con la sesión, y RLS no deja ver ni tocar lo de nadie más.
 
 import type { Periodo } from '@/dominio/constelaciones';
 import { SITIOS, type Medidas } from '@/dominio/cuerpo';
@@ -37,6 +37,13 @@ const sinArreglo = (error: { code?: string }) => /^2[23]/.test(error.code ?? '')
 /** Supabase devuelve las horas como `2026-10-21T15:00:00.5+00:00`; el teléfono las compara en el formato de JavaScript. */
 const hora = (texto: string) => new Date(texto).toISOString();
 
+/**
+ * Un texto hasta las letras que acepta la cuenta (los CHECK de 0002_comida.sql), como hace poner_nombre: lo de Open Food
+ * Facts no tiene límite, y lo rechazado quedaba solo en el teléfono. Por letras y no por unidades de JavaScript, así no
+ * parte un emoji.
+ */
+const recortar = <T extends string | null>(texto: T, letras: number): T => (texto === null ? texto : (Array.from(texto).slice(0, letras).join('') as T));
+
 // Del teléfono a la base, con todas las columnas siempre (un `null` también es un cambio: un hábito que se desarchiva).
 const filaDe = {
   habito: (h: Habito) => ({
@@ -61,15 +68,15 @@ const filaDe = {
   }),
   peso: (p: Peso) => ({ fecha: p.fecha, kg: p.kg, origen: p.origen, momento: p.momento }),
   registro: (r: Registro) => ({
-    id: r.id, dia: r.dia, comida: r.comida, momento: r.momento, fuente: r.fuente, ref: r.ref, nombre: r.nombre, cantidad: r.cantidad,
+    id: r.id, dia: r.dia, comida: r.comida, momento: r.momento, fuente: r.fuente, ref: r.ref, nombre: recortar(r.nombre, 200), cantidad: r.cantidad,
     kcal: r.valores.kcal, proteina: r.valores.proteina, carbohidratos: r.valores.carbohidratos, grasas: r.valores.grasas,
     fibra: r.valores.fibra ?? null, azucares: r.valores.azucares ?? null, saturadas: r.valores.saturadas ?? null, sodio: r.valores.sodio ?? null,
     alcohol: r.valores.alcohol ?? null, micros: r.valores.micros ?? null, planificado: r.planificado, plan: r.plan ?? null, estimado: !!r.estimado, borrado: !!r.borrado,
     actualizado: r.actualizado,
   }),
-  receta: (r: Receta) => ({ id: r.id, tipo: r.tipo, nombre: r.nombre, items: r.items, porciones: r.porciones, peso_final: r.pesoFinal, borrado: !!r.borrado, actualizado: r.actualizado }),
+  receta: (r: Receta) => ({ id: r.id, tipo: r.tipo, nombre: recortar(r.nombre, 120), items: r.items, porciones: r.porciones, peso_final: r.pesoFinal, borrado: !!r.borrado, actualizado: r.actualizado }),
   propio: (a: AlimentoPropio) => ({
-    id: a.id, nombre: a.nombre, marca: a.marca, codigo: a.codigo, por_100g: a.por100g, porciones: a.porciones, origen: a.origen ?? null, borrado: !!a.borrado, actualizado: a.actualizado,
+    id: a.id, nombre: recortar(a.nombre, 200), marca: recortar(a.marca, 120), codigo: a.codigo, por_100g: a.por100g, porciones: a.porciones, origen: a.origen ?? null, borrado: !!a.borrado, actualizado: a.actualizado,
   }),
   favorito: (f: Favorito) => ({ fuente: f.fuente, ref: f.ref, favorito: f.favorito, actualizado: f.actualizado }),
   agua: (t: TomaDeAgua) => ({ id: t.id, dia: t.dia, ml: t.ml, momento: t.momento, borrado: !!t.borrado, actualizado: t.actualizado }),
@@ -291,6 +298,14 @@ export function remotoSupabase(cliente: Cliente): Remoto {
           noches: noches.map(deFila.noches),
         },
       };
+    },
+
+    // La marca de «Borrar mis datos» (0018_borrados.sql): RLS deja leer solo la propia.
+    async borrado() {
+      const { data, error } = await cliente.from('borrados').select('en');
+      if (error) throw new Error(`borrados: ${error.message}`);
+      const fila = (data as { en: string }[])[0];
+      return fila ? hora(fila.en) : null;
     },
   };
 }

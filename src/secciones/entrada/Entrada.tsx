@@ -21,7 +21,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { actualizarSalud, elAlmacen } from '@/almacen';
+import { actualizarSalud, elAlmacen, esperarLaCuenta } from '@/almacen';
 import { DURACION_DEL_VIAJE, loQueSeVa, MITAD_DEL_VIAJE } from '@/cielo/viaje';
 import { avanceDelViaje, viajar } from '@/cielo/viajar';
 import { buscarConstelacion } from '@/datos/catalogo';
@@ -362,11 +362,17 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
     // La estrella sube y se va, como en la galería antes del flum.
     setGuion(guionDeSalida(lugarDeAhora()));
     const { c, nuevo } = paraGuardar(r, hoy, noches);
-    salir(() => {
-      elAlmacen().responderCuestionario(c, deSalud.has('pesoKg') ? 'salud' : 'manual', nuevo);
+    // Con sesión, primero lo que ya tenía la cuenta (con poca red puede no haber llegado): si trae su perfil, quedan
+    // el suyo, sus metas y sus hábitos, como cuando llega antes; si no llega a tiempo, el cuestionario no le gana.
+    esperarLaCuenta().then((llego) => salir(() => {
+      if (elAlmacen().estado().perfil) {
+        elAlmacen().terminarEntrada();
+        return;
+      }
+      elAlmacen().responderCuestionario(c, deSalud.has('pesoKg') ? 'salud' : 'manual', nuevo, !llego);
       // Los primeros hábitos suben cuando el viaje ya llegó, como en la galería: antes tapaban a Inicio llegando.
       if (alTerminar) setTimeout(alTerminar, reducido ? 0 : DURACION_DEL_VIAJE * (1 - MITAD_DEL_VIAJE));
-    });
+    }));
   };
   const empezar = () => {
     if (empezo.current || saliendo) return;

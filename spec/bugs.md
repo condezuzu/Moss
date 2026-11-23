@@ -79,7 +79,32 @@ corrida 18 horas (04:25 en vez de 22:25: el periodo de melatonina cuenta desde l
 15. **Una meta de 0 g en un macro** (confirmado, dos revisores): las barras y los anillos dan NaN o se llenan mal
     (`Inicio.tsx:314`, `:348`, `Comida.tsx:413`).
 
-## Tanda B: la sincronización (hay que hacerla con cuidado, una por una)
+## Tanda B: la sincronización (arreglada el 23/11, con tu sí)
+
+**Estado:** del 16 al 24 arreglados, cada uno con su test que fallaba antes (2027 tests en total), y también el aviso
+doble que encontró la tanda A (un hábito marcado antes de su hora): en una simulación de 20.000 días al azar, de 1.256
+con algún aviso doble a ninguno. La migración `0018_borrados.sql` (la marca de «Borrar mis datos») está probada en la
+base local y **falta aplicarla en la real, con tu sí**; sin ella la app anda igual, solo que no se entera de los
+borrados de otro teléfono. Cómo quedó:
+- **16:** con sesión, la entrada espera hasta 8 s a que baje lo de la cuenta; si llega su perfil, quedan el suyo, sus
+  metas y sus hábitos. Si no llega, el perfil del cuestionario se guarda con la hora más vieja: cuando llegue el de la
+  cuenta, gana ese. Esos segundos no muestran nada nuevo.
+- **17:** cada teléfono lee la marca antes de subir nada; si es posterior a la que había cuando conoció la cuenta,
+  olvida lo suyo y vuelve a bajar de cero. El que borró no olvida dos veces. Las fotos de las comidas de ese teléfono no
+  se borran.
+- **18:** el peso de Salud lleva la hora en que te pesaste, y la noche estimada no pisa la cara ni lo confirmado.
+- **19:** al cambiar algo, su hora es la de ahora o la anterior más un milisegundo, la mayor.
+- **20, 21, 24a:** salir o borrar reintenta si falla la base; una vuelta colgada no sube después de salir; lo bajado se
+  da por bajado solo si se guardó.
+- **22:** los nombres se recortan a lo que acepta la base (200 y 120 letras) y la noche se edita hasta 18 h.
+- **23:** solo «Cerrar sesión» y «Borrar la cuenta» son salir; una sesión que se corta sola no borra nada, y cerrar
+  sesión con cambios sin subir avisa. Queda sin resolver cómo volver a entrar desde Perfil en ese caso (es visual: va a
+  la galería).
+- **24b:** con la misma hora gana lo que baja, como en el servidor.
+- **24c:** con dos lecturas de la cuenta a la vez, el regalo ya está al terminar la primera.
+- Nuevo, para la tanda C: las comidas tienen el mismo aviso doble que los hábitos. Una cena anotada antes de su aviso
+  «sin anotar» vuelve a atrasar a otros cuando llega su hora (287 de 20.000 días con hábitos de después de cenar). Se
+  arregla igual, con la hora en que se anotó.
 
 16. **Si la primera bajada se atrasa, el cuestionario pisa el perfil y la meta de la cuenta** (confirmado). Teléfono
     nuevo, la red tarda, contestas el cuestionario y después llega la cuenta: el perfil nuevo gana por más nuevo y
