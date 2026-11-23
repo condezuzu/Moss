@@ -109,18 +109,26 @@ Hecho:
 **El regalo pasa a ser de 3 meses (lo pediste y lo aprobaste el 22/11), ya en la app:** quien ya tenía cuenta ve una vez
 «¡Felicidades!», con sus 3 meses gratis y hasta qué día, y «Mira lo nuevo», un pase de seis capturas de la app de verdad
 (`assets/novedades`). En Perfil, «Regalo hasta el…», y desde ahí, lo nuevo otra vez. Moss avisa dos días antes del último
-día. Los términos ya lo dicen, publicados el 22/11 (`condezuzu/moss-app` 6bf5306). Va adentro de la build 9. Lo último, como pediste (camino A):
-sacar la 1.1 de revisión, corregir la ficha («sigue gratis» ya no es cierto), armar la build 9 y mandarla de nuevo.
-**Te toca decidir antes de la build 9:** el día del corte (`EXPO_PUBLIC_PREMIUM_SALE`, hoy 2026-11-14): el regalo dura
-hasta tres meses después de ese día, así que con el 14/11 termina el 14/2.
+día. Los términos ya lo dicen, publicados el 22/11 (`condezuzu/moss-app` 6bf5306). El corte queda en el 14/11 (lo decidiste
+el 22/11): el regalo termina el 14/2/2027. **Salió por aire el 23/11** (abajo, «La 1.1 publicada»).
+
+**La 1.1 publicada (23/11/2026).** Apple aprobó la 1.1.0 con la build 8 y las dos suscripciones antes de que llegáramos a
+sacarla de revisión, así que el camino A ya no hizo falta: la versión salió el 23/11 a las 12:12 de Uruguay, y la página de
+la App Store muestra «Moss yearly» USD 39,99 y «Moss monthly» USD 9,99. Lo que vino después de la build 8 (los alimentos y
+el regalo de 3 meses) salió por aire el mismo día a `production` y `preview` (grupos 48946e2b y 0321b599, commit b4c6cef,
+huella 27c0c152), revisado en el paquete que sirve EAS. La build 9 (EAS 922735a3) tiene la misma huella y quedó sin mandar:
+sirve para la próxima versión. **Ojo:** las notas de la 1.1 en la tienda dicen «si ya tenías cuenta, sigue gratis»; ya no
+se pueden cambiar, se corrigen en las de la próxima versión. **Te toca:** abrir Moss dos veces (la primera baja la
+actualización) y ver la bienvenida; probar el pago con alguien que tenga otro Apple ID (empieza los 7 días gratis y cancela
+en Ajustes antes de que terminen): con tu cuenta no se puede, es de regalo.
 
 **Más alimentos (lo pediste el 22/11): 2.786 nuevos**, de 4.859 curados a 7.645, lo saludable primero: panes, granos, pastas,
 galletas y snacks, verduras, tubérculos, frutas y jugos, legumbres y frutos secos, aves, pescados, carnes, huevos y lácteos;
 después dulces, golosinas y postres, bebidas y alcohol, sopas y salsas, sándwiches y pizza, platos del mundo, y grasas,
 especias y suplementos. Cada uno con su nombre en cada país (spec/nutricion.md, «Las variantes»). Al buscar salen después
-de lo de siempre: «pan» da primero el blanco y el integral. Van adentro de la build 9; no salieron por aire. La base pesa
-14,9 MB (subí el tope a 16).
-**Te toca:** probar la búsqueda en el iPhone cuando llegue la build 9.
+de lo de siempre: «pan» da primero el blanco y el integral. Salieron por aire el 23/11 con la 1.1. La base pesa 14,9 MB
+(subí el tope a 16).
+**Te toca:** probar la búsqueda en el iPhone.
 
 La suscripción: **mandada a revisión el 21/11/2026** (lo pediste, sin build de prueba).
 - **Qué se mandó:** la versión 1.1.0 con la build 8, las dos suscripciones (anual y mensual) y su grupo, todo en un
