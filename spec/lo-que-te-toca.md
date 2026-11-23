@@ -176,7 +176,7 @@ La app no cambia hasta que digas. Sección 1.1, salvo que diga otra.
 - **«Picos de energía:»** con sus horas, arriba de la curva, en lugar de «Tu mejor momento» y «Otro pico» (escenario `energia`).
 - **«Qué priorizar cada noche»,** abajo de todo en Sueño: 17 puntos de lo que más ayuda a lo que menos, con su explicación, la hora de hoy y en qué se basa (spec/estudio/priorizar-cada-noche.md; escenario `priorizar`).
 
-**La búsqueda de bugs (23/11):** 34 hallazgos en spec/bugs.md, en tres tandas. Decí si arranco con la tanda A (lo que más se nota) y lo de «Para decidir» (la siesta de 20 o 30 minutos, las luces).
+**La búsqueda de bugs (23/11):** 34 hallazgos en spec/bugs.md, en tres tandas. **La tanda A está arreglada y por aire** (production ff4d611f, preview e1243622, commit 46cafd9, huella 27c0c152), con un test por arreglo. Te toca: decir si sigo con la tanda B (la sincronización; «Borrar mis datos» lleva una migración con tu sí), lo de «Para decidir» (la siesta de 20 o 30 minutos, las luces) y cómo elegir un plan con el regalo (un «Ahora no» en la pantalla de pago o «Elegir un plan» en Tu suscripción, para la galería).
 
 **Del 9/11**
 - **La base de la comunidad:** el sello «Verificado por la comunidad», en oro, y «¿De dónde sale esto?» con cuántas personas lo cargaron (escenario `ventana`, la barra de proteína de maní). Ya está programado: si no te gusta, se cambia antes de la OTA (spec/nutricion.md, «La base de la comunidad»).
