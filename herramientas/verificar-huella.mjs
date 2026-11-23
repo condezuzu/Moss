@@ -11,8 +11,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Build 6, la de la tienda. Con cada build nueva se cambia acá.
-const DE_LA_BUILD = 'fc0d415b9a4f72c58715db202f22d4be49af3eb0';
+// Build 8 (la 1.1.0), la de la tienda desde el 23/11/2026; la 9 tiene la misma. Con cada build nueva se cambia acá.
+const DE_LA_BUILD = '27c0c1521e800a538421953883f9e2420809ac1d';
 const LINEAS_CON_CRLF = 55;
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');

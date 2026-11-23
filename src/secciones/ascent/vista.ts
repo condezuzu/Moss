@@ -19,7 +19,7 @@ import { fatigaMuscular, musculosParaLaFatiga } from '@/dominio/fatiga';
 import { diaDeLaSemana, diasEntre, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import {
   CATALOGO, claveDelEjercicio, esfuerzoDeSerie, grupoDelEjercicio, mejorE1rm, MUSCULOS, musculosDe, musculosTrabajados, PARTES,
-  type Bloque, type Musculo, type Parte, type SesionConBloques, type UnoRMDe,
+  type Bloque, type GrupoDeAscent, type Musculo, type Parte, type SesionConBloques, type UnoRMDe,
 } from '@/dominio/musculos';
 import {
   DE_PIERNAS, DIAS_DEL_E1RM, dentroDeLaSemana, e1rm, diasHastaListo, esDeTrabajo, esDura, estadoDeFatiga, estadoDelPuntaje, listoEl, mejorE1rm as mejorDeLasSeries, notaDeLaRutina,
@@ -202,7 +202,11 @@ export type Todo = {
   /** Las semanas sin marca que eligió en los Ajustes de Ascent (sin ellos, las de fábrica). */
   umbral: number;
   estancados: Estancado[];
-  anio: { dias: DiaDelAnio[]; ultimas: (MarcaDeAscent & { grupo: GrupoDelAnio })[]; datos: TuAnio };
+  /**
+   * Las últimas marcas: la última de cada ejercicio; primero las de pecho, piernas y espalda (las del DOTS), destacadas.
+   * `grupo` es el color de «Tu año» (los hombros van con el pecho) y `de`, el grupo del ejercicio, que da el nombre.
+   */
+  anio: { dias: DiaDelAnio[]; ultimas: (MarcaDeAscent & { grupo: GrupoDelAnio | null; de: GrupoDeAscent | null; destacada: boolean })[]; datos: TuAnio };
   metas: MetaConProyeccion[];
   alejan: Aleja[];
   /** La proteína del día que pide la meta (1,6 g por kilo); sin peso, null. */
@@ -292,12 +296,21 @@ export function calcularTodo(h: Hoy, { e, d, sueno, persona }: Entradas): Todo {
   const grupoDelDia = new Map<ClaveDia, GrupoDelAnio | null>();
   for (const s of d.sesiones) if (s.fecha.startsWith(`${anio}-`)) grupoDelDia.set(s.fecha, grupoDelDia.get(s.fecha) ?? grupoDelAnio(gruposDeLaSesion(s)));
   const dias: DiaDelAnio[] = [...grupoDelDia].map(([fecha, grupo]) => ({ fecha, grupo, marca: delAnio.has(fecha) }));
-  const ultimas = (['piernas', 'pecho', 'espalda', 'brazos'] as const).flatMap((grupo) => {
-    const de = d.marcas.filter((m) => {
-      const g = grupoDelEjercicio({ id: m.id });
-      return g && grupoDelAnio([g]) === grupo;
-    }).sort((a, b) => (a.fecha < b.fecha ? 1 : -1))[0];
-    return de ? [{ ...de, grupo }] : [];
+  // La última marca de cada ejercicio, de todos los que entrenas (lo pidió el dueño el 23/11/2026): primero las de
+  // piernas, pecho y espalda, que son las del DOTS, y después las demás, de la más nueva a la más vieja.
+  const DESTACADOS = ['piernas', 'pecho', 'espalda'] as const;
+  const porEjercicio = new Map<string, MarcaDeAscent>();
+  for (const m of d.marcas) {
+    const clave = m.id ?? m.ejercicio;
+    const antes = porEjercicio.get(clave);
+    if (!antes || antes.fecha < m.fecha) porEjercicio.set(clave, m);
+  }
+  const ultimas = [...porEjercicio.values()].map((m) => {
+    const de = grupoDelEjercicio({ id: m.id }) ?? null;
+    return { ...m, grupo: de ? grupoDelAnio([de]) : null, de, destacada: !!de && (DESTACADOS as readonly string[]).includes(de) };
+  }).sort((a, b) => {
+    const lugar = (x: { de: GrupoDeAscent | null; destacada: boolean }) => (x.destacada ? DESTACADOS.indexOf(x.de as (typeof DESTACADOS)[number]) : DESTACADOS.length);
+    return lugar(a) - lugar(b) || (a.fecha < b.fecha ? 1 : -1);
   });
   const comidas = new Set<ClaveDia>();
   for (const r of vigentes(e.registros.values())) if (!r.planificado) comidas.add(r.dia);

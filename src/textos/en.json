@@ -4006,10 +4006,12 @@
     },
     "fatigados": {
       "titulo": "Fatigued muscles",
-      "texto": "What's still recovering from your last workout.",
+      "texto": "State of the muscles you trained.",
       "ninguno": "No fatigued muscles.",
-      "vuelve": "ready {cuando}",
-      "vuelveEl": "ready on {dia}",
+      "faltan": {
+        "uno": "1 day left",
+        "otros": "{n} days left"
+      },
       "estimado": "estimate",
       "comoSeCalcula": "It's an estimate based on how close to failure you got (when another rep won't come): it can be off by a day."
     },
@@ -4117,7 +4119,7 @@
       "nivelKg": "Today you could lift about {kg} kg (estimate)"
     },
     "sugerencias": {
-      "titulo": "For today",
+      "titulo": "Suggestions for today",
       "tipos": {
         "entreno": "Training",
         "comida": "Food",
@@ -4126,30 +4128,25 @@
       "masEnSueno": "More in Sleep",
       "entreno": {
         "descanso": "Rest day. Walking or moving gently is fine: it doesn't take from your recovery.",
-        "hecha": "You already trained today. What's next: eat well and sleep at your usual time.",
-        "entrenar": "Today: {musculos}. Sets of {reps} reps; stop when you feel you could do {reserva} more.",
+        "entrenar": "Today: {musculos}. Sets of {repsDe} to {repsA} reps; stop when you feel you could do {reservaDe} or {reservaA} more.",
         "nocheCorta": "Today: {musculos}. You slept little: keep the weight and don't go to failure.",
         "conFatiga": "Today: {musculos}. {fatigados} is still recovering: today, one set fewer and not to failure.",
         "conFatigaVarios": "Today: {musculos}. {fatigados} are still recovering: today, one set fewer and not to failure."
       },
       "comida": {
         "cuidado": "Eat as usual, at your usual times.",
-        "faltoProteina": "Protein fell short yesterday. No need to make it up: today, about {gramos} g each meal.",
-        "comioMenos": "You ate less yesterday. Today, as usual: no need to make up for it.",
-        "carbos": "Since you train over 45 minutes, carbs beforehand (bread, fruit, rice) can help.",
-        "ayerBien": "You hit your targets yesterday. Same today: protein at each meal.",
-        "normal": "Today, your usual meals, with protein in each one.",
-        "sinDatos": "Log what you eat and I'll tell you what to prioritize here."
+        "faltaron": "Yesterday you came up short on {macros}: today, focus on that.",
+        "recuperar": "To recover better, focus on {macros}."
       },
       "sueno": {
-        "dormistePoco": "You slept little. Tonight, bed around {hora}.",
-        "dormistePocoSinHora": "You slept little. If you can, a 30-minute nap before 4 pm.",
-        "deuda": "You've been short on sleep: several nights at your time bring it down. Tonight, around {hora}.",
-        "deudaSinHora": "You've been short on sleep: several nights in a row at the same time bring it down.",
-        "bien": "You slept well. Keep your time: bed around {hora}.",
-        "bienSinHora": "You slept well. Keep going to bed at the same time.",
-        "soloHora": "Tonight, bed around {hora}.",
-        "sinDatos": "Once Moss has your nights, it tells you here when to go to bed."
+        "dormistePoco": "You slept little. Tonight, about {horas}: bed around {hora}.",
+        "dormistePocoSinHora": "You slept little. Tonight, about {horas}; if you can, a 30-minute nap before 4 pm.",
+        "deuda": "To bring your debt down, tonight about {horas}: bed around {hora}.",
+        "deudaSinHora": "To bring your debt down, about {horas} a night, several nights in a row.",
+        "bien": "You slept well. Tonight, about {horas}: bed around {hora}.",
+        "bienSinHora": "You slept well. Tonight, about {horas}, at your usual time.",
+        "soloHora": "Tonight, about {horas}: bed around {hora}.",
+        "sinDatos": "Tonight, about {horas}. Once Moss has your nights, it tells you when to go to bed."
       }
     }
   },
@@ -4772,13 +4769,13 @@
       "cancelada": "You canceled: you keep everything until that date and won’t be charged again.",
       "administrar": "Manage in Settings",
       "administrarTexto": "To change plans or cancel. Apple handles charges and refunds.",
-      "regaloHasta": "You used Moss while it was being built: it’s free for you until {fecha}. After that, if you want to keep going, you pick a plan. Moss lets you know a few days before."
+      "regaloHasta": "You used Moss during its development: as a gift, it’s free for you until {fecha}. After that, if you want to keep going, you pick a plan. Moss lets you know a few days before."
     },
     "borrarConSuscripcion": "Apple bills your subscription: deleting your account doesn’t cancel it. Cancel it first in Settings, or you’ll keep being charged.",
     "administrarSuscripcion": "Manage subscription",
     "bienvenida": {
       "titulo": "Congratulations!",
-      "antes": "You used Moss while it was being built. That’s why you get ",
+      "antes": "You used Moss during its development. As a gift, you get ",
       "meses": "{n} months completely free",
       "despuesDeMeses": ".",
       "hoy": "Today",
@@ -4814,7 +4811,7 @@
       },
       "musculos": {
         "titulo": "With Ascent, your muscles",
-        "texto": "If you train with Ascent, see which muscle needs more and what to do today."
+        "texto": "If you train with Ascent, see the state of your muscles based on what you log."
       }
     }
   },

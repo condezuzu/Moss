@@ -9,7 +9,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 
 import type { Musculo } from '@/dominio/musculos';
-import { t } from '@/textos';
+import { plural, t } from '@/textos';
 import { letras } from '@/tema';
 import { C, useAcento } from './colores';
 import { Cuerpo, Reloj, type EstadoDibujado } from './Dibujos';
@@ -181,7 +181,7 @@ function Recuperandose() {
       <Cuerpo ancho={170} clases={{ cuadriceps: 'enSuPunto', gluteos: 'enSuPunto', isquios: 'poco' }} fatigados={k === 0 ? ['cuadriceps', 'gluteos'] : ['cuadriceps']} etiqueta={tx('ascent.tutorial.pasos.fatigados.titulo')} />
       <View style={st.relojDibujo}>
         <Reloj tam={34} hecho={k === 0 ? 0.35 : 0.75} color={C.lejos} />
-        <Text style={st.relojTexto}>{t('ascent.fatigados.vuelve', { cuando: t(k === 0 ? 'ascent.titular.cuando.pasadoManana' : 'ascent.titular.cuando.manana') })}</Text>
+        <Text style={st.relojTexto}>{plural('ascent.fatigados.faltan', k === 0 ? 2 : 1)}</Text>
       </View>
     </View>
   );

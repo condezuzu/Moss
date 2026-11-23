@@ -20,6 +20,18 @@ contra; **derivado** es una cuenta propia con datos citados. Para quien no entre
 repeticiones seguidas; la **reserva** (RIR, en inglés) es cuántas repeticiones más podrías haber hecho al terminar
 la serie: 0 es «al fallo», no podías una más.*
 
+> **Cambiado el 23/11/2026 (lo pediste mirándola en el iPhone).** Las reglas de la comida (4.3) y del sueño (5.4) de
+> abajo quedan como estudio; las de la app ahora son más cortas (`sugerenciasDeHoy.ts`, con sus casos):
+> - **Entrenamiento:** si ya entrenaste hoy, no hay sugerencia.
+> - **Comida:** en qué macros enfocarte. Con un macro de ayer por debajo del 80 % de su meta (la **convención** de C2
+>   y C4, ahora para los tres), los dos que más faltaron, sin compensar; si no, para recuperarte, proteína y
+>   carbohidratos el día que entrenas (C3 y C5) y proteína el de descanso (C6). Sin gramos. Con el cuidado de la
+>   comida (sin déficit o un trastorno), lo de antes.
+> - **Sueño:** cuántas horas y a qué hora acostarte: tu necesidad más 30 min después de una noche corta y 30 o 60 min
+>   con deuda media o alta, lo mayor y no la suma. Una falta de ~1 h por noche se recuperó en ~4 noches largas
+>   (Kitamura 2016) y más de ~1 h extra casi no se logra (Harrison y Horne 1996): por eso el tope de 60. La hora, la
+>   de `melatonina.ts`. La siesta y el café (S1 y S3) salen de esta línea; quedan en Sueño.
+
 ---
 
 ## 1. Resumen

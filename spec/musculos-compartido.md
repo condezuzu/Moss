@@ -40,6 +40,25 @@ fitness ni de la app, la leyó dos veces y marcó lo que no se entendía. Lo que
   repetición; «Cómo se lee» al lado del «!».
 - **Para más adelante**: preguntar si buscas músculo o fuerza (cambia las repeticiones de 8 a 12 a 3 a 6).
 
+## Cambiada el 23/11/2026 (lo pediste mirándola en el iPhone)
+
+- **«Sugerencias para hoy»** (antes «Para hoy») va justo arriba de «Esta semana», dentro de «Tus músculos».
+  - **Entrenamiento:** si ya entrenaste hoy, no va (`entreno` es `null`); quedan la comida y el sueño.
+  - **Comida:** en qué macros enfocarte. Si ayer quedaste por debajo del 80 % de la meta en alguno, los dos que más
+    faltaron («Ayer quedaste bajo en carbohidratos y grasas: hoy, enfócate en eso»); si no, para recuperarte: proteína
+    y carbohidratos el día que entrenas, proteína el de descanso. La entrada suma los carbohidratos y las grasas de ayer
+    con sus metas.
+  - **Sueño:** cuántas horas y a qué hora acostarte: tu necesidad, más 30 min después de una noche corta y 30 o 60 min
+    con deuda media o alta (lo mayor, no la suma); la entrada suma `necesidad`. La hora es en minutos desde la
+    medianoche: el periodo de melatonina cuenta desde las 18 y hay que convertirlo.
+  - Las repeticiones y la reserva van como números (`[8, 12]`, `[1, 2]`): el «a» y el «o» los pone cada idioma.
+- **Esta semana:** «Va bien» pasa a «Al día» (en inglés sigue «On track»).
+- **Músculos fatigados:** el subtítulo es «Estado de los músculos trabajados.» y cada uno dice cuánto le falta: «falta 1
+  día» o «faltan 3 días» (antes «listo pasado mañana» o «listo el sábado»).
+- **Tus últimas marcas:** la última de cada ejercicio, de todos los que entrenas. Primero las de piernas, pecho y
+  espalda (las del DOTS), en negrita; después las demás, de la más nueva a la más vieja. El cuadrado lleva el color de
+  «Tu año» (los hombros, con el pecho) y el nombre, el grupo del ejercicio («Hombros: press militar»).
+
 ## 0. La regla de fondo
 
 - **La misma información, el mismo orden y la misma interacción en las dos apps.** Solo cambia la
@@ -108,9 +127,9 @@ que la mejorarían (4.4).
 
 ### 2.2 Músculos fatigados
 
-- **Título:** «Músculos fatigados». **Subtítulo:** «Hoy descansan: todavía se recuperan.»
-- Una fila por músculo fatigado: el nombre, la palabra («recuperándose» o «cargado») y cuándo vuelve
-  («mañana», «el jueves»). Se dice en días, nunca en horas ni en %.
+- **Título:** «Músculos fatigados». **Subtítulo:** «Estado de los músculos trabajados.» (23/11)
+- Una fila por músculo fatigado: el nombre, el reloj y cuánto le falta («falta 1 día», «faltan 3 días»;
+  23/11). Se dice en días, nunca en horas ni en %.
 - Sin ninguno: «Ningún músculo fatigado.»
 - **En qué se basa**, solo de este bloque (4.2).
 

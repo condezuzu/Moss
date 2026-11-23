@@ -13,21 +13,21 @@ import { reglasDeCuidados } from '@/almacen/almacen';
 import { deAscent, useAscent } from '@/almacen/ascent';
 import { POCAS_PESADAS, PROTEINA_POR_KG, type Razon } from '@/dominio/progresoCompartido';
 import { musculosPrincipales } from '@/dominio/fatiga';
-import { diaDeLaSemana, diasEntre, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { diasEntre, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { periodoDeMelatonina } from '@/dominio/melatonina';
 import type { Musculo } from '@/dominio/musculos';
 import { pesoSiguiente, RANGO, type EstadoDelPuntaje } from '@/dominio/puntajeMuscular';
 import { aDosYMedio, NOCHE_CORTA } from '@/dominio/rendimiento';
 import { totalDelDia } from '@/dominio/registros';
 import { juicioDeLaDeuda } from '@/dominio/sueno';
-import { sugerenciasDeHoy, type SugerenciasDeHoy } from '@/dominio/sugerenciasDeHoy';
+import { sugerenciasDeHoy, type Sugerencia, type SugerenciasDeHoy } from '@/dominio/sugerenciasDeHoy';
 import { lista, plural, t, type ClaveDeLista } from '@/textos';
 import { letras } from '@/tema';
 import { duracion, hora, metaDelDia, numero, useEstado } from '../comida/datos';
 import { usePersona, useSueno } from '../ganchos';
 import { C, GRUPOS_DEL_ANIO, useAcento } from './colores';
 import { Cuerpo, Parte as ParteDeCerca, Reloj, type EstadoDibujado } from './Dibujos';
-import { conMayuscula, cuandoDe, enFrase, enLista, nombreDelEjercicio, nombreDelMusculo, tx } from './palabras';
+import { conMayuscula, enFrase, enLista, nombreDelEjercicio, nombreDelMusculo, tx } from './palabras';
 import { Accion, Cambia, Desplegable, Etiqueta, Flecha, Fundido, Nota, Parte, Una, Escala, Enlace } from './piezas';
 import { calcularTodo, calcularTusMusculos, type EjercicioDeLaSemana, type Estancado, type Hoy, type MetaConProyeccion, type MusculoDeLaSemana, type Todo, type TusMusculos as DeTusMusculos } from './vista';
 
@@ -87,8 +87,8 @@ function EnQueSeBasa({ de }: { de: 'musculos' | 'fatigados' | 'estancados' | 'po
   );
 }
 
-// ------------------------------------------------------------ para hoy (lo primero que se ve al llegar)
-/** Las tres sugerencias de hoy (sugerenciasDeHoy.ts, igual en Ascent) con lo de Moss y lo de Ascent de hoy. */
+// ------------------------------------------------------------ sugerencias para hoy (justo arriba de «Esta semana»)
+/** Las sugerencias de hoy (sugerenciasDeHoy.ts, igual en Ascent) con lo de Moss y lo de Ascent de hoy. */
 function useSugerenciasDeHoy(h: Hoy, tm: DeTusMusculos): SugerenciasDeHoy {
   const e = useEstado();
   const sueno = useSueno();
@@ -106,8 +106,13 @@ function useSugerenciasDeHoy(h: Hoy, tm: DeTusMusculos): SugerenciasDeHoy {
       objetivo: 'musculo',
       noche: h.noche ? { dormido: h.noche.dormido, despertoAntes: h.noche.despertoAntes } : null,
       deuda: h.deuda === null ? null : juicioDeLaDeuda({ minutos: h.deuda }),
-      acostarse: periodo?.acostarse ?? null,
-      ayer: comido.kcal > 0 && meta ? { kcal: comido.kcal, proteina: comido.proteina, metaKcal: meta.kcal, metaProteina: meta.proteina } : null,
+      necesidad: sueno.necesidad,
+      // El periodo cuenta desde las 18 del día anterior; las sugerencias, desde la medianoche.
+      acostarse: periodo ? (periodo.acostarse + 18 * 60) % (24 * 60) : null,
+      ayer: comido.kcal > 0 && meta ? {
+        kcal: comido.kcal, proteina: comido.proteina, carbohidratos: comido.carbohidratos, grasas: comido.grasas,
+        metaKcal: meta.kcal, metaProteina: meta.proteina, metaCarbohidratos: meta.carbohidratos, metaGrasas: meta.grasas,
+      } : null,
       cuidadoConLaComida: !!reglasDeCuidados(e)?.cuidados.includes('tca'),
     });
   }, [h, tm, e, sueno]);
@@ -119,12 +124,14 @@ export function ParaHoy({ h, tm, alIrASueno }: { h: Hoy; tm: DeTusMusculos; alIr
   const lista = (ms: readonly string[] | undefined) =>
     ms?.length ? enLista(ms.map((m) => nombreDelMusculo(m as Musculo).toLowerCase())) : (h.sesion?.nombre ?? '').toLowerCase();
   // Con más de un músculo que se recupera, el verbo va en plural.
-  const clave = (x: SugerenciasDeHoy['entreno']) => (x.clave === 'conFatiga' && (x.fatigados?.length ?? 0) > 1 ? 'conFatigaVarios' : x.clave);
-  const texto = (grupo: 'entreno' | 'comida' | 'sueno', x: SugerenciasDeHoy['entreno']) => tx(`ascent.sugerencias.${grupo}.${clave(x)}`, {
-    musculos: lista(x.musculos), fatigados: conMayuscula(lista(x.fatigados)), reps: x.reps ?? '', reserva: x.reserva ?? '',
-    hora: x.hora === undefined ? '' : hora(x.hora), gramos: x.gramos ?? '',
+  const clave = (x: Sugerencia) => (x.clave === 'conFatiga' && (x.fatigados?.length ?? 0) > 1 ? 'conFatigaVarios' : x.clave);
+  const texto = (grupo: 'entreno' | 'comida' | 'sueno', x: Sugerencia) => tx(`ascent.sugerencias.${grupo}.${clave(x)}`, {
+    musculos: lista(x.musculos), fatigados: conMayuscula(lista(x.fatigados)), repsDe: x.reps?.[0] ?? '', repsA: x.reps?.[1] ?? '', reservaDe: x.reserva?.[0] ?? '', reservaA: x.reserva?.[1] ?? '',
+    hora: x.hora === undefined ? '' : hora(x.hora),
+    macros: enLista((x.macros ?? []).map((m) => t(`comida.${m}`).toLowerCase())), horas: x.minutos === undefined ? '' : duracion(x.minutos),
   });
-  const filas = [['entreno', s.entreno], ['comida', s.comida], ['sueno', s.sueno]] as const;
+  // Si ya entrenaste hoy, el entrenamiento no va: quedan la comida y el sueño.
+  const filas = ([['entreno', s.entreno], ['comida', s.comida], ['sueno', s.sueno]] as const).filter((f): f is ['entreno' | 'comida' | 'sueno', Sugerencia] => f[1] !== null);
   return (
     <View style={st.paraHoy}>
       <Etiqueta>{t('ascent.sugerencias.titulo')}</Etiqueta>
@@ -168,6 +175,8 @@ export function TusMusculos({ tm, hoy }: { tm: DeTusMusculos; hoy?: ReactNode })
   return (
     <View style={st.tus}>
       <Text style={st.paraQue}>{t('ascent.tus.paraQue')}</Text>
+      {/* Sugerencias para hoy, justo arriba de «Esta semana» (lo pidió el dueño el 23/11/2026, igual en Ascent). */}
+      {hoy}
       {!tm.conDatos ? (
         <Text style={st.vacio}>{t('ascent.tus.sinDatos')}</Text>
       ) : (
@@ -196,7 +205,6 @@ export function TusMusculos({ tm, hoy }: { tm: DeTusMusculos; hoy?: ReactNode })
           )}
         </>
       )}
-      {hoy}
       <Nota style={st.anotas}>{t('ascent.tus.anotas')}</Nota>
       <EnQueSeBasa de="musculos" />
     </View>
@@ -269,11 +277,8 @@ function FilaDelMusculo({ m, elegido, alTocar }: { m: MusculoDeLaSemana; elegido
   );
 }
 
-/** «listo mañana», «listo pasado mañana» o «listo el sábado». */
-function cuandoVuelve(f: { dias: number; listo: ClaveDia }): string {
-  if (f.dias <= 2) return t('ascent.fatigados.vuelve', { cuando: cuandoDe(f.dias === 1 ? 'manana' : 'pasadoManana') });
-  return t('ascent.fatigados.vuelveEl', { dia: lista('fecha.dias')[diaDeLaSemana(f.listo)] });
-}
+/** «falta 1 día» o «faltan 3 días»: lo que le falta para recuperarse. */
+const cuandoVuelve = (f: { dias: number }): string => plural('ascent.fatigados.faltan', Math.max(1, Math.ceil(f.dias)));
 
 /** Un músculo: de cerca con sus partes (si tiene), sus series contra lo ideal, qué hacer, cuándo está listo y sus ejercicios. */
 function DetalleDelMusculo({ m, tm, alCerrar }: { m: MusculoDeLaSemana; tm: DeTusMusculos; alCerrar: () => void }) {
@@ -722,9 +727,9 @@ function TuAnio({ h, todo }: { h: Hoy; todo: Todo }) {
             {a.ultimas.map((m) => {
               const semanas = Math.floor(diasEntre(m.fecha, h.hoy) / 7);
               return (
-                <View key={m.grupo} style={st.anioUltima}>
-                  <View style={[st.leyendaCuadro, { backgroundColor: GRUPOS_DEL_ANIO[m.grupo] }]} />
-                  <Text style={st.anioUltimaTexto}>{`${tx(`ascent.hoy.grupos.${m.grupo}`)}: ${enFrase(nombreDelEjercicio({ id: m.id, ejercicio: m.ejercicio }))} ${t('ascent.estancamiento.marca', { kg: numero(m.kilos, m.kilos % 1 ? 1 : 0), reps: m.reps })}`}</Text>
+                <View key={m.id ?? m.ejercicio} style={st.anioUltima}>
+                  <View style={[st.leyendaCuadro, { backgroundColor: m.grupo ? GRUPOS_DEL_ANIO[m.grupo] : C.lejos }]} />
+                  <Text style={[st.anioUltimaTexto, m.destacada && st.anioUltimaDestacada]}>{`${m.de ? `${tx(`ascent.hoy.grupos.${m.de}`)}: ${enFrase(nombreDelEjercicio({ id: m.id, ejercicio: m.ejercicio }))}` : conMayuscula(nombreDelEjercicio({ id: m.id, ejercicio: m.ejercicio }))} ${t('ascent.estancamiento.marca', { kg: numero(m.kilos, m.kilos % 1 ? 1 : 0), reps: m.reps })}`}</Text>
                   <Text style={st.anioUltimaCuando}>{semanas ? plural('ascent.anio.hace', semanas) : t('ascent.anio.estaSemana')}</Text>
                 </View>
               );
@@ -899,6 +904,8 @@ const st = StyleSheet.create({
   anioUltimas: { marginTop: 14, gap: 9 },
   anioUltima: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
   anioUltimaTexto: { flex: 1, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 17.5, color: C.tinta },
+  // Las del DOTS (pecho, piernas y espalda), un poco más fuertes.
+  anioUltimaDestacada: { fontFamily: letras.textoMedio },
   anioUltimaCuando: { fontFamily: letras.texto, fontSize: 12, color: C.sub },
   grilla: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 14, marginTop: 18 },
   dato: { width: '33.3%', gap: 4, paddingRight: 10 },
