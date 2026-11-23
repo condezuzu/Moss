@@ -304,14 +304,17 @@ function loQueQueda(comido: Comido, meta: Macros, numeros: boolean): string[] {
   return numeros ? [kcal, ...macros] : macros;
 }
 
+/** Cuánto de la meta se comió. Con una meta de 0 (a mano), lleno si se comió algo y vacío si no: nunca NaN ni Infinity. */
+const deLaMeta = (comido: number, meta: number) => (meta > 0 ? comido / meta : comido > 0 ? 1 : 0);
+
 // Aparte, así el hook de la cifra que cuenta no depende de si hay meta.
 function CaloriasConMeta({ numeros, comido, meta, ancho }: { numeros: boolean; comido: Comido; meta: Macros; ancho: number }) {
   const e = useEstado();
   const estilo = e.kcal;
   const queda = meta.kcal - comido.kcal;
   const de = {
-    fraccion: comido.kcal / meta.kcal,
-    macros: { proteina: comido.proteina / meta.proteina, carbohidratos: comido.carbohidratos / meta.carbohidratos, grasas: comido.grasas / meta.grasas },
+    fraccion: deLaMeta(comido.kcal, meta.kcal),
+    macros: { proteina: deLaMeta(comido.proteina, meta.proteina), carbohidratos: deLaMeta(comido.carbohidratos, meta.carbohidratos), grasas: deLaMeta(comido.grasas, meta.grasas) },
     comidas: comidasDelDia(e.registros, e.hoy, e.hoy).filter((c) => !c.planificada).map((c) => c.total.kcal),
   };
   const figura = <FiguraGrande estilo={estilo} de={de} numeros={numeros} ancho={ancho} />;
@@ -345,7 +348,7 @@ function CaloriasConMeta({ numeros, comido, meta, ancho }: { numeros: boolean; c
               </View>
               {numeros && <Text style={estilos.macroValor} {...EN_SU_COLUMNA}>{valor}</Text>}
               <View style={estilos.barra}>
-                <Relleno fraccion={comido[m] / meta[m]} style={[estilos.barraLlena, { backgroundColor: COLOR_DE_MACRO[m], opacity: estado === 'falta' ? 0.75 : 1 }]} />
+                <Relleno fraccion={deLaMeta(comido[m], meta[m])} style={[estilos.barraLlena, { backgroundColor: COLOR_DE_MACRO[m], opacity: estado === 'falta' ? 0.75 : 1 }]} />
               </View>
               {/* Lo comido y la meta siempre a la vista: también al pasarse (lo pediste el 30/10/2026). */}
               {numeros && <Text style={estilos.macroDe} {...EN_SU_COLUMNA}>{t('comida.gramosDe', { n: numero(Math.round(comido[m])), meta: numero(meta[m]) })}</Text>}

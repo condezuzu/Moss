@@ -562,6 +562,14 @@ describe('las noches de Moss junto a las de Salud', () => {
     expect(conNochesDeMoss([], [propia('2026-10-22', 'estimada')], UY).map((n) => n.clave)).toEqual(['2026-10-22']);
   });
 
+  it('una siesta en Salud no le gana a la noche de Moss (el anillo cargó de noche y registró una siesta de 14:00 a 14:40)', () => {
+    const anillo: Fuente = { id: 'com.ouraring.oura', nombre: 'Oura', tipo: 'otra' };
+    const siesta = armarNoches([{ etapa: 'nucleo', desde: hora('2026-10-22 14:00'), hasta: hora('2026-10-22 14:40'), fuente: anillo.id, zona: UY }], [anillo]);
+    for (const origen of ['confirmada', 'estimada'] as const) {
+      expect(conNochesDeMoss(siesta, [propia('2026-10-22', origen)], UY).map((n) => [n.clave, n.fuente.id, n.dormido])).toEqual([['2026-10-22', 'moss', 450]]);
+    }
+  });
+
   it('mientras la noche del anillo no llega, se sabe de cuál se espera; si ya llegó una de ese día o después, no se espera', () => {
     const anillo: Fuente = { id: 'com.moyoung.darings', nombre: 'Da Rings', tipo: 'otra' };
     const iphone: Fuente = { id: 'iphone', nombre: 'iPhone', tipo: 'telefono' };

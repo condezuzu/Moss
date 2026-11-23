@@ -4,6 +4,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
 
+import type { EstadoDelControl } from '@/dominio/control';
 import { diaDeLaSemana } from '@/dominio/fechas';
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -14,6 +15,18 @@ import { bloques } from './comunes';
 
 export const CONTROL_CERCA = 2;
 
+/**
+ * Lo que le falta, en una línea: «listo» solo si alcanza. Con el tramo corto ese control no mide aunque lleguen
+ * los datos (como Progreso); con la pesada y la comida, todavía le falta otra pesada a una semana, para la recta.
+ */
+export function loQueFalta(c: EstadoDelControl): string {
+  if (c.alcanza) return t('inicio.control.listo');
+  if (c.tramoCorto) return t('progreso.control.textos.faltanDatos');
+  return c.pesadas >= c.minimos.pesadas && c.diasConComida < c.minimos.diasConComida
+    ? plural('inicio.control.faltanDias', c.minimos.diasConComida - c.diasConComida)
+    : t('inicio.control.faltaPesada');
+}
+
 export function ControlCerca({ alIr }: { alIr: () => void }) {
   const p = usePersona();
   const c = p.estadoControl;
@@ -21,9 +34,7 @@ export function ControlCerca({ alIr }: { alIr: () => void }) {
   if (p.deEjemplo || !c || c.faltan > CONTROL_CERCA) return null;
   const cuando = c.faltan === 1 ? t('progreso.manana') : t('progreso.enDias', { n: c.faltan });
   const titulo = c.faltan === 0 ? t('inicio.control.hoy') : t('inicio.control.titulo', { dia: lista('fecha.dias')[diaDeLaSemana(c.fecha)], cuando });
-  const falta = c.pesadas < c.minimos.pesadas ? t('inicio.control.faltaPesada')
-    : c.diasConComida < c.minimos.diasConComida ? plural('inicio.control.faltanDias', c.minimos.diasConComida - c.diasConComida)
-      : t('inicio.control.listo');
+  const falta = loQueFalta(c);
   return (
     <Animated.View entering={FadeIn.duration(320).reduceMotion(ReduceMotion.Never)} exiting={FadeOut.duration(200).reduceMotion(ReduceMotion.Never)} layout={ACOMODA}>
       <Pressable

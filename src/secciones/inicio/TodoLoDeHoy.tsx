@@ -8,7 +8,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { elAlmacen } from '@/almacen';
 import { ESTILOS_DE_KCAL } from '@/almacen/almacen';
-import { edadDe, estadoDeMacro, RITMOS } from '@/dominio/metas';
+import { edadDe, estadoDeMacro, objetivoPermitido } from '@/dominio/metas';
 import { faltaParaEstimar } from '@/dominio/progreso';
 import { idioma, lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -17,6 +17,7 @@ import { cifraDePeso, duracion, fechaDiaMes, metaDelDia, numero, sistemaDe, text
 import { usePersona, useSueno } from '../ganchos';
 import { HojaModal } from '../HojaModal';
 import { Muestra } from '../kcal/Kcal';
+import { ritmoDelPlan } from '../persona';
 import { justo } from './comunes';
 import { entradaDeParaHoy } from './consejos';
 
@@ -67,13 +68,16 @@ function Contenido({ alVerComida }: { alVerComida: () => void }) {
     sabe.push([t('perfil.edad'), numero(edadDe(perfil, e.hoy)), t('inicio.todo.origen.dijiste')]);
     sabe.push([t('perfil.sexo'), t(perfil.sexo === 'f' ? 'entrada.cuestionario.femenino' : 'entrada.cuestionario.masculino'), t('inicio.todo.origen.dijiste')]);
     sabe.push([t('perfil.actividad'), lista(`entrada.cuestionario.actividad.${perfil.actividad}`)[0], t('inicio.todo.origen.dijiste')]);
-    if (perfil.objetivo === 'mantener' || !perfil.pesoMeta) {
-      sabe.push([t('progreso.objetivo'), t(`progreso.objetivos.${perfil.objetivo}`), t('inicio.todo.origen.elegiste')]);
+    // Sin déficit, bajar queda en mantener; el ritmo, el de Progreso (lo elegido en Ritmo y plazo).
+    const objetivo = objetivoPermitido(perfil);
+    const pct = ritmoDelPlan(e);
+    if (objetivo === 'mantener' || !perfil.pesoMeta || pct === null) {
+      sabe.push([t('progreso.objetivo'), t(`progreso.objetivos.${objetivo}`), t('inicio.todo.origen.elegiste')]);
     } else {
       const m = cifraDePeso(perfil.pesoMeta, sistema);
       sabe.push([
-        t('progreso.objetivo'), t(`progreso.objetivoA.${perfil.objetivo}`, { kg: m.cifra, unidad: m.unidad }),
-        t('inicio.todo.origen.ritmo', { pct: numero(Math.abs(RITMOS[perfil.objetivo][perfil.ritmo]), 2) }),
+        t('progreso.objetivo'), t(`progreso.objetivoA.${objetivo}`, { kg: m.cifra, unidad: m.unidad }),
+        t('inicio.todo.origen.ritmo', { pct: numero(pct, 2) }),
       ]);
     }
     if (!p.deEjemplo && numeros && p.gasto !== null && p.control) sabe.push([t('progreso.gasto'), `${numero(p.gasto)} ${t('inicio.kcalPorDia')}`, t('inicio.todo.origen.control', { fecha: fechaDiaMes(p.control.fecha) })]);

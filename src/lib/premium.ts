@@ -112,16 +112,31 @@ async function leerLosPrecios(): Promise<void> {
   }
 }
 
-/** Dice si contestó. Apple contesta sin conexión: si no contesta, no se le muestra la pantalla de pago a nadie. */
-async function leerSuscripcion(): Promise<boolean> {
-  if (!tienda) return false;
+/** Lo que dice Apple, sin guardarlo todavía; null si no contestó. Apple contesta sin conexión. */
+async function preguntarAApple(): Promise<Pick<EstadoDePremium, 'suscripcion' | 'ultima' | 'leido'> | null> {
+  if (!tienda) return null;
   try {
     const [suscripcion, ultima] = await Promise.all([tienda.estado(), tienda.ultima(Object.values(PRODUCTOS))]);
-    cambiar({ suscripcion, ultima, leido: Date.now() });
-    return true;
+    return { suscripcion, ultima, leido: Date.now() };
   } catch {
-    return false;
+    return null;
   }
+}
+
+/** Dice si contestó: si no contesta, no se le muestra la pantalla de pago a nadie. */
+async function leerSuscripcion(): Promise<boolean> {
+  const leida = await preguntarAApple();
+  if (leida) cambiar(leida);
+  return !!leida;
+}
+
+/**
+ * Quien ya tuvo una y Apple no la da por vigente: si no hay conexión, pudo haber renovado. Se esperan los
+ * precios, con tope: si no llegan a tiempo, no hay conexión.
+ */
+async function esperarLosPrecios(precios: Promise<void>): Promise<void> {
+  const llegaron = await Promise.race([precios.then(() => true), new Promise<boolean>((listo) => setTimeout(() => listo(false), ESPERA_A_LOS_PRECIOS))]);
+  if (!llegaron) cambiar({ sinPrecios: true });
 }
 
 /**
@@ -161,7 +176,16 @@ type LeerCuenta = () => Promise<string | null | undefined>;
 async function arrancar(leerCuenta: LeerCuenta): Promise<void> {
   if (!tienda) return;
   const leerAlVolver = async () => {
-    if ((await leerSuscripcion()) && !estado.listo) cambiar({ listo: true });
+    const leida = await preguntarAApple();
+    if (!leida) return;
+    // Los precios de la mañana no dicen si ahora hay conexión: se vuelve a esperar antes de cambiar lo que se ve,
+    // y hasta entonces queda lo de antes (si no, quien renovó vería la pantalla de pago mientras tanto).
+    if (!leida.suscripcion && leida.ultima) {
+      await esperarLosPrecios(leerPrecios().catch(() => {}));
+      // Mientras se esperaba llegó algo más nuevo (una compra, restaurar): vale eso.
+      if (estado.leido > leida.leido) return;
+    }
+    cambiar({ ...leida, listo: true });
   };
   tienda.addListener('alCambiar', () => { leerAlVolver().catch(() => {}); });
   AppState.addEventListener('change', (a) => {
@@ -173,11 +197,7 @@ async function arrancar(leerCuenta: LeerCuenta): Promise<void> {
   const precios = leerPrecios().catch(() => {});
   // La cuenta guardada, sin esperar al primer aviso de la sesión. Sin sesión a mano, la trae ese aviso.
   const [contesto] = await Promise.all([leerSuscripcion(), leerCuenta().then(cuentaDePremium).catch(() => {})]);
-  // Quien ya tuvo una y Apple no la da por vigente: si no hay conexión, pudo haber renovado.
-  if (contesto && !estado.suscripcion && estado.ultima) {
-    await Promise.race([precios, new Promise((listo) => setTimeout(listo, ESPERA_A_LOS_PRECIOS))]);
-    if (!estado.productos.anual && !estado.productos.mensual) cambiar({ sinPrecios: true });
-  }
+  if (contesto && !estado.suscripcion && estado.ultima) await esperarLosPrecios(precios);
   if (contesto) cambiar({ listo: true });
 }
 

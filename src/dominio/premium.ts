@@ -28,10 +28,11 @@ export type Acceso = 'nueva' | 'prueba' | 'activa' | 'regalo' | 'vencida';
  * La regla, una sola. `suscripcion` es lo vigente según Apple: la gracia de un pago que falló ya está en
  * su cuenta, y lo guarda en el teléfono, así que anda sin conexión. Lo único que Apple no puede saber sin
  * conexión es que renovó: por eso `ultima`, la última que se conoce aunque haya vencido, con `sinConexion`.
+ * Una suscripción vigente va antes que el regalo: Apple la cobra igual, y es la que hay que mostrar y administrar.
  */
 export function acceso(d: { suscripcion: Suscripcion | null; regalo: boolean; ultima?: Suscripcion | null; sinConexion?: boolean; ahora?: number }): Acceso {
-  if (d.regalo) return 'regalo';
   if (d.suscripcion) return d.suscripcion.prueba ? 'prueba' : 'activa';
+  if (d.regalo) return 'regalo';
   if (!d.ultima) return 'nueva';
   const renovaria = d.sinConexion && d.ultima.renueva !== false && (d.ahora ?? 0) < d.ultima.vence + GRACIA_SIN_CONEXION;
   return renovaria ? 'activa' : 'vencida';
@@ -59,11 +60,15 @@ export function cuentaParaElRegalo(deLaSesion: string | null | undefined, guarda
   return deLaSesion || guardada || null;
 }
 
-/** Si la cuenta es de antes de que se prendiera. `saleEl` es AAAA-MM-DD; sin cuenta, no. Vigente, mientras dura el regalo (regaloVigente). */
+/**
+ * Si la cuenta es de antes de que se prendiera. `saleEl` es AAAA-MM-DD; sin cuenta, no. Vigente, mientras dura el
+ * regalo (regaloVigente). El corte es la medianoche de Uruguay, donde se eligió la fecha (UTC−3, sin horario de
+ * verano desde 2015): en UTC, quien la creó el día anterior después de las 21 quedaba afuera.
+ */
 export function esDeRegalo(cuentaCreada: string | null | undefined, saleEl: string): boolean {
   if (!cuentaCreada) return false;
   const creada = Date.parse(cuentaCreada);
-  return Number.isFinite(creada) && creada < Date.parse(`${saleEl}T00:00:00Z`);
+  return Number.isFinite(creada) && creada < Date.parse(`${saleEl}T00:00:00-03:00`);
 }
 
 export const MESES_DE_REGALO = 3;
@@ -112,10 +117,11 @@ export function avisoDePrueba(s: Suscripcion | null, ahora: number): number | nu
  * Hasta cuándo pueden sonar los avisos que se programan, en milisegundos. Con la prueba o la suscripción
  * cancelada, hasta que vence: después no hay acceso y no suena nada, aunque Moss no se abra para borrarlos.
  * De regalo, hasta que termina el regalo (`regaloHasta`, en milisegundos). Renovándose, null: sin fin.
+ * Con las dos, lo que dure más: al vencer la cancelada antes que el regalo, sigue el regalo.
  */
 export function avisosHasta(s: Suscripcion | null, a: Acceso, regaloHasta: number | null = null): number | null {
   if (a === 'regalo') return regaloHasta;
-  return s?.renueva === false ? s.vence : null;
+  return s?.renueva === false ? Math.max(s.vence, regaloHasta ?? s.vence) : null;
 }
 
 export const planDe = (s: Suscripcion): Plan => (s.producto === PRODUCTOS.anual ? 'anual' : 'mensual');

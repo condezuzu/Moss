@@ -16,7 +16,7 @@
 // Entra en avisosDelDia como lo que conviene: el mismo máximo, de a uno y nada de lo que ya pasó. Acá van códigos;
 // el texto sale de textoDelAviso y tituloDelAviso (avisos.ts). Las fuentes, en spec/estudio/momentos.md.
 
-import { avisosDelDia, horasDeSueno, inicioDeLaManana, PESARSE_DESPUES, SEPARACION, type Aviso, type Avisos, type DelDia, type Notificacion } from './avisos';
+import { avisosDelDia, DESPERTAR_SIN_SUENO, horasDeSueno, inicioDeLaManana, PESARSE_DESPUES, SEPARACION, type Aviso, type Avisos, type DelDia, type Notificacion } from './avisos';
 import { CON_HORA, horasCorridas, type Comida } from './comidas';
 import { diaDeLaSemana } from './fechas';
 import { loQueConviene, type DeLoQueConviene } from './loQueConviene';
@@ -124,16 +124,20 @@ export function avisosDelDespertar(op: DeSigueElDespertar): Aviso[] {
   const inicio = inicioDeLaManana(op.dia, sueno, despertar);
   if (despertar !== null && inicio !== null) {
     let libre = inicio;
+    // Lo que no suena guarda su lugar, en el máximo y en la mañana: si después llega un despertar más temprano (la
+    // noche del anillo, más tarde que abrir Moss), lo que ya sonó sigue contando y lo de después no se corre a antes.
     const aTiempo = inicio - despertar <= MANANA_QUE_SE_PASO;
-    if (aTiempo && prendido('deuda') && sueno.deuda !== null) {
+    const callado = aTiempo ? {} : { sobra: true as const };
+    if (prendido('deuda') && sueno.deuda !== null) {
       const antes = op.deudaAntes == null ? null : redondearDeuda(op.deudaAntes);
-      lista.push({ id: 'deuda', tipo: 'deuda', minutos: inicio, despertar: { que: 'deuda', ahora: redondearDeuda(sueno.deuda), antes } });
+      lista.push({ id: 'deuda', tipo: 'deuda', minutos: inicio, despertar: { que: 'deuda', ahora: redondearDeuda(sueno.deuda), antes }, ...callado });
       libre = inicio + SEPARACION;
     }
     const control = op.diaDelControl === diaDeLaSemana(op.dia);
-    if (aTiempo && ajustes.pesarse?.encendido && (control || ajustes.pesarse.todos)) {
-      const minutos = Math.max(libre, despertar + PESARSE_DESPUES);
-      lista.push({ id: 'pesarse', tipo: 'pesarse', minutos, ...(control ? { control: true } : {}) });
+    if (ajustes.pesarse?.encendido && (control || ajustes.pesarse.todos)) {
+      // Desde el despertar que Moss supo primero, que no cambia: uno más temprano que llegue después no lo adelanta.
+      const minutos = Math.max(libre, Math.max(despertar, sueno.despertarSabido?.(op.dia) ?? despertar) + PESARSE_DESPUES);
+      lista.push({ id: 'pesarse', tipo: 'pesarse', minutos, ...(control ? { control: true } : {}), ...callado });
       libre = minutos + SEPARACION;
     }
     if (ajustes.horario?.includes('desayuno')) {
@@ -143,6 +147,8 @@ export function avisosDelDespertar(op: DeSigueElDespertar): Aviso[] {
         // Ya pregunta por el desayuno: el de su hora y el de «falta anotar», que contaban desde la hora de siempre
         // (con un despertar tarde, mientras dormías), no hacen falta.
         reemplaza: ['horario:desayuno', 'comida:desayuno'],
+        // Pasada la hora del almuerzo, preguntar ya no viene al caso.
+        ...(minutos < op.horaDeComida('almuerzo') ? {} : { sobra: true as const }),
       });
       libre = minutos + SEPARACION;
     }
@@ -226,7 +232,8 @@ export type SenalesDelDespertar = {
  * atajo o la primera vez que abriste Moss de mañana. Nada del futuro ni de antes del corte; null mientras no hay nada.
  */
 export function despertarDelDia(s: SenalesDelDespertar): number | null {
-  const desde = Math.max(s.corte, s.habitual === null ? 0 : s.habitual - ANTES_DE_LO_DE_SIEMPRE);
+  // Sin noches para saber lo de siempre, como los avisos sin sueño: despertarse a las 7:30.
+  const desde = Math.max(s.corte, (s.habitual ?? DESPERTAR_SIN_SUENO) - ANTES_DE_LO_DE_SIEMPRE);
   const entre = (m: number, d: number, hasta: number) => Number.isFinite(m) && m >= d && m <= Math.min(hasta, s.ahora);
   const candidatos = [
     ...(s.salud !== null && entre(s.salud, desde, Infinity) ? [s.salud] : []),

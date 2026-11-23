@@ -127,7 +127,12 @@ cual con cuatro semanas de mentira.
      más son una noche (hasta el 18/11 también se pegaban los que empezaban o terminaban a 2 horas del principal);
    - de las fuentes que registraron el mismo sueño, la noche es de una que lo tenga casi entero (dos tercios o más de lo que
      registró la que más): antes, otra app con etapas que solo vio el segundo tramo se quedaba con la noche (6:22 a 8:30). Un
-     tramo que registró otra fuente, pegado a la noche (a una hora o menos) y sin encimarse, también es la noche;
+     tramo que registró otra fuente, pegado a la noche (a una hora o menos) y sin encimarse, también es la noche. Lo de cada
+     fuente se suma con todos sus tramos (23/11/2026, spec/bugs.md 7): la noche partida del reloj (23:00 a 2:30 y 4:00 a
+     7:00) ya no pierde contra otra app que la tiene de corrido;
+   - lo que dura menos de 3 horas y termina entre las 12 y las 24 es una siesta aunque sea lo único del día en Salud: no es
+     la noche (23/11/2026, spec/bugs.md 6: con el anillo cargando de noche, una siesta de 40 minutos se volvía la noche y le
+     ganaba a la de Moss). Ese día queda la noche de Moss; la siesta de ese día todavía no suma a la deuda;
    - lo demás, desde 15 minutos, son siestas: cuentan para la deuda, no para el horario.
 5. **En cama** se muestra solo si alguna fuente lo escribió de verdad, y si es del
    teléfono va con confianza baja. Nunca cuenta como sueño.

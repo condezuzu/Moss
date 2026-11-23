@@ -29,8 +29,13 @@ describe('quién entra', () => {
   it('quien tenía cuenta antes de que se prendiera entra de regalo, aunque no pague', () => {
     expect(de({ regalo: true })).toBe('regalo');
     expect(tieneAcceso('regalo')).toBe(true);
-    // Aunque además tenga una: el regalo no se cobra, y venza lo que venza sigue adentro.
+    // Aunque además haya tenido una: el regalo no se cobra, y venza lo que venza sigue adentro.
     expect(de({ regalo: true, ultima: vencidaHace(40) })).toBe('regalo');
+  });
+
+  it('con regalo y una suscripción vigente, manda la suscripción: Apple la cobra igual', () => {
+    expect(de({ regalo: true, suscripcion: pagando })).toBe('activa');
+    expect(de({ regalo: true, suscripcion: prueba })).toBe('prueba');
   });
 
   it('la que terminó queda vencida y sin acceso', () => {
@@ -83,8 +88,16 @@ describe('el regalo', () => {
 
   it('la cuenta tiene que ser de antes del día en que se prende', () => {
     expect(esDeRegalo('2026-11-30T23:59:00Z', '2026-12-01')).toBe(true);
-    expect(esDeRegalo('2026-12-01T00:00:00Z', '2026-12-01')).toBe(false);
+    expect(esDeRegalo('2026-12-01T03:00:00Z', '2026-12-01')).toBe(false);
     expect(esDeRegalo('2027-01-05T10:00:00Z', '2026-12-01')).toBe(false);
+  });
+
+  it('el día del corte es el de Uruguay (UTC−3), no el de UTC', () => {
+    // Creada el 13/11 a las 21:30 en Uruguay: en UTC ya es el 14.
+    expect(esDeRegalo('2026-11-14T00:30:00Z', '2026-11-14')).toBe(true);
+    expect(esDeRegalo('2026-11-14T02:59:59Z', '2026-11-14')).toBe(true);
+    expect(esDeRegalo('2026-11-14T03:00:00Z', '2026-11-14')).toBe(false);
+    expect(esDeRegalo('2026-11-14T00:00:00-03:00', '2026-11-14')).toBe(false);
   });
 
   it('sin una fecha que se entienda, no', () => {
@@ -137,6 +150,13 @@ describe('el regalo dura 3 meses', () => {
   it('los avisos de quien la tiene de regalo suenan hasta que termina', () => {
     expect(avisosHasta(null, 'regalo', hastaDelRegalo('2027-02-14'))).toBe(local(2027, 2, 15));
     expect(avisosHasta({ ...prueba, renueva: false }, 'regalo', local(2027, 2, 15))).toBe(local(2027, 2, 15));
+  });
+
+  it('con regalo y una prueba cancelada que vence antes, suenan hasta que termina el regalo', () => {
+    const cancelada = { ...prueba, renueva: false };
+    expect(avisosHasta(cancelada, 'prueba', local(2027, 2, 15))).toBe(local(2027, 2, 15));
+    // Si la prueba vence después del regalo, hasta la prueba.
+    expect(avisosHasta(cancelada, 'prueba', cancelada.vence - DIA)).toBe(cancelada.vence);
   });
 });
 

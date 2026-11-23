@@ -103,6 +103,12 @@ export const HUECO_DE_LA_MISMA_NOCHE = 60;
 /** El sueño partido: dos episodios de 3 horas o más del mismo día son una noche, aunque estés despierto más de una hora entre ellos. */
 const EPISODIO_LARGO = 180;
 /**
+ * Lo que dura menos de 3 horas (EPISODIO_LARGO) y termina de las 12 a las 24 es una siesta, aunque sea lo único de ese
+ * día en Salud: no es la noche. Dormir 2 horas y despertarte a las 6 sí lo es, y 3 horas o más de día también (quien
+ * trabaja de noche).
+ */
+const MEDIODIA = 12 * 60;
+/**
  * De las fuentes que registraron el mismo sueño, la de la noche tiene que tenerlo casi entero: con menos de dos
  * tercios de lo que registró la que más, vio solo un tramo (el anillo vio toda la noche y otra app, solo la última
  * parte). Es una convención.
@@ -265,11 +271,20 @@ export function armarNoches(muestras: Muestra[], fuentes: Fuente[], elegida?: st
   for (const [clave, delDia] of porDia) {
     const nivel = (id: string) => prioridad(fuentes.find((f) => f.id === id)!, delDia.get(id)!.flatMap((e) => e.muestras), elegida);
     const elegir = (g: { id: string; e: Episodio }[]) => [...g].sort((a, b) => nivel(b.id) - nivel(a.id) || b.e.dormido - a.e.dormido)[0];
-    // El sueño más largo del día es la noche; de las fuentes que lo registraron se usa una sola.
+    // El sueño más largo del día que puede ser una noche es la noche; de las fuentes que lo registraron se usa una sola.
     const suenos = porSueno(delDia);
-    const masDormido = (g: { e: Episodio }[]) => Math.max(...g.map((x) => x.e.dormido));
-    const elDeLaNoche = [...suenos].sort((a, b) => masDormido(b) - masDormido(a))[0];
-    const { id, e: principal } = elegir(elDeLaNoche.filter((x) => x.e.dormido >= CASI_ENTERA * masDormido(elDeLaNoche)));
+    // Lo que registró cada fuente de un sueño, con todos sus tramos: la noche partida del reloj suma sus dos partes.
+    const deLaFuente = (g: { id: string; e: Episodio }[], id: string) => g.reduce((s, x) => s + (x.id === id ? x.e.dormido : 0), 0);
+    const masDormido = (g: { id: string; e: Episodio }[]) => Math.max(...g.map((x) => deLaFuente(g, x.id)));
+    const despertarDe = (g: { e: Episodio }[]) => {
+      const { hasta, muestras: [{ zona }] } = g.reduce((a, b) => (b.e.hasta > a.e.hasta ? b : a)).e;
+      return (((hasta / MIN + zona) % 1440) + 1440) % 1440;
+    };
+    const puedeSerLaNoche = (g: { id: string; e: Episodio }[]) => masDormido(g) >= EPISODIO_LARGO || despertarDe(g) < MEDIODIA;
+    const elDeLaNoche = suenos.filter(puedeSerLaNoche).sort((a, b) => masDormido(b) - masDormido(a))[0];
+    // Solo siestas (el anillo cargó de noche): ese día Salud no tiene noche, y queda la de Moss.
+    if (!elDeLaNoche) continue;
+    const { id, e: principal } = elegir(elDeLaNoche.filter((x) => deLaFuente(elDeLaNoche, x.id) >= CASI_ENTERA * masDormido(elDeLaNoche)));
     const fuente = fuentes.find((f) => f.id === id)!;
     const lista = delDia.get(id)!;
     const deLaNoche = lista.filter((e) => e === principal || (principal.dormido >= EPISODIO_LARGO && e.dormido >= EPISODIO_LARGO));

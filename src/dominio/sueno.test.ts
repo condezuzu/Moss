@@ -113,12 +113,35 @@ describe('armar las noches', () => {
       ...nocheDelReloj('2026-10-17', '2026-10-18'),
       m('nucleo', '2026-10-18 15:20', '2026-10-18 15:55'),
       m('nucleo', '2026-10-18 19:10', '2026-10-18 19:40'),
+      ...nocheDelReloj('2026-10-18', '2026-10-19'),
     ], [RELOJ]);
     const domingo = noches.find((n) => n.clave === '2026-10-18')!;
     expect(domingo.siestas).toBe(35);
     expect(domingo.dormido).toBe(435);
-    // La de las 19 ya es del lunes: sola, es la única de ese día.
-    expect(noches.find((n) => n.clave === '2026-10-19')!.dormido).toBe(30);
+    // La de las 19 ya es del lunes: una siesta de la noche del lunes.
+    expect(noches.find((n) => n.clave === '2026-10-19')).toMatchObject({ dormido: 435, siestas: 30 });
+  });
+
+  it('una siesta no es la noche, aunque sea lo único que hay en Salud ese día (el anillo cargando de noche)', () => {
+    const delDia = (muestras: Muestra[]) => armarNoches(muestras, [RELOJ, ANILLO]).map((n) => [n.clave, n.fuente.id, n.dormido, n.siestas]);
+    // De 14:00 a 14:40, o de 19:10 a 19:40 (ya del día siguiente): no hay noche.
+    expect(delDia([m('nucleo', '2026-10-21 14:00', '2026-10-21 14:40', ANILLO.id)])).toEqual([]);
+    expect(delDia([m('nucleo', '2026-10-20 19:10', '2026-10-20 19:40', ANILLO.id)])).toEqual([]);
+    // Dormir 2 horas y despertarte a las 6 sí es la noche, y una siesta más larga no le gana.
+    expect(delDia([m('nucleo', '2026-10-21 04:00', '2026-10-21 06:00')])).toEqual([['2026-10-21', RELOJ.id, 120, 0]]);
+    expect(delDia([m('nucleo', '2026-10-21 04:00', '2026-10-21 06:00'), m('nucleo', '2026-10-21 13:00', '2026-10-21 15:30')])).toEqual([['2026-10-21', RELOJ.id, 120, 150]]);
+    // Tres horas o más de día también son la noche: quien trabaja de noche.
+    expect(delDia([m('nucleo', '2026-10-21 08:00', '2026-10-21 15:00')])).toEqual([['2026-10-21', RELOJ.id, 420, 0]]);
+  });
+
+  it('la noche partida en el reloj y de corrido en otra fuente: cuenta lo que suma cada fuente, y gana el reloj', () => {
+    const muestras = [m('nucleo', '2026-10-20 23:00', '2026-10-21 02:30'), m('nucleo', '2026-10-21 04:00', '2026-10-21 07:00'), m('dormido', '2026-10-20 23:00', '2026-10-21 07:00', SLEEP_CYCLE.id)];
+    const ver = (elegida?: string) => armarNoches(muestras, [RELOJ, SLEEP_CYCLE], elegida).map((n) => [n.fuente.id, n.dormido, n.despierto, n.siestas]);
+    // Antes: Sleep Cycle con 480, porque cada tramo del reloj solo no llegaba a dos tercios de lo de la app.
+    expect(ver()).toEqual([[RELOJ.id, 390, 90, 0]]);
+    expect(ver(RELOJ.id)).toEqual([[RELOJ.id, 390, 90, 0]]);
+    // Elegida la app, la de la app.
+    expect(ver(SLEEP_CYCLE.id)).toEqual([[SLEEP_CYCLE.id, 480, 0, 0]]);
   });
 
   it('el sueño partido (despierto más de una hora en el medio) es una sola noche', () => {

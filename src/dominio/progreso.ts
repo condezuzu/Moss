@@ -146,6 +146,11 @@ export type EntradaDelProgreso = {
   pesadas?: readonly Pesada[];
   objetivo: Objetivo;
   ritmo: Ritmo;
+  /**
+   * El ritmo del plan en % del peso por semana, sin signo, cuando se eligió en Ritmo y plazo o con la fecha del
+   * cuestionario (plazoVigente, el mismo de Progreso). Sin él, el de `ritmo`.
+   */
+  pct?: number | null;
   pesoMeta?: number | null;
   /** El peso de la tendencia cuando se fijó el objetivo, para «cuánto del camino». */
   pesoInicial?: number | null;
@@ -158,7 +163,8 @@ export function progresoAlObjetivo(e: EntradaDelProgreso): Progreso {
   const ritmo = e.pesadas ? (conRango?.kgPorSemana ?? null) : ritmoSemanal(e.tendencia, e.hoy);
   const medio = conRango ? (conRango.hasta - conRango.desde) / 2 : 0;
   const nivel = peso === null ? null : nivelDeHoy(e.tendencia, e.hoy, e.pesadas, conRango);
-  const ritmoPlan = e.objetivo === 'mantener' || peso === null ? 0 : (RITMOS[e.objetivo][e.ritmo] / 100) * peso;
+  const pct = e.objetivo === 'mantener' ? 0 : (e.pct ?? Math.abs(RITMOS[e.objetivo][e.ritmo])) * (e.objetivo === 'bajar' ? -1 : 1);
+  const ritmoPlan = e.objetivo === 'mantener' || peso === null ? 0 : (pct / 100) * peso;
   const rango = ritmo === null ? null : { desde: ritmo - medio, hasta: ritmo + medio };
   const base = { peso, nivel, ritmo, rango, ritmoPlan, faltan: null, fecha: null, fechas: null, hecho: null };
   if (peso === null || nivel === null) return { ...base, estado: 'faltanDatos' };

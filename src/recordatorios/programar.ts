@@ -278,7 +278,9 @@ async function sacarLosQueYaNoDicenNada(e: Para): Promise<void> {
   for (const n of llegados) {
     const datos = n.request.content.data as Partial<AlTocarUnAviso> | undefined;
     if (!datos?.tipo) continue;
-    const dia = datos.dia ?? diaLogico(new Date(n.date), e.corte);
+    // Los de antes no llevan su día. La hora en que llegó viene en segundos en iOS (timeIntervalSince1970) y en
+    // milisegundos en Android: leída como milisegundos, caía en 1970 y el aviso de hoy salía por «de otro día».
+    const dia = datos.dia ?? diaLogico(new Date(n.date < 1e11 ? n.date * 1000 : n.date), e.corte);
     const deOtroDia = dia < hoy && datos.tipo !== 'prueba';
     const comidaHecha = (datos.tipo === 'comida' || datos.tipo === 'horario' || datos.tipo === 'desayuno') && !!datos.comida && dia === hoy && anotadas.has(datos.comida);
     const pesoHecho = datos.tipo === 'pesarse' && pesadoHoy;
@@ -372,9 +374,10 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
     try {
       await Notifications.scheduleNotificationAsync({
         // Lo que lleva el aviso para abrir lo suyo al tocarlo (useAlTocarUnAviso).
-        // La comida va con su día: tocado pasada la medianoche o a la mañana, se anota en el día del aviso.
+        // Cada uno va con su día: la comida tocada pasada la medianoche o a la mañana se anota en el día del aviso, y
+        // sacarLosQueYaNoDicenNada sabe de qué día es sin leer la hora que da el teléfono.
         content: {
-          title: tituloDe(n), body: textoDe(n, e), data: { tipo: aviso.tipo, ...(aviso.comida ? { comida: aviso.comida, dia: n.dia } : {}), ...(aviso.falta ? { que: aviso.falta.que } : {}) },
+          title: tituloDe(n), body: textoDe(n, e), data: { tipo: aviso.tipo, dia: n.dia, ...(aviso.comida ? { comida: aviso.comida } : {}), ...(aviso.falta ? { que: aviso.falta.que } : {}) },
           ...(aviso.tipo === 'dormir' ? { categoryIdentifier: CATEGORIA_DORMIR } : aviso.tipo === 'desayuno' ? { categoryIdentifier: CATEGORIA_DESAYUNO } : {}),
         },
         // A la hora del reloj y no «dentro de tantos segundos» (eso hace DATE en iOS): quien viaja a otra

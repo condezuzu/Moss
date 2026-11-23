@@ -63,6 +63,28 @@ describe('la comida dicha de una vez', () => {
     expect(leerFrase('anoche comí pizza', 'es').dichos.map((d) => d.buscado)).toEqual(['pizza']);
   });
 
+  it('«y media» con un alimento después es otro alimento; cerrando lo de antes, es la fracción', () => {
+    const leer = (texto: string, idioma: 'es' | 'en' = 'es') => resumen(texto, undefined, idioma).map(([c, u, b]) => [c, u, b]);
+    expect(leer('dos huevos y media palta')).toEqual([[2, null, 'huevo'], [0.5, null, 'palta']]);
+    expect(leer('un yogur y media manzana')).toEqual([[1, null, 'yogur'], [0.5, null, 'manzana']]);
+    expect(leer('two eggs and half an avocado', 'en')).toEqual([[2, null, 'egg'], [0.5, null, 'avocado']]);
+    // Lo de antes ya tenía su «de»: lo que se calla es la medida o el alimento.
+    expect(leer('una cucharada de aceite y media de manteca')).toEqual([[1, 'cucharada', 'aceite'], [0.5, 'cucharada', 'manteca']]);
+    expect(leer('dos empanadas de carne y media de jamón')).toEqual([[2, null, 'empanada de carne'], [0.5, null, 'empanada de jamón']]);
+    expect(leerFrase('un plato de arroz y medio de fideos', 'es').dichos.map((d) => [d.cantidad, d.buscado, d.vago ?? false])).toEqual([[1, 'arroz', true], [0.5, 'fideo', true]]);
+    // Solo un número y una medida antes: es la fracción.
+    expect(leer('una taza y media de arroz')).toEqual([[1.5, 'taza', 'arroz']]);
+    expect(leer('dos huevos y medio, un café')).toEqual([[2.5, null, 'huevo'], [1, null, 'café']]);
+  });
+
+  it('la medida sin número es una: «kilo y medio de asado», «kilo de asado»', () => {
+    const leer = (texto: string) => resumen(texto).map(([c, u, b]) => [c, u, b]);
+    expect(leer('kilo y medio de asado')).toEqual([[1.5, 'kg', 'asado']]);
+    expect(leer('taza y media de arroz')).toEqual([[1.5, 'taza', 'arroz']]);
+    expect(leer('litro y medio de agua')).toEqual([[1.5, 'l', 'agua']]);
+    expect(leer('kilo de asado')).toEqual([[1, 'kg', 'asado']]);
+  });
+
   it('lo que se calla es lo de antes: la unidad o el alimento', () => {
     expect(resumen('200 gramos de arroz y 150 de pollo a la plancha').map(([c, u]) => [c, u])).toEqual([[200, 'g'], [150, 'g']]);
     expect(resumen('dos empanadas de carne y una de jamón y queso').map(([c, , b]) => [c, b])).toEqual([[2, 'empanada de carne'], [1, 'empanada de jamón y queso']]);

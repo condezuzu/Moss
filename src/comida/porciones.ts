@@ -199,11 +199,12 @@ export function conUnaUnidad<P extends { nombre: string; gramos: number }>(porci
 /** Lo que se comió, con palabras: `veces` porciones de `porcion` («1 rebanada», «½ taza», «30 g»). */
 export function cantidadDePorcion(veces: number, porcion: string, idioma: Idioma): string {
   if (Math.abs(veces - 1) < 1e-9) return porcion;
-  const m = /^(\d+(?:[.,]\d+)?)?\s*([¼⅓½⅔¾])?\s+(\S.*)$/.exec(porcion);
+  // La fracción también con barra: «1/2 litro», «1 1/2 cups».
+  const m = /^(\d+(?:[.,]\d+)?)?(?:\s*([¼⅓½⅔¾])|(?:^|\s+)(\d+)\/(\d+))?\s+(\S.*)$/.exec(porcion);
   // Sin número («Porción típica»): es una.
-  if (!m || (!m[1] && !m[2])) return cantidadDePorcion(veces, `1 ${porcion.charAt(0).toLowerCase()}${porcion.slice(1)}`, idioma);
-  const base = (m[1] ? Number(m[1].replace(',', '.')) : 0) + (m[2] ? VALOR_DE[m[2]] : 0);
-  const resto = m[3];
+  if (!m || (!m[1] && !m[2] && !m[3])) return cantidadDePorcion(veces, `1 ${porcion.charAt(0).toLowerCase()}${porcion.slice(1)}`, idioma);
+  const base = (m[1] ? Number(m[1].replace(',', '.')) : 0) + (m[2] ? VALOR_DE[m[2]] : 0) + (m[3] ? Number(m[3]) / Number(m[4]) : 0);
+  const resto = m[5];
   const total = base * veces;
   if (METRICAS.test(resto)) return `${decimal(total, idioma)} ${resto}`;
   const numero = numeroDePorcion(total);

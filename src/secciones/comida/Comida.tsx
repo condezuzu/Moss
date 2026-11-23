@@ -365,7 +365,8 @@ export function BarrasDeMacros({ comido, meta, conEstado, promedio }: { comido: 
       {MACROS.map((m) => {
         const objetivo = meta?.[m] ?? 0;
         const estado = conEstado && meta ? estadoDeMacro(comido[m], objetivo) : 'falta';
-        const lleno = objetivo ? Math.min(1, comido[m] / objetivo) : 0;
+        // Con una meta de 0 g (a mano), llena si se comió algo, como el anillo.
+        const lleno = objetivo > 0 ? Math.min(1, comido[m] / objetivo) : meta && comido[m] > 0 ? 1 : 0;
         return (
           <View key={m} style={estilos.macro}>
             <View style={estilos.macroNombre}>
@@ -410,7 +411,8 @@ function PaginaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
               <AnillosDeMacros
                 tam={60}
                 grueso={10}
-                fracciones={{ proteina: meta ? comido.proteina / meta.proteina : 0, carbohidratos: meta ? comido.carbohidratos / meta.carbohidratos : 0, grasas: meta ? comido.grasas / meta.grasas : 0 }}
+                // Con una meta de 0 g (a mano), lleno si se comió algo y vacío si no: nunca NaN ni Infinity.
+                fracciones={Object.fromEntries(MACROS.map((m) => [m, !meta ? 0 : meta[m] > 0 ? comido[m] / meta[m] : comido[m] > 0 ? 1 : 0])) as Record<Macro, number>}
               />
             )}
             {estilo === 'arco' && <Arco ancho={66} grueso={8} fraccion={fraccion} estrella={false} />}

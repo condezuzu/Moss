@@ -15,7 +15,7 @@ import { comidasDelPlan, REPARTO } from '@/dominio/plan';
 import { vigentes } from '@/dominio/registros';
 import { estadoDeLaNoche, nochesCortasSeguidas } from '@/dominio/rendimiento';
 import { deudaDeSueno, juicioDeLaDeuda, redondearDeuda, ultimasNoches } from '@/dominio/sueno';
-import { horasDeComida, suenoParaAvisos } from '@/recordatorios/programar';
+import { horasDeComida, suenoDelDia } from '@/recordatorios/programar';
 import { cuentaComoEntrenar, entrenosDelDia } from '@/salud/convertir';
 import type { TitularParaAfuera } from '../ascent/titularDeHoy';
 import { metaDelDia } from '../comida/datos';
@@ -107,10 +107,13 @@ export function energiaDeHoy(e: Estado, s: Sueno, ahora: Date, ascent: TitularPa
     : null;
 
   const ahoraMin = minutosEnElDia(ahora, hoy);
-  const avisos = suenoParaAvisos(e);
+  // La noche como la dicen los avisos, con el despertar real de hoy: sin periodo de melatonina, despertarte tarde la corre.
+  const avisos = suenoDelDia(e);
   const horas = avisos ? horasDeSueno(hoy, avisos) : null;
-  // Con la noche de anoche, la hora en que te despertaste de verdad; si no, la de siempre.
-  const despertar = anoche ? anoche.despertar - 6 * 60 : (horas?.despertar ?? null);
+  // Con la noche de anoche, la hora en que te despertaste de verdad; si no, la que supo Moss o, mientras no la sabe,
+  // la de siempre (con el despertar real sin saber, horasDeSueno no da ninguna).
+  const despertar = anoche ? anoche.despertar - 6 * 60
+    : (horas?.despertar ?? (avisos ? horasDeSueno(hoy, { ...avisos, despertarReal: undefined }).despertar : null));
   const cama = horas?.acostarse ?? null;
   const n = comidasHabituales(e.registros.values(), hoy);
   const deSiempre = horasDeComida(e);

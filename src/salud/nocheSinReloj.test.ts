@@ -67,6 +67,27 @@ describe('la noche de anoche, sin reloj', () => {
     // Ya la mandó: la noche es la suya.
     expect(await conAnillo([20, 21, 22])).toBeUndefined();
   });
+
+  it('una siesta en Salud no es la noche: con el anillo cargando de noche y una siesta de 14:00 a 14:40, estima igual', async () => {
+    mockMovimiento = [];
+    const instante = el(22, 15, 0);
+    const anillo: Fuente = { id: 'com.ouraring.oura', nombre: 'Oura', tipo: 'otra' };
+    const zona = -instante.getTimezoneOffset();
+    const a = almacenCon(() => instante);
+    await a.iniciar();
+    a.ponerSalud({
+      dia: '2026-10-22', valores: {}, soloEnCama: new Map(), fuentes: [anillo], aparatos: [], pasosRecientes: [],
+      noches: armarNoches([{ etapa: 'nucleo', desde: el(22, 14).getTime(), hasta: el(22, 14, 40).getTime(), fuente: anillo.id, zona }], [anillo]),
+      lecturas: { frecuencia: [], variabilidad: [], respiracion: [], reposo: new Map() }, pesos: new Map(),
+    });
+    a.anotarUso('abrir', el(21, 23, 0).getTime());
+    a.anotarUso('cerrar', el(21, 23, 10).getTime());
+    a.anotarUso('abrir', el(22, 7, 20).getTime());
+    a.anotarUso('cerrar', el(22, 7, 25).getTime());
+    await estimarAnoche(a, instante);
+    const hora = a.estado().noches.get('2026-10-22')?.hora;
+    expect([hora?.origen, hora?.dormirse, hora?.despertar]).toEqual(['estimada', iso(21, 23, 25), iso(22, 7, 20)]);
+  });
 });
 
 describe('rehacer las noches estimadas con la regla del 17/11/2026, una sola vez', () => {

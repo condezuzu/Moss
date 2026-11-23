@@ -255,7 +255,7 @@ describe('lo que hay que hacer hoy', () => {
     expect(aLa(dia({ ajustes: { ...sinDesayuno, deuda: { encendido: false }, pesarse: undefined }, pendientes }), 'pendientes')).toBe(h('10:00'));
     // Si Moss se enteró tarde de tu despertar, igual: es para todo el día.
     const tarde: Sueno = { ...conDespertar(h('8:00')), despertarSabido: (d) => (d === VIERNES ? h('10:30') : null) };
-    expect(aLa(dia({ ajustes: conAnotar, pendientes, sueno: tarde }), 'pendientes')).toBe(h('10:52'));
+    expect(aLa(dia({ ajustes: conAnotar, pendientes, sueno: tarde }), 'pendientes')).toBe(h('11:32'));
   });
 
   it('con los dos de lo pendiente son doce, y entran: el máximo de fábrica sube solo con ellos', () => {
@@ -357,8 +357,15 @@ describe('cuándo te despertaste de verdad', () => {
     // El despertador sí, aunque sea temprano: lo paraste.
     expect(de({ anclas: [h('3:50'), h('4:30')] })).toBe(h('4:30'));
     expect(de({ salud: h('11:30') })).toBeNull();
-    // Sin noches para saber lo de siempre, desde el corte.
-    expect(de({ aperturas: [h('4:20')], habitual: null })).toBe(h('4:20'));
+  });
+
+  it('sin noches para saber lo de siempre, como si te despertaras a las 7:30: abrir Moss de madrugada tampoco es despertarse', () => {
+    expect(de({ aperturas: [h('4:20'), h('6:10')], habitual: null })).toBe(h('6:10'));
+    expect(de({ aperturas: [h('0:30')], corte: 0, habitual: null })).toBeNull();
+    expect(de({ aperturas: [h('4:10')], habitual: null })).toBeNull();
+    expect(de({ salud: h('3:00'), aperturas: [h('8:00')], corte: 0, habitual: null })).toBe(h('8:00'));
+    // El despertador sí, desde el corte.
+    expect(de({ anclas: [h('4:10')], habitual: null })).toBe(h('4:10'));
   });
 });
 
@@ -378,7 +385,37 @@ describe('lo de la mañana, desde que Moss lo sabe', () => {
     const tarde = dia({ sueno: sabido(h('10:30')) });
     expect(ids(tarde)).not.toContain('deuda');
     expect(ids(tarde)).not.toContain('pesarse');
-    expect(aLa(tarde, 'desayuno')).toBe(h('10:32'));
+    // Después de sus lugares, que guardan aunque no suenen.
+    expect(aLa(tarde, 'desayuno')).toBe(h('11:12'));
+  });
+
+  it('«¿Desayunas hoy?» no suena pasada la hora del almuerzo, aunque Moss se entere tarde', () => {
+    // Te despertaste a las 7 y Moss se enteró a las 16: ni la pregunta ni la hora del desayuno.
+    const lista = dia({ sueno: sabido(h('16:00')), ahora: h('16:00') });
+    expect(ids(lista)).not.toContain('desayuno');
+    expect(ids(lista)).not.toContain('horario:desayuno');
+    // Si se enteró antes del almuerzo, sí pregunta.
+    expect(aLa(dia({ sueno: sabido(h('11:30')), ahora: h('11:30') }), 'desayuno')).toBeLessThan(h('13:00'));
+  });
+
+  it('si después llega un despertar más temprano (la noche del anillo), lo que ya sonó sigue contando y la pregunta no se pierde', () => {
+    // Abriste Moss a las 9:30: la deuda a las 9:32, pesarse a las 9:52 y la pregunta a las 10:12. Con ocho como máximo,
+    // las luces y bajar el ritmo no entran.
+    const abriste = (despertar: string): Sueno => ({ ...conDespertar(h(despertar)), despertarSabido: (d) => (d === VIERNES ? h('9:30') : null) });
+    const ocho = { ...AJUSTES, maximoPorDia: 8 };
+    const antes = dia({ ajustes: ocho, sueno: abriste('9:30'), ahora: h('9:31') });
+    expect([aLa(antes, 'deuda'), aLa(antes, 'pesarse'), aLa(antes, 'desayuno')]).toEqual([h('9:32'), h('9:52'), h('10:12')]);
+    expect(ids(antes)).not.toContain('luces');
+    // A las 10 llega la noche del anillo: te despertaste a las 5:30. La pregunta sigue a las 10:12, y lo que ya sonó
+    // sigue ocupando su lugar en el máximo.
+    const despues = dia({ ajustes: ocho, sueno: abriste('5:30'), ahora: h('10:00') });
+    expect(aLa(despues, 'desayuno')).toBe(h('10:12'));
+    expect(ids(despues)).not.toContain('luces');
+    expect(ids(despues)).not.toContain('revoluciones');
+    // Sin la deuda, pesarse cuenta desde que Moss lo supo: el despertar más temprano tampoco lo adelanta.
+    const sinDeuda = { ...AJUSTES, deuda: { encendido: false } };
+    expect([aLa(dia({ ajustes: sinDeuda, sueno: abriste('9:30'), ahora: h('9:31') }), 'pesarse'), aLa(dia({ ajustes: sinDeuda, sueno: abriste('9:30'), ahora: h('9:31') }), 'desayuno')]).toEqual([h('9:40'), h('10:00')]);
+    expect(aLa(dia({ ajustes: sinDeuda, sueno: abriste('8:30'), ahora: h('9:55') }), 'desayuno')).toBe(h('10:00'));
   });
 
   it('lo de un hábito «al despertarte» tampoco suena antes de saberlo', () => {

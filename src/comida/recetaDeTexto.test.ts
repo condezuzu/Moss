@@ -42,6 +42,16 @@ describe('las cantidades', () => {
     espera('Medio kilo de carne picada', [0.5, 'kg', 'carne picada', null]);
     espera('Cuarto kilo de jamón', [0.25, 'kg', 'jamón', null]);
     espera('1 kilo y medio de papas', [1.5, 'kg', 'papa', null]);
+  });
+
+  it('la medida sin número, seguida de «y medio» o de «de», es una', () => {
+    espera('Kilo y medio de asado', [1.5, 'kg', 'asado', null]);
+    espera('Taza y media de arroz', [1.5, 'taza', 'arroz', null]);
+    espera('Litro y medio de agua', [1.5, 'l', 'agua', null]);
+    espera('Kilo de asado', [1, 'kg', 'asado', null]);
+    espera('Cup and a half of flour', [1.5, 'taza', 'flour', null], 'en');
+    // Sola, o en plural, no es una medida: el queso feta sigue siendo queso.
+    expect(resumen(leerReceta('Tomate y feta', 'es').lineas)).toEqual([[null, null, 'tomate', null], [null, null, 'feta', null]]);
     espera('Media docena de huevos', [6, null, 'huevo', null]);
     espera('Un par de tomates', [2, null, 'tomate', null]);
     // «cuarto» es ¼ solo con una unidad: «1 cuarto de pollo» es una presa.

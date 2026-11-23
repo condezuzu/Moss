@@ -435,6 +435,8 @@ type Pieza = { desde: number; hasta: number; texto: string };
 const RE_VAGO = /(un poco(?: de)?|un poquito(?: de)?|algo de|a little(?: bit)?(?: of)?|a bit(?: of)?|some|unos|unas|algunos|algunas|varios|varias|a few|several)(?![\p{L}])/uy;
 /** Las unidades que también se escriben sin número: «Pizca de sal», «Hojas de laurel», «Pinch of salt». */
 const SIN_NUMERO = new Set<Unidad>(['pizca', 'chorrito', 'puñado', 'hoja', 'rama', 'atado']);
+/** Lo que, después de otra medida sin número, dice que es una: «kilo y medio de…», «taza de…». */
+const RE_SIGUE_A_LA_MEDIDA = new RegExp(`${RE_Y_MEDIO.source}|(?:de|of)(?![\\p{L}])`, 'uy');
 /** Las que en inglés pueden ir después del alimento: «garlic cloves», «basil leaves», «chicken pieces». */
 const DESPUES_DEL_ALIMENTO = new Set<Unidad>(['diente', 'hoja', 'rama', 'rebanada', 'cabeza', 'filete', 'trozo', 'unidad']);
 const RE_JUGO = /(?:(?:el|la|las|los|the)\s+)?(jugo|zumo|ralladura|cascara|claras?|yemas?|juice|zest)\s+(?:de|del|of)\s+/uy;
@@ -560,11 +562,19 @@ function leerTramo(original: string, idioma: Idioma): Tramo {
     }
     tamano = tamano ?? leerTamano(l);
   } else {
+    // Las otras medidas, sin número, son una si van en singular y sigue «y medio» o «de»: «kilo y medio
+    // de asado», «taza de arroz». Solas no: «feta» también es un queso.
     const sola = probar(l, () => {
       const u = leerUnidad(l, idioma);
-      return u && SIN_NUMERO.has(u) ? u : null;
+      if (!u || SIN_NUMERO.has(u)) return u;
+      const desde = l.i;
+      const sigue = !/s$/.test(p.slice(0, desde).trim()) && tomar(l, RE_SIGUE_A_LA_MEDIDA);
+      l.i = desde;
+      return sigue ? u : null;
     });
     if (sola) [unidad, cantidad] = [sola, /s$/.test(p.slice(0, l.i).trim()) ? null : 1];
+    const yMedio = cantidad === null ? null : tomar(l, RE_Y_MEDIO);
+    if (yMedio) cantidad = 1 + valorDeYMedio(yMedio[1]);
   }
   if (cantidad !== null || unidad) tomar(l, /(?:de|del|of)(?![\p{L}])/uy);
   const inicio = l.i;
@@ -679,6 +689,8 @@ function ingredientesDeLinea(linea: string, idioma: Idioma): LineaDeReceta[] {
     for (const m of p.slice(a, b).matchAll(/\s(?:y|and)\s/g)) {
       const k = a + m.index!;
       if (hondura[k] > 0) continue;
+      // «Kilo y medio de asado»: la medida sola con su «y medio» es la cantidad, no otro alimento.
+      if (unidadDePalabra(linea.slice(inicio, k)) && tomar({ o: linea, p, i: k }, RE_Y_MEDIO)) continue;
       const izquierda = leerTramo(linea.slice(inicio, k), idioma);
       const derecha = leerTramo(linea.slice(k + m[0].length, b), idioma);
       if (izquierda.buscado && derecha.buscado) {

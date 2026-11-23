@@ -12,7 +12,7 @@ import { totalDelDia, vigentes } from '@/dominio/registros';
 import { pareceIncompleta, ultimasNoches } from '@/dominio/sueno';
 import { hayCompras } from '@/lib/premium';
 import { entrenosDelDia, type EntrenoDeSalud } from '@/salud/convertir';
-import { cafeinaPorToma, horaDeReloj, horasDeComida, suenoParaAvisos } from '@/recordatorios/programar';
+import { cafeinaPorToma, horaDeReloj, horasDeComida, suenoDelDia } from '@/recordatorios/programar';
 import { t } from '@/textos';
 import { suenoDe } from '../persona';
 import { duracion, metaDelDia } from './datos';
@@ -51,7 +51,8 @@ export function contextoDeHoy(e: Estado, ahora: Date): Contexto | null {
     const cuando = !antes ? hora : r.comida === 'snack' ? Math.max(antes.hora, hora) : Math.min(antes.hora, hora);
     anotado[r.comida] = { hora: cuando, proteina: (antes?.proteina ?? 0) + r.valores.proteina, kcal: (antes?.kcal ?? 0) + r.valores.kcal };
   }
-  const sueno = suenoParaAvisos(e);
+  // Como los avisos, con el despertar real de hoy: sin periodo de melatonina, despertarte tarde corre la noche.
+  const sueno = suenoDelDia(e);
   const horas = sueno ? horasDeSueno(e.hoy, sueno) : { despertar: null, dormir: null, acostarse: null };
   const comido = totalDelDia(e.registros.values(), e.hoy, false);
   return {

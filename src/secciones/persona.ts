@@ -7,8 +7,8 @@ import type { Estado } from '@/almacen/almacen';
 import { controlSemanal, estadoDelControl, tendencia, ultimoDiaDeControl, type ComidaDelDia, type Control, type EstadoDelControl, type Peso } from '@/dominio/control';
 import { rangoDeGrasa, ultimasMedidas, type Medidas, type RangoDeGrasa } from '@/dominio/cuerpo';
 import { diaDeLaSemana, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
-import { edadDe, metaPara, objetivoPermitido, type Macros, type Perfil } from '@/dominio/metas';
-import { balance, progresoAlObjetivo, type Balance, type Progreso } from '@/dominio/progreso';
+import { edadDe, metaPara, objetivoPermitido, RITMOS, type Macros, type Perfil } from '@/dominio/metas';
+import { balance, plazoVigente, progresoAlObjetivo, type Balance, type Progreso } from '@/dominio/progreso';
 import { comidasParaElControl, vigentes } from '@/dominio/registros';
 import { conNochesDeMoss } from '@/dominio/sinReloj';
 import { necesidad, type Fuente, type Medida, type Noche, type NochePropia } from '@/dominio/sueno';
@@ -73,7 +73,18 @@ export function comidasDeEjemplo(hoy: ClaveDia): ComidaDelDia[] {
   return lista;
 }
 
-export function calcularPersona(e: Pick<Estado, 'hoy' | 'perfil' | 'pesos' | 'metas' | 'registros' | 'medidas'>): Persona {
+/**
+ * El ritmo del plan, en % del peso por semana, el mismo de Progreso: lo elegido en Ritmo y plazo o la fecha del
+ * cuestionario (plazoVigente) y, sin eso, el del perfil, que elegir el plazo no cambia. Manteniendo, null.
+ */
+export function ritmoDelPlan(e: Pick<Estado, 'perfil' | 'plazo' | 'respuestas'>): number | null {
+  const objetivo = e.perfil ? objetivoPermitido(e.perfil) : 'mantener';
+  if (!e.perfil || objetivo === 'mantener') return null;
+  const r = e.respuestas;
+  return plazoVigente(e.plazo, r ? { fecha: r.fecha, pct: r.eleccion.pct } : null)?.pct ?? Math.abs(RITMOS[objetivo][e.perfil.ritmo]);
+}
+
+export function calcularPersona(e: Pick<Estado, 'hoy' | 'perfil' | 'pesos' | 'metas' | 'registros' | 'medidas'> & Partial<Pick<Estado, 'plazo' | 'respuestas'>>): Persona {
   const hoy = e.hoy;
   const deEjemplo = !e.perfil || e.pesos.length === 0;
   const ej = deEjemplo ? ejemplo(hoy) : null;
@@ -136,7 +147,11 @@ export function calcularPersona(e: Pick<Estado, 'hoy' | 'perfil' | 'pesos' | 'me
     cambio7: atras(7), cambio30: atras(30), pesoInicial,
     serie: serieDe(t, pesos, hoy, 56), serieDesde: sumarDias(hoy, -55), serie30: serieDe(t, pesos, hoy, 30),
     // Sin déficit, bajar queda en mantener (objetivoPermitido): el progreso es el de mantener.
-    progreso: progresoAlObjetivo({ hoy, tendencia: t, pesadas: pesos, objetivo: objetivoPermitido(perfil), ritmo: perfil.ritmo, pesoMeta: perfil.pesoMeta, pesoInicial }),
+    // El ritmo del plan, el mismo de Progreso: lo elegido en Ritmo y plazo, aunque el perfil diga otro.
+    progreso: progresoAlObjetivo({
+      hoy, tendencia: t, pesadas: pesos, objetivo: objetivoPermitido(perfil), ritmo: perfil.ritmo, pesoMeta: perfil.pesoMeta, pesoInicial,
+      pct: ej ? null : ritmoDelPlan({ perfil, plazo: e.plazo ?? null, respuestas: e.respuestas ?? null }),
+    }),
     gasto,
     balance: gasto !== null ? balance(comidas, gasto, sumarDias(hoy, -1), 7) : { dias: [], promedio: null },
     control,

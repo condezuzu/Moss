@@ -15,7 +15,7 @@ import { COMIDAS, type Comida } from '@/dominio/comidas';
 import { metaDeAgua } from '@/dominio/cuidados';
 import { sumarDias } from '@/dominio/fechas';
 import { CON_WIDGETS_NUEVOS } from '@/lib/banderas';
-import { suenoParaAvisos } from '@/recordatorios/programar';
+import { suenoDelDia } from '@/recordatorios/programar';
 import { nocheDeAhora } from '@/salud/nocheSinReloj';
 import { metaDelDia, numero, totalDe } from '@/secciones/comida/datos';
 import { enlaceASeccion, enlaceDeAnotar } from '@/secciones/enlaces';
@@ -229,7 +229,8 @@ async function unaVuelta() {
 
 /** A qué hora ir a la cama esta noche (D33). Sin noches de verdad o sin hora de despertarse, no hay «A dormir». */
 function horaDeDormirHoy(e: Estado, ahora: Date): { acostarse: number; despertar: number | null } | null {
-  const sueno = suenoParaAvisos(e);
+  // La del aviso, con el despertar real de hoy: sin periodo de melatonina, despertarte tarde corre la noche.
+  const sueno = suenoDelDia(e);
   if (!sueno) return null;
   // La de la noche de la línea, que cambia a las 4 y no con el corte (D32).
   const h = horasDeSueno(nocheDeAhora(ahora), sueno);
@@ -260,7 +261,7 @@ export function actualizarWidgets(): Promise<void> {
 }
 
 /** Lo que muestran los widgets: si cambia, se escriben de nuevo. */
-const queMuestran = (e: Estado) => [e.listo, e.hoy, e.corte, e.latencia, e.necesidad, e.perfil, e.habitos, e.periodos, e.dias, e.marcas, e.noches, e.salud, e.metas, ...(CON_WIDGETS_NUEVOS ? [e.registros, e.agua, e.pesos, e.cuidados] : [])] as const;
+const queMuestran = (e: Estado) => [e.listo, e.hoy, e.corte, e.latencia, e.necesidad, e.despertares, e.perfil, e.habitos, e.periodos, e.dias, e.marcas, e.noches, e.salud, e.metas, ...(CON_WIDGETS_NUEVOS ? [e.registros, e.agua, e.pesos, e.cuidados] : [])] as const;
 
 /**
  * En la raíz de la app: al estar listo el almacén, al volver a Moss y cuando cambia algo que muestran,

@@ -120,7 +120,7 @@ const CORRECCION_DESPUES = new RegExp(
 const OTRO_ALIMENTO = new RegExp(`\\s*,?\\s+(?:no|digo|perd[oó]n|i mean|sorry)(?:\\s*,)?\\s+(?:(?:mejor|digo|era|fue|it was)\\s+)?(?=(?:${NUMERO}|unos|unas|some)\\s)`, 'gu');
 /** Lo que queda de esa corrección, solo: «no», «no, mejor». */
 const ES_CORRECCION = /^(?:no|digo|perd[oó]n|i mean|sorry)(?:[\s,]+(?:mejor|digo|era|fue|it was))?$/u;
-/** «Un huevo y medio», «una pizza y media»: uno y medio de eso. */
+/** «Un huevo y medio», «una pizza y media»: uno y medio de eso, si cierra lo de antes (cierraLoDeAntes). */
 const Y_MEDIO = new RegExp(`(?<![\\p{L}])(${NUMERO})((?:\\s+(?!(?:y|e|and|con|with)(?![\\p{L}]))[\\p{L}]+){1,3}?)\\s+(?:y|and\\s+a)\\s+(?:medio|media|half)(?![\\p{L}])`, 'gu');
 /** «Café con dos medialunas»: lo que sigue al «con» con su cantidad es otra cosa, no un acompañante. */
 const CON_CANTIDAD = new RegExp(`\\s(?:con|with)\\s+(?=(?:${NUMERO}|un par de|a couple of)\\s)`, 'gu');
@@ -139,14 +139,30 @@ const ABRE_CANTIDAD_EN = /^(?:\d+(?:[.,]\d+)?|\d*½|a|an|one|two|three|four|five
 /** Lo que, antes de una cantidad, la deja en el mismo alimento: «un plato de dos…», «y medio», «con dos». */
 const NO_CORTA_DESPUES = /^(?:de|del|of|con|with|y|e|and|o|or|a|al|en|el|la|los|las|the|por|x|medio|media|half|cada|sin|mas|más|plus|par|docena|dozen|kilo|kilos|litro|litros)$/u;
 
-/** Corta en las comas (no en «1,5»), en «y» cuando sigue otro alimento («jamón y queso» queda junto, y «y medio» es cantidad) y donde empieza otra cantidad. */
+/**
+ * Si el «y medio» que sigue a `antes` es su fracción: al final, antes de una coma, de otro «y» o de un
+ * «con» («un huevo y medio»), o antes de «de X» si lo de antes no tenía su «de» («una taza y media de
+ * arroz»). Si sigue un alimento («y media palta») o lo de antes ya tenía su «de» («una cucharada de
+ * aceite y media de manteca»), es otro alimento. `despues` es lo que sigue al «medio».
+ */
+function cierraLoDeAntes(antes: string, despues: string): boolean {
+  if (/^\s*(?:$|[,.;]|(?:y|e|and|con|with)(?![\p{L}]))/u.test(despues)) return true;
+  return /^\s+(?:de|of)\s/u.test(despues) && !/(?<![\p{L}])(?:de|del|of)(?![\p{L}])/u.test(antes);
+}
+const SOLO_NUMERO = new RegExp(`^${NUMERO}$`, 'u');
+
+/** Corta en las comas (no en «1,5»), en «y» cuando sigue otro alimento («jamón y queso» queda junto, y «y medio» que cierra lo de antes es cantidad) y donde empieza otra cantidad. */
 function pedazos(texto: string, idioma: Idioma): string[] {
   const salida: string[] = [];
   for (const p of texto.split(/,(?!\d)/)) {
     let desde = 0;
     for (const m of p.matchAll(/\s(?:y|e|and)\s/gu)) {
       const derecha = p.slice(m.index + m[0].length);
-      if (EMPIEZA_ALIMENTO.test(derecha) && !/^(?:an?\s+)?(?:medio|media|half)(?![\p{L}])/u.test(derecha)) {
+      const medio = /^(?:an?\s+)?(?:medio|media|half)(?![\p{L}])/u.exec(derecha);
+      const antes = limpiar(p.slice(desde, m.index));
+      // «Two and a half eggs»: después de un número solo, siempre es la fracción.
+      const fraccion = medio && (SOLO_NUMERO.test(antes) || cierraLoDeAntes(antes, derecha.slice(medio[0].length)));
+      if (EMPIEZA_ALIMENTO.test(derecha) && !fraccion) {
         salida.push(...sinComas(p.slice(desde, m.index), idioma));
         desde = m.index + m[0].length;
       }
@@ -348,12 +364,14 @@ function prepararGrupo(texto: string): string {
   // «Dos huevos, no, tres huevos»: el nombre repetido queda una vez.
   s = s.replace(/(?<![\p{L}])(\p{L}{3,}?)(e?s)?\s+\1(e?s)?(?![\p{L}])/gu, '$1$3');
   s = s.replace(OTRO_ALIMENTO, ', no, ');
-  s = s.replace(Y_MEDIO, (todo: string, n: string, cosa: string) => {
+  s = s.replace(CON_CANTIDAD, ', ');
+  s = s.replace(SEPARADORES, ', ');
+  // Después de los separadores: «un huevo y medio después un café» ya tiene la coma que lo cierra.
+  s = s.replace(Y_MEDIO, (todo: string, n: string, cosa: string, desde: number, todoElTexto: string) => {
+    if (!cierraLoDeAntes(cosa, todoElTexto.slice(desde + todo.length))) return todo;
     const valor = VALOR_DE_PALABRA[n] ?? Number(n.replace(',', '.'));
     return Number.isInteger(valor) && valor > 0 ? `${valor}½${cosa}` : todo;
   });
-  s = s.replace(CON_CANTIDAD, ', ');
-  s = s.replace(SEPARADORES, ', ');
   return s.trim();
 }
 

@@ -310,8 +310,9 @@ export function desdeLoGuardado(e: Pick<Estado, 'perfil' | 'pesos' | 'hoy' | 're
     r.proteina = g.proteina;
     if (g.experiencia) r.experiencia = g.experiencia;
     if (g.despues) r.despues = g.despues;
+    // De la figura o de la cinta solo queda el porcentaje: vuelve como dicho, así guardar sin tocarla no la pierde.
     if (g.grasa) {
-      r.grasaModo = g.grasa.como === 'dicha' ? 'dicha' : 'no';
+      r.grasaModo = 'dicha';
       r.grasaPct = g.grasa.pct;
     }
     r.horarios = Object.fromEntries(CON_HORA.map((c) => [c, g.horarios[c] ?? HORA_TIPICA[c]])) as Contestado['horarios'];

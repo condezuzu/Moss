@@ -534,9 +534,14 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
     && !(a.comida && (op.anotadas?.has(a.comida) || yaPasoLaComida(a.comida)))
     && !(a.tipo === 'pesarse' && (op.pesado || op.anotadas?.has('desayuno')));
   const yaPaso = (a: Aviso) => op.ahora !== undefined && a.minutos <= op.ahora;
+  // Nada suena más tarde que en el plan entero, con lo hecho y lo que no suena adentro: lo que sonó un rato antes
+  // porque después venía algo que importa más no vuelve a sonar a su hora si eso se hace después, y si se hizo antes,
+  // suena igual a esa hora. Lo hecho antes de su hora sí deja de atrasar a los que esperaban.
+  const enElPlan = new Map(acomodar(plan.avisos, categoria).map((a) => [a.id, a.minutos]));
   // Lo de después de un evento y lo que falta buscan su hueco entre todo lo acomodado, también lo que ya
   // sonó y después se hizo: así, al reprogramar, cada uno sale siempre en el mismo lugar.
-  const puestos = acomodar(plan.avisos.filter((a) => falta(a) || yaPaso(a)), categoria);
+  const puestos = acomodar(plan.avisos.filter((a) => falta(a) || yaPaso(a)), categoria)
+    .map((a) => ({ ...a, minutos: Math.min(a.minutos, enElPlan.get(a.id) ?? a.minutos) }));
   const quedan = puestos.filter(falta);
   for (const e of conEvento) {
     const paso = op.eventos?.[e.evento];

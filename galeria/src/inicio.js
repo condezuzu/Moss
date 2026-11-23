@@ -821,9 +821,11 @@ const SeccionInicio = (() => {
       const c = carta('in-control', null, 2);
       const cuando = e.faltan === 1 ? tx('progreso.manana') : tx('progreso.enDias', { n: e.faltan });
       const titulo = e.faltan === 0 ? tx('inicio.control.hoy') : tx('inicio.control.titulo', { dia: tx('fecha.dias.' + Fechas.diaDeLaSemana(e.fecha)), cuando });
-      const falta = e.pesadas < e.minimos.pesadas ? tx('inicio.control.faltaPesada')
-        : e.diasConComida < e.minimos.diasConComida ? u.plural('inicio.control.faltanDias', e.minimos.diasConComida - e.diasConComida)
-        : tx('inicio.control.listo');
+      // Como la app (Control.tsx, loQueFalta): «listo» solo si alcanza; con el tramo corto, ese control no mide.
+      const falta = e.alcanza ? tx('inicio.control.listo')
+        : e.tramoCorto ? tx('progreso.control.textos.faltanDatos')
+        : e.pesadas >= e.minimos.pesadas && e.diasConComida < e.minimos.diasConComida ? u.plural('inicio.control.faltanDias', e.minimos.diasConComida - e.diasConComida)
+        : tx('inicio.control.faltaPesada');
       const textos = el('div', 'in-control-textos');
       textos.append(el('b', null, titulo), el('span', null, falta));
       const fila = el('div', 'in-control-fila');

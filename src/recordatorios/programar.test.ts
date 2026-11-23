@@ -16,7 +16,7 @@ import type { Registro } from '@/dominio/registros';
 
 type Disparador = { type: string; date?: Date; year?: number; month?: number; day?: number; hour?: number; minute?: number };
 /** Lo programado, con la fecha en que suena (de un disparador de calendario o de fecha). */
-const programadas: { content: { title: string; body: string; data: { tipo: string; que?: string }; categoryIdentifier?: string }; trigger: { date: Date }; tipo: string }[] = [];
+const programadas: { content: { title: string; body: string; data: { tipo: string; que?: string; dia?: string }; categoryIdentifier?: string }; trigger: { date: Date }; tipo: string }[] = [];
 /** Los avisos que ya llegaron (el centro de notificaciones) y los que Moss sacó de ahí. */
 let mockLlegados: { date: number; request: { identifier: string; content: { data: Record<string, unknown> } } }[] = [];
 const mockSacados: string[] = [];
@@ -62,7 +62,9 @@ const { t } = require('@/textos') as typeof import('@/textos');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { suenoDe } = require('@/secciones/persona') as typeof import('@/secciones/persona');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { lineasDeHoy } = require('@/secciones/comida/entreno') as typeof import('@/secciones/comida/entreno');
+const { contextoDeHoy, lineasDeHoy } = require('@/secciones/comida/entreno') as typeof import('@/secciones/comida/entreno');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { energiaDeHoy } = require('@/secciones/sueno/datosDeEnergia') as typeof import('@/secciones/sueno/datosDeEnergia');
 const MERIENDA = () => t('recordatorios.horario.merienda');
 
 const HOY = '2026-11-02';
@@ -270,6 +272,28 @@ describe('los avisos que se programan', () => {
     mockLlegados = [];
   });
 
+  it('en iOS la hora de lo que llegó viene en segundos: el de hoy sin día queda en la pantalla bloqueada; el de ayer sale', async () => {
+    // iOS da timeIntervalSince1970 (segundos); Android, milisegundos. Leído como milisegundos, cae en 1970.
+    const enSegundos = (identifier: string, cuando: Date, data: Record<string, unknown>) => ({ date: cuando.getTime() / 1000, request: { identifier, content: { data } } });
+    mockLlegados = [
+      enSegundos('entrenar-hoy', a(9), { tipo: 'habito' }),
+      enSegundos('entrenar-ayer', new Date(2026, 10, 1, 21, 0), { tipo: 'habito' }),
+      enSegundos('prueba', new Date(2026, 10, 1, 21, 0), { tipo: 'prueba' }),
+    ];
+    mockSacados.length = 0;
+    await programarAvisos(estado());
+    expect(mockSacados).toEqual(['entrenar-ayer']);
+    mockLlegados = [];
+  });
+
+  it('cada aviso lleva su día, no solo los de una comida: así no depende de la hora que da el teléfono', async () => {
+    await programarAvisos(estado());
+    const calendario = programadas.filter((p) => p.tipo === 'calendar');
+    expect(calendario.length).toBeGreaterThan(0);
+    expect(calendario.find((p) => p.content.body === 'Entrenar')?.content.data.dia).toBe(HOY);
+    expect(calendario.every((p) => /^\d{4}-\d{2}-\d{2}$/.test(p.content.data.dia ?? ''))).toBe(true);
+  });
+
   it('mientras Apple no contesta, lo programado queda como estaba', async () => {
     await programarAvisos(estado());
     const antes = programadas.length;
@@ -472,6 +496,28 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
     const acostarte = dice('dormir')[0];
     // Despertarte a las 7:00 con 8 h: dormirte a las 23:00 y, con el margen, acostarte a las 22:45.
     expect([hora(acostarte), acostarte.content.title]).toEqual([22 * 60 + 15, t('recordatorios.acostarte.titulo', { cama: '22:45' })]);
+  });
+
+  it('sin periodo, Energía y la línea de entrenar dicen la misma hora de acostarte que el aviso, también con el despertar de hoy', async () => {
+    // De 0:00 a 7:00, y solo noches de hace más de una semana: sin periodo de melatonina.
+    const viejas = new Map([...noches].filter(([fecha]) => fecha < sumarDias(HOY, -6)).map(([fecha, n]) => [fecha, { ...n, hora: { ...n.hora, dormirse: local(fecha, 0) } }]));
+    const entreno = { dias: [1], hora: 19 * 60, minutos: 60, tipo: 'fuerza' };
+    const con = (despertares: Estado['despertares']) => conNoches({ noches: viejas, despertares, entreno } as unknown as Partial<Estado>);
+    const ahora = a(9, 10);
+    jest.setSystemTime(ahora);
+    const dicen = async (e: Estado) => {
+      await programarAvisos(e);
+      const energia = energiaDeHoy(e, suenoDe(HOY, e.perfil, e.salud, e.noches, e.necesidad), ahora);
+      return { aviso: dice('dormir')[0]?.content.title, energia: energia?.noche?.cama, entreno: contextoDeHoy(e, ahora)?.acostarse, despertar: energia?.despertar };
+    };
+    // Despertarte a las 9:00 y no a las 7:00 corre la noche: a la cama a las 23:45, no a las 22:45.
+    expect(await dicen(con({ [HOY]: { despertar: 9 * 60, sabido: 9 * 60 + 5 } }))).toEqual({
+      aviso: t('recordatorios.acostarte.titulo', { cama: '23:45' }), energia: '23:45', entreno: 23 * 60 + 45, despertar: 9 * 60,
+    });
+    // Sin saber todavía a qué hora te despertaste, la de siempre en todos; Energía sigue con tu despertar de siempre.
+    expect(await dicen(con({}))).toEqual({
+      aviso: t('recordatorios.acostarte.titulo', { cama: '22:45' }), energia: '22:45', entreno: 22 * 60 + 45, despertar: 7 * 60,
+    });
   });
 
   it('con el despertar, de a uno desde que se supo: la deuda, pesarse y «¿Desayunas hoy?» con sus dos botones', async () => {

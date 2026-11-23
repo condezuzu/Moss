@@ -79,6 +79,23 @@ describe('lo que se guarda, y contestarlo otra vez', () => {
     });
     expect(metaDeAhora(otra, HOY).metas).toEqual(metaDeAhora(r, HOY).metas);
   });
+
+  it('la grasa de la figura vuelve: cambiar solo la hora de despertar no cambia la meta', () => {
+    // La séptima figura de hombre es de 30 a 34 %: 32 %.
+    const r: Contestado = { ...el, pesoKg: 90, grasaModo: 'imagen', figura: 6 };
+    const { c, nuevo } = paraGuardar(r, HOY, []);
+    expect(nuevo.respuestas.grasa).toEqual({ como: 'imagen', pct: 32 });
+    const e = {
+      hoy: HOY,
+      perfil: { sexo: c.sexo, nacimiento: 2026 - c.edad, alturaCm: c.alturaCm, actividad: c.actividad, objetivo: c.objetivo, ritmo: c.ritmo, actualizado: '' },
+      pesos: [{ fecha: HOY, kg: 90, origen: 'manual', momento: '' }],
+      respuestas: nuevo.respuestas, cuidados: nuevo.cuidados, entreno: nuevo.entreno,
+    } as unknown as Estado;
+    const otra = desdeLoGuardado(e);
+    const otraVez = paraGuardar({ ...otra, sueno: { ...otra.sueno, despertar: otra.sueno.despertar + 30 } }, HOY, []);
+    expect(otraVez.nuevo.respuestas.grasa?.pct).toBe(32);
+    expect(otraVez.nuevo.meta).toEqual(nuevo.meta);
+  });
 });
 
 describe('cuando llegues, ¿qué sigue?', () => {

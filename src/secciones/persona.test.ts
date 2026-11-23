@@ -1,8 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
 
+import type { RespuestasGuardadas } from '@/dominio/cuestionario';
 import { sumarDias } from '@/dominio/fechas';
 import type { MetaGuardada, Perfil } from '@/dominio/metas';
-import { calcularPersona, suenoDe } from './persona';
+import { calcularPersona, ritmoDelPlan, suenoDe } from './persona';
 
 const HOY = '2026-10-22';
 const vacio = { registros: new Map(), medidas: new Map() };
@@ -50,11 +51,35 @@ describe('la persona de Inicio y Progreso', () => {
     expect(p.pesoInicial!).toBeLessThan(86);
   });
 
+  it('el ritmo del plan es el elegido en Ritmo y plazo, aunque el perfil diga otro (como en Progreso)', () => {
+    const perfil: Perfil = { sexo: 'm', nacimiento: 1990, alturaCm: 180, actividad: 'algo', objetivo: 'bajar', ritmo: 'suave', pesoMeta: 80, actualizado: `${HOY}T08:00:00Z` };
+    const { pesos, metas } = conSalud();
+    const sinPlazo = calcularPersona({ hoy: HOY, perfil, pesos, metas, ...vacio });
+    const conPlazo = calcularPersona({ hoy: HOY, perfil, pesos, metas, ...vacio, plazo: { pct: 1, fecha: null }, respuestas: null });
+    expect(sinPlazo.progreso.ritmoPlan).toBeCloseTo(-0.0025 * sinPlazo.pesoHoy!, 6);
+    expect(conPlazo.progreso.ritmoPlan).toBeCloseTo(-0.01 * conPlazo.pesoHoy!, 6);
+  });
+
   it('sin déficit, bajar queda en mantener también en el progreso', () => {
     const perfil: Perfil = { sexo: 'f', nacimiento: 1990, alturaCm: 165, actividad: 'algo', objetivo: 'bajar', ritmo: 'recomendado', pesoMeta: 70, sinDeficit: true, actualizado: `${HOY}T08:00:00Z` };
     const { pesos, metas } = conSalud();
     const p = calcularPersona({ hoy: HOY, perfil, pesos, metas, ...vacio });
     expect(p.progreso).toMatchObject({ estado: 'estable', ritmoPlan: 0, faltan: null });
+  });
+});
+
+describe('el ritmo del plan, el mismo de Progreso', () => {
+  const perfil: Perfil = { sexo: 'm', nacimiento: 1990, alturaCm: 180, actividad: 'algo', objetivo: 'bajar', ritmo: 'suave', pesoMeta: 80, actualizado: '' };
+  const respuestas = (fecha: string | null, pct: number | null) => ({ fecha, eleccion: { pct } }) as unknown as RespuestasGuardadas;
+
+  it('lo elegido en Ritmo y plazo, aunque el perfil diga otro; sin elegir, la fecha del cuestionario; sin nada, el del perfil', () => {
+    expect(ritmoDelPlan({ perfil, plazo: { pct: 1, fecha: null }, respuestas: respuestas('2027-03-01', -0.8) })).toBe(1);
+    expect(ritmoDelPlan({ perfil, plazo: null, respuestas: respuestas('2027-03-01', -0.8) })).toBe(0.8);
+    expect(ritmoDelPlan({ perfil, plazo: null, respuestas: null })).toBe(0.25);
+  });
+
+  it('sin déficit, bajar queda en mantener: no hay ritmo', () => {
+    expect(ritmoDelPlan({ perfil: { ...perfil, sinDeficit: true }, plazo: { pct: 1, fecha: null }, respuestas: null })).toBeNull();
   });
 });
 

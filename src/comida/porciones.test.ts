@@ -181,6 +181,15 @@ describe('cantidadDePorcion', () => {
     expect(cantidadDePorcion(3, '½ cup', 'en')).toBe('1½ cups');
   });
 
+  it('las fracciones con barra también se suman: «1/2 litro» por dos es un litro', () => {
+    expect(cantidadDePorcion(2, '1/2 litro', 'es')).toBe('1 litro');
+    expect(cantidadDePorcion(3, '1/2 taza', 'es')).toBe('1½ tazas');
+    expect(cantidadDePorcion(2, '2/3 cup (55g)', 'en')).toBe('1⅓ cups (55g)');
+    expect(cantidadDePorcion(1.5, '1/2 cup (120ml)', 'en')).toBe('¾ cup (120ml)');
+    expect(cantidadDePorcion(2, '1 1/2 cups', 'en')).toBe('3 cups');
+    expect(cantidadDePorcion(3, '1/2 kg', 'es')).toBe('1,5 kg');
+  });
+
   it('los gramos y mililitros se multiplican', () => {
     expect(cantidadDePorcion(1.5, '100 g', 'es')).toBe('150 g');
     expect(cantidadDePorcion(2, '30 g', 'en')).toBe('60 g');

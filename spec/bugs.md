@@ -13,7 +13,22 @@ Dos que ya estaban arreglados ese día, antes de la búsqueda: la hora de acosta
 corrida 18 horas (04:25 en vez de 22:25: el periodo de melatonina cuenta desde las 18), y en inglés decía «Sets of 8 a
 12 reps» (el dominio devolvía el texto en español). Salieron por aire el 23/11.
 
-## Tanda A: lo que más se nota (propuesta para arreglar primero, todo por aire)
+## Tanda A: lo que más se nota (arreglada el 23/11, con tu sí, y por aire)
+
+**Estado:** los 15 arreglados, cada uno con su test que fallaba antes (2003 tests en total). Lo que quedó:
+- **El aviso «Elige tu plan» (3)** sigue llevando a Perfil: para mostrar los planes a quien todavía tiene el regalo hace
+  falta algo visual (un «Ahora no» en la pantalla de pago, o «Elegir un plan» en Tu suscripción). Va primero a la galería.
+- **Cuando Moss se entera tarde del despertar (9)**, más de 2 h después, la deuda y pesarse ya no desaparecen: guardan su
+  lugar sin sonar. Por eso «¿Desayunas hoy?» sale 20 minutos más tarde que antes en ese caso. Para que salga enseguida
+  hay que guardar el despertar que se conocía al saberlo (almacén y programar), para otra tanda.
+- **Una siesta de un día sin noche en Salud (6)** ya no es la noche, pero esa siesta todavía no suma a la deuda.
+- **La medida sin número (12)**: «filete de merluza» ahora se lee como 1 filete de merluza, igual que «un filete de
+  merluza».
+- **Con la suscripción vigente y el regalo (3)**, el acceso es el de la suscripción: no ve la bienvenida de los 3 meses.
+- Nuevo, que ya pasaba: un hábito marcado antes de su hora deja de atrasar a los demás, pero cuando pasa su hora vuelve
+  a atrasarlos, y un aviso puede sonar dos veces (leer a las 13:30, marcado a las 13:00: el almuerzo a las 13:45 y otra
+  vez a las 13:50). Se arregla con la hora en que se marcó, que programar ya tiene. Va a la tanda B.
+- Nuevo, menor: `faltaParaEstimar` (progreso.ts) no mira si el control alcanza, igual que Inicio antes.
 
 1. **En iOS, los avisos de hoy desaparecen de la pantalla bloqueada** (verificado). Al reprogramar (al abrir Moss o
    en la tarea de fondo), `sacarLosQueYaNoDicenNada` (`src/recordatorios/programar.ts:281`) toma la fecha del aviso en
