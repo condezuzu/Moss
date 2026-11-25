@@ -318,11 +318,12 @@ cambia nada. El 1 sí.
 ## Resumen
 
 1. **Hoy, limpio como el de la pantalla bloqueada:** una cifra, tres barras y la luna; la semana en el grande.
-   Por aire.
+   Por aire. **Hecho el 25/11** (spec/widgets.md, «Los widgets mejores»).
 2. **Controles «Decir lo que comí», «Escanear» y «+1 vaso»** en el Centro de control, la pantalla bloqueada y el
    botón de Acción. Build.
-3. **Tu noche en StandBy, con la cuenta hasta acostarte viva.** Por aire.
-4. **Pantalla bloqueada:** la deuda debajo de la noche y la hora de acostarte con la cuenta viva, por aire. El
+3. **Tu noche en StandBy, con la cuenta hasta acostarte viva.** Por aire. **Hecho el 25/11**, de a 5 minutos.
+4. **Pantalla bloqueada:** la deuda debajo de la noche y la hora de acostarte con la cuenta viva, por aire (**hecho el
+   25/11**). El
    agua en un redondo, «A dormir» en línea y elegir qué muestra cada uno, build.
 5. **La noche:** iOS no avisa al desbloquear, Salud no se lee bloqueado, y puede que el JavaScript no corra sin
    escena (hay que medirlo).

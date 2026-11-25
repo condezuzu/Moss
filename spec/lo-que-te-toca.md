@@ -3,7 +3,7 @@
 Todo lo que no puedo hacer yo: aprobar, decidir, entrar con tus cuentas, tocar el iPhone y lo de Ascent.
 Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar hecho: no lo puedo ver desde acá.
 
-Galería (versión 61): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
+Galería (versión 62): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 
 ## 0. El lanzamiento y la 1.1 (desde el 14/11/2026): dónde quedé
 
@@ -168,12 +168,19 @@ Falta (vos):
 
 ## 1. Ahora (no espera a nada)
 
+### Probar en tu iPhone
+
+**Los widgets mejores (aprobados el 25/11), por aire solo en `preview`** (commit a68e1c5, preview 6eae28d0; spec/widgets.md,
+«Los widgets mejores»): Hoy limpio en los tres tamaños, con la semana en el grande; Tu noche con la hora de acostarte y
+cuánto falta, de a 5 minutos, y a la mañana lo dormido con la deuda en una palabra. Quedaron como en la galería: los
+últimos 7 días (no de lunes a domingo) y sin el snack en la lista. **Te toca:** en la build `telefono`, cerrar y abrir
+Moss dos veces (para que tome la OTA y vuelva a registrar los widgets) y mirar Hoy chico, mediano y grande, StandBy a la
+noche y la pantalla bloqueada a la tardecita y a la mañana. Si se ven bien, decime y lo mando a `production`. Para ver la
+noche sin abrir Moss hace falta la próxima build (spec/estudio/widgets-y-noche.md).
+
 ### Aprobar en la galería
 
 La app no cambia hasta que digas. Sección 1.1, salvo que diga otra.
-
-**Del 25/11** (galería 61, arriba de todo en «Lo nuevo, para aprobar»; escenario `widgets-mejores`)
-- **Los widgets mejores, al lado de los de ahora:** Hoy chico (la cifra, la luna chica y P, C y G en barras finas), mediano (más las comidas, con «+633» de un toque) y grande (más los últimos 7 días contra la meta); StandBy con «A dormir 22:40 · en 53 min», en rojo con poca luz; y la pantalla bloqueada a la mañana con la noche y la deuda en una palabra, y a la tardecita con la hora de acostarte. El de las calorías que te gusta queda igual. Para decidir ahí: el grande con los últimos 7 días o de lunes a domingo, y el snack en la lista. Para ver la noche sin abrir Moss hace falta la próxima build (spec/estudio/widgets-y-noche.md).
 
 **Del 23/11** (galería 59, el primer grupo)
 - **Las estrellas de Hábitos sin nombre:** el primer toque muestra el de esa estrella, arriba o abajo y siempre entero; el segundo marca el hábito. El globito de la primera vez lo explica (escenario `tocar`).

@@ -3,6 +3,38 @@
 Investigado el 21/10/2026 y hecho el 26/10/2026, para la build de la revisión. La galería
 (escenario `widgets`, sección «Los widgets») es la referencia visual.
 
+## Los widgets mejores (25/11/2026, aprobados y programados)
+
+Lo pediste el 25/11 (spec/estudio/widgets-y-noche.md, 1.1, 1.3 y las filas 2 y 3 de la pantalla bloqueada) y lo
+aprobaste el mismo día en la galería 61 (escenario `widgets-mejores`, cada uno al lado del de antes). Va por aire: todos
+los tamaños ya estaban declarados en la build 8 (commit a68e1c5; por aire en `preview` el 25/11, 6eae28d0, para probarlo
+en tu iPhone antes de `production`).
+
+| Widget | Qué cambió |
+|---|---|
+| **Hoy, chico** | solo lo que queda en grande («1.025», «te quedan» o «de más»), la luna chica y P, C y G en barras finas, sin números de gramos. El cielo, muy tenue (0,14). Un toque abre la hoja de anotar |
+| **Hoy, mediano** | lo mismo a la izquierda y tus cuatro comidas a la derecha: la anotada, con sus kcal quietas; la de siempre, «+633» de un toque; sin nada, «+»; la tocada, «Anotado ✓». El snack no va en la lista (sí en lo que queda) |
+| **Hoy, grande** | arriba, como el mediano; abajo, tus últimos 7 días (hoy a la derecha, con lo tocado en el widget) contra la meta de hoy, la línea punteada; lo que la pasa, en oro. Ya no lleva Buscar, Decir y Código: para eso está Anotar |
+| **Tu noche, chico** (el de StandBy) | a la tardecita, «A dormir», la hora en grande y cuánto falta; a la mañana, lo dormido en grande («7 h 16») y debajo «¿Fue así?» con «Sí, fue así», o la deuda en una palabra después |
+| **Tu noche, pantalla bloqueada** | a la tardecita, la hora y cuánto falta (antes, «para despertarte a las…»); a la mañana, las dos horas y «7 h 16 · deuda baja» |
+| **Hoy, pantalla bloqueada** | igual: es el que te gusta |
+
+Cómo:
+
+- **La semana del grande es un `Chart` de barras** (Swift Charts, en el renderizador de la extensión): se adapta al alto
+  de cada iPhone. Lo que pasa la meta es una segunda barra apilada, en oro; un día sin nada, una marca chiquita. La
+  app pasa lo comido de los seis días anteriores (`semana`, sin lo planificado, como Inicio) y la letra de cada día
+  (`letras`); hoy lo suma el widget, con lo tocado.
+- **La cuenta hasta acostarte va de a 5 minutos:** una entrada de la línea cada 5 (antes, cada 30). Un `Text` con la
+  fecha relativa la bajaría solo, pero con menos de una hora cuenta también los segundos. La hora es la de tu periodo
+  de melatonina, la misma del aviso (`horasDeSueno`).
+- **La deuda es la de Sueño** (`juicioDeLaDeuda` con las noches hasta hoy) y va solo con la noche de hoy ya medida o
+  estimada: a la noche esperada (antes de abrir Moss) no se le pega, porque sería la deuda de antes de esa noche.
+- **StandBy** saca el fondo y, con poca luz, lo pone en rojo: lo hace iOS.
+
+Lo que hay que ver en el iPhone: que el gráfico se vea en la extensión (las barras, el oro y la línea punteada), la
+cuenta cada 5 minutos en StandBy y en la pantalla bloqueada, y el chico de Hoy en el iPhone más chico.
+
 ## Los widgets de la 1.1 (D43, aprobados el 2/11/2026 y programados)
 
 Lo pediste el 1/11/2026 («mejoraría los widgets») y lo aprobaste el 2/11. Está en la galería, sección «Los
