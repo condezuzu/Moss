@@ -216,7 +216,7 @@ Cuando le falte nada, el estado de cada uno pasa a **Ready to Submit**.
 
 **El corte pasó al 23/11 (24/11/2026).** Con el 14/11 (el día de la 1.0) quedaban sin regalo las cinco cuentas creadas
 del 14 al 18/11, las de los amigos del dueño, aunque los términos dicen «antes de que Moss fuera de pago», y Moss pasó
-a ser de pago el 23/11 con la 1.1. Ahora  en  y , por aire el
+a ser de pago el 23/11 con la 1.1. Ahora `EXPO_PUBLIC_PREMIUM_SALE=2026-11-23` en `production` y `preview`, por aire el
 24/11 (production df2389bb, preview fce2d1c1): las seis cuentas que había tienen el regalo hasta el 23/2/2027, sin
 hacer nada. Ninguna se creó después del 18/11. Quien ya hubiera empezado la prueba de 7 días la tiene que cancelar en
 Ajustes para que no se cobre al terminar: el regalo sigue igual.
