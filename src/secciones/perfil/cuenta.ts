@@ -66,6 +66,16 @@ async function exportar(hoy: string, alArmar?: () => void): Promise<void> {
   await Share.share({ url: lista[0].uri });
 }
 
+/** Los CSV exportados: quedan en la carpeta temporal, que iOS limpia cuando quiere. */
+function borrarLoExportado() {
+  if (Platform.OS === 'web') return;
+  try {
+    for (const f of Paths.cache.list()) if (f instanceof File && f.name.endsWith('.csv')) f.delete();
+  } catch (error) {
+    console.warn('Moss no pudo borrar lo exportado', error);
+  }
+}
+
 /**
  * El último correo que se supo, en este teléfono: sin conexión y con la sesión vencida, getSession no la
  * trae, y Perfil decía «Sin cuenta» y escondía cerrar sesión y borrar.
@@ -116,11 +126,12 @@ async function laSesion(): Promise<Session | null | undefined> {
 /** La lista de compras tachada (Plan.tsx). */
 const COMPRADAS = 'moss:compradas';
 
-/** Todo lo de la persona en el teléfono: el almacén (con tu nombre), las fotos de las comidas, tu foto, tu correo, lo tachado y lo que esperaba en el buzón. */
+/** Todo lo de la persona en el teléfono: el almacén (con tu nombre), las fotos de las comidas, tu foto, lo exportado, tu correo, lo tachado y lo que esperaba en el buzón. */
 async function borrarElTelefono() {
   await elAlmacen().olvidarTodo();
   borrarFotos();
   borrarFotoDePerfil();
+  borrarLoExportado();
   recordarCorreo(null);
   await AsyncStorage.removeItem(COMPRADAS).catch(() => {});
   await buzon().vaciar().catch(() => {});

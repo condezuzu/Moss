@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 
 import { crearAlmacen } from '../almacen/almacen';
 import { repositorioEnMemoria } from '../almacen/repositorio';
@@ -125,5 +125,23 @@ describe('el título de Anotar', () => {
     expect(l.filter((e) => e.date.getTime() < alCorte).every((e) => e.props.queda === 'te quedan 150')).toBe(true);
     // Con el corte a las 5, el desayuno empieza a las 4 y el día nuevo a las 5: ahí va otra entrada.
     expect(l.find((e) => e.date.getTime() === alCorte)?.props).toMatchObject({ titulo: 'Anotar el desayuno', queda: 'te quedan 2.000' });
+  });
+
+  it('cambia en punto también en Nepal (UTC+5:45), no 15 minutos tarde', () => {
+    // La hora del teléfono en Nepal: Jest no deja cambiar la zona, así que la hora local se corre 5:45 de UTC.
+    const NEPAL = (5 * 60 + 45) * 60_000;
+    const UTC = {
+      getFullYear: 'getUTCFullYear', getMonth: 'getUTCMonth', getDate: 'getUTCDate', getHours: 'getUTCHours', getMinutes: 'getUTCMinutes', getSeconds: 'getUTCSeconds', getMilliseconds: 'getUTCMilliseconds',
+    } as const;
+    const espias = Object.entries(UTC).map(([local, utc]) =>
+      jest.spyOn(Date.prototype, local as keyof typeof UTC).mockImplementation(function (this: Date) { return new Date(this.getTime() + NEPAL)[utc](); }));
+    try {
+      // Las 11:40 en Nepal: el almuerzo empieza a las 12:00 de ahí, y el día nuevo a las 4:00.
+      const l = anotar(new Date(Date.UTC(2026, 9, 21, 5, 55)));
+      expect(l[1]).toMatchObject({ date: new Date(Date.UTC(2026, 9, 21, 6, 15)), props: { titulo: 'Anotar el almuerzo' } });
+      expect(l.slice(1).map((e) => e.date.getMinutes() % 30)).toEqual(l.slice(1).map(() => 0));
+    } finally {
+      for (const e of espias) e.mockRestore();
+    }
   });
 });

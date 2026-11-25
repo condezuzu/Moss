@@ -328,6 +328,10 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   const deHoy = vigentes(e.registros.values()).filter((r) => r.dia === hoy && !r.planificado).sort((a, b) => (a.momento < b.momento ? -1 : 1));
   const eventosHoy: Partial<Record<Evento, number>> = {};
   for (const r of deHoy) if (r.comida !== 'snack' && eventosHoy[r.comida] === undefined) eventosHoy[r.comida] = minutosDe(r);
+  // Y cuándo se anotó: cuando se guardó, no la hora que dice que se comió (puede ser de antes). Si después se cambió, es
+  // más tarde, y a lo sumo su aviso cuenta como que ya sonó: así nunca se pierde uno.
+  const cuandoSeAnotoHoy: Partial<Record<Comida, number>> = {};
+  for (const r of deHoy) cuandoSeAnotoHoy[r.comida] = Math.min(cuandoSeAnotoHoy[r.comida] ?? Infinity, minutosEnElDia(new Date(r.actualizado), hoy));
   // Un entrenamiento de Salud de hoy (el reloj, un anillo, Strava, Fitness) es haber entrenado: cuándo terminó el último.
   const entrenoDeHoy = entrenosDelDia(e.salud?.entrenamientos, hoy).at(-1);
   if (entrenoDeHoy) eventosHoy.entrenamiento = minutosEnElDia(new Date(entrenoDeHoy.hasta), hoy);
@@ -359,7 +363,7 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
     hoy, ahora: minutos, ajustes, habitos: e.habitos, sueno, horaDeComida, corte: e.corte,
     sesionesDe: (dia) => sesionesDelDia(e.entreno, dia), convieneDe,
     faltasHoy: conFalta ? faltasDeHoy(e, hoy, minutos, horaDeComida, sueno) : [],
-    marcas: e.marcas, anotadasHoy: new Set(deHoy.map((r) => r.comida)), eventosHoy,
+    marcas: e.marcas, anotadasHoy: new Set(deHoy.map((r) => r.comida)), cuandoSeAnotoHoy, eventosHoy,
     diaDelControl,
     pesadoHoy: e.pesos.some((p) => p.fecha === hoy),
   });

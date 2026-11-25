@@ -146,3 +146,9 @@ export function largoEn(cm: number, s: Sistema): { valor: number; unidad: 'cm' |
 }
 
 export const aCm = (valor: number, s: Sistema) => (s === 'imperial' ? valor * CM_POR_PULGADA : valor);
+
+/** La altura en el sistema imperial: 5′ 9″. Las pulgadas se redondean antes de partirlas: si no, 152 cm (5′ 0″) daba 4′ 0″. */
+export function piesYPulgadas(cm: number): string {
+  const pulgadas = Math.round(cm / CM_POR_PULGADA);
+  return `${Math.floor(pulgadas / 12)}′ ${pulgadas % 12}″`;
+}

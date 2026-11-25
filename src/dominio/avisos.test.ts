@@ -439,6 +439,54 @@ describe('los avisos de un día', () => {
     expect(resumen(delDia(ajustes, { ahora: h('22:45'), conviene: [luces], marcas: hechoA('leer', '22:45') }))).toEqual([[h('23:00'), ['dormir']], [h('23:20'), ['luces']]]);
   });
 
+  it('lo mismo con las comidas: la cena anotada antes de su aviso no corre lo de después de cenar cuando pasa su hora', () => {
+    const ajustes: Avisos = { habitos: [{ habito: 'agua', cuando: { tipo: 'evento', evento: 'cena', despues: 30 }, dias: [] }], comidas: ['cena'] };
+    // Cenó y lo anotó a las 20:44: el agua, a las 21:14; «¿Anotaste la cena?» (ahora a las 21:29) ya no suena.
+    const cena = { eventos: { cena: h('20:44') }, anotadas: new Set<Comida>(['cena']), cuandoSeAnoto: { cena: h('20:44') } };
+    expect(resumen(delDia(ajustes, { ...cena, ahora: h('20:45') }))).toEqual([[h('21:14'), ['habito:agua:0']]]);
+    // Pasadas las 21:29, ese aviso sigue sin haber sonado: el agua, que sonó a las 21:14, no vuelve a las 21:49.
+    expect(delDia(ajustes, { ...cena, ahora: h('21:30') })).toEqual([]);
+  });
+
+  it('anotar la cena no lleva su hora a la hora en que se anotó: lo que ya sonó cerca no vuelve a sonar', () => {
+    const ajustes: Avisos = { habitos: [{ habito: 'agua', cuando: { tipo: 'evento', evento: 'merienda', despues: 30 }, dias: [] }], horario: ['cena'] };
+    const merienda = { merienda: h('19:00') };
+    // Merendó a las 19:00: el agua, a las 19:30, y la hora de la cena se corre a las 22:30.
+    expect(resumen(delDia(ajustes, { eventos: merienda, anotadas: new Set<Comida>(['merienda']), cuandoSeAnoto: merienda, ahora: h('19:01') })))
+      .toEqual([[h('19:30'), ['habito:agua:0']], [h('22:30'), ['horario:cena']]]);
+    // A las 19:35 anota la cena: su hora no había sonado, y el agua, que sonó a las 19:30, no vuelve a las 19:55.
+    const conCena = { eventos: { ...merienda, cena: h('19:35') }, anotadas: new Set<Comida>(['merienda', 'cena']), cuandoSeAnoto: { ...merienda, cena: h('19:35') } };
+    expect(delDia(ajustes, { ...conCena, ahora: h('19:36') })).toEqual([]);
+  });
+
+  it('lo de después de una comida anotada más tarde no corre lo que ya sonó después de otra', () => {
+    const ajustes: Avisos = {
+      habitos: [{ habito: 'leer', cuando: { tipo: 'evento', evento: 'cena', despues: 17 }, dias: [] }, { habito: 'agua', cuando: { tipo: 'evento', evento: 'merienda', despues: 7 }, dias: [] }],
+    };
+    const merienda = { merienda: h('19:23') };
+    expect(resumen(delDia(ajustes, { eventos: merienda, anotadas: new Set<Comida>(['merienda']), cuandoSeAnoto: merienda, ahora: h('19:24') }))).toEqual([[h('19:30'), ['habito:agua:0']]]);
+    // A las 19:31 anota la cena con una foto de las 19:18: leer (19:35) espera al agua, que ya sonó, y el agua no vuelve.
+    const conCena = { eventos: { ...merienda, cena: h('19:18') }, anotadas: new Set<Comida>(['merienda', 'cena']), cuandoSeAnoto: { ...merienda, cena: h('19:31') } };
+    expect(resumen(delDia(ajustes, { ...conCena, ahora: h('19:31') }))).toEqual([[h('19:50'), ['habito:leer:0']]]);
+  });
+
+  it('lo que sonó antes de anotar la comida sigue en su lugar, aunque la foto diga que comió antes: lo que esperaba no se pierde', () => {
+    const ajustes: Avisos = { habitos: [aLas('leer', '21:10')], horario: ['cena'] };
+    expect(resumen(delDia(ajustes, { ahora: h('20:00') }))).toEqual([[h('21:00'), ['horario:cena']], [h('21:20'), ['habito:leer:0']]]);
+    // A las 21:15 anota la cena con una foto de las 20:50: su hora ya sonó a las 21:00, y leer sigue a las 21:20.
+    const cena = { eventos: { cena: h('20:50') }, anotadas: new Set<Comida>(['cena']), cuandoSeAnoto: { cena: h('21:15') } };
+    expect(resumen(delDia(ajustes, { ...cena, ahora: h('21:15') }))).toEqual([[h('21:20'), ['habito:leer:0']]]);
+  });
+
+  it('y con una comida de antes: con la cena anotada, la merienda sin anotar no suena ni corre lo de después de cenar', () => {
+    const ajustes: Avisos = { habitos: [{ habito: 'agua', cuando: { tipo: 'evento', evento: 'cena', despues: 10 }, dias: [] }], comidas: ['merienda'] };
+    // Cenó temprano, a las 18:00, sin merendar: el agua, a las 18:10.
+    const cena = { eventos: { cena: h('18:00') }, anotadas: new Set<Comida>(['cena']), cuandoSeAnoto: { cena: h('18:00') } };
+    expect(resumen(delDia(ajustes, { ...cena, ahora: h('18:01') }))).toEqual([[h('18:10'), ['habito:agua:0']]]);
+    // Pasadas las 18:15, la merienda no sonó: el agua no vuelve a las 18:35.
+    expect(delDia(ajustes, { ...cena, ahora: h('18:16') })).toEqual([]);
+  });
+
   it('el máximo se cuenta sobre el plan del día: lo hecho o lo anotado no deja entrar lo que no entraba', () => {
     const ajustes: Avisos = { dormir: { encendido: true }, habitos: [aLas('leer', '18:00')], comidas: ['almuerzo', 'cena'], maximoPorDia: 2 };
     expect(resumen(delDia(ajustes))).toEqual([[h('18:00'), ['habito:leer:0']], [h('23:00'), ['dormir']]]);

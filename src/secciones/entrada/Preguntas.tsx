@@ -11,7 +11,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
-import { CM_POR_PULGADA, KG_POR_LIBRA } from '@/dominio/cantidades';
+import { CM_POR_PULGADA, KG_POR_LIBRA, piesYPulgadas } from '@/dominio/cantidades';
 import { CON_HORA } from '@/dominio/comidas';
 import {
   avisoDeRecomposicion, diasConDosSesiones, DEPORTES, FIGURAS, kcalDelEntreno, MOVIMIENTOS, NIVELES_DE_PROTEINA, opcionesDeLoQueSigue, partesRedondas, preguntasDelEntreno,
@@ -322,6 +322,16 @@ function ElSexo({ r, poner, deSalud, alSeguir }: PropsDePregunta) {
 function Tu({ r, poner, deSalud, alSeguir }: PropsDePregunta) {
   const reducido = useReducedMotion();
   const [abierta, setAbierta] = useState<string | null>(null);
+  // En el sistema imperial, en pulgadas y en libras, como Altura y Peso.
+  const imperial = sistemaDe(useEstado()) === 'imperial';
+  const [alturaMin, alturaMax] = RANGOS_DEL_CUESTIONARIO.alturaCm;
+  const [pesoMin, pesoMax] = RANGOS_DEL_CUESTIONARIO.pesoKg;
+  const altura = imperial
+    ? { valor: Math.round(r.alturaCm / CM_POR_PULGADA), min: Math.ceil(alturaMin / CM_POR_PULGADA), max: Math.floor(alturaMax / CM_POR_PULGADA), aCm: (p: number) => Math.round(p * CM_POR_PULGADA), texto: (p: number) => piesYPulgadas(p * CM_POR_PULGADA) }
+    : { valor: r.alturaCm, min: alturaMin, max: alturaMax, aCm: (cm: number) => cm, texto: (cm: number) => `${numero(cm)} cm` };
+  const peso = imperial
+    ? { valor: Math.round((r.pesoKg / KG_POR_LIBRA) * 10) / 10, min: Math.ceil(pesoMin / KG_POR_LIBRA), max: Math.floor(pesoMax / KG_POR_LIBRA), paso: 0.2, aKg: (lb: number) => Math.round(lb * KG_POR_LIBRA * 100) / 100, texto: (lb: number) => `${numero(lb, 1)} lb` }
+    : { valor: r.pesoKg, min: pesoMin, max: pesoMax, paso: 0.1, aKg: (kg: number) => Math.round(kg * 10) / 10, texto: (kg: number) => `${numero(kg, 1)} kg` };
   const filas: { clave: 'sexo' | 'edad' | 'alturaCm' | 'pesoKg'; nombre: string; valor: string; editor: ReactNode }[] = [
     {
       clave: 'sexo', nombre: t('entrada.cuestionario.sexo'), valor: r.sexo ? t(`entrada.cuestionario.${r.sexo === 'f' ? 'femenino' : 'masculino'}`) : '—',
@@ -336,12 +346,12 @@ function Tu({ r, poner, deSalud, alSeguir }: PropsDePregunta) {
       editor: <Deslizador style={s.deslizadorChico} valor={r.edad} min={EDAD_MINIMA} max={RANGOS_DEL_CUESTIONARIO.edad[1]} paso={1} alCambiar={(v) => poner((y) => ({ ...y, edad: v }), 'edad')} etiqueta={t('entrada.cuestionario.edad')} textoDe={(v) => `${numero(v)} ${t('entrada.cuestionario.anos')}`} />,
     },
     {
-      clave: 'alturaCm', nombre: t('entrada.cuestionario.altura'), valor: `${numero(r.alturaCm)} cm`,
-      editor: <Deslizador style={s.deslizadorChico} valor={r.alturaCm} min={RANGOS_DEL_CUESTIONARIO.alturaCm[0]} max={RANGOS_DEL_CUESTIONARIO.alturaCm[1]} paso={1} alCambiar={(v) => poner((y) => ({ ...y, alturaCm: v }), 'alturaCm')} etiqueta={t('entrada.cuestionario.altura')} textoDe={(v) => `${numero(v)} cm`} />,
+      clave: 'alturaCm', nombre: t('entrada.cuestionario.altura'), valor: altura.texto(altura.valor),
+      editor: <Deslizador style={s.deslizadorChico} valor={altura.valor} min={altura.min} max={altura.max} paso={1} alCambiar={(v) => poner((y) => ({ ...y, alturaCm: altura.aCm(v) }), 'alturaCm')} etiqueta={t('entrada.cuestionario.altura')} textoDe={altura.texto} />,
     },
     {
-      clave: 'pesoKg', nombre: t('entrada.cuestionario.peso'), valor: `${numero(r.pesoKg, 1)} kg`,
-      editor: <Deslizador style={s.deslizadorChico} valor={r.pesoKg} min={RANGOS_DEL_CUESTIONARIO.pesoKg[0]} max={RANGOS_DEL_CUESTIONARIO.pesoKg[1]} paso={0.1} pasoDeAccesibilidad={1} alCambiar={(v) => poner((y) => ({ ...y, pesoKg: Math.round(v * 10) / 10 }), 'pesoKg')} etiqueta={t('entrada.cuestionario.peso')} textoDe={(v) => `${numero(v, 1)} kg`} />,
+      clave: 'pesoKg', nombre: t('entrada.cuestionario.peso'), valor: peso.texto(peso.valor),
+      editor: <Deslizador style={s.deslizadorChico} valor={peso.valor} min={peso.min} max={peso.max} paso={peso.paso} pasoDeAccesibilidad={1} alCambiar={(v) => poner((y) => ({ ...y, pesoKg: peso.aKg(v) }), 'pesoKg')} etiqueta={t('entrada.cuestionario.peso')} textoDe={peso.texto} />,
     },
   ];
   return (

@@ -8,6 +8,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { elAlmacen } from '@/almacen';
 import { ESTILOS_DE_KCAL } from '@/almacen/almacen';
+import { piesYPulgadas } from '@/dominio/cantidades';
 import { edadDe, estadoDeMacro, objetivoPermitido } from '@/dominio/metas';
 import { faltaParaEstimar } from '@/dominio/progreso';
 import { idioma, lista, plural, t } from '@/textos';
@@ -31,8 +32,9 @@ const enLista = (cosas: readonly string[]) => {
 
 export function TodoLoDeHoy({ abierta, alCerrar, alVerComida }: { abierta: boolean; alCerrar: () => void; alVerComida: () => void }) {
   return (
+    // Sin condicionar a `abierta`: el Modal arma lo de adentro solo abierto, y lo deja mientras se funde al cerrarse.
     <HojaModal abierta={abierta} titulo={t('inicio.todo.titulo')} alCerrar={alCerrar}>
-      {abierta && <Contenido alVerComida={alVerComida} />}
+      <Contenido alVerComida={alVerComida} />
     </HojaModal>
   );
 }
@@ -64,7 +66,7 @@ function Contenido({ alVerComida }: { alVerComida: () => void }) {
   const sabe: [string, string, string][] = [];
   if (perfil) {
     if (!p.deEjemplo && p.pesoHoy !== null) sabe.push([t('inicio.todo.peso'), textoDePeso(p.pesoHoy, sistema), t('inicio.todo.origen.pesadas')]);
-    sabe.push([t('perfil.altura'), `${numero(perfil.alturaCm)} cm`, t('inicio.todo.origen.dijiste')]);
+    sabe.push([t('perfil.altura'), sistema === 'imperial' ? piesYPulgadas(perfil.alturaCm) : `${numero(perfil.alturaCm)} cm`, t('inicio.todo.origen.dijiste')]);
     sabe.push([t('perfil.edad'), numero(edadDe(perfil, e.hoy)), t('inicio.todo.origen.dijiste')]);
     sabe.push([t('perfil.sexo'), t(perfil.sexo === 'f' ? 'entrada.cuestionario.femenino' : 'entrada.cuestionario.masculino'), t('inicio.todo.origen.dijiste')]);
     sabe.push([t('perfil.actividad'), lista(`entrada.cuestionario.actividad.${perfil.actividad}`)[0], t('inicio.todo.origen.dijiste')]);

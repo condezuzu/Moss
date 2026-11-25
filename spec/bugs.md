@@ -131,7 +131,27 @@ lee y no la escribe, y que «Borrar mis datos» deja la marca y «Borrar la cuen
     distinto en el servidor y en el teléfono (`0001_esquema.sql:23`, `mezclar.ts:29`); dos lecturas a la vez de la
     cuenta pueden mostrar un instante la pantalla de pago (`premium.ts:149`).
 
-## Tanda C: chicos
+## Tanda C: chicos (arreglada el 25/11, con tu sí)
+
+**Estado:** del 25 al 34 arreglados, cada uno con su test donde se pudo (2050 tests en total), más el aviso doble
+de las comidas que encontró la tanda B y `faltaParaEstimar`. Cómo quedó:
+- **25:** con el sistema imperial, la tarjeta «Esto dice Salud» del cuestionario y la altura de Todo lo de hoy van en
+  pies, pulgadas y libras, y la sección de Ascent dice los pesos en libras (redondeados como en Ascent) y guarda la meta
+  en kilos. «Hoy podrías levantar unos {kg} kg» pasó a «cerca de», que sirve para las dos unidades.
+- **26:** la semana entre dos meses dice «26 oct – 1 nov» (en inglés «Oct 26 – Nov 1»).
+- **27:** una porción que se llamaba por su peso («30 g») cambia de nombre con los gramos nuevos.
+- **28:** Todo lo de hoy ya no se encoge de golpe al cerrarse.
+- **29:** volver a tocar el mismo objetivo no borra el ritmo elegido.
+- **30:** los CSV exportados se borran al cerrar sesión o borrar.
+- **31:** «cuatro empanadas, dos de carne y dos de jamón» son cuatro.
+- **32:** una etiqueta con porción de 0 g es como si no tuviera porción.
+- **33:** el widget Anotar cambia de comida a la media hora del teléfono.
+- **34:** tocar la entrada de Ascent usa el estado de ahora.
+- **El aviso doble de las comidas:** la misma regla que los hábitos, con la hora en que se anotó cada comida. En la
+  simulación de la tanda B, de 287 días con algún aviso doble a 0; con comidas a cualquier hora, de 176 a 2. Esos 2
+  son de hábitos: unas luces que sonaron un rato antes por un hábito que después se marcó antes de su hora.
+- **faltaParaEstimar:** la misma regla que Inicio. Con el tramo corto no pide nada del control; sin la recta, una
+  pesada más.
 
 25. Con el sistema imperial: la tarjeta «Esto dice Salud» del cuestionario y la altura de Todo lo de hoy en cm y kg
     (`Preguntas.tsx:339`, `TodoLoDeHoy.tsx:66`); los pesos de Ascent siempre en kg (`Vinculada.tsx`, varias líneas;

@@ -203,6 +203,22 @@ describe('los avisos que se programan', () => {
     expect(faltasDeHoy()).toEqual([[22 * 60 + 15, 'calorias']]);
   });
 
+  it('la cena anotada antes de su aviso no corre lo de después de cenar cuando pasa su hora: no suena dos veces', async () => {
+    const leer: Habito = { ...entrenar, id: 'leer', nombre: 'Leer', icono: 'book' };
+    // Cenó y lo anotó a las 20: leer, a las 20:30; «¿Anotaste la cena?» (20:45) ya no suena.
+    const conCena = estado({
+      habitos: [leer], recordatorios: ['cena'], registros: new Map([registro('cena', 20, 30, 500)]),
+      avisos: { ...APAGADO, falta: { encendido: false }, habitos: [{ habito: 'leer', cuando: { tipo: 'evento', evento: 'cena', despues: 30 }, dias: [] }] },
+    });
+    jest.setSystemTime(a(20, 1));
+    await programarAvisos(conCena);
+    expect(deHoy()).toEqual([[20 * 60 + 30, 'Leer']]);
+    // Leer sonó a las 20:30; pasadas las 20:45 no vuelve a las 21:05.
+    jest.setSystemTime(a(20, 46));
+    await programarAvisos(conCena);
+    expect(deHoy()).toEqual([]);
+  });
+
   it('un hábito a las 0:30 es de la noche de su día (D32): hecho ese día, no suena', async () => {
     const leer: Habito = { ...entrenar, id: 'leer', nombre: 'Leer', icono: 'book' };
     const conLeer = (marcas: Estado['marcas']) => estado({ habitos: [leer], marcas, avisos: { habitos: [{ habito: 'leer', cuando: { tipo: 'hora', minutos: 30 }, dias: [] }] } });

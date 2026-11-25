@@ -264,7 +264,7 @@ describe('el día del control', () => {
 });
 
 describe('lo que le falta a Moss', () => {
-  const control = { fecha: '2026-11-02', diasConComida: 2, pesadas: 0, minimos: { diasConComida: 4, pesadas: 1 } };
+  const control = { fecha: '2026-11-02', diasConComida: 2, pesadas: 0, minimos: { diasConComida: 4, pesadas: 1 }, tramoCorto: false, alcanza: false };
 
   it('lo que pide el control, el peso meta, las medidas y el reloj', () => {
     expect(faltaParaEstimar({ control, objetivo: 'bajar', pesoMeta: null, conMedidas: false, sinReloj: true })).toEqual([
@@ -276,8 +276,31 @@ describe('lo que le falta a Moss', () => {
     ]);
   });
 
+  // Como el control cerca de Inicio (Control.tsx, loQueFalta), con el mismo control pasado mañana.
+  const HOY = '2026-11-23';
+  const dia = (n: number) => sumarDias(HOY, n);
+  const cerca = (pesadas: number[], comidas: number[]) => estadoDelControl({
+    hoy: HOY, dia: ((diaDeLaSemana(HOY) + 2) % 7) as DiaSemana, ultimaMeta: dia(-5),
+    pesadas: pesadas.map((n) => ({ fecha: dia(n), kg: 80 })),
+    comidas: comidas.map((n) => ({ fecha: dia(n), kcal: 2000 })),
+  });
+  const delControl = (c: ReturnType<typeof cerca>) => faltaParaEstimar({ control: c, objetivo: 'mantener', conMedidas: true, sinReloj: false });
+
+  it('con el tramo corto ese control no mide: no pide una pesada que no alcanzaría', () => {
+    const c = cerca([], [-3, -2, -1]);
+    expect(c).toMatchObject({ tramoCorto: true, pesadas: 0 });
+    expect(delControl(c)).toEqual([]);
+  });
+
+  it('con la pesada y la comida pero sin la recta (dos pesadas a menos de una semana), otra pesada', () => {
+    const c = cerca([-6, -2], [-6, -5, -4, -3, -2, -1]);
+    expect(c).toMatchObject({ tramoCorto: false, alcanza: false });
+    expect(delControl(c)).toEqual([{ que: 'pesadas', n: 1, fecha: c.fecha }]);
+    expect(delControl(cerca([-12, -1], [-12, -5, -4, -3, -2, -1]))).toEqual([]);
+  });
+
   it('con todo eso, nada; manteniendo no hace falta un peso meta', () => {
-    const lleno = { ...control, diasConComida: 4, pesadas: 2 };
+    const lleno = { ...control, diasConComida: 4, pesadas: 2, alcanza: true };
     expect(faltaParaEstimar({ control: lleno, objetivo: 'bajar', pesoMeta: 71, conMedidas: true, sinReloj: false })).toEqual([]);
     expect(faltaParaEstimar({ control: lleno, objetivo: 'mantener', pesoMeta: null, conMedidas: true, sinReloj: false })).toEqual([]);
     expect(faltaParaEstimar({ control: null, objetivo: 'mantener', conMedidas: true, sinReloj: false })).toEqual([]);

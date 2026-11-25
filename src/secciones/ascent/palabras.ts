@@ -1,8 +1,11 @@
 // Cómo dice las cosas la sección de Ascent, como la galería (galeria/src/ascent.js): los nombres de los
-// ejercicios y los músculos, cuándo fue algo y el titular de hoy en dos líneas.
+// ejercicios y los músculos, los pesos en la unidad de cada uno, cuándo fue algo y el titular de hoy en dos líneas.
 
+import { aKg, KG_POR_LIBRA, type Sistema } from '@/dominio/cantidades';
 import { diaDeLaSemana, diasEntre, type ClaveDia } from '@/dominio/fechas';
 import { esPropio, type Bloque, type Cuando, type Musculo } from '@/dominio/musculos';
+import { pesoSiguiente } from '@/dominio/puntajeMuscular';
+import { aDosYMedio } from '@/dominio/rendimiento';
 import es from '@/textos/es.json';
 import { lista, t, type Clave } from '@/textos';
 import type { Hoy } from './vista';
@@ -22,6 +25,33 @@ export const enLista = (xs: readonly string[]) => (xs.length <= 1 ? (xs[0] ?? ''
 /** Los nombres de unos músculos en una lista: «cuádriceps y glúteos». */
 export const listaDeMusculos = (ms: readonly Musculo[]) => enLista(ms.map((m) => nombreDelMusculo(m).toLowerCase()));
 export const cuandoDe = (c: Cuando) => tx(`ascent.titular.cuando.${c}`);
+
+// Los pesos llegan de Ascent en kg y la meta se guarda en kg: con el sistema imperial de Moss, se dicen en libras.
+/** El peso de una serie o de una marca: en libras, al medio, como en Ascent (así lo anotado en libras vuelve igual). */
+export const pesoEn = (kg: number, s: Sistema) => (s === 'imperial' ? Math.round((kg / KG_POR_LIBRA) * 2) / 2 : kg);
+
+/**
+ * El peso de la próxima vez (pesoSiguiente, igual en Ascent). En libras, sobre lo de la última vez y con su paso
+ * redondeado para abajo a lo que se carga, de a 2,5 lb: los 2,5 kg son 5 lb (el disco chico de cada lado) y el kilo,
+ * 2,5 lb (de a 5, una mancuerna de 20 lb volvía a 20).
+ */
+export function siguienteEn(kg: number, s: Sistema): number | null {
+  const siguiente = pesoSiguiente(kg);
+  if (s !== 'imperial' || siguiente === null) return siguiente;
+  return pesoEn(kg, s) + Math.max(2.5, Math.floor((siguiente - kg) / KG_POR_LIBRA / 2.5) * 2.5);
+}
+
+/** El nivel de hoy de una meta, como se carga en la barra: de a 2,5 kg o de a 5 lb. */
+export const nivelEn = (kg: number, s: Sistema) => (s === 'imperial' ? Math.round(kg / KG_POR_LIBRA / 5) * 5 : aDosYMedio(kg));
+
+/** Lo escrito en la meta nueva, en kg para guardar: de libras, con dos decimales (225 lb vuelven como 225). */
+export function kilosDeLaMeta(escrito: string, s: Sistema): number {
+  const n = Number(escrito.replace(',', '.'));
+  return s === 'imperial' ? Math.round(aKg(n, s) * 100) / 100 : n;
+}
+
+/** Los textos de los pesos dicen «kg», como en Ascent: en libras, la misma frase con «lb» (como progreso/unidades.ts). */
+export const enLaUnidad = (frase: string, s: Sistema) => (s === 'imperial' ? frase.replace(/\bkg\b/g, 'lb') : frase);
 
 /** «hoy», «ayer» o «el lunes». */
 export function cuandoFue(fecha: ClaveDia, hoy: ClaveDia): string {

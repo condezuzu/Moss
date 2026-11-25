@@ -11,23 +11,24 @@ import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, w
 
 import { reglasDeCuidados } from '@/almacen/almacen';
 import { deAscent, useAscent } from '@/almacen/ascent';
+import type { Sistema } from '@/dominio/cantidades';
 import { POCAS_PESADAS, PROTEINA_POR_KG, type Razon } from '@/dominio/progresoCompartido';
 import { musculosPrincipales } from '@/dominio/fatiga';
 import { diasEntre, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { periodoDeMelatonina } from '@/dominio/melatonina';
 import type { Musculo } from '@/dominio/musculos';
-import { pesoSiguiente, RANGO, type EstadoDelPuntaje } from '@/dominio/puntajeMuscular';
-import { aDosYMedio, NOCHE_CORTA } from '@/dominio/rendimiento';
+import { RANGO, type EstadoDelPuntaje } from '@/dominio/puntajeMuscular';
+import { NOCHE_CORTA } from '@/dominio/rendimiento';
 import { totalDelDia } from '@/dominio/registros';
 import { juicioDeLaDeuda } from '@/dominio/sueno';
 import { sugerenciasDeHoy, type Sugerencia, type SugerenciasDeHoy } from '@/dominio/sugerenciasDeHoy';
 import { lista, plural, t, type ClaveDeLista } from '@/textos';
 import { letras } from '@/tema';
-import { duracion, hora, metaDelDia, numero, useEstado } from '../comida/datos';
+import { duracion, hora, metaDelDia, numero, sistemaDe, useEstado } from '../comida/datos';
 import { usePersona, useSueno } from '../ganchos';
 import { C, GRUPOS_DEL_ANIO, useAcento } from './colores';
 import { Cuerpo, Parte as ParteDeCerca, Reloj, type EstadoDibujado } from './Dibujos';
-import { conMayuscula, enFrase, enLista, nombreDelEjercicio, nombreDelMusculo, tx } from './palabras';
+import { conMayuscula, enFrase, enLaUnidad, enLista, kilosDeLaMeta, nivelEn, nombreDelEjercicio, nombreDelMusculo, pesoEn, siguienteEn, tx } from './palabras';
 import { Accion, Cambia, Desplegable, Etiqueta, Flecha, Fundido, Nota, Parte, Una, Escala, Enlace } from './piezas';
 import { calcularTodo, calcularTusMusculos, type EjercicioDeLaSemana, type Estancado, type Hoy, type MetaConProyeccion, type MusculoDeLaSemana, type Todo, type TusMusculos as DeTusMusculos } from './vista';
 
@@ -158,6 +159,10 @@ const TOPE_DE_SERIES = 30;
 const enLaBarra = (n: number) => (Math.min(TOPE_DE_SERIES, Math.max(0, n)) / TOPE_DE_SERIES) * 100;
 /** Las series se dicen redondeadas: «6,5» (una media serie del músculo que ayuda) se leía raro. */
 const series = (n: number) => numero(Math.round(n));
+/** Un peso redondo cuando lo es («60»), con un decimal cuando no («62,5»). */
+const cifra = (v: number) => numero(v, v % 1 ? 1 : 0);
+/** Un peso de Ascent (en kg) en la unidad de cada uno: «62,5 kg» o «137,5 lb». */
+const conUnidad = (kg: number, s: Sistema) => enLaUnidad(`${cifra(pesoEn(kg, s))} kg`, s);
 
 export function TusMusculos({ tm, hoy }: { tm: DeTusMusculos; hoy?: ReactNode }) {
   const { width } = useWindowDimensions();
@@ -283,6 +288,7 @@ const cuandoVuelve = (f: { dias: number }): string => plural('ascent.fatigados.f
 /** Un músculo: de cerca con sus partes (si tiene), sus series contra lo ideal, qué hacer, cuándo está listo y sus ejercicios. */
 function DetalleDelMusculo({ m, tm, alCerrar }: { m: MusculoDeLaSemana; tm: DeTusMusculos; alCerrar: () => void }) {
   const a = useAcento();
+  const sistema = sistemaDe(useEstado());
   const fuerte = (x: EjercicioDeLaSemana) => x.principal.includes(m.musculo);
   const ejercicios = tm.ejercicios.filter((x) => fuerte(x) || x.ayudan.includes(m.musculo)).sort((x, y) => Number(fuerte(y)) - Number(fuerte(x)));
   const fatigado = tm.fatigados.find((x) => x.musculo === m.musculo) ?? null;
@@ -321,19 +327,19 @@ function DetalleDelMusculo({ m, tm, alCerrar }: { m: MusculoDeLaSemana; tm: DeTu
       {!ejercicios.length ? (
         <Text style={st.ninguno}>{t('ascent.tus.sinEjercicios')}</Text>
       ) : (
-        ejercicios.map((x) => <FilaDelEjercicio key={nombreDelEjercicio(x.e)} x={x} musculo={m.musculo} ayuda={!fuerte(x)} />)
+        ejercicios.map((x) => <FilaDelEjercicio key={nombreDelEjercicio(x.e)} x={x} musculo={m.musculo} ayuda={!fuerte(x)} sistema={sistema} />)
       )}
     </View>
   );
 }
 
-function FilaDelEjercicio({ x, musculo, ayuda }: { x: EjercicioDeLaSemana; musculo: Musculo; ayuda: boolean }) {
+function FilaDelEjercicio({ x, musculo, ayuda, sistema }: { x: EjercicioDeLaSemana; musculo: Musculo; ayuda: boolean; sistema: Sistema }) {
   const a = useAcento();
   const p = x.proxima;
-  const siguiente = pesoSiguiente(x.peso);
-  const peso = x.peso > 0 ? `${numero(x.peso, x.peso % 1 ? 1 : 0)} kg` : t('ascent.tus.mismoPeso');
+  const siguiente = siguienteEn(x.peso, sistema);
+  const peso = x.peso > 0 ? conUnidad(x.peso, sistema) : t('ascent.tus.mismoPeso');
   const proxima = p.decision === 'subir'
-    ? (siguiente === null ? t('ascent.tus.proxima.subirSinPeso') : t('ascent.tus.proxima.subirA', { kg: numero(siguiente, siguiente % 1 ? 1 : 0) }))
+    ? (siguiente === null ? t('ascent.tus.proxima.subirSinPeso') : enLaUnidad(t('ascent.tus.proxima.subirA', { kg: cifra(siguiente) }), sistema))
     : p.decision === 'noSeSabe' ? t('ascent.tus.proxima.pocasSesiones', { peso }) : tx(`ascent.tus.proxima.${p.razon}`, { tope: x.tope ?? '', peso });
   return (
     <View style={st.ej}>
@@ -403,6 +409,7 @@ const horasDe = (min: number) => duracion(Math.round(min / 5) * 5);
 
 function Estancados({ todo }: { todo: Todo }) {
   const est = todo.estancados;
+  const sistema = sistemaDe(useEstado());
   return (
     <Parte titulo={t('ascent.estancados.lista')}>
       <Una>{t('ascent.estancados.texto', { n: todo.umbral })}</Una>
@@ -410,7 +417,7 @@ function Estancados({ todo }: { todo: Todo }) {
         <Text style={st.ninguno}>{t('ascent.estancados.ninguno')}</Text>
       ) : (
         est.map((e, i) => {
-          const marca = t('ascent.estancamiento.marca', { kg: numero(e.ultima.kilos, e.ultima.kilos % 1 ? 1 : 0), reps: e.ultima.reps });
+          const marca = enLaUnidad(t('ascent.estancamiento.marca', { kg: cifra(pesoEn(e.ultima.kilos, sistema)), reps: e.ultima.reps }), sistema);
           return (
             <View key={nombreDelEjercicio(e.e)} style={[st.estancEj, i === 0 && st.sinBorde]}>
               <Text style={st.estancNombre}>{nombreDelEjercicio(e.e)}</Text>
@@ -525,12 +532,13 @@ function PorQue({ todo }: { todo: Todo }) {
 // ------------------------------------------------------------ metas (arriba de todo: lo que menos importa)
 function Metas({ todo, tm }: { todo: Todo; tm: DeTusMusculos }) {
   const [nueva, setNueva] = useState(false);
+  const sistema = sistemaDe(useEstado());
   return (
     <Parte titulo={t('ascent.metas.titulo')}>
       {!todo.metas.length && !nueva && <Una>{t('ascent.metas.ninguna')}</Una>}
-      {todo.metas.map((x, i) => <FilaDeMeta key={x.meta.id} x={x} todo={todo} tm={tm} primera={i === 0} />)}
+      {todo.metas.map((x, i) => <FilaDeMeta key={x.meta.id} x={x} todo={todo} tm={tm} primera={i === 0} sistema={sistema} />)}
       <Desplegable abierto={nueva}>
-        <NuevaMeta todo={todo} alTerminar={() => setNueva(false)} />
+        <NuevaMeta todo={todo} alTerminar={() => setNueva(false)} sistema={sistema} />
       </Desplegable>
       {!nueva && <Enlace texto={t('ascent.metas.nueva')} alTocar={() => setNueva(true)} />}
       {todo.proteina !== null && todo.metas.some((x) => x.proyeccion.estado !== 'lograda') && <Text style={st.metaHacer}>{t('ascent.metas.comer', { g: todo.proteina })}</Text>}
@@ -539,7 +547,7 @@ function Metas({ todo, tm }: { todo: Todo; tm: DeTusMusculos }) {
   );
 }
 
-function FilaDeMeta({ x, todo, tm, primera }: { x: MetaConProyeccion; todo: Todo; tm: DeTusMusculos; primera: boolean }) {
+function FilaDeMeta({ x, todo, tm, primera, sistema }: { x: MetaConProyeccion; todo: Todo; tm: DeTusMusculos; primera: boolean; sistema: Sistema }) {
   const a = useAcento();
   const p = x.proyeccion;
   const parte = x.nivel === null ? null : Math.min(1, x.nivel / x.objetivo);
@@ -548,22 +556,22 @@ function FilaDeMeta({ x, todo, tm, primera }: { x: MetaConProyeccion; todo: Todo
     : t(`ascent.metas.${p.estado}`);
   const ej = tm.ejercicios.find((y) => y.e.id === x.meta.ejercicio);
   const proxima = ej?.proxima;
-  const siguiente = ej ? pesoSiguiente(ej.peso) : null;
-  const peso = ej && ej.peso > 0 ? `${numero(ej.peso, ej.peso % 1 ? 1 : 0)} kg` : t('ascent.tus.mismoPeso');
+  const siguiente = ej ? siguienteEn(ej.peso, sistema) : null;
+  const peso = ej && ej.peso > 0 ? conUnidad(ej.peso, sistema) : t('ascent.tus.mismoPeso');
   const queHacer = !proxima || proxima.decision === 'noSeSabe' ? null
-    : proxima.decision === 'subir' ? (siguiente === null ? t('ascent.tus.proxima.subirSinPeso') : t('ascent.tus.proxima.subirA', { kg: numero(siguiente, siguiente % 1 ? 1 : 0) }))
+    : proxima.decision === 'subir' ? (siguiente === null ? t('ascent.tus.proxima.subirSinPeso') : enLaUnidad(t('ascent.tus.proxima.subirA', { kg: cifra(siguiente) }), sistema))
     : tx(`ascent.tus.proxima.${proxima.razon}`, { tope: ej?.tope ?? '', peso });
-  const kg = numero(x.meta.kilos, x.meta.kilos % 1 ? 1 : 0);
+  const kg = cifra(pesoEn(x.meta.kilos, sistema));
   return (
     <View style={[st.meta, primera && st.sinBorde]}>
       <View style={st.metaCab}>
         <Text style={st.metaNombre}>{nombreDelEjercicio(x.e)}</Text>
-        <Text style={st.metaObjetivo}>{x.meta.reps === 1 ? t('ascent.metas.objetivoUna', { kg }) : t('ascent.metas.objetivoVarias', { kg, reps: x.meta.reps })}</Text>
+        <Text style={st.metaObjetivo}>{enLaUnidad(x.meta.reps === 1 ? t('ascent.metas.objetivoUna', { kg }) : t('ascent.metas.objetivoVarias', { kg, reps: x.meta.reps }), sistema)}</Text>
       </View>
       {parte !== null && (
         <>
           <View style={st.metaPista}><View style={[st.metaLleno, { width: `${parte * 100}%`, backgroundColor: a.claro }]} /></View>
-          <Text style={st.metaNivel}>{t('ascent.metas.nivelKg', { kg: numero(aDosYMedio(x.meta.reps === 1 ? x.nivel! : x.nivel! / (1 + x.meta.reps / 30)), 1) })}</Text>
+          <Text style={st.metaNivel}>{enLaUnidad(t('ascent.metas.nivelKg', { kg: numero(nivelEn(x.meta.reps === 1 ? x.nivel! : x.nivel! / (1 + x.meta.reps / 30), sistema), 1) }), sistema)}</Text>
         </>
       )}
       <Text style={st.metaLinea}>{linea}</Text>
@@ -582,14 +590,16 @@ function FilaDeMeta({ x, todo, tm, primera }: { x: MetaConProyeccion; todo: Todo
   );
 }
 
-function NuevaMeta({ todo, alTerminar }: { todo: Todo; alTerminar: () => void }) {
+function NuevaMeta({ todo, alTerminar, sistema }: { todo: Todo; alTerminar: () => void; sistema: Sistema }) {
   const a = useAcento();
   const [ejercicio, setEjercicio] = useState<string | null>(null);
   const [kilos, setKilos] = useState('');
   const [reps, setReps] = useState('1');
   const [error, setError] = useState(false);
   const [guardando, setGuardando] = useState(false);
-  const kg = Number(kilos.replace(',', '.'));
+  const kg = kilosDeLaMeta(kilos, sistema);
+  // No hay texto para «Libras»: con el sistema imperial, «Peso (lb)».
+  const etiqueta = sistema === 'imperial' ? `${t('progreso.peso')} (lb)` : t('ascent.metas.kilos');
   const r = Number(reps);
   const lista = !!ejercicio && kg >= 1 && kg <= 1000 && Number.isInteger(r) && r >= 1 && r <= 10;
   const guardar = () => {
@@ -621,8 +631,8 @@ function NuevaMeta({ todo, alTerminar }: { todo: Todo; alTerminar: () => void })
       </View>
       <View style={st.nuevaNumeros}>
         <View style={st.crece}>
-          <Text style={st.nuevaEtq}>{t('ascent.metas.kilos')}</Text>
-          <TextInput value={kilos} onChangeText={setKilos} keyboardType="decimal-pad" style={st.nuevaCampo} placeholder="100" placeholderTextColor={C.tenue} accessibilityLabel={t('ascent.metas.kilos')} />
+          <Text style={st.nuevaEtq}>{etiqueta}</Text>
+          <TextInput value={kilos} onChangeText={setKilos} keyboardType="decimal-pad" style={st.nuevaCampo} placeholder={sistema === 'imperial' ? '225' : '100'} placeholderTextColor={C.tenue} accessibilityLabel={etiqueta} />
         </View>
         <View style={st.crece}>
           <Text style={st.nuevaEtq}>{t('ascent.metas.reps')}</Text>
@@ -698,6 +708,7 @@ export function MapaDelAnio({ hoy, dias, elegido, alElegir, vacio }: { hoy: Clav
 
 function TuAnio({ h, todo }: { h: Hoy; todo: Todo }) {
   const [elegido, setElegido] = useState<ClaveDia | null>(null);
+  const sistema = sistemaDe(useEstado());
   const a = todo.anio;
   const detalle = (fecha: ClaveDia) => {
     const x = a.dias.find((y) => y.fecha === fecha);
@@ -729,7 +740,7 @@ function TuAnio({ h, todo }: { h: Hoy; todo: Todo }) {
               return (
                 <View key={m.id ?? m.ejercicio} style={st.anioUltima}>
                   <View style={[st.leyendaCuadro, { backgroundColor: m.grupo ? GRUPOS_DEL_ANIO[m.grupo] : C.lejos }]} />
-                  <Text style={[st.anioUltimaTexto, m.destacada && st.anioUltimaDestacada]}>{`${m.de ? `${tx(`ascent.hoy.grupos.${m.de}`)}: ${enFrase(nombreDelEjercicio({ id: m.id, ejercicio: m.ejercicio }))}` : conMayuscula(nombreDelEjercicio({ id: m.id, ejercicio: m.ejercicio }))} ${t('ascent.estancamiento.marca', { kg: numero(m.kilos, m.kilos % 1 ? 1 : 0), reps: m.reps })}`}</Text>
+                  <Text style={[st.anioUltimaTexto, m.destacada && st.anioUltimaDestacada]}>{`${m.de ? `${tx(`ascent.hoy.grupos.${m.de}`)}: ${enFrase(nombreDelEjercicio({ id: m.id, ejercicio: m.ejercicio }))}` : conMayuscula(nombreDelEjercicio({ id: m.id, ejercicio: m.ejercicio }))} ${enLaUnidad(t('ascent.estancamiento.marca', { kg: cifra(pesoEn(m.kilos, sistema)), reps: m.reps }), sistema)}`}</Text>
                   <Text style={st.anioUltimaCuando}>{semanas ? plural('ascent.anio.hace', semanas) : t('ascent.anio.estaSemana')}</Text>
                 </View>
               );

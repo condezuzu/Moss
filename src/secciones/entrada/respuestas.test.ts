@@ -96,6 +96,12 @@ describe('lo que se guarda, y contestarlo otra vez', () => {
     expect(otraVez.nuevo.respuestas.grasa?.pct).toBe(32);
     expect(otraVez.nuevo.meta).toEqual(nuevo.meta);
   });
+
+  it('volver a tocar el mismo objetivo no borra el ritmo, el peso meta ni la fecha; otro objetivo sí', () => {
+    const r: Contestado = { ...conObjetivo(el, 'bajar'), pesoMeta: 70, ritmo: 'rapido', fecha: '2027-03-01' };
+    expect(conObjetivo(r, 'bajar')).toMatchObject({ ritmo: 'rapido', pesoMeta: 70, fecha: '2027-03-01' });
+    expect(conObjetivo(r, 'subir')).toMatchObject({ ritmo: 'recomendado', fecha: null });
+  });
 });
 
 describe('cuando llegues, ¿qué sigue?', () => {

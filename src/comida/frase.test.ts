@@ -91,6 +91,12 @@ describe('la comida dicha de una vez', () => {
     expect(resumen('un vaso de leche y uno de jugo').map(([c, u, b]) => [c, u, b])).toEqual([[1, 'vaso', 'leche'], [1, 'vaso', 'jugo']]);
   });
 
+  it('«cuatro empanadas, dos de carne y dos de jamón» son cuatro: lo de antes era el total', () => {
+    expect(resumen('cuatro empanadas, dos de carne y dos de jamón').map(([c, , b]) => [c, b])).toEqual([[2, 'empanada de carne'], [2, 'empanada de jamón']]);
+    // Si no suman lo mismo, son otras.
+    expect(resumen('dos empanadas, una de carne').map(([c, , b]) => [c, b])).toEqual([[2, 'empanada'], [1, 'empanada de carne']]);
+  });
+
   it('sin muletillas ni verbos, y «y» corta solo cuando sigue otro alimento', () => {
     expect(resumen('eh bueno comí tres medialunas y un cortado').map(([c, , b]) => [c, b])).toEqual([[3, 'medialuna'], [1, 'cortado']]);
     expect(resumen('me tomé un café y después una galletita').map(([c, , b]) => [c, b])).toEqual([[1, 'café'], [1, 'galletita']]);

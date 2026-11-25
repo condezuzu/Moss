@@ -225,20 +225,25 @@ export type FaltaParaEstimar = { que: 'pesadas' | 'comida'; n: number; fecha: Cl
 /**
  * Lo que le falta a Moss (lo pediste el 30/10/2026: da seguridad saberlo): lo que el próximo control
  * necesita antes de su día, un peso meta si va a bajar o a subir, las medidas para la grasa corporal y,
- * sin reloj ni anillo, que el sueño es estimado.
+ * sin reloj ni anillo, que el sueño es estimado. Del control, como Inicio (Control.tsx, loQueFalta): con el
+ * tramo corto ese control no mide aunque lleguen los datos, y con la pesada y la comida todavía puede faltar
+ * otra pesada a una semana de la primera, para la recta.
  */
 export function faltaParaEstimar(o: {
-  control: Pick<EstadoDelControl, 'fecha' | 'diasConComida' | 'pesadas' | 'minimos'> | null;
+  control: Pick<EstadoDelControl, 'fecha' | 'diasConComida' | 'pesadas' | 'minimos' | 'tramoCorto' | 'alcanza'> | null;
   objetivo: Objetivo;
   pesoMeta?: number | null;
   conMedidas: boolean;
   sinReloj: boolean;
 }): FaltaParaEstimar[] {
   const lista: FaltaParaEstimar[] = [];
-  if (o.control) {
+  if (o.control && !o.control.alcanza && !o.control.tramoCorto) {
     const { pesadas, diasConComida, minimos, fecha } = o.control;
-    if (pesadas < minimos.pesadas) lista.push({ que: 'pesadas', n: minimos.pesadas - pesadas, fecha });
-    if (diasConComida < minimos.diasConComida) lista.push({ que: 'comida', n: minimos.diasConComida - diasConComida, fecha });
+    const faltanDias = minimos.diasConComida - diasConComida;
+    // Con lo mínimo de las dos y sin alcanzar, lo que falta es la recta: una pesada más.
+    const faltanPesadas = pesadas < minimos.pesadas ? minimos.pesadas - pesadas : faltanDias > 0 ? 0 : 1;
+    if (faltanPesadas > 0) lista.push({ que: 'pesadas', n: faltanPesadas, fecha });
+    if (faltanDias > 0) lista.push({ que: 'comida', n: faltanDias, fecha });
   }
   if (o.objetivo !== 'mantener' && !o.pesoMeta) lista.push({ que: 'pesoMeta' });
   if (!o.conMedidas) lista.push({ que: 'medidas' });

@@ -472,6 +472,7 @@
     "estaSemana": "Esta semana",
     "semanaDel": "Semana del {num}",
     "rangoSemana": "{desde} – {hasta} {mes}",
+    "rangoSemanaDosMeses": "{desde} {mesDesde} – {hasta} {mesHasta}",
     "registrar": "Registrar comida",
     "metaDe": "Meta: {n} kcal",
     "proteina": "Proteína",
@@ -4221,7 +4222,7 @@
       "error": "No se pudo guardar. Revisa la conexión.",
       "objetivoUna": "Levantar {kg} kg una vez",
       "objetivoVarias": "Levantar {kg} kg {reps} veces",
-      "nivelKg": "Hoy podrías levantar unos {kg} kg (estimado)"
+      "nivelKg": "Hoy podrías levantar cerca de {kg} kg (estimado)"
     },
     "sugerencias": {
       "titulo": "Sugerencias para hoy",

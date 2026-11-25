@@ -472,6 +472,7 @@
     "estaSemana": "This week",
     "semanaDel": "Week of {mes} {num}",
     "rangoSemana": "{mes} {desde} – {hasta}",
+    "rangoSemanaDosMeses": "{mesDesde} {desde} – {mesHasta} {hasta}",
     "registrar": "Log food",
     "metaDe": "Target: {n} kcal",
     "proteina": "Protein",

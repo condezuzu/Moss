@@ -460,6 +460,8 @@ function leerGrupo(texto: string, idioma: Idioma, esNombre: (buscado: string) =>
   // Cuántos sumó el último pedazo: «un café, no, un té» los saca.
   let ultimos = 0;
   let corregir = false;
+  // Cada detalle callado («dos de carne») y lo dicho sin detalle de donde sale («cuatro empanadas»).
+  const detalleDe = new Map<Dicho, Dicho>();
   for (const pedazo of pedazos(prepararGrupo(texto), idioma)) {
     if (ES_CORRECCION.test(recortar(pedazo))) {
       corregir = true;
@@ -496,11 +498,14 @@ function leerGrupo(texto: string, idioma: Idioma, esNombre: (buscado: string) =>
     // arroz y 150 de pollo» o «un vaso de leche y uno de jugo» (la unidad), o «un plato de arroz y uno de
     // fideos» (el plato).
     const elipsis = new RegExp(`^(${NUMERO})\\s+de\\s+`, 'u').exec(p);
+    let general: Dicho | null = null;
     if (elipsis && anterior) {
       // «uno de jugo» es «un vaso de jugo».
       const cuanto = elipsis[1] === 'uno' ? 'un' : elipsis[1];
       const recipiente = `${anterior.recipiente === 'otro' ? 'porción' : 'plato'}${anterior.plato ? ` ${anterior.plato}` : ''}`;
-      p = `${cuanto} ${anterior.vago ? recipiente : anterior.unidad ?? anterior.buscado.split(' ')[0]} de ${p.slice(elipsis[0].length)}`;
+      const palabra = anterior.buscado.split(' ')[0];
+      p = `${cuanto} ${anterior.vago ? recipiente : anterior.unidad ?? palabra} de ${p.slice(elipsis[0].length)}`;
+      general = detalleDe.get(anterior) ?? (!anterior.vago && !anterior.unidad && anterior.buscado === palabra ? anterior : null);
     }
     // «Café con leche y medialunas»: lo de después del «y» es otra cosa, salvo que el nombre entero exista.
     let resto: string | null = null;
@@ -526,6 +531,7 @@ function leerGrupo(texto: string, idioma: Idioma, esNombre: (buscado: string) =>
       dichos.push(leido);
       anterior = leido;
     }
+    if (general) detalleDe.set(anterior, general);
     if (resto) {
       const otro = leerUno(resto, idioma);
       // «Tostada con manteca y mermelada»: también acompaña. «Café con leche y medialunas»: no.
@@ -533,7 +539,12 @@ function leerGrupo(texto: string, idioma: Idioma, esNombre: (buscado: string) =>
     }
     ultimos = dichos.length - antes;
   }
-  return dichos.filter((d) => d.buscado && !VACIO.test(d.buscado));
+  // «Cuatro empanadas, dos de carne y dos de jamón»: si los detalles suman lo mismo, lo de antes era el total.
+  const esElTotal = (d: Dicho) => {
+    const detalles = dichos.filter((x) => detalleDe.get(x) === d);
+    return detalles.length > 0 && detalles.reduce((suma, x) => suma + (x.cantidad ?? NaN), 0) === d.cantidad;
+  };
+  return dichos.filter((d) => d.buscado && !VACIO.test(d.buscado) && !esElTotal(d));
 }
 
 /**

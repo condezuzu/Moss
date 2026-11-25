@@ -22,20 +22,31 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: async (k: string) => { mockGuardado.delete(k); },
 }));
 jest.mock('expo-apple-authentication', () => ({ signInAsync: async () => ({ authorizationCode: 'codigo' }) }));
+/** La carpeta temporal de mentira: lo que hay, por nombre. */
+const mockCache = new Map<string, MockArchivo>();
 /** Un archivo de mentira: Vista Rápida es la de mockVistaRapida. */
 class MockArchivo {
   uri = 'file:///cache/moss.csv';
+  name: string;
+  constructor(_carpeta: unknown, nombre: string) {
+    this.name = nombre;
+  }
   static async canPreview(): Promise<boolean> {
     return true;
   }
   static preview(): Promise<void> {
     return mockVistaRapida();
   }
-  create() {}
+  create() {
+    mockCache.set(this.name, this);
+  }
   writeSync() {}
+  delete() {
+    mockCache.delete(this.name);
+  }
 }
 
-jest.mock('expo-file-system', () => ({ Paths: { cache: 'cache' }, File: MockArchivo }));
+jest.mock('expo-file-system', () => ({ Paths: { cache: { list: () => [...mockCache.values()] } }, File: MockArchivo }));
 const mockSalirAProposito = jest.fn((hacer: () => Promise<unknown>) => hacer());
 jest.mock('@/almacen', () => ({
   elAlmacen: () => ({ olvidarTodo: () => mockOlvidar(), paraExportar: async () => ({ registros: [], pesos: [], metas: [] }) }),
@@ -254,5 +265,19 @@ describe('exportar', () => {
     mockVistaRapida.mockResolvedValue(undefined);
     await cuenta.exportarTodo('2026-11-06');
     expect(mockVistaRapida).toHaveBeenCalledTimes(2);
+  });
+
+  it('lo exportado no queda en el teléfono al borrar los datos (lo mismo que al borrar la cuenta o cerrar sesión)', async () => {
+    const cuenta = otraVez();
+    mockCache.clear();
+    // Lo que no es de exportar queda.
+    new MockArchivo(null, 'otro.dat').create();
+    mockVistaRapida.mockResolvedValue(undefined);
+    await cuenta.exportarTodo('2026-11-06');
+    expect(mockCache.size).toBe(4);
+    mockLeerSesion.mockResolvedValue(conSesion('lucia@ejemplo.com'));
+    mockBorrarDatos.mockResolvedValue({ error: null });
+    expect(await cuenta.borrarMisDatos()).toBe(true);
+    expect([...mockCache.keys()]).toEqual(['otro.dat']);
   });
 });

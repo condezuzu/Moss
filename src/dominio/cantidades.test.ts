@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import {
   ACEITE, aCm, aGramos, ajustar, AJUSTES, aKg, aMl, aOjoDeFabrica, comestible, largoEn, pesoCorporalEn, GRAMOS_POR_ONZA, gramosDeMl, ML_POR_ONZA_LIQUIDA, mlDeGramos, pasoDeCantidad,
-  pasoDePorcion, pesoEn, pesoParaGuardar, sistemaDeRegion, volumenEn,
+  pasoDePorcion, pesoEn, pesoParaGuardar, piesYPulgadas, sistemaDeRegion, volumenEn,
 } from './cantidades';
 
 describe('los pasos de − y +', () => {
@@ -124,6 +124,12 @@ describe('el cuerpo en el sistema de cada uno', () => {
     expect(aKg(80, 'metrico')).toBe(80);
     expect(largoEn(85.5, 'imperial')).toEqual({ valor: 33.7, unidad: 'in' });
     expect(aCm(33.7, 'imperial')).toBeCloseTo(85.6, 1);
+  });
+
+  it('la altura en pies y pulgadas, con las pulgadas redondeadas antes de partirlas', () => {
+    expect(piesYPulgadas(175)).toBe('5′ 9″');
+    // 152 cm son 59,8 pulgadas: 5′ 0″, no 4′ 0″.
+    expect(piesYPulgadas(152)).toBe('5′ 0″');
   });
 });
 

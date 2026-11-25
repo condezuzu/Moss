@@ -40,6 +40,7 @@ import { Boton, COLOR_DE_MACRO, degradado, Etiqueta, Icono, MACROS, Punto, Punto
 import { alTocarLaPagina, cerrarLaFilaAbierta, FilaQueSeDesliza } from './FilaQueSeDesliza';
 import { useFotos } from './fotos';
 import { HojaDeFoto, MiniaturaDeFoto, TiraDeFotos } from './FotosDelDia';
+import { rangoDeLaSemana } from './hoja';
 import { accionesDelMenu, borrarDeLaLinea, MenuFlotante, type PedidoDeMenu } from './MenuFlotante';
 import {
   cantidadDeTexto, comidasDelDia, fechaCorta, gramosDeMacro, hora, HORA_TIPICA, horasDeComer, letraDelDia, metaDelDia, numero, sistemaDe, tituloDelDia, totalDe, useNumeros,
@@ -501,14 +502,13 @@ function PaginaDeLaSemana({ e, dia, alElegir }: { e: Estado; dia: ClaveDia; alEl
   const lunes = lunesDe(dia);
   const dias = Array.from({ length: 7 }, (_, i) => sumarDias(lunes, i));
   const desde = partesDe(lunes);
-  const hasta = partesDe(dias[6]);
   const meta = metaDelDia(e, dias[6] < e.hoy ? dias[6] : e.hoy);
   const titulo = lunes === lunesDe(e.hoy) ? t('comida.estaSemana') : t('comida.semanaDel', { num: desde.dia, mes: lista('fecha.mesesCortos')[desde.mes] });
   return (
     <View>
       <CabezaDePromedio
         titulo={titulo}
-        fechas={t('comida.rangoSemana', { desde: desde.dia, hasta: hasta.dia, mes: lista('fecha.mesesCortos')[hasta.mes] })}
+        fechas={rangoDeLaSemana(lunes)}
         promedio={promedioDe(e, dias)}
         dias={dias.filter((d) => d < e.hoy).length}
         metaSinDias={meta}

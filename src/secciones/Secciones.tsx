@@ -227,9 +227,15 @@ export default function Secciones() {
     subida.set(0);
     ir(PESTANAS.indexOf('sueno'), false);
   };
+  // ascentArriba no cambia en cada render: su alAbrir llama al abrirAscent de ahora. El de cuando se armó tenía otro
+  // `actual` y, desde otra pestaña, vibraba de más y volvía a viajar a Progreso.
+  const abrirAscentAhora = useRef(abrirAscent);
+  useEffect(() => {
+    abrirAscentAhora.current = abrirAscent;
+  });
   const ascentArriba = useMemo(
-    () => (CON_ASCENT ? { subida, abierta: ascentAbierta, alAbrir: abrirAscent, alSoltar: setAscentAbierta } : undefined),
-    [subida, ascentAbierta], // eslint-disable-line react-hooks/exhaustive-deps
+    () => (CON_ASCENT ? { subida, abierta: ascentAbierta, alAbrir: () => abrirAscentAhora.current(), alSoltar: setAscentAbierta } : undefined),
+    [subida, ascentAbierta],
   );
   // Con Reducir movimiento la hoja del «+» no sube: aparece y se va con un fundido corto (HojaMas).
   const reducido = useReducedMotion();

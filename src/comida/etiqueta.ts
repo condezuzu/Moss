@@ -168,7 +168,9 @@ export function leerEtiqueta(lineas: string[]): Etiqueta {
     });
   }
 
-  const porcion = porcionDe(lineas);
+  const leida = porcionDe(lineas);
+  // Con 0 g no se puede pasar a 100 g: es como si no estuviera.
+  const porcion = leida && leida.gramos > 0 ? leida : null;
   const avisos: Aviso[] = [];
   if (porcion?.ml) avisos.push('mililitros');
   const completo = (v: Leidos) => CUATRO.every((k) => v[k] !== undefined);

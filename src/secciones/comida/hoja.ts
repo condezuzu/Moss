@@ -52,6 +52,16 @@ export function agregarADe(comida: Comida, dia: ClaveDia, hoy: ClaveDia): string
   });
 }
 
+// ------------------------------------------------------------ la semana de Comida
+/** Las fechas de la semana que empieza ese lunes: «9 – 15 nov»; entre dos meses, «26 oct – 1 nov». */
+export function rangoDeLaSemana(lunes: ClaveDia): string {
+  const desde = partesDe(lunes);
+  const hasta = partesDe(sumarDias(lunes, 6));
+  const meses = lista('fecha.mesesCortos');
+  if (desde.mes === hasta.mes) return t('comida.rangoSemana', { desde: desde.dia, hasta: hasta.dia, mes: meses[hasta.mes] });
+  return t('comida.rangoSemanaDosMeses', { desde: desde.dia, mesDesde: meses[desde.mes], hasta: hasta.dia, mesHasta: meses[hasta.mes] });
+}
+
 // ------------------------------------------------------------ cambiar lo guardado
 /** Un número para llenar un campo: con el decimal del idioma y sin separar los miles, así `leerNumero` lo lee igual. */
 export const paraCampo = (n: number) => decimal(Math.round(n * 10) / 10, idioma(), false);
@@ -87,6 +97,7 @@ export type Edicion = {
 };
 
 const MACROS_DE_PORCION = ['kcal', 'carbohidratos', 'proteina', 'grasas'] as const;
+const MEDIDA_PURA = /^\d+([.,]\d+)?\s*(g|ml)$/i;
 
 export function edicionDe(g: Guardada): Edicion {
   const vacia: Edicion = { nombre: g.x.nombre, items: [], porciones: '', pesoFinal: '', marca: '', porcion: '', kcal: '', carbohidratos: '', proteina: '', grasas: '' };
@@ -136,8 +147,10 @@ export function conLoEditado(g: Guardada, e: Edicion): Guardada | null {
   const carbohidratos = por100('carbohidratos') ?? 0;
   const grasas = por100('grasas') ?? 0;
   const por100g: Valores = { ...resto, kcal: por100('kcal') ?? kcalDeMacros(proteina, carbohidratos, grasas), proteina, carbohidratos, grasas };
+  // Una porción sin nombre se llama por lo que pesa («30 g»): con otro peso, otro nombre.
+  const medida = mismo ? null : MEDIDA_PURA.exec(a.porciones[0]?.nombre.trim() ?? '');
   const porciones = a.porciones.length
-    ? [{ ...a.porciones[0], gramos }, ...a.porciones.slice(1)]
+    ? [{ ...a.porciones[0], gramos, ...(medida ? { nombre: `${decimal(gramos, idioma())} ${medida[2].toLowerCase()}` } : {}) }, ...a.porciones.slice(1)]
     : gramos === 100 ? [] : [{ nombre: `${decimal(gramos, idioma())} g`, gramos }];
   return { tipo: 'propio', x: { ...a, nombre, marca: e.marca.trim() || null, por100g, porciones } };
 }

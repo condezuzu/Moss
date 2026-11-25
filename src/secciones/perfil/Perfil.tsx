@@ -21,7 +21,7 @@ import { horasDeComerDe, noSueleDe, reglasDeCuidados, type Estado } from '@/alma
 import { CON_ASCENT } from '@/lib/banderas';
 import { abrirPagina, CORREO } from '@/lib/sitio';
 import type { Calidad } from '@/cielo/mundo';
-import { CM_POR_PULGADA } from '@/dominio/cantidades';
+import { CM_POR_PULGADA, piesYPulgadas } from '@/dominio/cantidades';
 import type { Entreno } from '@/dominio/alrededorDelEntreno';
 import { DEPORTES, deportesDePerfil, entrenoConCambios, preguntasDelEntreno, type CambiosDelEntreno, type Deporte } from '@/dominio/cuestionario';
 import type { Comida } from '@/dominio/comidas';
@@ -576,12 +576,6 @@ function VeloDeEspera({ espera }: { espera: EnEspera | null }) {
       </View>
     </Modal>
   );
-}
-
-// Las pulgadas se redondean antes de partirlas: si no, 152 cm (5′ 0″) daba 4′ 0″.
-function piesYPulgadas(cm: number) {
-  const pulgadas = Math.round(cm / CM_POR_PULGADA);
-  return `${Math.floor(pulgadas / 12)}′ ${pulgadas % 12}″`;
 }
 
 /**

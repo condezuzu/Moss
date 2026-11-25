@@ -33,8 +33,10 @@ export function lineaDeAnotar(ahora: Date, d: {
   const entrada = (f: Date, comida: Comida, dia: ClaveDia): Entrada => ({ date: f, props: { ...comun, titulo: d.titulos[comida], queda: d.queda(dia), url: d.url.replace('{comida}', comida) } });
   let antes = { comida: comidaEn(ahora), dia: diaLogico(ahora, d.corte) };
   entradas.push(entrada(ahora, antes.comida, antes.dia));
-  // Las franjas y el corte empiezan en punto o y media: de a media hora no se pierde ningún cambio.
-  const primera = Math.ceil(ahora.getTime() / MEDIA_HORA) * MEDIA_HORA;
+  // Las franjas y el corte empiezan en punto o y media de la hora del teléfono: de a media hora no se pierde ningún
+  // cambio. En la hora local y no en UTC, que en Nepal (UTC+5:45) caería 15 minutos tarde.
+  const enLaHora = ahora.getMinutes() * 60_000 + ahora.getSeconds() * 1000 + ahora.getMilliseconds();
+  const primera = ahora.getTime() - enLaHora + Math.ceil(enLaHora / MEDIA_HORA) * MEDIA_HORA;
   for (let t = primera; t < ahora.getTime() + HORAS * 3600 * 1000; t += MEDIA_HORA) {
     const f = new Date(t);
     const ahi = { comida: comidaEn(f), dia: diaLogico(f, d.corte) };

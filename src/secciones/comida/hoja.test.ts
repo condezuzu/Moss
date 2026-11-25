@@ -3,9 +3,10 @@
 import { describe, expect, it, jest } from '@jest/globals';
 
 import type { AlimentoPropio, Item, Receta } from '@/dominio/registros';
-import { agregarADe, cambioLaEdicion, conLoEditado, edicionDe, etiquetaDelDia, porcionDePropio, sufijoDelDia, tuComidaDe, type Guardada } from './hoja';
+import { agregarADe, cambioLaEdicion, conLoEditado, edicionDe, etiquetaDelDia, porcionDePropio, rangoDeLaSemana, sufijoDelDia, tuComidaDe, type Guardada } from './hoja';
 
-jest.mock('expo-localization', () => ({ getLocales: () => [{ languageTag: 'es-UY', regionCode: 'UY' }] }));
+let mockIdioma = 'es-UY';
+jest.mock('expo-localization', () => ({ getLocales: () => [{ languageTag: mockIdioma, regionCode: 'UY' }] }));
 
 // El 9/11/2026 es lunes.
 const HOY = '2026-11-09';
@@ -30,6 +31,29 @@ describe('el día de la hoja', () => {
     expect(etiquetaDelDia('2026-11-06', HOY)).toBe('Vie 6');
     expect(sufijoDelDia('2026-11-06', HOY)).toBe(' · viernes 6');
     expect(agregarADe('merienda', '2026-11-06', HOY)).toBe('Agregar a la merienda del viernes 6');
+  });
+});
+
+describe('las fechas de una semana en Comida', () => {
+  it('en un mes, el mes una vez; entre dos, cada día con el suyo', () => {
+    expect(rangoDeLaSemana(HOY)).toBe('9 – 15 nov');
+    expect(rangoDeLaSemana('2026-10-26')).toBe('26 oct – 1 nov');
+    expect(rangoDeLaSemana('2026-12-28')).toBe('28 dic – 3 ene');
+  });
+
+  it('en inglés, también', () => {
+    // El idioma se lee una vez: con los módulos de nuevo, y de vuelta al español al terminar.
+    mockIdioma = 'en-US';
+    try {
+      jest.isolateModules(() => {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const enIngles = (require('./hoja') as typeof import('./hoja')).rangoDeLaSemana;
+        expect(enIngles(HOY)).toBe('Nov 9 – 15');
+        expect(enIngles('2026-10-26')).toBe('Oct 26 – Nov 1');
+      });
+    } finally {
+      mockIdioma = 'es-UY';
+    }
   });
 });
 
@@ -74,6 +98,16 @@ describe('cambiar lo guardado', () => {
     expect(a.por100g.fibra).toBeCloseTo(3.75);
     expect(a.codigo).toBe('7790001');
     expect(porcionDePropio(a)).toEqual({ porcion: '1 barrita', gramosPorcion: 40, veces: 1 });
+  });
+
+  it('una porción que se llama por lo que pesa («30 g», como la de Open Food Facts) cambia de nombre con los gramos', () => {
+    const conPeso = (nombre: string, gramos: number, porcion: string) => {
+      const g: Guardada = { tipo: 'propio', x: { ...barrita, porciones: [{ nombre, gramos }] } };
+      return (conLoEditado(g, { ...edicionDe(g), porcion })?.x as AlimentoPropio).porciones;
+    };
+    expect(conPeso('30 g', 30, '40')).toEqual([{ nombre: '40 g', gramos: 40 }]);
+    expect(conPeso('30g', 30, '12,5')).toEqual([{ nombre: '12,5 g', gramos: 12.5 }]);
+    expect(conPeso('200 ml', 200, '250')).toEqual([{ nombre: '250 ml', gramos: 250 }]);
   });
 
   it('las kcal vacías salen de los macros', () => {

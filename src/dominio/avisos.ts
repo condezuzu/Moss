@@ -409,6 +409,12 @@ export type DelDia = {
   marcas?: ReadonlyMap<string, Pick<Marca, 'hecho'> & Partial<Pick<Marca, 'momento'>>>;
   /** Las comidas ya anotadas ese día, sin lo planificado: no avisan. */
   anotadas?: ReadonlySet<Comida>;
+  /**
+   * Cuándo se anotó cada una, en minutos de la cuenta del día: la hora en que se anotó, no la que dice que se comió
+   * (`eventos`, que puede ser de antes). Como con `marcas`, lo anotado antes de que sonara su aviso nunca sonó, y no
+   * atrasa a nadie. Sin la hora, como anotada desde siempre.
+   */
+  cuandoSeAnoto?: Partial<Record<Comida, number>>;
   /** El día de la semana del control (control.ts): ese día, pesarse avisa aunque no sea cada día. */
   diaDelControl?: DiaSemana;
   /** Si ya se pesó ese día: pesarse no avisa. */
@@ -522,35 +528,52 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
   const maximo = Math.max(0, Math.floor(ajustes.maximoPorDia ?? MAXIMO_POR_DIA));
   const plan = elegir(delDia.map(redondo).filter(valido), conEvento.map((e) => e.aviso.id), maximo, categoria);
 
-  // Lo que ya pasó no avisa. Pesarse, después de desayunar, ya no es lo mismo: con el desayuno anotado no suena.
-  const yaPasoLaComida = (c: Comida) => {
-    const i = ORDEN_DE_COMIDAS.indexOf(c);
-    return i >= 0 && ORDEN_DE_COMIDAS.slice(i + 1).some((x) => op.anotadas?.has(x));
-  };
   const yaEntreno = (a: Aviso) => {
     const h = a.habito ? op.habitos.find((x) => x.id === a.habito) : undefined;
     if (!h || !esDeEntrenar(h)) return false;
     return op.eventos?.entrenamiento != null || (op.sesiones ?? []).some((s) => s.inicio <= a.minutos);
   };
-  // Cuándo se marcó el hábito, en la cuenta del día: sin marcar, nunca; marcado sin saber cuándo, desde siempre.
+  const anotada = (c: Comida): number => {
+    if (!op.anotadas?.has(c)) return Infinity;
+    const minutos = op.cuandoSeAnoto?.[c] ?? NaN;
+    return Number.isFinite(minutos) ? minutos : -Infinity;
+  };
+  // Cuándo dejó de hacer falta, en la cuenta del día: sin hacer, nunca; hecho sin saber cuándo, desde siempre. Un
+  // hábito, al marcarlo; una comida, al anotarla a ella o a una de después (con la cena anotada, la merienda ya fue); y
+  // pesarse, después de desayunar, ya no es lo mismo: al pesarte o al anotar el desayuno.
   const marcado = (a: Aviso): number => {
+    if (a.comida) {
+      const i = ORDEN_DE_COMIDAS.indexOf(a.comida);
+      return Math.min(anotada(a.comida), ...(i < 0 ? [] : ORDEN_DE_COMIDAS.slice(i + 1)).map(anotada));
+    }
+    if (a.tipo === 'pesarse') return op.pesado ? -Infinity : anotada('desayuno');
     const marca = a.habito ? op.marcas?.get(claveDeMarca(a.habito, dia)) : undefined;
     if (!marca?.hecho) return Infinity;
     const minutos = marca.momento ? minutosEnElDia(new Date(marca.momento), dia) : NaN;
     return Number.isFinite(minutos) ? minutos : -Infinity;
   };
-  // `hasta`: lo marcado antes de ese minuto ya está hecho; sin él, todo lo marcado.
-  const falta = (a: Aviso, hasta = Infinity) =>
-    !a.sobra && !(marcado(a) < hasta) && !yaEntreno(a)
-    && !(a.comida && (op.anotadas?.has(a.comida) || yaPasoLaComida(a.comida)))
-    && !(a.tipo === 'pesarse' && (op.pesado || op.anotadas?.has('desayuno')));
+  // `hasta`: lo hecho antes de ese minuto ya no hace falta; sin él, todo lo hecho.
+  const falta = (a: Aviso, hasta = Infinity) => !a.sobra && !(marcado(a) < hasta) && !yaEntreno(a);
+  // Anotar una comida lleva su hora a la hora en que se comió (horasCorridas). Sus avisos, que ya no suenan, ocupan el
+  // lugar que tenían antes de anotarla, con lo anotado hasta entonces: si no, contarían como sonados ahí y volverían a
+  // correr lo que ya sonó cerca.
+  const antesDeAnotarla = (a: Aviso): Aviso => {
+    const c = a.comida;
+    if (!c || (a.id !== `horario:${c}` && a.id !== `comida:${c}`) || anotadasHoy[c] === undefined) return a;
+    const cuando = anotada(c);
+    const antes = Number.isFinite(cuando)
+      ? horasCorridas(base, Object.fromEntries(Object.entries(anotadasHoy).filter(([x]) => anotada(x as Comida) < cuando)), true)[c]
+      : undefined;
+    return antes === undefined ? a : redondo({ ...a, minutos: a.tipo === 'horario' ? antes : Math.min(ULTIMO_DE_COMIDA, antes + DESPUES_MIN) });
+  };
+  const enSuLugar = plan.avisos.map(antesDeAnotarla);
   // Nada suena más tarde que en el plan entero, con lo hecho y lo que no suena adentro: lo que sonó un rato antes
   // porque después venía algo que importa más no vuelve a sonar a su hora si eso se hace después, y si se hizo antes,
   // suena igual a esa hora. Lo hecho antes de su hora sí deja de atrasar a los que esperaban.
-  const enElPlan = new Map(acomodar(plan.avisos, categoria).map((a) => [a.id, a.minutos]));
+  const enElPlan = new Map(acomodar(enSuLugar, categoria).map((a) => [a.id, a.minutos]));
   // Lo de después de un evento y lo que falta buscan su hueco entre todo lo acomodado, también lo que ya
   // sonó y después se hizo: así, al reprogramar, cada uno sale siempre en el mismo lugar.
-  const lugares = (hasta: number, sono: (a: Aviso) => boolean) => acomodar(plan.avisos.filter((a) => falta(a, hasta) || sono(a)), categoria)
+  const lugares = (hasta: number, sono: (a: Aviso) => boolean) => acomodar(enSuLugar.filter((a) => falta(a, hasta) || sono(a)), categoria)
     .map((a) => ({ ...a, minutos: Math.min(a.minutos, enElPlan.get(a.id) ?? a.minutos) }));
   // Lo hecho sonó si llegó a su lugar antes de que lo marcaras: el que tenía en ese momento, con lo marcado antes. Si lo
   // marcaste antes, nunca sonó y no atrasa a nadie, ni antes ni después de su hora (si no, lo que esperaba sonaría dos veces).
@@ -571,7 +594,14 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
   };
   const puestos = lugares(Infinity, (a) => yaPaso(a));
   const quedan = puestos.filter((a) => falta(a));
-  for (const e of conEvento) {
+  // Lo que se supo antes busca su hueco primero: lo de después de una comida anotada más tarde (con una foto de antes,
+  // su hora puede caer cerca) no corre lo que ya sonó. Sin saber cuándo, en el orden de siempre.
+  const seSupo = (e: Evento) => (e === 'entrenamiento' ? (op.eventos?.entrenamiento ?? Infinity) : anotada(e));
+  const porCuandoSeSupo = !op.cuandoSeAnoto ? conEvento : [...conEvento].sort((x, y) => {
+    const a = seSupo(x.evento), b = seSupo(y.evento);
+    return a < b ? -1 : a > b ? 1 : 0;
+  });
+  for (const e of porCuandoSeSupo) {
     const paso = op.eventos?.[e.evento];
     if (paso == null) continue;
     // «En el momento» es dos minutos después: al reprogramar (un segundo y medio después de anotar,
@@ -604,11 +634,12 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
  * lo de anoche que todavía no sonó (pasada la medianoche, el de dormir de ayer). Se rehace cada vez
  * que se abre Moss o se anota algo: si no se abre en una semana, para solo.
  */
-export function avisosDeLaSemana(op: Omit<DelDia, 'dia' | 'anotadas' | 'eventos' | 'ahora' | 'pesado' | 'sesiones' | 'faltas' | 'conviene'> & {
+export function avisosDeLaSemana(op: Omit<DelDia, 'dia' | 'anotadas' | 'cuandoSeAnoto' | 'eventos' | 'ahora' | 'pesado' | 'sesiones' | 'faltas' | 'conviene'> & {
   hoy: ClaveDia;
   /** Los minutos de ahora, desde la medianoche. */
   ahora: number;
   anotadasHoy?: ReadonlySet<Comida>;
+  cuandoSeAnotoHoy?: Partial<Record<Comida, number>>;
   eventosHoy?: Partial<Record<Evento, number>>;
   pesadoHoy?: boolean;
   faltasHoy?: readonly FaltaConHora[];
@@ -617,11 +648,11 @@ export function avisosDeLaSemana(op: Omit<DelDia, 'dia' | 'anotadas' | 'eventos'
   /** Lo que conviene de cada día (loQueConviene), con lo de hoy si es hoy. */
   convieneDe?: (dia: ClaveDia) => readonly Aviso[];
 }): Notificacion[] {
-  const { hoy, ahora, anotadasHoy, eventosHoy, pesadoHoy, faltasHoy, sesionesDe, convieneDe, ...comun } = op;
+  const { hoy, ahora, anotadasHoy, cuandoSeAnotoHoy, eventosHoy, pesadoHoy, faltasHoy, sesionesDe, convieneDe, ...comun } = op;
   const de = (dia: ClaveDia) => ({ ...comun, dia, sesiones: sesionesDe?.(dia), conviene: convieneDe?.(dia) });
   return [
     ...avisosDelDia({ ...de(sumarDias(hoy, -1)), ahora: ahora + DIA }),
-    ...avisosDelDia({ ...de(hoy), ahora, anotadas: anotadasHoy, eventos: eventosHoy, pesado: pesadoHoy, faltas: faltasHoy }),
+    ...avisosDelDia({ ...de(hoy), ahora, anotadas: anotadasHoy, cuandoSeAnoto: cuandoSeAnotoHoy, eventos: eventosHoy, pesado: pesadoHoy, faltas: faltasHoy }),
     ...Array.from({ length: DIAS - 1 }, (_, i) => avisosDelDia(de(sumarDias(hoy, i + 1)))).flat(),
   ];
 }

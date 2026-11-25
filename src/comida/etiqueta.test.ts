@@ -145,6 +145,13 @@ describe('lo que conviene revisar', () => {
     expect(sinPorcion.normalizado).toBeNull();
   });
 
+  it('una porción de 0 g es como si no estuviera: avisa y no da infinito', () => {
+    const e = leerEtiqueta(MERCOSUR.map((l) => l.replace('Porción 30 g', 'Porción 0 g')));
+    expect(e.porcion).toBeNull();
+    expect(e.normalizado).toBeNull();
+    expect(e.avisos).toEqual(['sinPorcion']);
+  });
+
   it('una porción en ml se toma como gramos, con aviso', () => {
     const e = leerEtiqueta(DOS_COLUMNAS.map((l) => l.replace('Porción: 200 g (1 vaso)', 'Porción: 200 ml (1 vaso)')));
     expect(e.porcion?.gramos).toBe(200);

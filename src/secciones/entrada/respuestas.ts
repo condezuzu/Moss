@@ -181,10 +181,10 @@ export function conPesoMeta(r: Contestado): Contestado {
   return { ...r, pesoMeta: pesoMetaSugerido(r.pesoKg, r.alturaCm, r.objetivo) ?? (rango ? rango[0] : r.pesoKg) };
 }
 
-/** Al cambiar lo que quiere lograr, el peso meta, la fecha y el ritmo vuelven a lo que se propone. */
+/** Al cambiar lo que quiere lograr, el peso meta, la fecha y el ritmo vuelven a lo que se propone; al tocar el mismo, quedan. */
 export function conObjetivo(r: Contestado, objetivo: ObjetivoDicho): Contestado {
   const cambio = objetivo !== r.objetivo;
-  const nuevo: Contestado = { ...r, objetivo, ...(cambio ? { pesoMeta: null, fecha: null } : {}), ritmo: ritmoSugerido(objetivo, levantaPesas(r) ? r.experiencia : null) };
+  const nuevo: Contestado = { ...r, objetivo, ...(cambio ? { pesoMeta: null, fecha: null, ritmo: ritmoSugerido(objetivo, levantaPesas(r) ? r.experiencia : null) } : {}) };
   return conPesoMeta(nuevo);
 }
 
