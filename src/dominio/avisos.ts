@@ -771,11 +771,10 @@ function textoDelDespertar(d: DelDespertar, h: ParaElTexto): { titulo: string; t
   const de = (clave: string, valores?: Record<string, string | number>) => h.t(`${DESPERTAR}.${clave}`, valores);
   switch (d.que) {
     case 'deuda': {
+      // El título dice si bajó o subió (lo pediste el 25/11/2026); el cuerpo, en cuánto quedó y cuánto cambió.
       const forma = d.ahora === 0 ? (d.antes ? 'cero' : 'sin') : d.antes === null ? 'es' : d.ahora < d.antes ? 'bajo' : d.ahora > d.antes ? 'subio' : 'igual';
-      return {
-        titulo: d.ahora === 0 ? de('deuda.tituloSin') : de('deuda.titulo', { deuda: h.duracion(d.ahora) }),
-        texto: de(`deuda.${forma}`, { cambio: h.duracion(Math.abs(d.ahora - (d.antes ?? 0))) }),
-      };
+      const valores = { deuda: h.duracion(d.ahora), cambio: h.duracion(Math.abs(d.ahora - (d.antes ?? 0))) };
+      return { titulo: de(`deuda.titulos.${forma}`, valores), texto: de(`deuda.${forma}`, valores) };
     }
     case 'desayuno':
       return { titulo: de('desayuno.titulo'), texto: de('desayuno.texto') };

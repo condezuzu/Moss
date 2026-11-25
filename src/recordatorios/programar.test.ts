@@ -56,7 +56,7 @@ jest.mock('@/lib/premium', () => ({
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { algunAviso, avisosDe, conLoQueFalta, LO_QUE_MUEVE_LOS_AVISOS, programarAvisos, suenoParaAvisos } = require('./programar') as typeof import('./programar');
+const { algunAviso, avisosDe, comidasQueAvisan, conLoQueFalta, LO_QUE_MUEVE_LOS_AVISOS, programarAvisos, suenoParaAvisos } = require('./programar') as typeof import('./programar');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { t } = require('@/textos') as typeof import('@/textos');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -81,7 +81,10 @@ const registro = (comida: Registro['comida'], hora: number, proteina: number, kc
   }];
 };
 
-/** Todo lo que viene prendido de fábrica, apagado a mano: sin esto, suena lo del día que sigue tu despertar. */
+/**
+ * Lo de la mañana y la noche, apagado a mano: sin esto, suena lo del día que sigue tu despertar. Las comidas sin anotar
+ * van aparte, en `recordatorios`, que estado() deja apagadas ([]).
+ */
 const APAGADO = {
   dormir: { encendido: false }, horario: [], deuda: { encendido: false }, melatonina: { encendido: false }, revoluciones: { encendido: false }, luces: { encendido: false },
 };
@@ -147,13 +150,37 @@ describe('los avisos que se programan', () => {
     expect(programadas).toEqual([]);
   });
 
-  it('sin tocar nada, suena lo de fábrica: el horario del desayuno, el almuerzo y la cena', async () => {
-    await programarAvisos(estado({ avisos: {}, registros: new Map([registro('desayuno', 8, 20, 400)]) }));
+  it('sin tocar nada, lo de fábrica (25/11/2026): la deuda, tu periodo de melatonina y las comidas sin anotar; la hora de cada comida, acostarte, las luces y bajar el ritmo, apagados', async () => {
+    const sinTocar = estado({ avisos: {}, recordatorios: null } as unknown as Partial<Estado>);
+    const a = avisosDe(sinTocar);
+    expect([a.deuda?.encendido, a.melatonina?.encendido]).toEqual([true, true]);
+    expect([a.horario, a.dormir, a.luces, a.revoluciones]).toEqual([[], undefined, undefined, undefined]);
+    expect(comidasQueAvisan(sinTocar)).toEqual(['desayuno', 'almuerzo', 'cena']);
+    // Lo que prendes en Perfil se respeta: con el horario prendido, cada comida suena a su hora.
+    await programarAvisos(estado({ avisos: { horario: ['almuerzo', 'cena'] }, registros: new Map([registro('desayuno', 8, 20, 400)]) }));
     const horario = (c: 'almuerzo' | 'cena') => t(`recordatorios.horario.${c}`);
     expect(deHoy().map(([, texto]) => texto)).toEqual(expect.arrayContaining([horario('almuerzo'), horario('cena')]));
-    // Lo que elegiste se respeta: con el horario apagado (vacío), no vuelve.
-    await programarAvisos(estado({ avisos: { horario: [] }, registros: new Map([registro('desayuno', 8, 20, 400)]) }));
-    expect(deHoy().map(([, texto]) => texto)).not.toContain(horario('almuerzo'));
+  });
+
+  it('sin elegir nada, suenan las comidas sin anotar, y no la hora de cada comida', async () => {
+    const sinAnotar = (c: 'desayuno' | 'almuerzo' | 'cena') => t(`recordatorios.sinAnotar.${c}`);
+    await programarAvisos(estado({ avisos: {}, recordatorios: null, registros: new Map([registro('desayuno', 8, 20, 400)]) } as unknown as Partial<Estado>));
+    const textos = deHoy().map(([, texto]) => texto);
+    expect(textos).toEqual(expect.arrayContaining([sinAnotar('almuerzo'), sinAnotar('cena')]));
+    // El desayuno ya está anotado.
+    expect(textos).not.toContain(sinAnotar('desayuno'));
+    expect(programadas.some((p) => p.content.data.tipo === 'horario')).toBe(false);
+    // Con todo lo demás apagado, igual suenan: son de fábrica.
+    await programarAvisos(estado({ avisos: APAGADO, recordatorios: null, registros: new Map([registro('desayuno', 8, 20, 400)]) } as unknown as Partial<Estado>));
+    expect(deHoy().map(([, texto]) => texto)).toEqual(expect.arrayContaining([sinAnotar('almuerzo'), sinAnotar('cena')]));
+  });
+
+  it('apagadas en Perfil (vacío), las comidas sin anotar no se vuelven a prender', async () => {
+    const apagadas = estado({ avisos: {}, recordatorios: [], registros: new Map([registro('desayuno', 8, 20, 400)]) });
+    expect(comidasQueAvisan(apagadas)).toEqual([]);
+    await programarAvisos(apagadas);
+    expect(programadas.length).toBeGreaterThan(0);
+    expect(programadas.some((p) => p.content.data.tipo === 'comida')).toBe(false);
   });
 
   it('cada comida suena a tu hora de comer: la que pusiste a mano o la de tu día; la que «No sueles», no suena', async () => {
@@ -162,8 +189,11 @@ describe('los avisos que se programan', () => {
     await programarAvisos(estado({ avisos: { horario: ['almuerzo', 'merienda', 'cena'] }, respuestas, horasDeComer: { cena: 20 * 60 } } as unknown as Partial<Estado>));
     expect(deHoy().filter(([, texto]) => [horario('almuerzo'), horario('merienda'), horario('cena')].includes(String(texto))))
       .toEqual([[13 * 60 + 30, horario('almuerzo')], [20 * 60, horario('cena')]]);
-    // Y lo que muestra Perfil › Avisos: la merienda no está entre las que avisan.
-    expect(avisosDe(estado({ avisos: {}, respuestas } as unknown as Partial<Estado>)).horario).toEqual(['desayuno', 'almuerzo', 'cena']);
+    // Y lo que muestra Perfil › Avisos con el horario prendido: la merienda no está entre las que avisan.
+    expect(avisosDe(estado({ avisos: { horario: ['desayuno', 'almuerzo', 'merienda', 'cena'] }, respuestas } as unknown as Partial<Estado>)).horario).toEqual(['desayuno', 'almuerzo', 'cena']);
+    // Sin elegir, tampoco avisa si no la anotaste.
+    const sinDesayuno = { horarios: { ...respuestas.horarios, desayuno: null } };
+    expect(comidasQueAvisan(estado({ recordatorios: null, respuestas: sinDesayuno } as unknown as Partial<Estado>))).toEqual(['almuerzo', 'cena']);
     expect(avisosDe(estado({ avisos: { horario: ['merienda', 'cena'] }, respuestas } as unknown as Partial<Estado>)).horario).toEqual(['cena']);
   });
 
@@ -469,8 +499,10 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
     const fecha = sumarDias(HOY, -i - 1);
     return [fecha, { fecha, actualizado: '2026-11-01T09:00:00.000Z', hora: { dormirse: local(sumarDias(fecha, -1), 23), despertar: local(fecha, 7), origen: 'confirmada' as const, confianza: 'media' as const } }];
   }));
+  /** La hora de cada comida y la noche entera, prendidas a mano: de fábrica (25/11/2026) no suenan. */
+  const PRENDIDO = { horario: ['desayuno', 'almuerzo', 'cena'], dormir: { encendido: true }, luces: { encendido: true }, revoluciones: { encendido: true } };
   const conNoches = (extra: Partial<Estado> = {}) =>
-    estado({ perfil: { nacimiento: 1994 }, noches, avisos: { pesarse: { encendido: true, todos: true } }, habitos: [], ...extra } as unknown as Partial<Estado>);
+    estado({ perfil: { nacimiento: 1994 }, noches, avisos: { pesarse: { encendido: true, todos: true }, ...PRENDIDO }, habitos: [], ...extra } as unknown as Partial<Estado>);
   const dice = (tipo: string) => programadas.filter((p) => p.trigger.date.getDate() === 2 && p.content.data.tipo === tipo);
   const hora = (p: (typeof programadas)[number] | undefined) => (p ? p.trigger.date.getHours() * 60 + p.trigger.date.getMinutes() : null);
 
@@ -490,19 +522,23 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
   });
 
   it('la noche es la de tu periodo de melatonina: el aviso del periodo y el de acostarte dicen las horas de Sueño', async () => {
-    // Durmiendo de 23:00 a 7:00, el punto medio son las 3:00: el periodo va de 22:30 a 23:30 y la melatonina
-    // empieza a subir a las 20:30; con 15 minutos de margen, acostarse a las 22:15.
+    // Durmiendo de 23:00 a 7:00, el punto medio son las 3:00: el periodo va de 22:30 a 23:30; con 15 minutos de
+    // margen, acostarse a las 22:15. Su aviso, una hora antes (21:30), caía a 15 minutos del de acostarte (21:45): va
+    // a SEPARACION de él, a las 21:25.
     const e = conNoches();
     const p = periodoDeMelatonina(suenoDe(HOY, e.perfil, e.salud, e.noches, e.necesidad).noches, HOY, { margen: e.latencia });
     expect(p).toMatchObject({ desde: 4 * 60 + 30, hasta: 5 * 60 + 30, acostarse: 4 * 60 + 15 });
     await programarAvisos(e);
     const periodo = dice('melatonina')[0];
-    expect([hora(periodo), periodo.content.title]).toEqual([20 * 60 + 30, t('recordatorios.despertar.melatonina.titulo', { desde: '22:30' })]);
-    expect(periodo.content.body).toBe(t('recordatorios.despertar.melatonina.texto', { desde: '22:30', hasta: '23:30' }));
+    expect([hora(periodo), periodo.content.title]).toEqual([21 * 60 + 25, t('recordatorios.despertar.melatonina.titulo')]);
+    expect(periodo.content.body).toBe(t('recordatorios.despertar.melatonina.texto', { desde: '22:30' }));
     const acostarte = dice('dormir')[0];
     expect([hora(acostarte), acostarte.content.title]).toEqual([21 * 60 + 45, t('recordatorios.acostarte.titulo', { cama: '22:15' })]);
     expect(acostarte.content.body).toContain('22:30 – 23:30');
     expect(acostarte.content.categoryIdentifier).toBe('dormir');
+    // Solo con lo de fábrica (sin acostarte), a la hora justa: una hora antes de que empiece.
+    await programarAvisos(conNoches({ avisos: { pesarse: { encendido: true, todos: true } } }));
+    expect(hora(dice('melatonina')[0])).toBe(21 * 60 + 30);
   });
 
   it('con menos de tres noches en la semana no hay periodo: su aviso no suena y el de acostarte usa la hora de antes', async () => {
@@ -563,7 +599,7 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
   it('«Lo que hay que hacer hoy»: con anotar prendido, lo que anotaste anoche llega 20 minutos después de la pregunta del desayuno', async () => {
     jest.setSystemTime(a(7, 40));
     const pendiente = (id: string, texto: string, hecho = false, para = HOY) => ({ id, texto, hecho, para });
-    const con = (pendientes: ReturnType<typeof pendiente>[], avisos: Estado['avisos'] = { descarga: { encendido: true } }) =>
+    const con = (pendientes: ReturnType<typeof pendiente>[], avisos: Estado['avisos'] = { ...PRENDIDO, descarga: { encendido: true } } as Estado['avisos']) =>
       conNoches({ despertares: { [HOY]: { despertar: 7 * 60 + 30, sabido: 7 * 60 + 40 } }, avisos, pendientes } as unknown as Partial<Estado>);
     await programarAvisos(con([pendiente('1', 'Llamar al dentista'), pendiente('2', 'Pagar la luz', true), pendiente('3', 'Comprar el regalo'), pendiente('4', 'Lo de mañana', false, sumarDias(HOY, 1))]));
     const aviso = dice('pendientes')[0];
@@ -576,7 +612,7 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
     // Con todo tachado, o con el interruptor apagado, no suena.
     await programarAvisos(con([pendiente('1', 'Llamar al dentista', true)]));
     expect(dice('pendientes')).toEqual([]);
-    await programarAvisos(con([pendiente('1', 'Llamar al dentista')], {}));
+    await programarAvisos(con([pendiente('1', 'Llamar al dentista')], PRENDIDO as Estado['avisos']));
     expect(dice('pendientes')).toEqual([]);
   });
 
@@ -586,7 +622,7 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
     const horasDeComer = { desayuno: 8 * 60, almuerzo: 13 * 60, merienda: 17 * 60, cena: 20 * 60 };
     const con = (maximoPorDia?: number) => conNoches({
       despertares: { [HOY]: { despertar: 7 * 60 + 30, sabido: 7 * 60 + 40 } }, horasDeComer,
-      avisos: { pesarse: { encendido: true, todos: true }, horario: ['desayuno', 'almuerzo', 'merienda', 'cena'], descarga: { encendido: true }, ...(maximoPorDia ? { maximoPorDia } : {}) },
+      avisos: { ...PRENDIDO, pesarse: { encendido: true, todos: true }, horario: ['desayuno', 'almuerzo', 'merienda', 'cena'], descarga: { encendido: true }, ...(maximoPorDia ? { maximoPorDia } : {}) },
       pendientes: [{ id: '1', texto: 'Pagar la luz', hecho: false, para: HOY }],
     } as unknown as Partial<Estado>);
     // Lo que muestra Perfil › Avisos: el máximo que vale.

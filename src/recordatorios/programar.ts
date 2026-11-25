@@ -22,7 +22,7 @@ import { delDeporte, loQueConviene, QUE_CONVIENE, type DeLoQueConviene } from '@
 import { periodoDeMelatonina } from '@/dominio/melatonina';
 import { edadDe } from '@/dominio/metas';
 import { pendientesPara } from '@/dominio/pendientes';
-import { avisosDelDespertar, deFabrica, RESPUESTAS_DEL_DESAYUNO, type DeSigueElDespertar, type RespuestaDelDesayuno } from '@/dominio/sigueElDespertar';
+import { avisosDelDespertar, comidasSinAnotar, deFabrica, RESPUESTAS_DEL_DESAYUNO, type DeSigueElDespertar, type RespuestaDelDesayuno } from '@/dominio/sigueElDespertar';
 import { DIAS } from '@/dominio/recordatorios';
 import { aguaDelDia, recientes, totalDelDia, vigentes } from '@/dominio/registros';
 import { AGUA_META_ML, bajoAlFinal, horaDeLaTarde, loQueFaltaHoy, QUE_FALTA, type FaltaConHora } from '@/dominio/loQueFalta';
@@ -140,12 +140,15 @@ function conLoDeFabrica(avisos: Avisos, noSuele: (c: Comida) => boolean, cuidado
 }
 
 /**
- * Los avisos como suenan: lo elegido y, en lo que no se tocó, lo de fábrica del día que sigue tu despertar (la deuda,
- * el horario, la melatonina, las revoluciones, las luces, la hora de dormir y el máximo de diez). Perfil muestra esto.
+ * Los avisos como suenan: lo elegido y, en lo que no se tocó, lo de fábrica (deFabrica: la deuda, la melatonina y el
+ * máximo de diez; las comidas sin anotar van aparte, comidasQueAvisan). Perfil muestra esto.
  */
 export function avisosDe(e: Pick<Estado, 'avisos' | 'respuestas' | 'cuidados' | 'perfil' | 'pesos' | 'hoy'>): Avisos {
   return conLoDeFabrica(e.avisos, noSueleDe(e), cuidadosDe(e));
 }
+
+/** Las comidas que avisan si no las anotaste: las elegidas o, sin elegir, las de fábrica (comidasSinAnotar). */
+export const comidasQueAvisan = (e: Pick<Estado, 'recordatorios' | 'respuestas'>) => comidasSinAnotar(e.recordatorios, noSueleDe(e));
 
 /** La cafeína de una toma, si se anotó al menos tres de los últimos 14 días: la mediana, en mg. */
 export function cafeinaPorToma(e: Pick<Estado, 'registros' | 'hoy'>): number | null {
@@ -309,14 +312,14 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
     ...Object.fromEntries(QUE_CONVIENE.filter((q) => apagaLoQueConviene(q, cuidados)).map((q) => [q, { encendido: false }])),
     ...(cuidados.apagar.includes('pesarse') ? { pesarse: { encendido: false } } : {}),
   } : {};
-  const ajustes: Avisos = { ...conLoDeFabrica(e.avisos, noSueleDe(e), cuidados), ...apagados, comidas: e.recordatorios ?? [] };
+  const ajustes: Avisos = { ...conLoDeFabrica(e.avisos, noSueleDe(e), cuidados), ...apagados, comidas: comidasQueAvisan(e) };
   const finDePrueba = avisoDePrueba(suscripcionActual(), Date.now());
   // De regalo, unos días antes de que termine, y nada después (salvo que se suscriba antes).
   const finDelRegalo = accesoActual() === 'regalo' ? finDelRegaloActual() : null;
   const avisoDeRegalo = finDelRegalo ? avisoDelRegalo(finDelRegalo, Date.now()) : null;
   // Cancelada, nada después de que vence: sin acceso no suena, aunque Moss no se abra para borrarlo.
   const hasta = avisosHasta(suscripcionActual(), accesoActual(), hastaDelRegaloActual());
-  const elegido = algunAviso({ avisos: ajustes, recordatorios: e.recordatorios });
+  const elegido = algunAviso({ avisos: ajustes, recordatorios: ajustes.comidas ?? null });
   const conFalta = conLoQueFalta(ajustes, elegido);
   if ((!elegido && !conFalta && finDePrueba === null && avisoDeRegalo === null) || !(await Notifications.getPermissionsAsync()).granted) return;
   await prepararCategorias();

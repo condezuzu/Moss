@@ -4393,11 +4393,11 @@
     "meVoyADormir": "Me voy a dormir",
     "buenasNoches": "Buenas noches. Moss anotó la hora.",
     "sinAnotar": {
-      "desayuno": "Falta anotar el desayuno",
-      "almuerzo": "Falta anotar el almuerzo",
-      "merienda": "Falta anotar la merienda",
-      "cena": "Falta anotar la cena",
-      "snack": "Falta anotar el snack"
+      "desayuno": "No olvides anotar lo que comiste en el desayuno",
+      "almuerzo": "No olvides anotar lo que comiste en el almuerzo",
+      "merienda": "No olvides anotar lo que comiste en la merienda",
+      "cena": "No olvides anotar lo que comiste en la cena",
+      "snack": "No olvides anotar lo que comiste de snack"
     },
     "falta": {
       "y": "{a} y {b}",
@@ -4569,14 +4569,20 @@
     },
     "despertar": {
       "deuda": {
-        "bajo": "Bajó {cambio} desde ayer.",
-        "subio": "Subió {cambio} desde ayer.",
-        "igual": "Igual que ayer.",
+        "bajo": "Ahora es de {deuda}: {cambio} menos que ayer.",
+        "subio": "Ahora es de {deuda}: {cambio} más que ayer.",
+        "igual": "Sigue en {deuda}, como ayer.",
         "es": "Es lo que te falta dormir de las últimas dos semanas.",
-        "cero": "Bajó a cero: dormiste lo que te faltaba.",
+        "cero": "Dormiste lo que te faltaba.",
         "sin": "Duermes lo que necesitas.",
-        "titulo": "Tu deuda de sueño: {deuda}",
-        "tituloSin": "Sin deuda de sueño"
+        "titulos": {
+          "bajo": "Tu deuda de sueño bajó",
+          "subio": "Tu deuda de sueño subió",
+          "igual": "Tu deuda de sueño sigue igual",
+          "es": "Tu deuda de sueño: {deuda}",
+          "cero": "Tu deuda de sueño bajó a cero",
+          "sin": "Sin deuda de sueño"
+        }
       },
       "desayuno": {
         "si": "Sí",
@@ -4599,8 +4605,8 @@
       },
       "y": "{a} y {b}",
       "melatonina": {
-        "titulo": "Tu periodo de melatonina empieza a las {desde}",
-        "texto": "Hasta las {hasta}, es cuando más fácil te duermes. Tu melatonina ya empieza a subir."
+        "titulo": "En 1 hora empieza tu periodo de melatonina",
+        "texto": "A las {desde}. Ve dejando las pantallas y baja las luces: así te duermes más fácil."
       },
       "revoluciones": {
         "titulo": "Se acerca tu hora de acostarte",

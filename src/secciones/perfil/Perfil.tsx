@@ -28,7 +28,7 @@ import type { Comida } from '@/dominio/comidas';
 import { CORTE_DE_FABRICA, CORTES, diaDeLaSemana, sumarDias, type DiaSemana } from '@/dominio/fechas';
 import { edadDe, RANGOS_DEL_CUESTIONARIO, type Actividad, type Perfil as DatosDelPerfil, type Sexo } from '@/dominio/metas';
 import { LARGO_DEL_NOMBRE } from '@/dominio/nombre';
-import { algunAviso, avisosDe, conLoQueFalta, horaDeReloj, pedirPermisoDeAvisosConMotivo, suenoDelDia } from '@/recordatorios/programar';
+import { algunAviso, avisosDe, comidasQueAvisan, conLoQueFalta, horaDeReloj, pedirPermisoDeAvisosConMotivo, suenoDelDia } from '@/recordatorios/programar';
 import { duerme, horasDeSueno, MAXIMO_POR_DIA } from '@/dominio/avisos';
 import { apagaLoQueConviene } from '@/dominio/cuidados';
 import { delDeporte, QUE_CONVIENE, VIAJE_DE_FABRICA, VIAJES, type QueConviene } from '@/dominio/loQueConviene';
@@ -831,7 +831,7 @@ function TarjetaDeAviso({ icono, color, titulo, texto, prendido, alCambiar, dere
  * Lo que nunca se tocó muestra lo de fábrica (avisosDe); lo elegido se respeta. Los de cada hábito se eligen en el hábito.
  */
 function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
-  const comidas = e.recordatorios;
+  const comidas = comidasQueAvisan(e);
   const a = avisosDe(e);
   const [sinPermiso, setSinPermiso] = useState(false);
   // Tus horas de comer se cambian en Tus respuestas, en «¿Cómo es tu día?»: se abre encima y se vuelve acá.
@@ -855,7 +855,8 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
   });
   const encender = (si: boolean) => {
     if (!si) {
-      elAlmacen().ponerRecordatorios(null);
+      // Vacío y no sin elegir: sin elegir son las de fábrica, que avisan.
+      elAlmacen().ponerRecordatorios([]);
       return;
     }
     conPermiso('comidas', () => elAlmacen().ponerRecordatorios(['desayuno', 'almuerzo', 'cena']));
@@ -901,9 +902,9 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
     else conPermiso('pesarse', () => elAlmacen().ponerAvisos({ pesarse: { encendido: true, todos: pesarse?.todos } }));
   };
   const alternar = (c: Comida) => {
-    const lista = comidas ?? [];
-    const nueva = lista.includes(c) ? lista.filter((x) => x !== c) : COMIDAS_QUE_AVISAN.filter((x) => x === c || lista.includes(x));
-    elAlmacen().ponerRecordatorios(nueva.length ? nueva : null);
+    const nueva = comidas.includes(c) ? comidas.filter((x) => x !== c) : COMIDAS_QUE_AVISAN.filter((x) => x === c || comidas.includes(x));
+    // Sin ninguna queda vacío y no sin elegir: sin elegir son las de fábrica, que avisan.
+    elAlmacen().ponerRecordatorios(nueva);
   };
   // Lo que un cuidado de salud apaga (la última comida, lo de entrenar, pesarte) no se ofrece. Los del deporte, solo
   // con ese deporte en Perfil › Entrenamiento (delDeporte).
@@ -1044,7 +1045,7 @@ const PRIMER_PARTIDO = 8 * 60;
 /** Si suena algún aviso: los de comidas sin anotar, dormir, el horario, pesarse, un hábito o lo que falta, si se prendió. */
 function hayAvisos(e: Estado): boolean {
   const avisos = avisosDe(e);
-  return algunAviso({ avisos, recordatorios: e.recordatorios }) || !!avisos.falta?.encendido;
+  return algunAviso({ avisos, recordatorios: comidasQueAvisan(e) }) || !!avisos.falta?.encendido;
 }
 
 /** «Lun Mié Vie · 19:00», «Todos los días · 19:00» o que todavía no se cargó: corto, para que entre en la fila. */

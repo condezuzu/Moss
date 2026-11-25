@@ -708,7 +708,7 @@ describe('lo que falta, aparte del máximo', () => {
   });
 
   it('sale siempre en el mismo lugar: lo que ya sonó un rato antes no vuelve a sonar después', () => {
-    // La merienda de siempre es a las 17:50: «Falta anotar la merienda» a las 18:35 deja lo que falta a las 18:10.
+    // La merienda de siempre es a las 17:50: «No olvides anotar lo que comiste en la merienda» a las 18:35 deja lo que falta a las 18:10.
     const merienda = { horaDeComida: (c: Comida) => (c === 'merienda' ? h('17:50') : HORA_DE_COMIDA[c]), faltas: [{ ...faltas[0], minutos: h('18:30') }] };
     expect(resumen(delDia({ comidas: ['merienda'] }, { ...merienda, ahora: h('12:00') }))).toEqual([[h('18:10'), ['falta:proteina']], [h('18:35'), ['comida:merienda']]]);
     // Sonó a las 18:10 y a las 18:15 se vuelve a programar: no se repite a las 18:55.
@@ -746,7 +746,7 @@ describe('lo que dice cada aviso', () => {
     expect(texto({ tipo: 'horario', comida: 'merienda' })).toBe('Hora de la merienda');
     expect(texto({ tipo: 'habito', habito: 'entrenar' })).toBe('Entrenar');
     expect(texto({ tipo: 'habito', habito: 'entrenar', mensaje: 'Las zapatillas' })).toBe('Las zapatillas');
-    expect(texto({ tipo: 'comida', comida: 'cena' })).toBe('Falta anotar la cena');
+    expect(texto({ tipo: 'comida', comida: 'cena' })).toBe('No olvides anotar lo que comiste en la cena');
     expect(texto({ tipo: 'horario', comida: 'cena' }, en as unknown as Rama)).toBe('Time for dinner');
     // El horario, las comidas sin anotar y los hábitos llevan el nombre de la app.
     for (const aviso of [{ tipo: 'horario', comida: 'cena' }, { tipo: 'comida', comida: 'cena' }, { tipo: 'habito', habito: 'entrenar' }] as const) expect(dos({ minutos: 0, ...aviso })[0]).toBe('Moss');

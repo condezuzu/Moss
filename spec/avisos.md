@@ -18,6 +18,24 @@ programa en `src/recordatorios/programar.ts`; se eligen en Perfil › Avisos y e
 el editor de cada hábito. Son avisos locales: no pasan por ningún servidor, y lo
 elegido queda en el teléfono (no sube a la cuenta).
 
+## Lo de fábrica, desde el 25/11/2026 (lo pediste)
+
+Para quien no eligió nada en Perfil › Avisos (`deFabrica` y `comidasSinAnotar`, en `src/dominio/sigueElDespertar.ts`):
+
+- **Prendidos:** la deuda al despertarte, tu periodo de melatonina y las comidas sin anotar.
+- **Apagados:** el horario de comidas (la hora de cada comida), acostarte (`dormir`), bajar las luces y bajar el ritmo
+  (`revoluciones`). Se prenden en Perfil › Avisos. Lo de «Más avisos» sigue apagado, y pesarse, como lo elegiste.
+- **Tu periodo de melatonina** suena una hora antes de que empiece (`ANTES_DEL_PERIODO`): «En 1 hora empieza tu
+  periodo de melatonina · A las 23:30. Ve dejando las pantallas y baja las luces: así te duermes más fácil.» Antes
+  sonaba dos horas antes, cuando la melatonina empieza a subir.
+- **La deuda al despertar:** el título dice si bajó o subió, y el cuerpo, en cuánto quedó: «Tu deuda de sueño bajó ·
+  Ahora es de 3 h 20 min: 40 min menos que ayer.» Si no, «subió», «sigue igual», «bajó a cero» o «Sin deuda de
+  sueño»; sin el día anterior, «Tu deuda de sueño: 4 h».
+- **Las comidas sin anotar:** sin elegir, el desayuno, el almuerzo y la cena, salvo la que en tu día dice «No suelo».
+  Dicen «No olvides anotar lo que comiste en el almuerzo». Sin elegir se guarda `null`; apagadas, vacías (`[]`), y
+  no vuelven a prenderse. Quien las había apagado antes del 25/11 lo guardaba como `null`: le vuelven prendidas.
+- **El máximo de fábrica** sigue en 10.
+
 ## La hora de dormir
 
 **Desde el 17/11/2026 (galería 50), con tu periodo de melatonina la hora es la suya:** te acuestas tu margen para
@@ -40,7 +58,8 @@ hay periodo (menos de 3 noches en la última semana).
   v1, con AlarmKit), o lo de siempre para esa noche: el viernes a la noche usa
   el despertar del sábado.
 - **El aviso** suena un rato antes (15, 30, 45 o 60 minutos; 30 de fábrica). Sin
-  noches para saber cuándo te despertás, no hay aviso de dormir.
+  noches para saber cuándo te despertás, no hay aviso de dormir. Desde el 25/11/2026 viene apagado: se prende en
+  Perfil › Avisos.
 - **Lo que dice** (reescrito el 17/11/2026; antes rotaba entre nueve textos, que ya no están): el título, «Acuéstate
   a las 23:15»; el cuerpo, cuánto falta y por qué esa hora: «En media hora. Así te duermes dentro de tu periodo de
   melatonina (23:30 – 00:30).» Sin periodo: «En media hora. Así duermes 8 h y te despiertas a las 07:30.» Sin culpa:
@@ -81,8 +100,8 @@ permiso se pide al elegirlos, y cada aviso se cambia o se saca en su hábito.
 
 Cada comida elegida avisa a tu hora de comer, si todavía no se anotó y no anotaste una posterior (con la cena
 anotada, la merienda ya fue): «Hora de la merienda». Si hay un plan para esa
-comida, dice qué toca: «Hora del almuerzo: pollo a la plancha, arroz». Arranca
-con el desayuno, el almuerzo y la cena. Desde el 18/11 las horas son una sola lista para todo (`horasDeComer`, en
+comida, dice qué toca: «Hora del almuerzo: pollo a la plancha, arroz». Desde el
+25/11/2026 viene apagado; al prenderlo en Perfil › Avisos, arranca con el desayuno, el almuerzo y la cena. Desde el 18/11 las horas son una sola lista para todo (`horasDeComer`, en
 `recordatorios.ts`; ver `entreno.md` 5.11): la que cambiaste a mano en Perfil › Tus respuestas, fija; si no, la
 mediana de lo anotado con 5 días o más en dos semanas, la de tu día o la típica. Perfil › Avisos las muestra y lleva a
 «¿Cómo es tu día?»; la que ahí dice «No suelo» no avisa. El horario de antes, con su hora, pasó a ser tus horas
@@ -101,9 +120,10 @@ igual: así se ve la tendencia.» y, el día del control, «Hoy es tu control: p
 
 ## Las comidas sin anotar
 
-Las que elijas, un rato después de tu hora de siempre (45 minutos, no después de
-las 23:30), y solo si esa comida no está anotada: «Falta anotar la cena». Si no
-abres Moss en una semana, paran solas.
+Prendidas de fábrica desde el 25/11/2026: sin elegir, el desayuno, el almuerzo y la cena, salvo la que en tu día dice
+«No suelo» (`comidasSinAnotar`). En Perfil › Avisos eliges otras o las apagas. Suenan un rato después de tu hora de
+siempre (45 minutos, no después de las 23:30), y solo si esa comida no está anotada: «No olvides anotar lo que
+comiste en la cena». Si no abres Moss en una semana, paran solas.
 
 ## Si vas muy bajo en algo
 
@@ -473,7 +493,7 @@ apagadas y sin marca) de [`estudio/momentos.md`](estudio/momentos.md).
 
 **Cómo quedó** (el 16/11; **desde el 17/11, las palabras de cada aviso y la cuenta de la noche son las de «Los avisos
 reescritos», abajo**: donde acá dice «la ventana de melatonina», «las revoluciones» o «la cama», léase tu periodo de
-melatonina, bajar el ritmo y acostarte):
+melatonina, bajar el ritmo y acostarte; **desde el 25/11, lo de fábrica es el de «Lo de fábrica», arriba de todo**):
 
 - **La regla** está en `src/dominio/sigueElDespertar.ts`, con sus tests, y entra en `avisosDelDia` como lo que
   conviene (`avisosQueSiguenElDespertar`). Se prende con `Sueno.despertarReal` (el despertar de verdad de cada día, o
@@ -490,8 +510,9 @@ melatonina, bajar el ritmo y acostarte):
   la hora de siempre de dormirte (D8 de [`estudio/momentos.md`](estudio/momentos.md)). La melatonina, 2 h antes de
   dormirte; las luces, hora y media antes de la cama; las revoluciones, una hora antes; la cama, como siempre. Las
   gafas (2 h antes) y anotar lo pendiente (al acostarte), apagados. La evidencia, en la sección 10 de ese estudio.
-- **De fábrica** (`deFabrica`): la deuda, el horario (desayuno, almuerzo y cena), la melatonina, las revoluciones,
-  las luces y la cama, con un máximo de 10 (D9); pesarse, como lo elegiste.
+- **De fábrica** (`deFabrica`), desde el 25/11/2026: la deuda y la melatonina, con un máximo de 10 (D9); las comidas
+  sin anotar, aparte (`comidasSinAnotar`); pesarse, como lo elegiste. Hasta el 25/11 también venían prendidos el
+  horario (desayuno, almuerzo y cena), las revoluciones, las luces y la cama.
 - **En el teléfono (16/11):**
   - **El despertar real** (`despertarDelDia`, en `sigueElDespertar.ts`): lo más temprano entre el final de la noche
     en Salud, las anclas del despertador o el atajo (`alarmaParada`, `despertadorParado`, `meDesperte`) y la
@@ -512,7 +533,8 @@ melatonina, bajar el ritmo y acostarte):
     cuidado apaga no suena; con reflujo, la última comida 3 h antes). Lo que conviene y lo de la noche llevan su título.
   - **De fábrica** (`avisosDe`, con `deFabrica`): vale para lo que nunca se tocó; lo elegido se respeta. El horario
     apagado queda vacío (`{}`) y ya no vuelve al de fábrica. Quien lo había apagado antes del 16/11 lo guardaba sin
-    nada (igual que no haberlo tocado): le vuelve prendido.
+    nada (igual que no haberlo tocado): le vuelve prendido. Las comidas sin anotar, igual desde el 25/11 (`comidasQueAvisan`,
+    en `programar.ts`): sin elegir son las de fábrica; apagadas quedan vacías.
   - **Perfil › Avisos**, como en la galería: «Tu día» (la deuda, pesarse, el horario, la melatonina, las luces, las
     revoluciones, la hora de dormir, «Tardo en dormirme» y «Necesito dormir») y «Más avisos» (anotar lo pendiente, las
     gafas, el café, entrenar tarde, la última comida, comer antes y la proteína después de entrenar, las comidas sin
@@ -531,13 +553,13 @@ los cuatro primeros.
 
 | Aviso | Título | Cuerpo |
 |---|---|---|
-| Tu periodo de melatonina | «Tu periodo de melatonina: 23:30» | «De 23:30 a 00:30 es cuando menos te cuesta dormirte: tu melatonina empieza a subir más o menos ahora.» |
+| Tu periodo de melatonina (25/11, una hora antes) | «En 1 hora empieza tu periodo de melatonina» | «A las 23:30. Ve dejando las pantallas y baja las luces: así te duermes más fácil.» |
 | Bajar las luces | «Baja las luces» | «Luz baja y cálida desde ahora: la luz fuerte atrasa tu sueño. Te acuestas a las 23:15.» |
 | Bajar el ritmo (antes, «las revoluciones») | «Baja el ritmo» | «Deja lo que te acelera y las pantallas brillantes. Te acuestas a las 23:15.» |
 | Acostarte | «Acuéstate a las 23:15» | «En media hora. Así te duermes dentro de tu periodo de melatonina (23:30 – 00:30).» Con la deuda: «En media hora. Con 4 h de deuda de sueño, esta noche no lo dejes para más tarde.» |
 | Anotar lo que tienes en la cabeza | «Anota lo que tienes en la cabeza» | «Escribe tus pendientes antes de acostarte: con la cabeza despejada cuesta menos dormirse. Mañana Moss te los recuerda.» |
 | Las gafas | «Ponte las gafas para la luz azul» | «Si las tienes, úsalas desde ahora hasta acostarte, a las 23:15.» |
-| La deuda al despertar | «Tu deuda de sueño: 4 h» | «Bajó 30 min desde ayer.» (o subió, igual, bajó a cero, y la primera vez, qué es) |
+| La deuda al despertar (25/11) | «Tu deuda de sueño bajó» (o «subió», «sigue igual», «bajó a cero», «Sin deuda de sueño»; sin el día anterior, «Tu deuda de sueño: 4 h») | «Ahora es de 4 h: 30 min menos que ayer.» (la primera vez, qué es) |
 | Pesarte | «Pésate antes de desayunar» | «Después de ir al baño y siempre igual: así se ve la tendencia.» |
 | El desayuno | «¿Desayunas hoy?» | «Si vas directo al almuerzo, lo del desayuno se reparte en el resto del día.», con «Sí» y «Voy directo al almuerzo» |
 | Lo que hay que hacer hoy (nuevo) | «Lo que hay que hacer hoy» | Tus pendientes, uno por línea: hasta cuatro, y «y 2 más» |
@@ -557,9 +579,11 @@ tus noches de los últimos 7 días y tu margen para dormirte.
   café, entrenar tarde, lo que falta a la noche, los hábitos «antes de dormir» y el widget de la noche. En el
   teléfono lo arma `suenoParaAvisos` (`programar.ts`) con las mismas noches, el mismo día y el mismo margen que la
   tarjeta (`Sueno.tsx`); los días que vienen todavía no tienen noches y usan el de hoy.
-- **El aviso del periodo** suena cuando la melatonina empieza a subir (`inicio`: dos horas antes de que empiece el
-  periodo) y dice sus dos horas, al minuto: «Tu periodo de melatonina: 22:57 · De 22:57 a 23:57 es cuando menos te
-  cuesta dormirte…».
+- **El aviso del periodo**, desde el 25/11/2026, suena una hora antes de que empiece (`ANTES_DEL_PERIODO`) y dice a
+  qué hora empieza, al minuto: «En 1 hora empieza tu periodo de melatonina · A las 22:57…». Antes sonaba cuando la
+  melatonina empieza a subir (`inicio`, dos horas antes). Con acostarte prendido y 15 minutos de margen, el de
+  acostarte cae 15 minutos después: el del periodo va 20 minutos antes de él, y la noche queda las luces, bajar el
+  ritmo, el periodo y acostarte.
 - **Sin periodo** (menos de 3 noches en la última semana, o noches con poca confianza en el horario): el aviso del
   periodo no suena, y «Acuéstate a las…» y lo demás de la noche usan la cuenta de antes («La hora de dormir»,
   arriba), con el cuerpo que dice cuánto dormirías.
@@ -615,10 +639,11 @@ tus noches de los últimos 7 días y tu margen para dormirte.
 
 **Para tener en cuenta:**
 
-- **Si elegiste el máximo a mano, no sube solo.** De fábrica son ocho avisos (la deuda, el desayuno, el almuerzo, la
-  cena, el periodo, las luces, el ritmo y acostarte); con pesarte y la merienda, diez; con lo pendiente, doce. Quien
-  eligió 10 a mano y prende «Anotar» tiene que pasar a 12 para que suenen todos: los primeros en caerse son el de
-  anotar y bajar el ritmo.
+- **Si elegiste el máximo a mano, no sube solo.** Con el horario, las luces, el ritmo y acostarte prendidos son ocho
+  avisos (la deuda, el desayuno, el almuerzo, la cena, el periodo, las luces, el ritmo y acostarte); con pesarte y la
+  merienda, diez; con lo pendiente, doce. Las comidas sin anotar (de fábrica desde el 25/11) suman las suyas, pero son
+  las primeras en caerse: casi siempre ya se anotaron. Quien eligió 10 a mano y prende «Anotar» tiene que pasar a 12
+  para que suenen todos: después de las comidas sin anotar, los primeros en caerse son el de anotar y bajar el ritmo.
 - **Las gafas aprietan la noche**: cada aviso va a 20 minutos del anterior, y el que tendría que esperar más de 45 no
   suena. Con la cena a las 21:00 y acostarte a las 22:40 (el día de ejemplo de la galería), con las gafas se cae
   «Baja el ritmo»; con la cena más temprano, entran todos.

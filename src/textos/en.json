@@ -4393,11 +4393,11 @@
     "meVoyADormir": "Going to bed",
     "buenasNoches": "Good night. Moss noted the time.",
     "sinAnotar": {
-      "desayuno": "Breakfast isn't logged yet",
-      "almuerzo": "Lunch isn't logged yet",
-      "merienda": "Your afternoon snack isn't logged yet",
-      "cena": "Dinner isn't logged yet",
-      "snack": "Your snack isn't logged yet"
+      "desayuno": "Don't forget to log what you had for breakfast",
+      "almuerzo": "Don't forget to log what you had for lunch",
+      "merienda": "Don't forget to log your afternoon snack",
+      "cena": "Don't forget to log what you had for dinner",
+      "snack": "Don't forget to log your snack"
     },
     "falta": {
       "y": "{a} and {b}",
@@ -4569,14 +4569,20 @@
     },
     "despertar": {
       "deuda": {
-        "bajo": "Down {cambio} since yesterday.",
-        "subio": "Up {cambio} since yesterday.",
-        "igual": "Same as yesterday.",
-        "es": "It is the sleep you are missing from the last two weeks.",
-        "cero": "Down to zero: you caught up.",
+        "bajo": "Now {deuda}: {cambio} less than yesterday.",
+        "subio": "Now {deuda}: {cambio} more than yesterday.",
+        "igual": "Still {deuda}, same as yesterday.",
+        "es": "It's the sleep you're missing from the last two weeks.",
+        "cero": "You slept what you were missing.",
         "sin": "You sleep what you need.",
-        "titulo": "Your sleep debt: {deuda}",
-        "tituloSin": "No sleep debt"
+        "titulos": {
+          "bajo": "Your sleep debt went down",
+          "subio": "Your sleep debt went up",
+          "igual": "Your sleep debt stayed the same",
+          "es": "Your sleep debt: {deuda}",
+          "cero": "Your sleep debt is down to zero",
+          "sin": "No sleep debt"
+        }
       },
       "desayuno": {
         "si": "Yes",
@@ -4599,8 +4605,8 @@
       },
       "y": "{a} and {b}",
       "melatonina": {
-        "titulo": "Your melatonin window starts at {desde}",
-        "texto": "Until {hasta}, it's when you fall asleep most easily. Your melatonin is starting to rise."
+        "titulo": "Your melatonin window starts in 1 hour",
+        "texto": "At {desde}. Start putting screens away and dim the lights: it makes falling asleep easier."
       },
       "revoluciones": {
         "titulo": "Bedtime is getting close",

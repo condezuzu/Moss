@@ -46,7 +46,7 @@ export type DelDespertar =
 export const RESPUESTAS_DEL_DESAYUNO = ['si', 'directo'] as const;
 export type RespuestaDelDesayuno = (typeof RESPUESTAS_DEL_DESAYUNO)[number];
 
-/** Los de Perfil › Avisos, en sus dos grupos: los que vienen prendidos y los que no. */
+/** Los de Perfil › Avisos del día que sigue tu despertar (de fábrica, desde el 25/11/2026, solo la deuda y la melatonina: deFabrica). */
 export const DE_FABRICA = ['deuda', 'pesarse', 'horario', 'melatonina', 'revoluciones', 'luces', 'dormir'] as const;
 export const MAS = ['descarga', 'gafas', 'cafe', 'entrenarTarde', 'ultimaComida'] as const;
 
@@ -91,24 +91,34 @@ export type DeSigueElDespertar = Pick<DelDia, 'dia' | 'ajustes' | 'sueno' | 'hor
 };
 
 /**
- * Lo prendido de fábrica, para quien no eligió: la deuda, la melatonina, las revoluciones, las luces, la hora de
- * dormir, el horario con el desayuno, el almuerzo y la cena a tus horas de comer, y el máximo de diez, que sube
- * con anotar lo que tienes en la cabeza, con las gafas y con el café (maximoDeFabrica). Pesarse sigue como lo
- * elegiste; lo demás, apagado. Una comida que en tu día dice «No suelo» (`noSuele`) no avisa a su hora.
+ * Lo prendido de fábrica, para quien no eligió (lo pediste el 25/11/2026): la deuda al despertarte y tu periodo de
+ * melatonina, una hora antes, con el máximo de diez, que sube con anotar lo que tienes en la cabeza, con las gafas y
+ * con el café (maximoDeFabrica). Las comidas avisan solo si no las anotaste (comidasSinAnotar). El horario (la hora de
+ * cada comida), acostarte, las luces, bajar el ritmo y lo demás de Rise se prenden en Perfil › Avisos. Una comida que en
+ * tu día dice «No suelo» (`noSuele`) no avisa a su hora.
  */
 export function deFabrica(a: Avisos, noSuele: (c: Comida) => boolean = () => false): Avisos {
   const prendido = { encendido: true };
   return {
     ...a,
-    dormir: a.dormir ?? prendido, deuda: a.deuda ?? prendido, melatonina: a.melatonina ?? prendido,
-    revoluciones: a.revoluciones ?? prendido, luces: a.luces ?? prendido,
-    horario: (a.horario ?? HORARIO_DE_FABRICA).filter((c) => !noSuele(c)),
+    deuda: a.deuda ?? prendido, melatonina: a.melatonina ?? prendido,
+    horario: (a.horario ?? []).filter((c) => !noSuele(c)),
     maximoPorDia: a.maximoPorDia ?? maximoDeFabrica(a),
   };
 }
 
-/** Las comidas que avisan a su hora de fábrica. */
+/** Las comidas que avisan a su hora al prender el horario en Perfil › Avisos. */
 export const HORARIO_DE_FABRICA: readonly Comida[] = ['desayuno', 'almuerzo', 'cena'];
+
+/**
+ * Las comidas que avisan si no las anotaste («No olvides anotar lo que comiste en el almuerzo»): las que elegiste o,
+ * sin elegir, el desayuno, el almuerzo y la cena, salvo la que en tu día dice «No suelo». Apagado queda vacío.
+ */
+export const comidasSinAnotar = (elegidas: readonly Comida[] | null, noSuele: (c: Comida) => boolean = () => false): Comida[] =>
+  elegidas ? [...elegidas] : HORARIO_DE_FABRICA.filter((c) => !noSuele(c));
+
+/** Tu periodo de melatonina se anuncia una hora antes de que empiece (lo pediste el 25/11/2026). */
+export const ANTES_DEL_PERIODO = 60;
 
 /** Lo de la mañana, el reparto del desayuno y lo de la noche, como avisos para avisosDelDia (en `conviene`). */
 export function avisosDelDespertar(op: DeSigueElDespertar): Aviso[] {
@@ -186,10 +196,10 @@ export function avisosDelDespertar(op: DeSigueElDespertar): Aviso[] {
   // La noche, desde la hora de acostarte de esta noche: la de tu periodo de melatonina o, sin él, la de antes.
   const cama = horas.acostarse;
   if (cama !== null) {
-    // El periodo se anuncia cuando la melatonina empieza a subir, unas dos horas antes de que empiece (PERIODO, en
-    // melatonina.ts), con las mismas horas que dice Sueño. Sin periodo, no suena.
+    // El periodo se anuncia una hora antes de que empiece, con las mismas horas que dice Sueño: para ir dejando las
+    // pantallas. Sin periodo, no suena.
     const p = horas.periodo;
-    if (prendido('melatonina') && p) lista.push({ id: 'melatonina', tipo: 'melatonina', minutos: p.inicio, despertar: { que: 'melatonina', desde: p.desde, hasta: p.hasta } });
+    if (prendido('melatonina') && p) lista.push({ id: 'melatonina', tipo: 'melatonina', minutos: p.desde - ANTES_DEL_PERIODO, despertar: { que: 'melatonina', desde: p.desde, hasta: p.hasta } });
     if (prendido('gafas')) lista.push({ id: 'gafas', tipo: 'gafas', minutos: cama - GAFAS, despertar: { que: 'gafas', cama } });
     if (prendido('revoluciones')) lista.push({ id: 'revoluciones', tipo: 'revoluciones', minutos: cama - REVOLUCIONES, despertar: { que: 'revoluciones', cama } });
     if (prendido('descarga')) lista.push({ id: 'descarga', tipo: 'descarga', minutos: cama - DESCARGA, despertar: { que: 'descarga' } });
