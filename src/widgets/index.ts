@@ -14,13 +14,14 @@ import { horasDeSueno } from '@/dominio/avisos';
 import { COMIDAS, type Comida } from '@/dominio/comidas';
 import { metaDeAgua } from '@/dominio/cuidados';
 import { sumarDias } from '@/dominio/fechas';
+import { juicioDeLaDeuda } from '@/dominio/sueno';
 import { CON_WIDGETS_NUEVOS } from '@/lib/banderas';
 import { suenoDelDia } from '@/recordatorios/programar';
 import { nocheDeAhora } from '@/salud/nocheSinReloj';
 import { metaDelDia, numero, totalDe } from '@/secciones/comida/datos';
 import { enlaceASeccion, enlaceDeAnotar } from '@/secciones/enlaces';
 import { alarmaPuesta } from '@/secciones/sueno/despertador';
-import { idioma, t } from '@/textos';
+import { idioma, lista, t } from '@/textos';
 import { lineaDelAgua, repartirAgua, toquesDelAgua } from './agua';
 import { lineaDeAnotar } from './anotar';
 import { lineaDelCielo, repartirToques, toquesDeLaLinea } from './cielo';
@@ -139,13 +140,13 @@ async function unaVuelta() {
     () => {
       const ahora = new Date();
       return lineaDeLaNoche(a.estado(), {
-        ahora, zona, url: enlaceASeccion('sueno'), esperando, dormir: horaDeDormirHoy(a.estado(), ahora), fondo: fondos.noche,
+        ahora, zona, url: enlaceASeccion('sueno'), esperando, dormir: horaDeDormirHoy(a.estado(), ahora), deuda: deudaDeAnoche(a.estado(), ahora), fondo: fondos.noche,
         despertador: despertadorPara(alarma, sumarDias(nocheDeAhora(ahora), 1), ahora),
         textos: {
           anoche: t('widgets.anoche'), si: t('widgets.si'), fueAsi: t('widgets.fueAsi'), confirmada: t('widgets.confirmada'),
           seVeEnMoss: t('widgets.seVeEnMoss'), seAnotaEnMoss: t('widgets.seAnotaEnMoss'), horas: t('widgets.horas'), duracion: t('cielo.horasMinutos'), soloHoras: t('fecha.horas'),
           horasCorto: t('widgets.horasCorto'), siLargo: t('widgets.siFueAsi'), aDormir: t('widgets.aDormir'), enTiempo: t('widgets.enTiempo'),
-          minutos: t('fecha.minutos'), yaEsHora: t('widgets.yaEsHora'), paraDespertar: t('widgets.paraDespertar'),
+          minutos: t('fecha.minutos'), yaEsHora: t('widgets.yaEsHora'),
         },
       });
     },
@@ -165,17 +166,14 @@ async function unaVuelta() {
         return lineaDeHoy(e, {
           metaDe: (dia) => metaDelDia(e, dia),
           nombres: Object.fromEntries(COMIDAS.map((c) => [c, t(`widgets.comidaCorta.${c}`)])) as Record<Comida, string>,
+          letras: lista('fecha.diasCortos').map((d) => d.charAt(0).toUpperCase()),
           textos: {
-            teQuedan: t('inicio.teQuedan'), deMas: t('inicio.deMas'), kcal: t('comida.kcal'), de: t('widgets.deMeta'), anotado: t('widgets.anotado'), sinAnotar: t('widgets.sinAnotar'),
+            teQuedan: t('inicio.teQuedan'), deMas: t('inicio.deMas'), kcal: t('comida.kcal'), quedan: t('widgets.quedan'), sobra: t('widgets.deMas'), anotado: t('widgets.anotado'),
             miles: idioma() === 'es' ? '.' : ',',
-            macros: { p: t('comida.proteina'), c: t('comida.carbohidratos'), g: t('comida.grasas') },
             cortos: { p: t('widgets.macroCorto.p'), c: t('widgets.macroCorto.c'), g: t('widgets.macroCorto.g') },
-            buscar: t('widgets.acciones.buscar'), decir: t('widgets.acciones.decir'), codigo: t('widgets.acciones.codigo'),
+            semana: t('widgets.semana'), meta: t('widgets.meta'),
           },
-          urls: {
-            anotar: enlaceDeAnotar(), inicio: enlaceASeccion('inicio'), comida: enlaceASeccion('comida'), anotarComida: enlaceDeAnotar({ comida: '{comida}' }),
-            buscar: enlaceDeAnotar({ via: 'buscar' }), decir: enlaceDeAnotar({ via: 'decir' }), codigo: enlaceDeAnotar({ via: 'codigo' }),
-          },
+          urls: { anotar: enlaceDeAnotar(), inicio: enlaceASeccion('inicio'), comida: enlaceASeccion('comida'), anotarComida: enlaceDeAnotar({ comida: '{comida}' }) },
           fondo: fondos.noche,
           deshacer,
         });
@@ -229,13 +227,23 @@ async function unaVuelta() {
 }
 
 /** A qué hora ir a la cama esta noche (D33). Sin noches de verdad o sin hora de despertarse, no hay «A dormir». */
-function horaDeDormirHoy(e: Estado, ahora: Date): { acostarse: number; despertar: number | null } | null {
+function horaDeDormirHoy(e: Estado, ahora: Date): { acostarse: number } | null {
   // La del aviso, con el despertar real de hoy: sin periodo de melatonina, despertarte tarde corre la noche.
   const sueno = suenoDelDia(e);
   if (!sueno) return null;
   // La de la noche de la línea, que cambia a las 4 y no con el corte (D32).
   const h = horasDeSueno(nocheDeAhora(ahora), sueno);
-  return h.acostarse === null ? null : { acostarse: h.acostarse, despertar: h.despertarManana };
+  return h.acostarse === null ? null : { acostarse: h.acostarse };
+}
+
+/**
+ * La deuda en una palabra, la de Sueño (con las noches hasta hoy): solo cuando la noche de la línea es la de hoy, así
+ * no se le pega a otra. Sin noches de verdad, nada.
+ */
+function deudaDeAnoche(e: Estado, ahora: Date): string {
+  const minutos = suenoDelDia(e)?.deuda;
+  if (minutos == null || nocheDeAhora(ahora) !== e.hoy) return '';
+  return t(`widgets.deuda.${juicioDeLaDeuda({ minutos })}`);
 }
 
 let enCurso: Promise<void> | null = null;

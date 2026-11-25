@@ -14,7 +14,7 @@ jest.mock('expo-widgets', () => ({ createWidget: (nombre: string, layout: unknow
 type Nodo = { type: unknown; key: string | null; props: Record<string, unknown> };
 type Armado = { nombre: string; layout: unknown; inicial: unknown };
 
-const COMPONENTES = ['AccessoryWidgetBackground', 'VStack', 'HStack', 'ZStack', 'Text', 'Circle', 'Ellipse', 'Gauge', 'Link', 'Rectangle', 'Spacer', 'Button', 'Image', 'UnevenRoundedRectangle'];
+const COMPONENTES = ['AccessoryWidgetBackground', 'Chart', 'VStack', 'HStack', 'ZStack', 'Text', 'Circle', 'Ellipse', 'Gauge', 'Link', 'Rectangle', 'Spacer', 'Button', 'Image', 'UnevenRoundedRectangle'];
 const MODIFICADORES = [
   'accessibilityLabel', 'accessibilityValue', 'background', 'blur', 'buttonBorderShape', 'buttonStyle', 'containerBackground', 'contentTransition', 'controlSize', 'font', 'foregroundStyle',
   'frame', 'gaugeStyle', 'kerning', 'lineLimit', 'minimumScaleFactor', 'monospacedDigit', 'multilineTextAlignment', 'offset', 'opacity', 'padding', 'resizable', 'rotationEffect', 'shadow', 'strokeBorder', 'textCase', 'widgetURL',
@@ -143,9 +143,9 @@ describe('el widget de la noche, en la extensión', () => {
   const armado = jest.requireActual<{ default: Armado }>('./Noche.widget').default;
   const dibujar = enLaExtension(armado);
   const NOCHE: PropsNoche = {
-    clave: '2026-10-21', titulo: 'Anoche', horas: '23:40 → 07:10', nota: '¿Fue así?', notaConfirmada: 'Confirmada · 7 h 30 min', si: 'Sí',
+    clave: '2026-10-21', titulo: 'Anoche', horas: '23:40 → 07:10', nota: '¿Fue así?', notaConfirmada: '7 h 30 · deuda baja', si: 'Sí',
     pregunta: true, dormirse: 340, despertar: 790, confirmada: 0, hecha: false, url: 'moss://sueno',
-    aDormir: false, cifra: '7 h 30', falta: '', siLargo: 'Sí, fue así', fondo: '',
+    aDormir: false, cifra: '7 h 30', falta: '', deuda: 'deuda baja', textoConfirmada: 'Confirmada', siLargo: 'Sí, fue así', fondo: '',
   };
   const entorno = { widgetFamily: 'accessoryRectangular' };
 
@@ -156,7 +156,7 @@ describe('el widget de la noche, en la extensión', () => {
     expect(despues.confirmada).toBeGreaterThan(0);
     const otra = dibujar(despues, entorno);
     expect(todos(otra, 'Button')).toHaveLength(0);
-    expect(textos(otra)).toEqual(['Anoche', '23:40 → 07:10', 'Confirmada · 7 h 30 min']);
+    expect(textos(otra)).toEqual(['Anoche', '23:40 → 07:10', '7 h 30 · deuda baja']);
   });
 
   it('con la noche ya contestada o medida, sin botón', () => {
@@ -165,18 +165,23 @@ describe('el widget de la noche, en la extensión', () => {
     expect(() => dibujar(armado.inicial as object, entorno)).not.toThrow();
   });
 
-  const A_DORMIR: PropsNoche = { ...NOCHE, titulo: 'A dormir', horas: '23:15', cifra: '23:15', falta: 'en 1 h 30', nota: 'para despertarte a las 07:15', notaConfirmada: 'para despertarte a las 07:15', pregunta: false, aDormir: true };
+  const A_DORMIR: PropsNoche = { ...NOCHE, titulo: 'A dormir', horas: '23:15', cifra: '23:15', falta: 'en 1 h 30', nota: 'en 1 h 30', notaConfirmada: 'en 1 h 30', deuda: '', pregunta: false, aDormir: true };
 
-  it('a la tardecita dice a qué hora, sin botón', () => {
-    expect(textos(dibujar(A_DORMIR, entorno))).toEqual(['A dormir', '23:15', 'para despertarte a las 07:15']);
+  it('a la tardecita dice a qué hora y cuánto falta, sin botón', () => {
+    expect(textos(dibujar(A_DORMIR, entorno))).toEqual(['A dormir', '23:15', 'en 1 h 30']);
     expect(todos(dibujar(A_DORMIR, entorno), 'Button')).toHaveLength(0);
   });
 
-  it('el chico y el redondo, para la próxima build', () => {
+  it('el chico, el de StandBy: la cifra grande, lo de debajo y el «Sí»; y el redondo', () => {
     const chico = { widgetFamily: 'systemSmall' };
-    expect(textos(dibujar(NOCHE, chico))).toEqual(['Anoche', '7 h 30', '23:40 → 07:10', 'Sí, fue así']);
+    expect(textos(dibujar(NOCHE, chico))).toEqual(['Anoche', '7 h 30', '¿Fue así?', 'Sí, fue así']);
     expect(todos(dibujar(NOCHE, chico), 'Button').map((b) => b.props.target)).toEqual(['si|2026-10-21']);
-    expect(textos(dibujar(A_DORMIR, chico))).toEqual(['A dormir', '23:15', 'en 1 h 30', 'para despertarte a las 07:15']);
+    // Después del «Sí», la deuda en una palabra y «Confirmada»; medida, sin pregunta ni deuda, las dos horas.
+    const confirmada = tocar(dibujar, NOCHE, chico, 'si|2026-10-21');
+    expect(textos(dibujar(confirmada, chico))).toEqual(['Anoche', '7 h 30', 'deuda baja', 'Confirmada']);
+    expect(textos(dibujar({ ...NOCHE, pregunta: false, deuda: '' }, chico))).toEqual(['Anoche', '7 h 30', '23:40 → 07:10']);
+    expect(textos(dibujar({ ...NOCHE, horas: '', cifra: '', pregunta: false, nota: 'Se ve al abrir Moss' }, chico))).toEqual(['Anoche', '—', 'Se ve al abrir Moss']);
+    expect(textos(dibujar(A_DORMIR, chico))).toEqual(['A dormir', '23:15', 'en 1 h 30']);
     expect(textos(dibujar(A_DORMIR, { widgetFamily: 'accessoryCircular' }))).toEqual(['23:15']);
     expect(() => dibujar({} as PropsNoche, chico)).not.toThrow();
   });
@@ -191,27 +196,30 @@ describe('el widget Hoy, en la extensión', () => {
     meta: { kcal: 2600, p: 150, c: 325, g: 78 },
     comido: { kcal: 1575, p: 61, c: 210, g: 57 },
     comidas: [
-      { tipo: 'desayuno', nombre: 'Desayuno', anotada: true, anotado: { kcal: 412, p: 12, c: 79, g: 7 }, detalle: 'Café con leche', siempre: vacio, items: '[]', deshacer: '', confirmado: false },
-      { tipo: 'almuerzo', nombre: 'Almuerzo', anotada: true, anotado: { kcal: 792, p: 40, c: 90, g: 30 }, detalle: 'Milanesa', siempre: vacio, items: '[]', deshacer: '', confirmado: false },
-      { tipo: 'merienda', nombre: 'Merienda', anotada: false, anotado: vacio, detalle: '', siempre: vacio, items: '[]', deshacer: '', confirmado: false },
-      { tipo: 'cena', nombre: 'Cena', anotada: false, anotado: vacio, detalle: 'Fideos, Tuco', siempre: { kcal: 633, p: 21, c: 103, g: 14 }, items: '[{"nombre":"Fideos"}]', deshacer: '', confirmado: false },
+      { tipo: 'desayuno', nombre: 'Desayuno', anotada: true, anotado: { kcal: 412, p: 12, c: 79, g: 7 }, siempre: vacio, items: '[]', deshacer: '', confirmado: false },
+      { tipo: 'almuerzo', nombre: 'Almuerzo', anotada: true, anotado: { kcal: 792, p: 40, c: 90, g: 30 }, siempre: vacio, items: '[]', deshacer: '', confirmado: false },
+      { tipo: 'merienda', nombre: 'Merienda', anotada: false, anotado: vacio, siempre: vacio, items: '[]', deshacer: '', confirmado: false },
+      { tipo: 'cena', nombre: 'Cena', anotada: false, anotado: vacio, siempre: { kcal: 633, p: 21, c: 103, g: 14 }, items: '[{"nombre":"Fideos"}]', deshacer: '', confirmado: false },
     ],
     pendientes: [],
+    semana: [2400, 2900, 0, 2100, 1800, 2650],
+    letras: ['J', 'V', 'S', 'D', 'L', 'M', 'X'],
     numeros: true,
     textos: {
-      teQuedan: 'Te quedan', deMas: 'Arriba de la meta', kcal: 'kcal', de: '{comido} de {meta}', anotado: 'Anotado', sinAnotar: 'Sin anotar', miles: '.',
-      macros: { p: 'Proteína', c: 'Carbohidratos', g: 'Grasas' }, cortos: { p: 'P', c: 'C', g: 'G' }, buscar: 'Buscar', decir: 'Decir', codigo: 'Código',
+      teQuedan: 'Te quedan', deMas: 'Arriba de la meta', kcal: 'kcal', quedan: 'te quedan', sobra: 'de más', anotado: 'Anotado', miles: '.',
+      cortos: { p: 'P', c: 'C', g: 'G' }, semana: 'Últimos 7 días', meta: 'meta {n}',
     },
-    urls: { anotar: 'moss://anotar', inicio: 'moss://inicio', comida: 'moss://comida', anotarComida: 'moss://anotar?comida={comida}', buscar: 'moss://anotar?via=buscar', decir: 'moss://anotar?via=decir', codigo: 'moss://anotar?via=codigo' },
+    urls: { anotar: 'moss://anotar', inicio: 'moss://inicio', comida: 'moss://comida', anotarComida: 'moss://anotar?comida={comida}' },
     fondo: 'file:///grupo/cielo-noche.jpg',
   };
   const mediano = { widgetFamily: 'systemMedium' };
 
-  it('se registra como Hoy; el chico dice lo que queda y lo que falta de cada macro', () => {
+  it('se registra como Hoy; el chico es lo que queda, la luna y los tres macros en barras, de un solo toque', () => {
     expect(armado.nombre).toBe('Hoy');
-    const t = textos(dibujar(HOY, { widgetFamily: 'systemSmall' }));
-    expect(t).toEqual(expect.arrayContaining(['Te quedan', '1.025', 'kcal', '89', '115', '21']));
-    expect(todos(dibujar(HOY, { widgetFamily: 'systemSmall' }), 'Button')).toHaveLength(0);
+    const chico = dibujar(HOY, { widgetFamily: 'systemSmall' });
+    expect(textos(chico)).toEqual(['1.025', 'te quedan', 'P', 'C', 'G']);
+    expect(todos(chico, 'Button')).toHaveLength(0);
+    expect(todos(chico, 'Link')).toHaveLength(0);
   });
 
   it('un toque en lo de siempre lo anota ahí mismo: «Anotado ✓», y otro toque lo deshace', () => {
@@ -245,15 +253,25 @@ describe('el widget Hoy, en la extensión', () => {
     expect(destinos).toEqual(['moss://comida', 'moss://comida', 'moss://anotar?comida={comida}'.replace('{comida}', 'merienda')]);
   });
 
-  it('el grande lleva una fila por comida y los accesos', () => {
-    const grande = dibujar(HOY, { widgetFamily: 'systemLarge' });
-    expect(textos(grande)).toEqual(expect.arrayContaining(['1.575 de 2.600', 'Café con leche', 'Fideos, Tuco', 'Sin anotar', 'Buscar', 'Decir', 'Código']));
-    expect(todos(grande, 'Link').map((l) => l.props.destination)).toEqual(expect.arrayContaining(['moss://anotar?via=buscar', 'moss://anotar?via=decir', 'moss://anotar?via=codigo']));
+  it('el grande: arriba como el mediano y abajo los últimos siete días contra la meta, con hoy y lo tocado', () => {
+    const grande = { widgetFamily: 'systemLarge' };
+    expect(textos(dibujar(HOY, grande))).toEqual(expect.arrayContaining(['1.025', 'Cena', '+633', 'Últimos 7 días', 'meta 2.600', 'J', 'X']));
+    const grafico = todos(dibujar(HOY, grande), 'Chart')[0];
+    expect(grafico.props.referenceLines).toEqual([expect.objectContaining({ y: 2600 })]);
+    const datos = grafico.props.data as { x: string; y: number; color: string }[];
+    // Siete días; lo que pasa la meta va arriba, en oro; un día sin nada, una marca chiquita.
+    expect(new Set(datos.map((d) => d.x)).size).toBe(7);
+    expect(datos.filter((d) => d.x === '1').map((d) => d.y)).toEqual([2600, 300]);
+    expect(datos.find((d) => d.x === '2')!.y).toBeLessThan(100);
+    expect(datos.find((d) => d.x === '6')).toMatchObject({ y: 1575, color: '#f6e3a6' });
+    // Lo tocado en el widget ya cuenta hoy.
+    const tocada = dibujar(tocar(dibujar, HOY, grande, 'comida|2026-10-21|cena'), grande);
+    expect((todos(tocada, 'Chart')[0].props.data as { x: string; y: number }[]).find((d) => d.x === '6')!.y).toBe(2208);
   });
 
   it('pasada la meta, lo dice y en oro', () => {
     const pasada = dibujar({ ...HOY, comido: { kcal: 2860, p: 153, c: 335, g: 103 } }, mediano);
-    expect(textos(pasada)).toEqual(expect.arrayContaining(['Arriba de la meta', '260', '+3 g', '+10 g', '+25 g']));
+    expect(textos(pasada)).toEqual(expect.arrayContaining(['260', 'de más']));
   });
 
   it('en la pantalla bloqueada, en las tres formas, sin imagen', () => {
@@ -270,7 +288,7 @@ describe('el widget Hoy, en la extensión', () => {
   });
 
   it('una comida anotada con 0 kcal está anotada: abre Comida y no suma lo de siempre', () => {
-    const conCafe: PropsHoy = { ...HOY, comidas: HOY.comidas.map((c) => (c.tipo === 'cena' ? { ...c, anotada: true, detalle: 'Café negro' } : c)) };
+    const conCafe: PropsHoy = { ...HOY, comidas: HOY.comidas.map((c) => (c.tipo === 'cena' ? { ...c, anotada: true } : c)) };
     expect(todos(dibujar(conCafe, mediano), 'Button')).toHaveLength(0);
     expect(todos(dibujar(conCafe, mediano), 'Link').map((l) => l.props.destination)).toEqual(['moss://comida', 'moss://comida', 'moss://anotar?comida=merienda', 'moss://comida']);
     expect(textos(dibujar(conCafe, mediano))).not.toContain('+633');
@@ -280,12 +298,12 @@ describe('el widget Hoy, en la extensión', () => {
     const sin: PropsHoy = { ...HOY, numeros: false };
     for (const entorno of [{ widgetFamily: 'systemSmall' }, mediano, { widgetFamily: 'systemLarge' }, { widgetFamily: 'accessoryInline' }, { widgetFamily: 'accessoryCircular', widgetRenderingMode: 'vibrant' }, { widgetFamily: 'accessoryRectangular', widgetRenderingMode: 'vibrant' }]) {
       const t = textos(dibujar(sin, entorno));
-      expect([entorno.widgetFamily, t.filter((x) => /\d|kcal|Te quedan/.test(x))]).toEqual([entorno.widgetFamily, []]);
+      expect([entorno.widgetFamily, t.filter((x) => x !== 'Últimos 7 días' && /\d|kcal|quedan/i.test(x))]).toEqual([entorno.widgetFamily, []]);
     }
     // La luna sigue, y lo de siempre se anota de un toque.
     expect(todos(dibujar(sin, { widgetFamily: 'accessoryCircular', widgetRenderingMode: 'vibrant' }), 'Circle').length).toBeGreaterThan(0);
     expect(todos(dibujar(sin, mediano), 'Button').map((b) => b.props.target)).toEqual(['comida|2026-10-21|cena']);
-    expect(textos(dibujar(sin, { widgetFamily: 'systemLarge' }))).toEqual(expect.arrayContaining(['Desayuno', 'Café con leche', 'Fideos, Tuco', 'Proteína']));
+    expect(textos(dibujar(sin, { widgetFamily: 'systemLarge' }))).toEqual(expect.arrayContaining(['Desayuno', 'Cena', 'Últimos 7 días', 'P']));
     // Sin el dato (una línea de antes), con números.
     expect(textos(dibujar({ ...HOY, numeros: undefined }, mediano))).toContain('1.025');
   });

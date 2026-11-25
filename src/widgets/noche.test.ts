@@ -12,7 +12,6 @@ const ZONA = -180;
 const TEXTOS = {
   anoche: 'Anoche', si: 'Sí', fueAsi: '¿Fue así?', confirmada: 'Confirmada', seVeEnMoss: 'Se ve al abrir Moss', seAnotaEnMoss: 'Anótala en Moss',
   horas: '{desde} → {hasta}', duracion: '{h} h {m} min', soloHoras: '{h} h', horasCorto: '{h} h {m}', siLargo: 'Sí, fue así', aDormir: 'A dormir', enTiempo: 'en {tiempo}', minutos: '{m} min', yaEsHora: 'Ya es hora',
-  paraDespertar: 'para despertarte a las {hora}',
 };
 const iso = (clave: ClaveDia, minutos: number) => new Date(instanteDe(clave, ZONA, minutos)).toISOString();
 
@@ -44,10 +43,18 @@ describe('la línea de tiempo del widget de la noche', () => {
     expect(l[0].props).toMatchObject({ clave: '2026-10-21', horas: '23:52 → 07:12', pregunta: true, nota: '¿Fue así?', confirmada: 0, hecha: false, dormirse: 352, despertar: 792 });
     // La de mañana: lo de siempre, a las 4, para verla al despertar sin abrir Moss.
     expect([l[1].date.getDate(), l[1].date.getHours()]).toEqual([22, 4]);
-    expect(l[1].props).toMatchObject({ clave: '2026-10-22', horas: '23:40 → 07:10', pregunta: true, notaConfirmada: 'Confirmada · 7 h 30 min' });
+    expect(l[1].props).toMatchObject({ clave: '2026-10-22', horas: '23:40 → 07:10', pregunta: true, notaConfirmada: '7 h 30' });
     // Si Moss no se abre en dos días, el widget no se queda con una noche vieja.
     expect([l[2].date.getDate(), l[2].date.getHours()]).toEqual([23, 4]);
     expect(l[2].props).toMatchObject({ clave: '2026-10-23', horas: '', pregunta: false, nota: 'Se ve al abrir Moss' });
+  });
+
+  it('con la noche ya medida o estimada, lo dormido lleva la deuda en una palabra; la de mañana, no', () => {
+    const l = armar(estado('2026-10-21', propia('2026-10-21', 'estimada', 352, 792)), new Date(2026, 9, 21, 9, 0), { deuda: 'deuda baja' });
+    expect(l[0].props).toMatchObject({ cifra: '7 h 20', deuda: 'deuda baja', nota: '¿Fue así?', notaConfirmada: '7 h 20 · deuda baja', textoConfirmada: 'Confirmada' });
+    expect(l[1].props).toMatchObject({ deuda: '', notaConfirmada: '7 h 30' });
+    // Sin estimarla todavía, lo de siempre no la lleva: sería la deuda de antes de esa noche.
+    expect(armar(estado('2026-10-21'), new Date(2026, 9, 21, 7, 0), { deuda: 'deuda baja' })[0].props.deuda).toBe('');
   });
 
   it('hasta las 4 sigue siendo «anoche» la de ayer, sea cual sea el corte (D32)', () => {
@@ -109,7 +116,7 @@ describe('la línea de tiempo del widget de la noche', () => {
     const delReloj = { clave: '2026-10-21', fuente: { id: 'w', nombre: 'Apple Watch', tipo: 'reloj' }, dormirse: 341, despertar: 793, confianza: { horario: 'alta', duracion: 'alta' } } as unknown as Noche;
     const salud = { noches: [delReloj] } as unknown as Estado['salud'];
     const l = armar(estado('2026-10-21', undefined, salud), new Date(2026, 9, 21, 9, 0));
-    expect(l[0].props).toMatchObject({ horas: '23:41 → 07:13', pregunta: false, hecha: false, nota: '7 h 32 min' });
+    expect(l[0].props).toMatchObject({ horas: '23:41 → 07:13', pregunta: false, hecha: false, nota: '7 h 32' });
     expect(l[1].props).toMatchObject({ horas: '', pregunta: false });
   });
 
@@ -124,17 +131,17 @@ describe('la línea de tiempo del widget de la noche', () => {
     const salud = { noches: [delReloj] } as unknown as Estado['salud'];
     const esperando: ConfirmacionDelWidget = { clave: '2026-10-21', dormirse: 300, despertar: 760, en: 123 };
     const l = armar(estado('2026-10-21', undefined, salud), new Date(2026, 9, 21, 9, 0), { esperando });
-    expect(l[0].props).toMatchObject({ horas: '23:41 → 07:13', confirmada: 0, pregunta: false, nota: '7 h 32 min' });
+    expect(l[0].props).toMatchObject({ horas: '23:41 → 07:13', confirmada: 0, pregunta: false, nota: '7 h 32' });
   });
 
-  it('las duraciones, sin el cero de relleno y sin los minutos cuando son cero', () => {
+  it('las duraciones, cortas como en Sueño, y sin los minutos cuando son cero', () => {
     const delReloj = (despertar: number) => ({ clave: '2026-10-21', fuente: { id: 'w', nombre: 'Apple Watch', tipo: 'reloj' }, dormirse: 340, despertar, confianza: { horario: 'alta', duracion: 'alta' } }) as unknown as Noche;
     const con = (despertar: number) => armar(estado('2026-10-21', undefined, { noches: [delReloj(despertar)] } as unknown as Estado['salud']), new Date(2026, 9, 21, 9, 0))[0].props;
-    expect(con(820)).toMatchObject({ nota: '8 h', notaConfirmada: 'Confirmada · 8 h' });
-    expect(con(765)).toMatchObject({ nota: '7 h 5 min' });
-    // A la cama a las 23:00: a las 22:10, «en 1 h»; a las 23:05, a las 21:00 faltan 2 h 5 min.
-    expect(armar(estado('2026-10-21'), new Date(2026, 9, 21, 22, 10), { dormir: { acostarse: 23 * 60, despertar: null } })[0].props.falta).toBe('en 1 h');
-    expect(armar(estado('2026-10-21'), new Date(2026, 9, 21, 21, 10), { dormir: { acostarse: 23 * 60 + 5, despertar: null } })[0].props.falta).toBe('en 2 h 5 min');
+    expect(con(820)).toMatchObject({ cifra: '8 h', nota: '8 h', notaConfirmada: '8 h' });
+    expect(con(765)).toMatchObject({ cifra: '7 h 05', nota: '7 h 05' });
+    // A la cama a las 23:00: a las 22:00, «en 1 h»; a las 23:05, a las 21:00 faltan 2 h 5 min.
+    expect(armar(estado('2026-10-21'), new Date(2026, 9, 21, 22, 0), { dormir: { acostarse: 23 * 60 } })[0].props.falta).toBe('en 1 h');
+    expect(armar(estado('2026-10-21'), new Date(2026, 9, 21, 21, 0), { dormir: { acostarse: 23 * 60 + 5 } })[0].props.falta).toBe('en 2 h 5 min');
   });
 
   it('las horas, de 0 a 23', () => {
@@ -144,15 +151,17 @@ describe('la línea de tiempo del widget de la noche', () => {
 
 describe('«A dormir», a la tardecita', () => {
   const HOY = '2026-10-21';
-  // A la cama a las 23:15, para despertarse a las 07:15.
-  const dormir = { acostarse: 23 * 60 + 15, despertar: 24 * 60 + 7 * 60 + 15 };
+  // A la cama a las 23:15.
+  const dormir = { acostarse: 23 * 60 + 15 };
 
-  it('de mañana sigue «Anoche» y a las 19 empieza, de a media hora, hasta 90 minutos después', () => {
+  it('de mañana sigue «Anoche» y a las 19 empieza, de a 5 minutos, hasta 90 minutos después', () => {
     const l = armar(estado(HOY), new Date(2026, 9, 21, 9, 0), { dormir });
     expect(l[0].props.aDormir).toBe(false);
     const tarde = l.filter((x) => x.props.aDormir);
     expect(tarde[0].date.getHours()).toBe(19);
-    expect(tarde[0].props).toMatchObject({ titulo: 'A dormir', horas: '23:15', cifra: '23:15', falta: 'en 4 h 15 min', nota: 'para despertarte a las 07:15', pregunta: false });
+    expect(tarde[0].props).toMatchObject({ titulo: 'A dormir', horas: '23:15', cifra: '23:15', falta: 'en 4 h 15 min', nota: 'en 4 h 15 min', pregunta: false });
+    expect(tarde[1].date.getTime() - tarde[0].date.getTime()).toBe(5 * 60 * 1000);
+    expect(tarde[1].props.falta).toBe('en 4 h 10 min');
     expect(tarde.at(-1)!.props.falta).toBe('Ya es hora');
     expect(tarde.at(-1)!.date.getHours()).toBe(23);
     // Después de un rato vuelve a lo de antes, hasta las 4 de la mañana.
@@ -164,16 +173,16 @@ describe('«A dormir», a la tardecita', () => {
     expect([...tiempos].sort((a, b) => a - b)).toEqual(tiempos);
   });
 
-  it('si ya empezó, lo primero es «A dormir» con lo que falta desde esa media hora', () => {
+  it('si ya empezó, lo primero es «A dormir» con lo que falta desde esos 5 minutos', () => {
     const l = armar(estado(HOY), new Date(2026, 9, 21, 21, 47), { dormir });
     expect(l[0].date.getHours()).toBe(21);
-    expect(l[0].props).toMatchObject({ aDormir: true, falta: 'en 1 h 45 min' });
-    expect(l[1].date.getHours()).toBe(22);
+    expect(l[0].props).toMatchObject({ aDormir: true, falta: 'en 1 h 30 min' });
+    expect([l[1].date.getHours(), l[1].date.getMinutes()]).toEqual([21, 50]);
   });
 
-  it('faltando menos de una hora, en minutos; sin hora de despertarse, sin esa frase', () => {
-    const l = armar(estado(HOY), new Date(2026, 9, 21, 22, 50), { dormir: { acostarse: dormir.acostarse, despertar: null } });
-    expect(l[0].props).toMatchObject({ aDormir: true, falta: 'en 45 min', nota: '' });
+  it('faltando menos de una hora, en minutos, también en la pantalla bloqueada', () => {
+    const l = armar(estado(HOY), new Date(2026, 9, 21, 22, 50), { dormir });
+    expect(l[0].props).toMatchObject({ aDormir: true, falta: 'en 25 min', nota: 'en 25 min' });
   });
 
   it('sin hora de dormir, no hay «A dormir»', () => {
@@ -189,7 +198,7 @@ describe('«A dormir», a la tardecita', () => {
     const l = armar(estado(HOY, propia(HOY, 'estimada', 352, 792)), new Date(2026, 9, 21, 7, 0), { dormir });
     expect(l[0].props.pregunta).toBe(true);
     const despues = l.find((x) => x.date.getHours() === 0 && x.date.getMinutes() === 45)!;
-    expect(despues.props).toMatchObject({ clave: HOY, horas: '23:52 → 07:12', pregunta: false, aDormir: false, nota: '7 h 20 min' });
+    expect(despues.props).toMatchObject({ clave: HOY, horas: '23:52 → 07:12', pregunta: false, aDormir: false, nota: '7 h 20' });
     // Un «Sí» que espera la estimación sigue confirmado.
     const esperando: ConfirmacionDelWidget = { clave: HOY, dormirse: 340, despertar: 790, en: 123 };
     const conSi = armar(estado(HOY), new Date(2026, 9, 21, 7, 30), { dormir, esperando });
@@ -197,8 +206,8 @@ describe('«A dormir», a la tardecita', () => {
   });
 
   it('acostándose pasadas las 2:30, lo de la tardecita termina a las 4 y no tapa la noche que viene', () => {
-    // A la cama a las 2:45 (la 1605 de su día), para despertarse a las 11.
-    const l = armar(estado(HOY), new Date(2026, 9, 21, 21, 0), { dormir: { acostarse: 1605, despertar: 1440 + 660 } });
+    // A la cama a las 2:45 (la 1605 de su día).
+    const l = armar(estado(HOY), new Date(2026, 9, 21, 21, 0), { dormir: { acostarse: 1605 } });
     const tiempos = l.map((x) => x.date.getTime());
     expect([...tiempos].sort((a, b) => a - b)).toEqual(tiempos);
     const i = l.findIndex((x) => x.date.getDate() === 22 && x.date.getHours() === 4);

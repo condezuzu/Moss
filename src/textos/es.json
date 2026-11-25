@@ -4786,8 +4786,17 @@
     "teQuedanCorto": "te quedan {n}",
     "deMasCorto": "{n} de más",
     "anotado": "Anotado",
-    "deMeta": "{comido} de {meta}",
-    "yaEsHora": "Ya es hora"
+    "yaEsHora": "Ya es hora",
+    "quedan": "te quedan",
+    "deMas": "de más",
+    "semana": "Últimos 7 días",
+    "meta": "meta {n}",
+    "deuda": {
+      "sinDeuda": "sin deuda",
+      "baja": "deuda baja",
+      "media": "deuda media",
+      "alta": "deuda alta"
+    }
   },
   "suscripcion": {
     "titulo": "Tu suscripción",

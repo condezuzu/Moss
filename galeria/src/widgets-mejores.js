@@ -1,34 +1,18 @@
-// Lo que pediste el 25/11/2026, para aprobar (spec/estudio/widgets-y-noche.md: 1.1, 1.3 y las filas 2 y 3 de la
-// pantalla bloqueada):
+// Lo que pediste el 25/11/2026, aprobado ese día y en la app (src/widgets/Hoy.widget.tsx y Noche.widget.tsx;
+// spec/estudio/widgets-y-noche.md: 1.1, 1.3 y las filas 2 y 3 de la pantalla bloqueada):
 // - Hoy, tan limpio como el de la pantalla bloqueada que te gusta: el chico es la cifra, la luna chica y los tres
 //   macros en barras finas; el mediano suma tus comidas a la derecha, con «+633» de un toque; el grande, además, tus
 //   últimos siete días contra la meta. Cada uno, junto al de ahora.
-// - Tu noche en StandBy: «A dormir 23:15» y la cuenta que baja de a un minuto, sin fondo y en rojo con poca luz.
+// - Tu noche en StandBy: «A dormir 23:15» y la cuenta que baja de a 5 minutos, sin fondo y en rojo con poca luz.
 // - La pantalla bloqueada: a la mañana, la deuda debajo de la noche; a la tardecita, la hora de acostarte (la de tu
 //   periodo de melatonina, como el aviso) con la cuenta viva. Un dato por widget: el de las calorías no cambia.
 // Con lo que deja dibujar SwiftUI en un widget y los mismos datos de mentira que los widgets de D43
-// (widgets-nuevos.js). Los textos nuevos van acá, con las claves que tendrían en src/textos, hasta que se aprueben.
+// (widgets-nuevos.js). Los textos son los de src/textos; acá solo los rótulos de la comparación.
 
 const WidgetsMejores = (() => {
   const TEXTOS_NUEVOS = {
-    es: {
-      widgets: {
-        mejores: {
-          quedan: 'te quedan', deMas: 'de más', semana: 'Últimos 7 días', meta: 'meta {n}',
-          deuda: { sinDeuda: 'sin deuda', baja: 'deuda baja', media: 'deuda media', alta: 'deuda alta' },
-          antes: 'Antes', despues: 'Después',
-        },
-      },
-    },
-    en: {
-      widgets: {
-        mejores: {
-          quedan: 'left', deMas: 'over', semana: 'Last 7 days', meta: 'goal {n}',
-          deuda: { sinDeuda: 'no debt', baja: 'low debt', media: 'medium debt', alta: 'high debt' },
-          antes: 'Before', despues: 'After',
-        },
-      },
-    },
+    es: { widgets: { mejores: { antes: 'Antes', despues: 'Después' } } },
+    en: { widgets: { mejores: { antes: 'Before', despues: 'After' } } },
   };
   function completar(destino, origen) {
     Object.entries(origen).forEach(([k, v]) => {
@@ -166,14 +150,15 @@ const WidgetsMejores = (() => {
       const extra = o.paraLaNoche ? o.paraLaNoche() || {} : {};
       return { n, acostarse: extra.acostarse == null ? A_DORMIR : extra.acostarse, deuda: extra.deuda || null };
     }
-    // Lo que falta para acostarte, contando desde las 18 como las noches de Moss: pasada la hora, «Ya es hora».
+    // Lo que falta para acostarte, contando desde las 18 como las noches de Moss, de a 5 minutos como las entradas del
+    // widget (src/widgets/noche.ts): pasada la hora, «Ya es hora».
     function cuenta(acostarse) {
       const desdeLas18 = (m) => (((m - 18 * 60) % 1440) + 1440) % 1440;
-      const falta = desdeLas18(acostarse) - desdeLas18(ahora());
+      const falta = Math.ceil((desdeLas18(acostarse) - desdeLas18(ahora())) / 5) * 5;
       return falta > 0 ? tx('widgets.enTiempo', { tiempo: duracion(falta) }) : tx('widgets.yaEsHora');
     }
     const dormido = (n) => Periodo.corta(u, n.dormido);
-    const conDeuda = (n, deuda) => (deuda ? `${dormido(n)} · ${tx('widgets.mejores.deuda.' + deuda)}` : dormido(n));
+    const conDeuda = (n, deuda) => (deuda ? `${dormido(n)} · ${tx('widgets.deuda.' + deuda)}` : dormido(n));
 
     // ------------------------------------------------------------ Hoy, nuevo
     const barra = () => '<span class="wn-barra"><i></i></span>';
@@ -197,7 +182,7 @@ const WidgetsMejores = (() => {
           l.ir(d.fraccion, animar ? ms() : 0);
           contenedor.classList.toggle('de-mas', d.queda < 0);
           p.poner(cifra, p.cifraDe(d));
-          queda.textContent = tx(d.queda < 0 ? 'widgets.mejores.deMas' : 'widgets.mejores.quedan');
+          queda.textContent = tx(d.queda < 0 ? 'widgets.deMas' : 'widgets.quedan');
           p.macrosDe(d).forEach((m, i) => {
             celdas[i].querySelector('small').textContent = m.corto;
             celdas[i].classList.toggle('de-mas', m.mas);
@@ -296,8 +281,8 @@ const WidgetsMejores = (() => {
             return { k, kcal, dia: (hoy + k + 7 * DIAS) % 7 };
           });
           const tope = Math.max(d.meta.kcal * 1.2, ...dias.map((x) => x.kcal));
-          titulo.textContent = tx('widgets.mejores.semana');
-          meta.textContent = tx('widgets.mejores.meta', { n: numero(d.meta.kcal) });
+          titulo.textContent = tx('widgets.semana');
+          meta.textContent = tx('widgets.meta', { n: numero(d.meta.kcal) });
           linea.style.setProperty('--meta', `${((d.meta.kcal / tope) * 100).toFixed(1)}%`);
           dias.forEach((x, i) => {
             const col = columnas[i];
@@ -331,9 +316,8 @@ const WidgetsMejores = (() => {
     }
 
     // ------------------------------------------------------------ Tu noche, nuevo
-    // El chico, el que StandBy pone de costado: a la tardecita, la hora de acostarte y cuánto falta, que iOS baja
-    // solo de a un minuto (`Text` con `dateStyle: 'relative'`, sin gastar recargas; con `timerInterval` sería de a
-    // segundo, «1:27:59»); a la mañana, lo dormido y la deuda.
+    // El chico, el que StandBy pone de costado: a la tardecita, la hora de acostarte y cuánto falta, de a 5 minutos
+    // (una entrada de la línea cada 5: un `Text` relativo contaría los segundos); a la mañana, lo dormido y la deuda.
     function nocheChico() {
       const w = p.conFondo(el('div', 'wg-w chico wm-w'));
       const dentro = el('div', 'wm-noche');
@@ -361,7 +345,7 @@ const WidgetsMejores = (() => {
           p.poner(falta, cuenta(acostarse));
         } else {
           p.poner(cifra, n ? dormido(n) : '—');
-          p.poner(falta, !n ? tx('widgets.seVeEnMoss') : pregunta && !p.confirmada ? tx('widgets.fueAsi') : deuda ? tx('widgets.mejores.deuda.' + deuda) : tx('widgets.horas', { desde: horaMin(n.dormirse), hasta: horaMin(n.despertar) }));
+          p.poner(falta, !n ? tx('widgets.seVeEnMoss') : pregunta && !p.confirmada ? tx('widgets.fueAsi') : deuda ? tx('widgets.deuda.' + deuda) : tx('widgets.horas', { desde: horaMin(n.dormirse), hasta: horaMin(n.despertar) }));
         }
         si.hidden = !pregunta;
         si.classList.toggle('lista', p.confirmada);

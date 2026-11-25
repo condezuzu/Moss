@@ -4786,8 +4786,17 @@
     "teQuedanCorto": "{n} left",
     "deMasCorto": "{n} over",
     "anotado": "Logged",
-    "deMeta": "{comido} of {meta}",
-    "yaEsHora": "It's time"
+    "yaEsHora": "It's time",
+    "quedan": "left",
+    "deMas": "over",
+    "semana": "Last 7 days",
+    "meta": "goal {n}",
+    "deuda": {
+      "sinDeuda": "no debt",
+      "baja": "low debt",
+      "media": "medium debt",
+      "alta": "high debt"
+    }
   },
   "suscripcion": {
     "titulo": "Your subscription",

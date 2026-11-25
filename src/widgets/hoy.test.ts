@@ -15,6 +15,7 @@ const HOY: ClaveDia = '2026-10-21';
 const NOMBRES = { desayuno: 'Desayuno', almuerzo: 'Almuerzo', merienda: 'Merienda', cena: 'Cena', snack: 'Snack' } as Record<Comida, string>;
 const TEXTOS = {} as PropsHoy['textos'];
 const URLS = {} as PropsHoy['urls'];
+const LETRAS = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 const valores = (kcal: number) => ({ kcal, proteina: kcal / 40, carbohidratos: kcal / 10, grasas: kcal / 90 });
 
 let n = 0;
@@ -34,7 +35,7 @@ const conCenaDeSiempre = () => [-1, -3].flatMap((k) => {
 });
 
 const linea = (registros: Map<string, Registro>, deshacer?: Map<string, DelToque>) =>
-  lineaDeHoy({ hoy: HOY, registros, corte: 240 }, { metaDe: () => ({ kcal: 2000, proteina: 150, carbohidratos: 200, grasas: 60 }), nombres: NOMBRES, textos: TEXTOS, urls: URLS, deshacer });
+  lineaDeHoy({ hoy: HOY, registros, corte: 240 }, { metaDe: () => ({ kcal: 2000, proteina: 150, carbohidratos: 200, grasas: 60 }), nombres: NOMBRES, letras: LETRAS, textos: TEXTOS, urls: URLS, deshacer });
 
 describe('la línea de Hoy', () => {
   it('lleva una entrada por día, desde que empieza cada día, con las cuatro comidas a la vista', () => {
@@ -63,8 +64,17 @@ describe('la línea de Hoy', () => {
 
   it('lleva si se ven los números: ocultos, el widget no los muestra', () => {
     expect(linea(mapa([]))[0].props.numeros).toBe(true);
-    const sin = lineaDeHoy({ hoy: HOY, registros: mapa([]), corte: 240, numeros: false }, { metaDe: () => null, nombres: NOMBRES, textos: TEXTOS, urls: URLS });
+    const sin = lineaDeHoy({ hoy: HOY, registros: mapa([]), corte: 240, numeros: false }, { metaDe: () => null, nombres: NOMBRES, letras: LETRAS, textos: TEXTOS, urls: URLS });
     expect(sin.every((x) => x.props.numeros === false)).toBe(true);
+  });
+
+  it('para el grande, lo comido los seis días anteriores (sin lo planificado) y la letra de los siete', () => {
+    const l = linea(mapa([registro(sumarDias(HOY, -1), 'almuerzo', 'Milanesa', 600), registro(sumarDias(HOY, -6), 'cena', 'Pizza', 900), registro(sumarDias(HOY, -2), 'cena', 'Sopa', 300, { planificado: true })]));
+    expect(l[0].props.semana).toEqual([900, 0, 0, 0, 0, 600]);
+    // El 21/10/2026 es miércoles: los siete días van del jueves al miércoles.
+    expect(l[0].props.letras).toEqual(['J', 'V', 'S', 'D', 'L', 'M', 'X']);
+    // Mañana, ayer pasa a ser el de hace dos días y hoy entra con lo que tenga.
+    expect(l[1].props.semana).toEqual([0, 0, 0, 0, 600, 0]);
   });
 
   it('el snack aparece si se anotó, y va por su hora', () => {
@@ -76,7 +86,6 @@ describe('la línea de Hoy', () => {
   it('lo de siempre viaja en la entrada, para anotar justo eso', () => {
     const cena = linea(mapa(conCenaDeSiempre()))[0].props.comidas.find((c) => c.tipo === 'cena')!;
     expect(cena.siempre.kcal).toBe(550);
-    expect(cena.detalle).toBe('Fideos, Tuco');
     expect((JSON.parse(cena.items) as Item[]).map((i) => i.nombre)).toEqual(['Fideos', 'Tuco']);
   });
 
@@ -90,7 +99,7 @@ describe('la línea de Hoy', () => {
   it('lo del plan confirmado con un toque sigue siendo lo del plan: si se deshace, suma eso', () => {
     const sopa = registro(HOY, 'cena', 'Sopa', 300);
     const cena = linea(mapa([...conCenaDeSiempre(), sopa]), new Map([[`${HOY}|cena`, { ids: [sopa.id], confirmado: true }]]))[0].props.comidas.find((c) => c.tipo === 'cena')!;
-    expect(cena).toMatchObject({ items: '', deshacer: sopa.id, confirmado: true, detalle: 'Sopa' });
+    expect(cena).toMatchObject({ items: '', deshacer: sopa.id, confirmado: true });
     expect(cena.siempre.kcal).toBe(300);
   });
 });
@@ -163,7 +172,7 @@ describe('lo tocado en Hoy', () => {
 
 describe('lo tocado en Hoy, por el almacén', () => {
   const catalogo = datos.constelaciones as unknown as Constelacion[];
-  const OPCIONES = { metaDe: () => null, nombres: NOMBRES, textos: TEXTOS, urls: URLS };
+  const OPCIONES = { metaDe: () => null, nombres: NOMBRES, letras: LETRAS, textos: TEXTOS, urls: URLS };
   /** Una hora de ese día en Montevideo (todo el año a −3), en milisegundos. */
   const aLas = (dia: ClaveDia, h: number, m = 0) => Date.parse(`${dia}T00:00:00.000-03:00`) + (h * 60 + m) * 60_000;
 

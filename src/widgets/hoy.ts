@@ -6,7 +6,7 @@
 
 import type { Almacen, Estado } from '@/almacen/almacen';
 import { HORA_TIPICA, type Comida } from '@/dominio/comidas';
-import { minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { minutosEnElDia, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import type { Macros } from '@/dominio/metas';
 import { sugerenciaVencida } from '@/dominio/plan';
 import { deSiempre, delDia, sumarValores, type Item, type Registro } from '@/dominio/registros';
@@ -27,13 +27,18 @@ const sumaDe = (lista: readonly Pick<Item, 'valores'>[]) => aWidget(sumarValores
 /** Lo que anotó un toque de este widget en un día y una comida: los registros y si fue confirmar lo del plan. */
 export type DelToque = { ids: string[]; confirmado: boolean };
 
+/** Los días del grande: los seis anteriores y el de la entrada. */
+const DIAS_DE_LA_SEMANA = 7;
+
 /**
  * La línea de tiempo: hoy, con lo anotado, y los días que siguen sin nada, cada uno desde que empieza.
- * `deshacer` dice qué se anotó con un toque de este widget, por día y comida.
+ * `deshacer` dice qué se anotó con un toque de este widget, por día y comida. `letras`: la de cada día de
+ * la semana, desde el domingo.
  */
 export function lineaDeHoy(e: ParaHoy, d: {
   metaDe: (dia: ClaveDia) => Macros | null;
   nombres: Record<Comida, string>;
+  letras: readonly string[];
   textos: PropsHoy['textos'];
   urls: PropsHoy['urls'];
   fondo?: string;
@@ -41,6 +46,12 @@ export function lineaDeHoy(e: ParaHoy, d: {
 }): Entrada[] {
   const todos = [...e.registros.values()];
   const deSiempreHoy = new Map(COMIDAS_DE_HOY.map((c) => [c, deSiempre(todos, c, e.hoy)]));
+  // Lo comido cada día; lo planificado no cuenta hasta comerlo, como en Inicio.
+  const comidoEn = new Map<ClaveDia, number>();
+  const kcalDe = (dia: ClaveDia) => {
+    if (!comidoEn.has(dia)) comidoEn.set(dia, sumaDe(delDia(todos, dia).filter((r) => !r.planificado)).kcal);
+    return comidoEn.get(dia)!;
+  };
   const entradas: Entrada[] = [];
   for (let k = 0; k < DIAS_ARMADOS; k++) {
     const dia = sumarDias(e.hoy, k);
@@ -57,13 +68,11 @@ export function lineaDeHoy(e: ParaHoy, d: {
       const planificados = lista.filter((r) => r.planificado && r.comida === tipo);
       const delPlan = planificados.length ? planificados : confirmados;
       const siempre: readonly Item[] = delPlan.length ? delPlan : (deSiempreHoy.get(tipo) ?? []);
-      const mostrar = anotados.length ? anotados : siempre;
       return {
         tipo,
         nombre: d.nombres[tipo],
         anotada: anotados.length > 0,
         anotado: sumaDe(anotados),
-        detalle: mostrar.map((x) => x.nombre).join(', '),
         siempre: sumaDe(siempre),
         // Lo del plan ya está guardado: se confirma. Lo de siempre viaja en la entrada.
         items: delPlan.length ? '' : JSON.stringify(siempre.map(({ fuente, ref, nombre, cantidad, valores, estimado }) => ({ fuente, ref, nombre, cantidad, valores, ...(estimado ? { estimado } : {}) }))),
@@ -73,6 +82,7 @@ export function lineaDeHoy(e: ParaHoy, d: {
       };
     });
     const meta = d.metaDe(dia);
+    const semana = Array.from({ length: DIAS_DE_LA_SEMANA }, (_, i) => sumarDias(dia, i - DIAS_DE_LA_SEMANA + 1));
     entradas.push({
       date: comienzoDe(dia, e.corte),
       props: {
@@ -81,6 +91,8 @@ export function lineaDeHoy(e: ParaHoy, d: {
         comido: sumaDe(comidos),
         comidas: comidas.sort((a, b) => a.minutos - b.minutos).map(({ minutos: _m, ...c }) => c),
         pendientes: [],
+        semana: semana.slice(0, -1).map(kcalDe),
+        letras: semana.map((x) => d.letras[partesDe(x).diaSemana] ?? ''),
         numeros: e.numeros !== false,
         textos: d.textos,
         urls: d.urls,

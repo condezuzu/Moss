@@ -60,6 +60,10 @@ export type PropsNoche = {
   cifra: string;
   /** «en 1 h 30», o «Ya es hora». */
   falta: string;
+  /** La deuda en una palabra, como en Sueño («deuda baja»), con la noche ya medida o estimada; si no, vacío. */
+  deuda: string;
+  /** «Confirmada», debajo del chico después del «Sí». */
+  textoConfirmada: string;
   /** «Sí, fue así», para el botón del chico. */
   siLargo: string;
   /** El cielo de fondo del chico (fondos.ts), o vacío. */
@@ -76,8 +80,6 @@ export type ComidaDeHoy = {
   anotada: boolean;
   /** Lo anotado en esa comida. */
   anotado: ValoresDelWidget;
-  /** Lo anotado, o lo de siempre: «Café con leche, Tostada». */
-  detalle: string;
   /** Lo que sumaría un toque (tu comida de siempre, o lo del plan de hoy); kcal en 0, nada. */
   siempre: ValoresDelWidget;
   /** Los alimentos de siempre, en JSON: si se toca, eso es lo que se anota. Vacío, lo del plan. */
@@ -98,15 +100,23 @@ export type PropsHoy = {
   comido: ValoresDelWidget;
   comidas: ComidaDeHoy[];
   pendientes: ToqueDeComida[];
+  /** Lo comido los seis días anteriores, del más viejo al de ayer, en kcal: el grande los muestra con hoy contra la meta. */
+  semana: number[];
+  /** La letra de cada uno de esos siete días, hoy al final. */
+  letras: string[];
   /** Los números de la comida (Perfil): ocultos, solo la luna, las barras y las comidas, sin kcal ni gramos. */
   numeros: boolean;
   textos: {
-    teQuedan: string; deMas: string; kcal: string; de: string; anotado: string; sinAnotar: string; miles: string;
-    macros: { p: string; c: string; g: string }; cortos: { p: string; c: string; g: string };
-    buscar: string; decir: string; codigo: string;
+    /** Los de la pantalla bloqueada: «Te quedan», «Sobre la meta». */
+    teQuedan: string; deMas: string; kcal: string;
+    /** Los de la pantalla de inicio, debajo de la cifra: «te quedan», «de más». */
+    quedan: string; sobra: string;
+    anotado: string; miles: string; cortos: { p: string; c: string; g: string };
+    /** «Últimos 7 días» y «meta {n}». */
+    semana: string; meta: string;
   };
   /** Adónde lleva tocar: el widget chico, lo anotado, y una comida sin nada para sumar (con {comida}). */
-  urls: { anotar: string; inicio: string; comida: string; anotarComida: string; buscar: string; decir: string; codigo: string };
+  urls: { anotar: string; inicio: string; comida: string; anotarComida: string };
   fondo: string;
 };
 
