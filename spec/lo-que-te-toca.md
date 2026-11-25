@@ -3,7 +3,7 @@
 Todo lo que no puedo hacer yo: aprobar, decidir, entrar con tus cuentas, tocar el iPhone y lo de Ascent.
 Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar hecho: no lo puedo ver desde acá.
 
-Galería (versión 59): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
+Galería (versión 61): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 
 ## 0. El lanzamiento y la 1.1 (desde el 14/11/2026): dónde quedé
 
@@ -172,13 +172,16 @@ Falta (vos):
 
 La app no cambia hasta que digas. Sección 1.1, salvo que diga otra.
 
+**Del 25/11** (galería 61, arriba de todo en «Lo nuevo, para aprobar»; escenario `widgets-mejores`)
+- **Los widgets mejores, al lado de los de ahora:** Hoy chico (la cifra, la luna chica y P, C y G en barras finas), mediano (más las comidas, con «+633» de un toque) y grande (más los últimos 7 días contra la meta); StandBy con «A dormir 22:40 · en 53 min», en rojo con poca luz; y la pantalla bloqueada a la mañana con la noche y la deuda en una palabra, y a la tardecita con la hora de acostarte. El de las calorías que te gusta queda igual. Para decidir ahí: el grande con los últimos 7 días o de lunes a domingo, y el snack en la lista. Para ver la noche sin abrir Moss hace falta la próxima build (spec/estudio/widgets-y-noche.md).
+
 **Del 23/11** (galería 59, el primer grupo)
 - **Las estrellas de Hábitos sin nombre:** el primer toque muestra el de esa estrella, arriba o abajo y siempre entero; el segundo marca el hábito. El globito de la primera vez lo explica (escenario `tocar`).
 - **Inicio sobre el cielo estrellado:** el velo de Inicio baja de 0,8 a 0,45 (escenario `inicio`).
 - **«Picos de energía:»** con sus horas, arriba de la curva, en lugar de «Tu mejor momento» y «Otro pico» (escenario `energia`).
 - **«Qué priorizar cada noche»,** abajo de todo en Sueño: 17 puntos de lo que más ayuda a lo que menos, con su explicación, la hora de hoy y en qué se basa (spec/estudio/priorizar-cada-noche.md; escenario `priorizar`).
 
-**La búsqueda de bugs (23/11):** 34 hallazgos en spec/bugs.md, en tres tandas. **La tanda A está arreglada y por aire** (production ff4d611f, preview e1243622, commit 46cafd9, huella 27c0c152), con un test por arreglo. **La tanda B también, por aire el 23/11** (production 711452ae, preview a6c82501, commit 402c885). La migración 0018 (la marca de «Borrar mis datos») quedó aplicada en la base real el 23/11, con tu sí. **La tanda C también, por aire el 25/11** (production bcb8f213, preview 42045ae8, commit 59954e2): las tres tandas están arregladas. **Te toca:** lo de «Para decidir» (la siesta de 20 o 30 minutos, las luces) y cómo elegir un plan con el regalo (un «Ahora no» en la pantalla de pago o «Elegir un plan» en Tu suscripción, para la galería).
+**La búsqueda de bugs (23/11):** 34 hallazgos en spec/bugs.md, en tres tandas. **La tanda A está arreglada y por aire** (production ff4d611f, preview e1243622, commit 46cafd9, huella 27c0c152), con un test por arreglo. **La tanda B también, por aire el 23/11** (production 711452ae, preview a6c82501, commit 402c885). La migración 0018 (la marca de «Borrar mis datos») quedó aplicada en la base real el 23/11, con tu sí. **La tanda C también, por aire el 25/11** (production bcb8f213, preview 42045ae8, commit 59954e2): las tres tandas están arregladas. **La segunda búsqueda (25/11, mientras estabas en el gimnasio):** unos 75 hallazgos más; la tanda D y lo del almacén, arreglados con sus tests y por aire el 25/11 (production d5e80bf9, preview 4e6f0295, commit 891c8ff), junto con los avisos nuevos (de fábrica, solo la deuda al despertarte, el periodo de melatonina una hora antes y las comidas que no anotaste; lo demás, en Perfil › Avisos). Lo que es para decidir está en spec/bugs.md (las horas en 12 h, los separadores por país, Sleep Cycle y AutoSleep, «crema» y «queso» en Uruguay). **Te toca:** lo de «Para decidir» (la siesta de 20 o 30 minutos, las luces) y cómo elegir un plan con el regalo (un «Ahora no» en la pantalla de pago o «Elegir un plan» en Tu suscripción, para la galería).
 
 **Del 9/11**
 - **La base de la comunidad:** el sello «Verificado por la comunidad», en oro, y «¿De dónde sale esto?» con cuántas personas lo cargaron (escenario `ventana`, la barra de proteína de maní). Ya está programado: si no te gusta, se cambia antes de la OTA (spec/nutricion.md, «La base de la comunidad»).
