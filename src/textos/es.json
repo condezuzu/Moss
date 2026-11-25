@@ -624,9 +624,9 @@
       "codigoTitulo": "Código de barras",
       "codigoTexto": "Apunta al código: se lee solo.",
       "buscando": "Buscando {codigo}…",
-      "noEsta": "No lo encontramos. Saca una foto de la etiqueta y queda guardado para la próxima.",
-      "incompleto": "Le faltan datos: saca una foto de la etiqueta para completarlo.",
-      "sinConexion": "Sin conexión no se puede buscar un código nuevo: saca una foto de la etiqueta.",
+      "noEsta": "No lo encontramos. Toma una foto de la etiqueta y queda guardado para la próxima.",
+      "incompleto": "Le faltan datos: toma una foto de la etiqueta para completarlo.",
+      "sinConexion": "Sin conexión no se puede buscar un código nuevo: toma una foto de la etiqueta.",
       "etiquetaTitulo": "Foto de la etiqueta",
       "etiquetaTexto": "Encuadra la tabla nutricional, con buena luz, y toca el botón.",
       "leyendo": "Leyendo la etiqueta…",
@@ -636,7 +636,7 @@
       "sinPermiso": "Moss necesita la cámara para leer el código y la etiqueta.",
       "darPermiso": "Continuar",
       "abrirAjustes": "Abrir Ajustes",
-      "sacarFoto": "Sacar la foto",
+      "sacarFoto": "Tomar la foto",
       "deOff": "Datos de Open Food Facts (ODbL)",
       "otraVez": "Escanear otro",
       "noCierra": "Los datos de este producto no cierran. Mejor lee la etiqueta."
@@ -702,21 +702,21 @@
     "agregadoA": "{que}: agregado {donde}",
     "fotos": {
       "ver": "La foto de esta comida",
-      "cambiar": "Sacar otra",
+      "cambiar": "Tomar otra",
       "borrar": "Borrar la foto",
       "nota": "La foto queda solo en este teléfono y en su copia de iCloud: no se sube a tu cuenta."
     },
     "fotoDiario": {
-      "sacar": "Sacar una foto",
+      "sacar": "Tomar una foto",
       "noSeAnaliza": "La foto no se analiza: es solo para tu diario.",
       "visor": "Foto de tu comida",
-      "disparar": "Sacar la foto",
+      "disparar": "Tomar la foto",
       "tusFotos": "Tus fotos",
       "elegir": "Elegir de tus fotos",
       "soloLaQueElijas": "Moss solo recibe la foto que eliges.",
       "queEs": "¿Qué es? Dilo o escríbelo",
       "ayuda": "Toca el micrófono y di qué es. Moss lo calcula con su base de alimentos.",
-      "otraFoto": "Sacar otra",
+      "otraFoto": "Tomar otra",
       "borrar": "Borrar",
       "despues": "Anotar después",
       "quedo": "Tu foto quedó en el día, sin anotar",
@@ -1035,7 +1035,7 @@
       "decir": "Decirlo",
       "caloriasTexto": "Empieza por lo próximo que comas: en unos días, Moss conoce tus comidas y te las sugiere.",
       "camino": "Tu camino",
-      "caminoTexto": "A un ritmo viable, llegarías el {fecha}. Pésate mañana al despertarte: con dos semanas de pesadas, Moss empieza a ver hacia dónde vas; con cuatro a seis, a qué ritmo.",
+      "caminoTexto": "Con tu plan, llegarías el {fecha}. Pésate mañana al despertarte: con dos semanas de pesadas, Moss empieza a ver hacia dónde vas; con cuatro a seis, a qué ritmo.",
       "pesarme": "Anotar mi peso",
       "cieloTexto": "Cada hábito que marques enciende una estrella; con todos, se dibuja la constelación de hoy.",
       "habitos": "Elegir mis hábitos"
@@ -1653,6 +1653,10 @@
       "ritmo": "Ritmo",
       "porSemana": "{pct} % del peso por semana · {kg} kg",
       "enSemanas": "en {n} semanas",
+      "enCuantasSemanas": {
+        "uno": "en {n} semana",
+        "otros": "en {n} semanas"
+      },
       "elegirFecha": "Elegir la fecha",
       "elegirRitmo": "Elegir el ritmo",
       "antes": "Una semana antes",
@@ -1807,7 +1811,7 @@
     "nocheDel": "Noche del {desde} al {hasta}",
     "dormido": "dormido",
     "horas": "Te dormiste a las {desde} y te despertaste a las {hasta}",
-    "incompleta": "Parece incompleta: dormiste mucho menos que siempre y te despertaste temprano. ¿El reloj se quedó sin batería? Puedes dejarla fuera.",
+    "incompleta": "Parece incompleta: dormiste mucho menos que siempre y te despertaste temprano. ¿El reloj se quedó sin batería?",
     "etapas": {
       "despierto": "Despierto",
       "rem": "REM",
@@ -2568,12 +2572,12 @@
       "nombreCampo": "Nombre",
       "sinNombre": "¿Cómo te llamas? Solo lo ves tú, aquí en Perfil.",
       "foto": "Tu foto",
-      "sacarFoto": "Sacar foto",
+      "sacarFoto": "Tomar foto",
       "elegirFoto": "Elegir foto",
       "quitarFoto": "Quitar foto",
       "fotoNota": "Tu foto queda en este iPhone: no sube a tu cuenta.",
       "sinCamaraTitulo": "Moss no tiene acceso a la cámara",
-      "sinCamara": "Para sacar tu foto, actívala en los Ajustes del iPhone."
+      "sinCamara": "Para tomar tu foto, actívala en los Ajustes del iPhone."
     },
     "conectar": "Conectar",
     "pronto": "Pronto",
@@ -3543,6 +3547,7 @@
       }
     },
     "y": "y",
+    "ye": "e",
     "recuperado": {
       "estas": "Estás",
       "palabra": {
@@ -3840,7 +3845,7 @@
     },
     "estancados": {
       "titulo": "Razones de estancamiento",
-      "texto": "Ejercicios que no mejoran en 8 semanas o más.",
+      "texto": "Ejercicios que no mejoran en {n} semanas o más.",
       "ninguno": "Ningún ejercicio está estancado: con 12 semanas, todos suben o todavía no se sabe.",
       "dato": "{n} semanas sin marca · {marca}",
       "sinCausa": "Sin una causa clara en tus series, tu comida ni tu sueño.",
@@ -3852,7 +3857,8 @@
       },
       "series": {
         "titulo": "Menos series duras de {musculo}",
-        "texto": "Por semana, con todos sus ejercicios: es lo que más pesa en la fuerza (Pelland 2026)."
+        "texto": "Por semana, con todos sus ejercicios: es lo que más pesa en la fuerza (Pelland 2026).",
+        "etiqueta": "Series duras por semana: {antes} cuando subía, {ahora} ahora."
       },
       "frecuencia": {
         "titulo": "Lo haces menos a menudo",
@@ -4208,7 +4214,14 @@
       "noSeSabe": "Con 6 sesiones de este ejercicio se puede calcular cuándo llegas.",
       "noSube": "Así no llega: en 12 semanas no sube con claridad. Mira «Por qué puedes estar estancado».",
       "enCamino": "Al ritmo de tus últimas 12 semanas, en {de} a {a} semanas.",
-      "enCaminoAbierto": "Al ritmo de tus últimas 12 semanas, en {de} semanas o más.",
+      "enCaminoExacto": {
+        "uno": "Al ritmo de tus últimas 12 semanas, en {n} semana.",
+        "otros": "Al ritmo de tus últimas 12 semanas, en {n} semanas."
+      },
+      "enCaminoAbierto": {
+        "uno": "Al ritmo de tus últimas 12 semanas, en {n} semana o más.",
+        "otros": "Al ritmo de tus últimas 12 semanas, en {n} semanas o más."
+      },
       "lejana": "Es una meta lejana: ponte una intermedia.",
       "comer": "Para llegar: come unos {g} g de proteína por día.",
       "alejaSueno": "La puede alejar: duermes {h} en promedio.",
@@ -4299,6 +4312,10 @@
       "titulo": "Elige tus primeros hábitos",
       "texto": "De 3 a 5 para empezar: forman tu primera constelación. Los de comida se encienden solos con lo que registras.",
       "cuantos": "{n} elegidos · al menos 3",
+      "elegidos": {
+        "uno": "{n} elegido · al menos 3",
+        "otros": "{n} elegidos · al menos 3"
+      },
       "listo": "Crear mi constelación",
       "despues": "Después puedes sumar, cambiar o archivar cada uno.",
       "leer": "Leer 20 páginas",
@@ -4374,7 +4391,10 @@
   },
   "compartir": {
     "boton": "Compartir",
-    "rinde": "Rinde {n} porciones",
+    "rinde": {
+      "uno": "Rinde {porciones} porción",
+      "otros": "Rinde {porciones} porciones"
+    },
     "porPorcion": "Por porción: {kcal} kcal · {p} g de proteína · {c} g de carbohidratos · {g} g de grasas",
     "por100": "Cada 100 g: {kcal} kcal · {p} g de proteína · {c} g de carbohidratos · {g} g de grasas",
     "ingredientes": "Ingredientes:",

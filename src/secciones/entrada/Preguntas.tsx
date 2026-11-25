@@ -15,7 +15,7 @@ import { CM_POR_PULGADA, KG_POR_LIBRA, piesYPulgadas } from '@/dominio/cantidade
 import { CON_HORA } from '@/dominio/comidas';
 import {
   avisoDeRecomposicion, diasConDosSesiones, DEPORTES, FIGURAS, kcalDelEntreno, MOVIMIENTOS, NIVELES_DE_PROTEINA, opcionesDeLoQueSigue, partesRedondas, preguntasDelEntreno,
-  proteinaDelNivel, rangoDelPesoMeta, ritmoSugerido, VIAJES, type Deporte, type Despues, type Movimiento, type ObjetivoDicho,
+  rangoDelPesoMeta, ritmoSugerido, VIAJES, type Deporte, type Despues, type Movimiento, type ObjetivoDicho,
 } from '@/dominio/cuestionario';
 import { RANGOS as RANGOS_DEL_CUERPO, rangoDeGrasa } from '@/dominio/cuerpo';
 import { gruposPara, PREGUNTA, sinDeficitDe, type Cuidado } from '@/dominio/cuidados';
@@ -32,11 +32,12 @@ import { COLOR_DE_MACRO, Icono, MACROS } from '../comida/comunes';
 import { horaDelDia, numero, sistemaDe, useEstado } from '../comida/datos';
 import { Luna } from '../comida/Luna';
 import { BotonDePaso, margenDeToque } from '../paso';
+import { unidades, type U } from '../progreso/unidades';
 import { Anillos, Figura } from './Lienzos';
 import { ACOMODA, Boton, Deslizador, Dias, Elegible, entra, Etiqueta, Interruptor, Pasito, Plegable, TextoQueCambia } from './piezas';
 import {
-  cambiaPeso, conObjetivo, conPesoMeta, deporteDelPartido, despuesDe, entrenoDicho, levantaPesas, medidasDeCinta, metaDeAhora, objetivoPosible, objetivosQueNo, pctDe,
-  paraLoQueSigue, plazoDeRitmo, plazoElegido, reglasDeAhora, respuestasPara, sexoDe, suenoDeSalud, type Contestado, type Pregunta,
+  cambiaPeso, conElPartido, conObjetivo, conPesoMeta, conPlan, despuesDe, entrenoDicho, levantaPesas, llegadaDe, medidasDeCinta, metaDeAhora, objetivoPosible, objetivosQueNo,
+  paraLoQueSigue, pctDe, plazoDeRitmo, plazoElegido, proteinaDe, reglasDeAhora, sexoDe, suenoDeSalud, type Contestado, type Pregunta,
 } from './respuestas';
 
 /** Lo que vino de Salud (y no se cambió a mano). */
@@ -158,8 +159,14 @@ export function ChipDeSalud({ encendido, izquierda }: { encendido: boolean; izqu
 }
 
 // ------------------------------------------------------------------ formatos
-const kg = (x: number) => numero(x, Math.round(x * 10) % 10 ? 1 : 0);
 const hasta2 = (x: number) => numero(x, 2);
+/** Un peso para elegir en la unidad de cada uno: en kilos, de a `pasoKg`; en libras, de a una, como el peso meta de Progreso. Se guarda en kg. */
+function pesoParaElegir(u: U, kg: number, min: number, max: number, pasoKg: number) {
+  if (u.unidad === 'kg') return { valor: kg, min, max, paso: pasoKg, aKg: (x: number) => x, texto: u.corto };
+  const [desde, hasta] = [Math.ceil(u.enUnidad(min)), Math.floor(u.enUnidad(max))];
+  const aKg = (lb: number) => Math.round(lb * KG_POR_LIBRA * 10) / 10;
+  return { valor: Math.min(hasta, Math.max(desde, Math.round(u.enUnidad(kg)))), min: desde, max: hasta, paso: 1, aKg, texto: (lb: number) => numero(lb) };
+}
 /** Una fecha del plan: corta y, a más de diez meses, con el año (si no, parecería de este). */
 function fechaDelCamino(clave: ClaveDia, hoy: ClaveDia) {
   const p = partesDe(clave);
@@ -416,6 +423,8 @@ function ElCuidado({ r, poner, hoy, alSeguir }: PropsDePregunta) {
   const hay = r.cuidados.length > 0;
   const pendiente = hay && !r.consentido;
   const reglas = reglasDeAhora(r, hoy);
+  const u = unidades(sistemaDe(useEstado()));
+  const antes = pesoParaElegir(u, d.pesoAntes ?? r.pesoKg, 35, 200, 0.5);
   const ponerDato = (cambio: Partial<Contestado['datosCuidado']>) => poner((x) => ({ ...x, datosCuidado: { ...x.datosCuidado, ...cambio } }));
   const marcar = (c: Cuidado) => poner((x) => ({ ...x, cuidados: x.cuidados.includes(c) ? x.cuidados.filter((y) => y !== c) : [...x.cuidados, c] }));
   let k = 0;
@@ -436,7 +445,7 @@ function ElCuidado({ r, poner, hoy, alSeguir }: PropsDePregunta) {
           <Text style={s.extraTexto}>{t('cuidados.preguntas.pesoAntes')}</Text>
           <View style={[s.extraFila, { justifyContent: 'flex-end' }]}>
             <Interruptor texto={t('cuidados.preguntas.noSe')} prendido={d.pesoAntes === null} alTocar={() => ponerDato({ pesoAntes: d.pesoAntes === null ? r.pesoKg : null })} />
-            <Pasito valor={d.pesoAntes ?? r.pesoKg} min={35} max={200} paso={0.5} ancho={92} apagado={d.pesoAntes === null} nombre={t('cuidados.preguntas.pesoAntes')} formato={(x) => `${kg(x)} kg`} alCambiar={(x) => ponerDato({ pesoAntes: x })} />
+            <Pasito valor={antes.valor} min={antes.min} max={antes.max} paso={antes.paso} ancho={92} apagado={d.pesoAntes === null} nombre={t('cuidados.preguntas.pesoAntes')} formato={(x) => `${antes.texto(x)} ${u.unidad}`} alCambiar={(x) => ponerDato({ pesoAntes: antes.aKg(x) })} />
           </View>
           <View style={s.extraFila}>
             <Text style={s.extraTexto}>{t('cuidados.preguntas.mellizos')}</Text>
@@ -541,6 +550,9 @@ function LaGrasa({ r, poner, alSeguir }: PropsDePregunta) {
   const modos = ['no', 'dicha', 'imagen', 'cinta'] as const;
   const cinta = rangoDeGrasa(sexo, r.alturaCm, medidasDeCinta(r));
   const [minPct, maxPct] = [sexo === 'f' ? 10 : 4, 50];
+  // En el sistema imperial, la cinta en pulgadas, de a media; se guarda en cm.
+  const pulgadas = sistemaDe(useEstado()) === 'imperial';
+  const largo = (cm: number) => (pulgadas ? cm / CM_POR_PULGADA : cm);
   return (
     <>
       <Desliza>
@@ -572,7 +584,10 @@ function LaGrasa({ r, poner, alSeguir }: PropsDePregunta) {
                   <Text style={s.medidaNombre}>{t(`entrada.cuestionario.grasa.${m}`)}</Text>
                   {m === 'cintura' && <Text style={s.medidaTexto}>{t('entrada.cuestionario.grasa.cinturaTexto')}</Text>}
                 </View>
-                <Pasito valor={r.cinta[m]} min={RANGOS_DEL_CUERPO[m][0]} max={RANGOS_DEL_CUERPO[m][1]} paso={0.5} nombre={t(`entrada.cuestionario.grasa.${m}`)} formato={(x) => `${numero(x, 1)} cm`} alCambiar={(x) => poner((y) => ({ ...y, cinta: { ...y.cinta, [m]: x } }))} />
+                <Pasito
+                  valor={Math.round(largo(r.cinta[m]) * 2) / 2} min={Math.ceil(largo(RANGOS_DEL_CUERPO[m][0]) * 2) / 2} max={Math.floor(largo(RANGOS_DEL_CUERPO[m][1]) * 2) / 2} paso={0.5} nombre={t(`entrada.cuestionario.grasa.${m}`)}
+                  formato={(x) => `${numero(x, 1)} ${pulgadas ? 'in' : 'cm'}`} alCambiar={(x) => poner((y) => ({ ...y, cinta: { ...y.cinta, [m]: pulgadas ? Math.round(x * CM_POR_PULGADA * 10) / 10 : x } }))}
+                />
               </View>
             ))}
           </View>
@@ -675,17 +690,10 @@ function Cuando({ r, poner, alSeguir }: PropsDePregunta) {
   const tipos = DEPORTES.filter((x) => e.tipos.includes(x));
   const varios = tipos.length > 1;
   const preguntas = preguntasDelEntreno(tipos);
-  const conPartidos = deporteDelPartido(r);
   const dicho = entrenoDicho(r);
   const dobles = diasConDosSesiones(dicho);
   const ponerDe = (tipo: Deporte, cambio: Partial<Contestado['entreno']['de'][Deporte]>) => poner((x) => ({ ...x, entreno: { ...x.entreno, de: { ...x.entreno.de, [tipo]: { ...x.entreno.de[tipo], ...cambio } } } }));
   const ponerEntreno = (cambio: Partial<Contestado['entreno']>) => poner((x) => ({ ...x, entreno: { ...x.entreno, ...cambio } }));
-  // El día del partido también es un día de ese deporte: se suma a la vista.
-  const conElPartido = (x: Contestado): Contestado => {
-    const s0 = x.entreno.de[conPartidos];
-    if (!x.entreno.partidos || s0.dias.includes(x.entreno.diaDePartido)) return x;
-    return { ...x, entreno: { ...x.entreno, de: { ...x.entreno.de, [conPartidos]: { ...s0, dias: [...s0.dias, x.entreno.diaDePartido] } } } };
-  };
   // Al abrir, el día del partido ya contestado también se ve entre los de ese deporte.
   useEffect(() => {
     poner(conElPartido);
@@ -823,16 +831,19 @@ function LaMeta({ r, poner, hoy, alSeguir }: PropsDePregunta) {
   const dir = r.objetivo === 'subir' ? 'subir' : 'bajar';
   const [min, max] = rangoDelPesoMeta(r.pesoKg, r.alturaCm, dir) ?? [r.pesoKg, r.pesoKg];
   const pesoMeta = Math.min(max, Math.max(min, r.pesoMeta ?? min));
+  const u = unidades(sistemaDe(useEstado()));
+  const elegir = pesoParaElegir(u, pesoMeta, min, max, 0.5);
   const sugerido = ritmoSugerido(r.objetivo, levantaPesas(r) ? r.experiencia : null);
   const elegida = r.fecha ? plazoElegido(r, hoy) : null;
-  // Antes de los 18, una fecha que pide más que el ritmo recomendado pasa a la que llega a ese ritmo.
+  // Una fecha que pide más de lo que deja la meta (antes de los 18, más que el recomendado; o lo marcado) pasa a la que llega a ese ritmo.
   useEffect(() => {
     if (elegida && r.fecha && elegida.fecha !== r.fecha) poner((x) => ({ ...x, fecha: elegida.fecha }));
   }, [elegida, r.fecha, poner]);
   const elegirFecha = () => {
     if (r.fecha) return;
     const x = plazoDeRitmo(r, hoy, r.ritmo);
-    poner((y) => ({ ...y, fecha: sumarDias(hoy, x ? Math.min(DIAS_MAXIMOS, diasEntre(hoy, x.fecha)) : 70) }));
+    const llegada = x && (llegadaDe(x) ?? x.fecha);
+    poner((y) => ({ ...y, fecha: sumarDias(hoy, llegada ? Math.min(DIAS_MAXIMOS, diasEntre(hoy, llegada)) : 70) }));
   };
   const COLOR_DE_VIABILIDAD = { viable: colores.salvia, exigente: colores.oroClaro, muyAgresivo: '#f0a58a' } as const;
   return (
@@ -840,12 +851,15 @@ function LaMeta({ r, poner, hoy, alSeguir }: PropsDePregunta) {
       <Desliza>
         <Titulo denso>{t('entrada.cuestionario.meta.titulo')}</Titulo>
         <View style={[s.numero, s.numeroSolo, { marginTop: 14 }]}>
-          <Text style={[s.numeroValor, { fontSize: 56, lineHeight: 62 }]} maxFontSizeMultiplier={TOPE}>{numero(pesoMeta, 1)}</Text>
-          <Text style={s.numeroUnidad}>kg</Text>
+          <Text style={[s.numeroValor, { fontSize: 56, lineHeight: 62 }]} maxFontSizeMultiplier={TOPE}>{u.unidad === 'lb' ? numero(elegir.valor) : numero(pesoMeta, 1)}</Text>
+          <Text style={s.numeroUnidad}>{u.unidad}</Text>
         </View>
-        <Deslizador style={{ marginTop: 14 }} valor={pesoMeta} min={min} max={max} paso={0.5} pasoDeAccesibilidad={0.5} alCambiar={(v) => poner((x) => ({ ...x, pesoMeta: v }))} etiqueta={t('entrada.cuestionario.meta.titulo')} textoDe={(v) => `${kg(v)} kg`} />
-        <Regla min={kg(min)} max={kg(max)} />
-        {dir === 'bajar' && <Chico izquierda>{t('entrada.cuestionario.meta.minimo', { kg: kg(min) })}</Chico>}
+        <Deslizador
+          style={{ marginTop: 14 }} valor={elegir.valor} min={elegir.min} max={elegir.max} paso={elegir.paso} pasoDeAccesibilidad={elegir.paso} alCambiar={(v) => poner((x) => ({ ...x, pesoMeta: elegir.aKg(v) }))}
+          etiqueta={t('entrada.cuestionario.meta.titulo')} textoDe={(v) => `${elegir.texto(v)} ${u.unidad}`}
+        />
+        <Regla min={elegir.texto(elegir.min)} max={elegir.texto(elegir.max)} />
+        {dir === 'bajar' && <Chico izquierda>{u.texto(t('entrada.cuestionario.meta.minimo', { kg: elegir.texto(elegir.min) }))}</Chico>}
         <Etiqueta>{t('entrada.cuestionario.meta.ritmo')}</Etiqueta>
         <View style={{ gap: 6 }}>
           {(['suave', 'recomendado', 'rapido', 'fecha'] as const).map((k, i) => {
@@ -853,7 +867,9 @@ function LaMeta({ r, poner, hoy, alSeguir }: PropsDePregunta) {
             const menor = dir === 'bajar' && k === 'rapido' && r.edad < MAYORIA_DE_EDAD;
             const plazo = esFecha ? null : plazoDeRitmo(r, hoy, k);
             const pulsada = esFecha ? !!r.fecha : !r.fecha && r.ritmo === k;
-            const fecha = esFecha ? (r.fecha ? fechaDelCamino(r.fecha, hoy) : '') : plazo && !menor ? fechaDelCamino(plazo.fecha, hoy) : '';
+            // Cuando se llega de verdad: con el piso de kcal, más tarde; si así no se llega en dos años, sin fecha.
+            const llegada = plazo && llegadaDe(plazo);
+            const fecha = esFecha ? (r.fecha ? fechaDelCamino(r.fecha, hoy) : '') : plazo && !menor ? (llegada ? fechaDelCamino(llegada, hoy) : '—') : '';
             return (
               <Animated.View key={k} entering={entra(reducido, 320 + i * 70)} layout={ACOMODA}>
                 <Pressable
@@ -872,7 +888,7 @@ function LaMeta({ r, poner, hoy, alSeguir }: PropsDePregunta) {
                       <Text style={s.ritmoTitulo}>{t(esFecha ? 'entrada.cuestionario.meta.elegirFecha' : `entrada.cuestionario.${k}`)}</Text>
                       {k === sugerido && k !== 'recomendado' && <Text style={s.sugerida}>{t('entrada.cuestionario.meta.paraTi')}</Text>}
                     </View>
-                    <Text style={s.ritmoDetalle}>{esFecha ? t('entrada.cuestionario.meta.elegirFechaTexto') : menor ? t('entrada.cuestionario.meta.desde18') : t('entrada.cuestionario.meta.porSemana', { pct: hasta2(pctDe(r, k)) })}</Text>
+                    <Text style={s.ritmoDetalle}>{esFecha ? t('entrada.cuestionario.meta.elegirFechaTexto') : menor ? t('entrada.cuestionario.meta.desde18') : t('entrada.cuestionario.meta.porSemana', { pct: hasta2(pctDe(r, k, hoy)) })}</Text>
                   </View>
                   <Text style={s.ritmoFecha}>{fecha}</Text>
                 </Pressable>
@@ -904,8 +920,9 @@ function LaMeta({ r, poner, hoy, alSeguir }: PropsDePregunta) {
  */
 function LoQueSigue({ r, poner, hoy, alSeguir }: PropsDePregunta) {
   const plazo = plazoElegido(r, hoy);
-  const llegada = plazo ? plazo.fecha : null;
+  const llegada = plazo && llegadaDe(plazo);
   const meta = r.pesoMeta ?? r.pesoKg;
+  const u = unidades(sistemaDe(useEstado()));
   // Si con lo contestado antes la elegida ya no se puede, queda mantener.
   const elegido = despuesDe(r, hoy);
   useEffect(() => {
@@ -925,13 +942,13 @@ function LoQueSigue({ r, poner, hoy, alSeguir }: PropsDePregunta) {
   return (
     <>
       <Desliza>
-        <Titulo denso>{t('entrada.cuestionario.despues.titulo', { kg: kg(meta) })}</Titulo>
+        <Titulo denso>{u.texto(t('entrada.cuestionario.despues.titulo', { kg: u.meta(meta) }))}</Titulo>
         <Texto denso>{t('entrada.cuestionario.despues.texto', { n: SEMANAS_DE_MANTENIMIENTO })}</Texto>
         <ElPlan
           denso
           nodos={[
-            [t('entrada.cuestionario.despues.hoy'), `${kg(r.pesoKg)} kg`],
-            [llegada ? fechaDelCamino(llegada, hoy) : '—', `${kg(meta)} kg`],
+            [t('entrada.cuestionario.despues.hoy'), `${u.corto(r.pesoKg)} ${u.unidad}`],
+            [llegada ? fechaDelCamino(llegada, hoy) : '—', `${u.meta(meta)} ${u.unidad}`],
             [llegada ? fechaDelCamino(sumarDias(llegada, SEMANAS_DE_MANTENIMIENTO * 7), hoy) : '—', t(`entrada.cuestionario.despues.elegido.${elegido}`)],
           ]}
         />
@@ -973,8 +990,7 @@ function ElPlan({ nodos, denso }: { nodos: [string, string][]; denso?: boolean }
 /** ¿Cómo quieres comer? El reparto (con su barra, para la meta de ahora), la proteína en gramos y lo que comes. */
 function Comer({ r, poner, hoy, alSeguir }: PropsDePregunta) {
   const kcal = metaDeAhora(r, hoy).metas.kcal;
-  const resp = respuestasPara(r, hoy);
-  const proteina = proteinaDelNivel(resp);
+  const proteina = proteinaDe(r, hoy, r.proteina);
   return (
     <>
       <Desliza>
@@ -1002,7 +1018,7 @@ function Comer({ r, poner, hoy, alSeguir }: PropsDePregunta) {
         <Etiqueta>{t('entrada.cuestionario.comer.proteina')}</Etiqueta>
         <View style={s.fila}>
           {NIVELES_DE_PROTEINA.map((n, k) => {
-            const g = macrosConProteina(kcal, r.pesoKg, proteinaDelNivel({ ...resp, proteina: n })).proteina;
+            const g = macrosConProteina(kcal, r.pesoKg, proteinaDe(r, hoy, n)).proteina;
             return <Elegible key={n} forma="segmento" titulo={t(`entrada.cuestionario.comer.niveles.${n}`)} detalle={t('entrada.cuestionario.comer.gramos', { n: numero(g) })} elegida={r.proteina === n} demora={k * 60} alTocar={() => poner((x) => ({ ...x, proteina: n }))} />;
           })}
         </View>
@@ -1117,13 +1133,21 @@ function TuDia({ r, poner, hoy, noches, alSeguir }: PropsDePregunta) {
 
 // ------------------------------------------------------------------ el resultado
 /** El plan en una línea: «Bajar a 71 kg para el 4 de enero; después, mantener». */
-function lineaDelPlan(r: Contestado, hoy: ClaveDia, objetivo: string, recomponer: boolean): string {
+function lineaDelPlan(r: Contestado, hoy: ClaveDia, objetivo: string, recomponer: boolean, u: U): string {
   if (recomponer) return t('entrada.cuestionario.plan.recomponer');
-  if (objetivo === 'mantener' || !cambiaPeso(r)) return t('entrada.cuestionario.plan.mantener', { kg: kg(r.pesoKg) });
+  if (objetivo === 'mantener' || !cambiaPeso(r)) return u.texto(t('entrada.cuestionario.plan.mantener', { kg: u.corto(r.pesoKg) }));
+  const dir = objetivo === 'subir' ? 'subir' : 'bajar';
+  // Con un trastorno de la alimentación no hay peso meta ni plan (D9): solo hacia dónde.
+  if (!conPlan(r)) return t(`entrada.cuestionario.${dir}`);
   const plazo = plazoElegido(r, hoy);
-  const p = plazo ? partesDe(plazo.fecha) : null;
-  const fecha = p && plazo ? t(diasEntre(hoy, plazo.fecha) > 300 ? 'entrada.cuestionario.fechaConAnio' : 'entrada.cuestionario.fecha', { num: p.dia, mes: lista('fecha.meses')[p.mes], anio: p.anio }) : '';
-  return t(`entrada.cuestionario.plan.${objetivo === 'subir' ? 'subir' : 'bajar'}`, { kg: kg(r.pesoMeta ?? r.pesoKg), fecha }) + t(`entrada.cuestionario.plan.luego.${despuesDe(r, hoy)}`);
+  const llegada = plazo && llegadaDe(plazo);
+  const kg = u.meta(r.pesoMeta ?? r.pesoKg);
+  const luego = t(`entrada.cuestionario.plan.luego.${despuesDe(r, hoy)}`);
+  // Si con el piso de kcal no se llega en dos años, sin fecha.
+  if (!llegada) return u.texto(t(`progreso.plan.etapas.${dir}`, { kg })) + luego;
+  const p = partesDe(llegada);
+  const fecha = t(diasEntre(hoy, llegada) > 300 ? 'entrada.cuestionario.fechaConAnio' : 'entrada.cuestionario.fecha', { num: p.dia, mes: lista('fecha.meses')[p.mes], anio: p.anio });
+  return u.texto(t(`entrada.cuestionario.plan.${dir}`, { kg, fecha })) + luego;
 }
 
 /**
@@ -1132,6 +1156,7 @@ function lineaDelPlan(r: Contestado, hoy: ClaveDia, objetivo: string, recomponer
  */
 export function Resultado({ r, hoy, alEmpezar, boton, kcalAntes }: { r: Contestado; hoy: ClaveDia; alEmpezar: () => void; boton: string; kcalAntes?: number | null }) {
   const reducido = useReducedMotion();
+  const u = unidades(sistemaDe(useEstado()));
   const meta = metaDeAhora(r, hoy);
   const m = meta.metas;
   const partes = partesRedondas(meta.gasto);
@@ -1154,7 +1179,7 @@ export function Resultado({ r, hoy, alEmpezar, boton, kcalAntes }: { r: Contesta
     <>
       <Desliza>
         <Titulo centrado>{t(kcalAntes !== undefined ? 'entrada.cuestionario.revisar.titulo' : 'entrada.cuestionario.resultadoTitulo')}</Titulo>
-        <Animated.Text entering={entra(reducido, 300)} style={s.planLinea}>{lineaDelPlan(r, hoy, meta.objetivo, meta.recomponer)}</Animated.Text>
+        <Animated.Text entering={entra(reducido, 300)} style={s.planLinea}>{lineaDelPlan(r, hoy, meta.objetivo, meta.recomponer, u)}</Animated.Text>
         <View style={s.lunaResultado}>
           <Luna tam={100} fraccion={llena ? 1 : 0.06} ms={reducido ? 0 : 1600} />
           <View style={StyleSheet.absoluteFill} pointerEvents="none">

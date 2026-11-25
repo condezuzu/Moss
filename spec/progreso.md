@@ -104,7 +104,7 @@ mantenían.
   | Todavía no se sabe | el medio margen pasa de 0,25 kg por semana o del plan |
   | Al revés | todo el margen va para el otro lado |
   | Sin cambio claro | el margen incluye el cero |
-  | Más despacio | todo el margen, debajo de la mitad del plan |
+  | Más despacio | todo el margen, debajo de lo que es ir al ritmo: el plan menos un cuarto, o menos 100 g por semana con un plan lento (desde el 25/11/2026; antes, la mitad del plan, y Inicio y Progreso decían cosas distintas) |
   | En camino | lo demás |
   | Estable o cambiando | manteniendo: cambiando solo si todo el margen queda afuera de ±150 g por semana |
   | Sin peso meta / faltan datos | sin meta elegida, o sin tres semanas con pesadas |
@@ -229,7 +229,11 @@ registrar no cuentan: no son ceros.
   Se muestra «con datos», «en curso» (todavía puede llegar) o «faltan datos».
 - **Bajando, la meta nunca pide más de 1 kg por semana ni 1.000 kcal de déficit por
   día**, tampoco con una fecha: la fecha que pide más que lo exigente se corre a la que
-  da ese borde (`pctDelPlan`).
+  da ese borde (`pctDelPlan`). Subiendo, el borde es el 0,5 % del peso por semana
+  (desde el 25/11/2026; antes, una fecha cercana podía pedir cualquier superávit).
+- **Con una fecha, la meta de cada día usa el ritmo que hace falta desde el peso de hoy**
+  (`pctDeHoy`), como el plan de Progreso, que lo vuelve a sacar cada día: si vas atrasado,
+  la meta lo nota sin esperar a que cambies la fecha (desde el 25/11/2026).
 - **Los hitos**, de a medio kilo: más fino sería precisión falsa.
 - **El piso al final** (`pisoAlFinal`): bajando, el gasto baja unas 22 kcal por día por
   cada kilo (Hall y Chow, 2011). Si hoy el ritmo entra arriba del piso pero al llegar no,

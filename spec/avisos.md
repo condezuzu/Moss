@@ -156,8 +156,8 @@ en `src/dominio/loQueFalta.ts`.
   2021; Kerksick 2017).
 - **El agua:** solo si la sueles anotar. No propone comida: un vaso ahora.
 - **Con «Mostrar números» apagado**, sin números: «Vas bajo de proteína hoy: …».
-- **Se apaga** en Perfil › Avisos («Si voy muy bajo en algo»). Sin elegir, anda si
-  hay algún otro aviso prendido, y no cuenta para el máximo.
+- **Se prende** en Perfil › Avisos («Si voy muy bajo en algo»). Desde el 25/11/2026 viene apagado de fábrica (antes
+  andaba si había algún otro aviso prendido, aunque Perfil lo mostraba entre los apagados). No cuenta para el máximo.
 - **Al tocarlo:** la hoja para anotar; el del agua, Inicio.
 
 ## Lo que conviene hacer (como Rise, para aprobar)

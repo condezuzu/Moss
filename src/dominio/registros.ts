@@ -394,6 +394,23 @@ export function deEstaHora(registros: Iterable<Registro>, comida: Comida, hoy: C
   return lista.slice(0, cuantos);
 }
 
+/**
+ * Un atajo (tu comida de siempre, lo de esta hora, una comida guardada) con lo que vale ahora lo tuyo o la receta:
+ * si lo corregiste después de anotarlo, se anota corregido, con la misma cantidad. Lo de la base y lo que ya no
+ * está, como se anotó.
+ */
+export function alDia(item: Item, propios: ReadonlyMap<string, AlimentoPropio>, recetas: ReadonlyMap<string, Receta>): Item {
+  if (!item.ref || !item.cantidad) return item;
+  const propio = item.fuente === 'propio' ? propios.get(item.ref) : undefined;
+  if (propio && !propio.borrado) return { ...item, nombre: propio.nombre, valores: valoresDeCantidad(propio.por100g, item.cantidad) };
+  const receta = item.fuente === 'receta' ? recetas.get(item.ref) : undefined;
+  if (!receta || receta.borrado) return item;
+  const { por100g, porcion } = valoresDeReceta(receta);
+  // Una receta sin pesos se anota por platos, sin gramos.
+  const valores = por100g ? valoresDeCantidad(por100g, item.cantidad) : 'veces' in item.cantidad ? escalar(porcion, item.cantidad.veces) : null;
+  return valores ? { ...item, nombre: receta.nombre, valores } : item;
+}
+
 /** El premio más grande: alcanza para subir uno o dos escalones del orden del buscador, no más. */
 const PREMIO_MAXIMO = 10;
 

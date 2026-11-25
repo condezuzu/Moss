@@ -507,7 +507,8 @@ export function nocheDeMoss(np: NochePropia, zona: Zona, despierto = 0): Noche |
 /**
  * Las noches de Salud con las de Moss donde Salud no tiene nada. La hora que confirmaste o corregiste
  * gana también a lo anotado a mano en Salud: es de esa noche y la diste en Moss (spec/aparatos.md). Lo
- * despierto de las de Moss es lo tuyo, si tuviste noches con un reloj o un anillo.
+ * despierto de las de Moss es lo tuyo, si tuviste noches con un reloj o un anillo. Una de Salud con la
+ * duración de confianza baja (Sleep Cycle, AutoSleep: apps del teléfono) no cuenta para nada: es como si faltara.
  */
 export function conNochesDeMoss(noches: Noche[], propias: NochePropia[], zona: Zona): Noche[] {
   const porClave = new Map(noches.map((n) => [n.clave, n]));
@@ -516,7 +517,7 @@ export function conNochesDeMoss(noches: Noche[], propias: NochePropia[], zona: Z
     const n = nocheDeMoss(np, zona, despierto);
     if (!n) continue;
     const deSalud = porClave.get(np.fecha);
-    if (deSalud && !(deSalud.aMano && n.moss!.origen !== 'estimada')) continue;
+    if (deSalud && deSalud.confianza.duracion !== 'baja' && !(deSalud.aMano && n.moss!.origen !== 'estimada')) continue;
     porClave.set(np.fecha, n);
   }
   return [...porClave.values()].sort((a, b) => (a.clave < b.clave ? -1 : 1));

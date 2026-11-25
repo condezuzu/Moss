@@ -21,6 +21,8 @@ export type TextosDeLaNoche = {
   horas: string;
   /** Con {h} y {m}. */
   duracion: string;
+  /** La duración en horas justas: «8 h». Con {h}. */
+  soloHoras: string;
   /** Lo grande del chico: «7 h 36». Con {h} y {m}. */
   horasCorto: string;
   siLargo: string;
@@ -115,9 +117,10 @@ export function lineaDeLaNoche(e: ParaLaNoche, d: {
     pregunta: false, dormirse: 0, despertar: 0, confirmada: 0, hecha: false, url: d.url,
     aDormir: false, cifra: '', falta: '', siLargo: tx.siLargo, fondo: d.fondo ?? '',
   });
+  const enHoras = (min: number) => (min % 60 ? conVariables(tx.duracion, { h: Math.floor(min / 60), m: min % 60 }) : conVariables(tx.soloHoras, { h: min / 60 }));
   const conHoras = (p: PropsNoche, dormirse: number, despertar: number): PropsNoche => {
     const min = Math.max(0, Math.round(despertar - dormirse));
-    const duracion = conVariables(tx.duracion, { h: Math.floor(min / 60), m: String(min % 60).padStart(2, '0') });
+    const duracion = enHoras(min);
     const cifra = conVariables(tx.horasCorto, { h: Math.floor(min / 60), m: String(min % 60).padStart(2, '0') });
     return { ...p, horas: conVariables(tx.horas, { desde: reloj(dormirse), hasta: reloj(despertar) }), dormirse: Math.round(dormirse), despertar: Math.round(despertar), cifra, nota: duracion, notaConfirmada: `${tx.confirmada} · ${duracion}` };
   };
@@ -132,14 +135,15 @@ export function lineaDeLaNoche(e: ParaLaNoche, d: {
   const actual = nocheDeAhora(d.ahora);
   let ahora: PropsNoche;
   const n = noches.find((x) => x.clave === actual);
-  if (n && !n.moss) ahora = conHoras(base(actual), n.dormirse, n.despertar);
+  const deSalud = !!n && !n.moss;
+  if (deSalud) ahora = conHoras(base(actual), n.dormirse, n.despertar);
   else if (n?.moss) ahora = n.moss.origen === 'estimada' ? propuesta(actual, n.dormirse, n.despertar, n.moss.confianza) : { ...conHoras(base(actual), n.dormirse, n.despertar), hecha: true };
   else {
     const esperada = aparato ? null : nocheEsperada(noches, actual);
     ahora = esperada ? propuesta(actual, esperada.dormirse, esperada.despertar, 'media') : base(actual);
   }
-  // Un «Sí» que todavía espera la estimación sigue a la vista, con las horas que se confirmaron.
-  if (d.esperando && d.esperando.clave === actual && !ahora.hecha) {
+  // Un «Sí» que todavía espera la estimación sigue a la vista, con las horas que se confirmaron. Lo medido no lo tapa.
+  if (d.esperando && d.esperando.clave === actual && !deSalud && !ahora.hecha) {
     ahora = { ...conHoras(base(actual), d.esperando.dormirse, d.esperando.despertar), pregunta: true, confirmada: d.esperando.en };
   }
 
@@ -160,7 +164,7 @@ export function lineaDeLaNoche(e: ParaLaNoche, d: {
     const paraDormir = (falta: string): PropsNoche => ({ ...base(manana), titulo: tx.aDormir, horas: hora, cifra: hora, falta, nota, notaConfirmada: nota, aDormir: true });
     const cuanto = (min: number) => {
       const r = Math.round(min);
-      return conVariables(tx.enTiempo, { tiempo: r >= 60 ? conVariables(tx.duracion, { h: Math.floor(r / 60), m: String(r % 60).padStart(2, '0') }) : conVariables(tx.minutos, { m: r }) });
+      return conVariables(tx.enTiempo, { tiempo: r >= 60 ? enHoras(r) : conVariables(tx.minutos, { m: r }) });
     };
     const desde = Math.max(A_DORMIR_DESDE, acostarse - A_DORMIR_ANTES);
     for (let m = desde; m < acostarse; m += 30) tarde.push({ date: fecha(m), props: paraDormir(cuanto(acostarse - m)) });
@@ -197,10 +201,12 @@ export function confirmacionesDeLaLinea(linea: { props: unknown }[]): Confirmaci
  * - `aplicar`: Moss ya estimó esa noche y las dos horas coinciden (COINCIDE minutos de cada lado):
  *   queda confirmada la estimada, como el «Sí» de la mañana en Sueño;
  * - `esperar`: es la noche de hoy y Moss todavía no la estimó;
- * - `olvidar`: no coincide (Moss pregunta como siempre), ya la contestaste en Moss o es vieja.
+ * - `olvidar`: no coincide (Moss pregunta como siempre), ya la contestaste en Moss, es vieja o Salud
+ *   ya tiene esa noche (`salud`): lo medido gana.
  */
-export function decidir(c: ConfirmacionDelWidget, propia: NochePropia | undefined, hoy: ClaveDia, zona: Zona): 'aplicar' | 'esperar' | 'olvidar' {
+export function decidir(c: ConfirmacionDelWidget, propia: NochePropia | undefined, hoy: ClaveDia, zona: Zona, salud: readonly Pick<Noche, 'clave'>[] = []): 'aplicar' | 'esperar' | 'olvidar' {
   if (c.clave > hoy || c.clave < sumarDias(hoy, -1)) return 'olvidar';
+  if (salud.some((n) => n.clave === c.clave)) return 'olvidar';
   const h = propia && !propia.borrado ? propia.hora : undefined;
   if (h && h.origen !== 'estimada') return 'olvidar';
   const estimada = propia && h ? nocheDeMoss(propia, zona) : null;

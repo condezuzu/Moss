@@ -3,9 +3,9 @@ import { describe, expect, it } from '@jest/globals';
 import type { Comida } from './comidas';
 import { minutosEnElDia, sumarDias } from './fechas';
 import {
-  aguaDelDia, borrado, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, deSiempre, escalar, gramosDe, itemDeAlimento, itemDeReceta, itemDeRecetaEnGramos, itemRapido,
+  aguaDelDia, alDia, borrado, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, deSiempre, escalar, gramosDe, itemDeAlimento, itemDeReceta, itemDeRecetaEnGramos, itemRapido,
   deEstaHora, itemsParaRegistrar, premios, recientes, restaurado, sueles, sumarValores, totalDelDia, ultimaCantidad, valoresDeReceta,
-  type Item, type Receta, type Registro, type Valores,
+  type AlimentoPropio, type Item, type Receta, type Registro, type Valores,
 } from './registros';
 
 const HOY = '2026-10-21';
@@ -296,6 +296,28 @@ describe('los atajos', () => {
     expect(deHoy[1].cantidad).toEqual({ porcion: '1 mediana', gramosPorcion: 118, veces: 2 });
     expect(deEstaHora(lista, 'desayuno', HOY, 1).map((i) => i.nombre)).toEqual(['Café con leche']);
     expect(deEstaHora(lista, 'cena', HOY)).toEqual([]);
+  });
+
+  it('un atajo anota lo que vale ahora lo tuyo o la receta, con la misma cantidad: corregido el alimento, el atajo también', () => {
+    // «Yogur X» creado con 1.200 kcal por error, anotado dos veces y corregido a 120.
+    const yogur: AlimentoPropio = {
+      id: 'y', nombre: 'Yogur X', marca: null, codigo: null, por100g: { kcal: 1200, proteina: 4, carbohidratos: 5, grasas: 3 }, porciones: [{ nombre: '1 pote', gramos: 100 }], actualizado: HOY,
+    };
+    const anotado = itemDeAlimento('propio', 'y', 'Yogur X', yogur.por100g, { porcion: '1 pote', gramosPorcion: 100, veces: 1.5 });
+    const lista = [reg(anotado, dias(1), 'desayuno', 8), reg(banana(), dias(1), 'desayuno', 8.1), reg(anotado, dias(2), 'desayuno', 8), reg(banana(), dias(2), 'desayuno', 8.1)];
+    const propios = new Map([['y', { ...yogur, nombre: 'Yogur natural X', por100g: { ...yogur.por100g, kcal: 120 } }]]);
+    const siempre = deSiempre(lista, 'desayuno', HOY)!.map((i) => alDia(i, propios, new Map()));
+    expect(siempre[0]).toMatchObject({ nombre: 'Yogur natural X', cantidad: anotado.cantidad, valores: { kcal: 180, proteina: 6 } });
+    // Lo de la base, como estaba.
+    expect(siempre[1]).toEqual(banana());
+    // La receta, con los mismos gramos y lo que vale ahora (sin la banana que tenía de más).
+    const tarta: Receta = { id: 't', tipo: 'receta', nombre: 'Tarta', porciones: 2, pesoFinal: null, actualizado: HOY, items: [arroz(300), banana()] };
+    const plato = itemDeReceta(tarta, 1, '1 plato');
+    const corregida = alDia(plato, new Map(), new Map([['t', { ...tarta, items: [arroz(300)] }]]));
+    expect(corregida.cantidad).toEqual(plato.cantidad);
+    expect(corregida.valores.kcal).toBeCloseTo(1.3 * (300 + 118) / 2, 6);
+    // Lo borrado, como estaba.
+    expect(alDia(anotado, new Map([['y', { ...yogur, por100g: { ...yogur.por100g, kcal: 120 }, borrado: true as const }]]), new Map())).toEqual(anotado);
   });
 
   it('el premio del buscador: lo usado sube, lo de esta semana un poco más, y tiene tope', () => {

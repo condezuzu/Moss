@@ -316,7 +316,8 @@ Pan de centeno | Rye bread | sr:Bread, rye | 1 rebanada / 1 slice=32 |
 Pan de avena | Oat bread | fndds:Bread, oatmeal | 1 rebanada / 1 slice=28 |
 Pan de pasas | Raisin bread | fndds:Bread, raisin | 1 rebanada / 1 slice=28 | pan con pasas
 Pan sin gluten | Gluten-free bread | sr:Bread, gluten-free, white, made with rice flour, corn starch, and/or tapioca | 1 rebanada / 1 slice=35 | pan sin TACC (AR UY) · pan para celíacos
-Pan francés | French bread | fndds:Bread, French or Vienna | 1 rebanada / 1 slice=32 | baguette · pan de barra* (ES) · flauta (AR UY) · bolillo* (MX) · marraqueta* (CL)
+// «Pan» a secas, en el Río de la Plata y Paraguay, es este: sin ese alias, era el pan dulce (el panettone).
+Pan francés | French bread | fndds:Bread, French or Vienna | 1 rebanada / 1 slice=32 | baguette · pan de barra* (ES) · flauta (AR UY) · pan (AR UY PY) · bolillo* (MX) · marraqueta* (CL)
 Pan de masa madre | Sourdough bread | fndds:Bread, sour dough | 1 rebanada / 1 slice=31 · 1 rebanada gruesa / 1 thick slice=43 | masa madre · sourdough
 Panecillo | Dinner roll | sr:Rolls, dinner, plain, commercially prepared (includes brown-and-serve) | 1 unidad / 1 roll=28 · 1 grande / 1 large roll=43 | pancito* (AR UY PY CL) · bollo* (ES) · pan de mesa
 Pan tostado | Toast | fndds:Bread, white, toasted | 1 rebanada / 1 slice=25 | tostada* (AR UY ES)

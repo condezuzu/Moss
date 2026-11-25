@@ -11,7 +11,7 @@ import { leerCompartido, porPorcion } from '@/dominio/compartir';
 import { Boton } from '@/secciones/comida/comunes';
 import { cantidadDeTexto, numero, sistemaDe, useEstado } from '@/secciones/comida/datos';
 import { avisar } from '@/secciones/comida/registro';
-import { t } from '@/textos';
+import { plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 
 export default function Compartido() {
@@ -42,7 +42,7 @@ export default function Compartido() {
             <Text style={st.nombre}>{c.tipo === 'receta' ? c.receta.nombre : c.propio.marca ? `${c.propio.nombre} · ${c.propio.marca}` : c.propio.nombre}</Text>
             <Text style={st.texto}>
               {c.tipo === 'receta'
-                ? `${c.receta.tipo === 'receta' ? `${t('compartir.rinde', { n: numero(c.receta.porciones) })}. ` : ''}${t('compartir.porPorcion', macros)}`
+                ? `${c.receta.tipo === 'receta' ? `${plural('compartir.rinde', c.receta.porciones, { porciones: numero(c.receta.porciones) })}. ` : ''}${t('compartir.porPorcion', macros)}`
                 : t('compartir.por100', macros)}
             </Text>
             {c.tipo === 'receta' && (

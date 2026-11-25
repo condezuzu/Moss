@@ -28,7 +28,7 @@ function mismosPesos(a: readonly Peso[], b: readonly Peso[]): boolean {
 
 function personaDe(de: ParaLaPersona): Persona {
   const u = ultimaPersona;
-  if (u && u.de.hoy === de.hoy && u.de.perfil === de.perfil && u.de.metas === de.metas && u.de.registros === de.registros && u.de.medidas === de.medidas && u.de.plazo === de.plazo && u.de.respuestas === de.respuestas && mismosPesos(u.de.pesos, de.pesos)) {
+  if (u && u.de.hoy === de.hoy && u.de.perfil === de.perfil && u.de.metas === de.metas && u.de.registros === de.registros && u.de.medidas === de.medidas && u.de.plazo === de.plazo && u.de.respuestas === de.respuestas && u.de.inicioDelObjetivo === de.inicioDelObjetivo && mismosPesos(u.de.pesos, de.pesos)) {
     return u.persona;
   }
   const persona = calcularPersona(de);
@@ -47,10 +47,10 @@ function suenoDeHoy(...de: ParaElSueno): Sueno {
 /** La persona de hoy: se rehace cuando cambia lo guardado. */
 export function usePersona(): Persona {
   const e = useEstado();
-  const { hoy, perfil, metas, registros, medidas, plazo, respuestas } = e;
+  const { hoy, perfil, metas, registros, medidas, plazo, respuestas, inicioDelObjetivo } = e;
   // Con Ascent vinculada, el peso de las dos apps (spec/ascent.md, función 4).
   const pesos = usePesoUnico(e.pesos);
-  return useMemo(() => personaDe({ hoy, perfil, pesos, metas, registros, medidas, plazo, respuestas }), [hoy, perfil, pesos, metas, registros, medidas, plazo, respuestas]);
+  return useMemo(() => personaDe({ hoy, perfil, pesos, metas, registros, medidas, plazo, respuestas, inicioDelObjetivo }), [hoy, perfil, pesos, metas, registros, medidas, plazo, respuestas, inicioDelObjetivo]);
 }
 
 export function useSueno(): Sueno {

@@ -19,7 +19,7 @@ import { elAlmacen } from '@/almacen';
 import { textoDeBusqueda } from '@/almacen/buzon';
 import { buzon } from '@/almacen/buzonDeMoss';
 import { baseDeAlimentos } from '@/comida/base';
-import { normalizar, type Resultado } from '@/comida/buscar';
+import { empiezaCon, normalizar, type Resultado } from '@/comida/buscar';
 import { propuestaDe } from '@/comida/comunidad';
 import { formasDelCodigo, type Detalle } from '@/comida/detalle';
 import { leerEtiqueta, type Leidos, type Nutriente } from '@/comida/etiqueta';
@@ -28,12 +28,12 @@ import { buscarEnOff, type Producto } from '@/comida/off';
 import { ACEITE_POR_100G } from '@/dominio/cantidades';
 import { COMIDAS, type Comida } from '@/dominio/comidas';
 import { minutosEnElDia, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
-import { sinAnotar } from '@/dominio/fotos';
+import { sinAnotar, type FotoDeComida } from '@/dominio/fotos';
 import { edadDe, type Macros } from '@/dominio/metas';
 import type { ParaQuien } from '@/dominio/micronutrientes';
 import { SITIO } from '@/lib/sitio';
 import {
-  claveDeAlimento, delDia, deSiempre, escalar, gramosDe, itemDeAlimento, itemsParaRegistrar, premios, recientes, sueles, sumarValores, ultimaCantidad,
+  alDia, claveDeAlimento, delDia, deSiempre, escalar, gramosDe, itemDeAlimento, itemsParaRegistrar, premios, recientes, sueles, sumarValores, ultimaCantidad,
   valoresDeCantidad, valoresDeReceta, vigentes, type AlimentoPropio, type Cantidad, type Item, type Receta, type Registro, type Valores,
 } from '@/dominio/registros';
 import { idioma, plural, t } from '@/textos';
@@ -103,12 +103,22 @@ function ventanaParaCorregir(e: ReturnType<ReturnType<typeof elAlmacen>['estado'
   const propio = r.fuente === 'propio' && r.ref ? e.propios.get(r.ref) : undefined;
   const receta = r.fuente === 'receta' && r.ref ? e.recetas.get(r.ref) : undefined;
   const base = propio ? alimentoDePropio(propio) : receta ? alimentoDeReceta(receta) : null;
+  // Los valores son los de cuando se anotó: la porción anotada va con sus gramos de entonces, no con los de la receta
+  // o lo tuyo cambiados después, que se llaman igual («1 plato» de una receta que ahora rinde otra cosa).
+  const anotada = r.cantidad && 'porcion' in r.cantidad ? { nombre: r.cantidad.porcion, gramos: r.cantidad.gramosPorcion } : null;
+  const porciones = anotada ? [anotada, ...(base?.porciones ?? []).filter((p) => p.nombre !== anotada.nombre)] : (base?.porciones ?? []);
   return {
-    alimento: { fuente: r.fuente, ref: r.ref ?? '', nombre: r.nombre, por100g, porciones: base?.porciones ?? [], origen: base?.origen ?? t('comida.fuente.usda') },
+    alimento: { fuente: r.fuente, ref: r.ref ?? '', nombre: r.nombre, por100g, porciones, origen: base?.origen ?? t('comida.fuente.usda') },
     inicial: r.cantidad ?? undefined,
     estimado: !!r.estimado,
     modo: { tipo: 'registro', id: r.id },
   };
+}
+
+/** Lo anotado con una foto va en su día y a la hora en que se sacó. */
+function momentoDeLaFoto(f: Pick<FotoDeComida, 'dia' | 'minutos'>): string {
+  const p = partesDe(f.dia);
+  return new Date(p.anio, p.mes, p.dia, 0, f.minutos).toISOString();
 }
 
 let veces = 0;
@@ -291,9 +301,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
   /** Lo dicho, anotado con la foto: en su día y a la hora en que se sacó. Deshacer la devuelve a sin anotar. */
   const anotarConFoto = (items: Item[], comidaDicha: Comida) => {
     if (!fotoEnCurso) return;
-    const p = partesDe(fotoEnCurso.dia);
-    const momento = new Date(p.anio, p.mes, p.dia, 0, fotoEnCurso.minutos).toISOString();
-    const nuevos = a.registrar(items, { comida: comidaDicha, dia: fotoEnCurso.dia, momento });
+    const nuevos = a.registrar(items, { comida: comidaDicha, dia: fotoEnCurso.dia, momento: momentoDeLaFoto(fotoEnCurso) });
     anotarFoto(fotoEnCurso.id, comidaDicha, nuevos.map((r) => r.id));
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     const id = fotoEnCurso.id;
@@ -535,12 +543,19 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
     setRecienSumado({ texto: que, vez: otraVez() });
   };
   const agregar = () => {
-    const nuevos = a.agregarCanasta({ comida, dia, momento: momentoDe(e, dia, comida) });
+    // Lo buscado desde «¿Qué es?» con «Buscarlo» se anota con la foto: en su día, a su hora, y la foto queda anotada
+    // (si no, quedaba sin anotar y se podía anotar otra vez).
+    const conFoto = fotoEnCurso && sinAnotar(fotoEnCurso) ? fotoEnCurso : null;
+    const nuevos = a.agregarCanasta(conFoto ? { comida, dia: conFoto.dia, momento: momentoDeLaFoto(conFoto) } : { comida, dia, momento: momentoDe(e, dia, comida) });
     if (!nuevos.length) return;
+    if (conFoto) anotarFoto(conFoto.id, comida, nuevos.map((r) => r.id));
     copia.current.clear();
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     const que = nuevos.length === 1 ? [nuevos[0].nombre, cantidadDeTexto(nuevos[0].cantidad, sistema)].filter(Boolean).join(' · ') : `${t(`comida.comidas.${comida}`)} · ${resumenDeCanasta(nuevos, numeros)}`;
-    avisar(que, () => nuevos.forEach((r) => a.borrarRegistro(r.id)));
+    avisar(que, () => {
+      nuevos.forEach((r) => a.borrarRegistro(r.id));
+      if (conFoto) desanotarFoto(conFoto.id);
+    });
     cerrar();
   };
 
@@ -692,9 +707,12 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
   }, [favoritosSinAnotar, deLaBase]);
   // Qué comer antes o después de entrenar, si esta comida es la que toca hoy.
   const lineaDeEntreno = dia === e.hoy && !soloEditar ? lineasDeHoy(e).get(comida) : undefined;
-  // Tu comida de siempre, entera de un toque: la misma combinación dos veces en dos semanas. Armando otra
-  // cosa, se suma solo lo que todavía no está.
-  const siempre = useMemo(() => deSiempre(e.registros.values(), comida, dia), [e.registros, comida, dia]);
+  // Tu comida de siempre, entera de un toque: la misma combinación dos veces en dos semanas, con lo que vale ahora
+  // lo tuyo o la receta si lo corregiste (alDia). Armando otra cosa, se suma solo lo que todavía no está.
+  const siempre = useMemo(
+    () => deSiempre(e.registros.values(), comida, dia)?.map((i) => alDia(i, e.propios, e.recetas)) ?? null,
+    [e.registros, e.propios, e.recetas, comida, dia],
+  );
   const siempreQueFalta = useMemo(() => (siempre ? sinLoQueYaEsta(siempre, canasta) : []), [siempre, canasta]);
   const secciones = useMemo(() => {
     const vistos = new Set<string>();
@@ -738,9 +756,10 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
   const propiosHallados = useMemo(() => {
     if (!q) return [];
     const palabras = normalizar(q).split(' ').filter(Boolean);
+    // Como el buscador: cada palabra, también sin plural («yogures» encuentra «Yogur X»).
     const coincide = (nombre: string) => {
       const n = normalizar(nombre).split(' ');
-      return palabras.every((p) => n.some((w) => w.startsWith(p)));
+      return palabras.every((p) => n.some((w) => empiezaCon(w, p)));
     };
     return [
       ...vigentes(e.propios.values()).filter((x) => coincide(`${x.nombre} ${x.marca ?? ''}`)).map((x) => ({ tipo: 'propio' as const, x })),
@@ -1158,7 +1177,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
                 // De una receta, un plato; de un alimento tuyo, su porción. Se cierra el panel: la bandeja dice «Sumado».
                 if (g.tipo === 'propio') sumar(itemDeAlimento('propio', g.x.id, g.x.nombre, g.x.por100g, porcionDePropio(g.x)));
                 else if (g.tipo === 'receta') sumar(itemsParaRegistrar(g.x, t('comida.receta.plato'))[0]);
-                else sumarVarias(itemsParaRegistrar(g.x, t('comida.receta.plato')), g.x.nombre);
+                else sumarVarias(itemsParaRegistrar(g.x, t('comida.receta.plato')).map((i) => alDia(i, e.propios, e.recetas)), g.x.nombre);
                 setPanel(null);
               }}
               alGuardar={(g) => {
@@ -1237,7 +1256,8 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
                 setBorrador({
                   ...antes,
                   nombre: antes.nombre || r.nombre,
-                  porciones: antes.porciones || String(r.porciones ?? 1),
+                  // Lo que rinde la receta pegada manda: «Receta nueva» nace con 4, que no es algo que se escribió.
+                  porciones: r.porciones ? String(r.porciones) : antes.porciones || '1',
                   pesoFinal: antes.pesoFinal || (r.pesoFinal ? String(Math.round(r.pesoFinal)) : ''),
                   items: [...antes.items, ...r.items],
                 });

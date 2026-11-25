@@ -15,7 +15,7 @@ import { avisoDeFabrica } from '@/dominio/avisos';
 import { pedirPermisoDeAvisos } from '@/recordatorios/programar';
 import type { DiaSemana } from '@/dominio/fechas';
 import type { Fuente } from '@/dominio/habitos';
-import { t } from '@/textos';
+import { plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Boton, Icono } from '../comida/comunes';
 import { HojaModal } from '../HojaModal';
@@ -100,7 +100,7 @@ export function Sugeridos({ alCerrar }: { alCerrar: () => void }) {
       cerrarAfuera={false}
       pie={(
         <>
-          <Text style={st.cuantos}>{t('habitos.sugeridos.cuantos', { n: elegidos.length })}</Text>
+          <Text style={st.cuantos}>{plural('habitos.sugeridos.elegidos', elegidos.length)}</Text>
           <Boton tipo="principal" texto={t('habitos.sugeridos.listo')} alTocar={armar} desactivado={!listos} />
         </>
       )}

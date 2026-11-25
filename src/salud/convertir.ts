@@ -97,6 +97,8 @@ export type LoDeSalud = {
   dia: ClaveDia;
   /** Lo de hoy: pasos, ml de agua, minutos de atención plena y minutos dormidos anoche. */
   valores: Partial<Record<'pasos' | 'agua' | 'mindfulness' | 'sueno', number>>;
+  /** Lo mismo del día anterior, entero: lo que llegó a la meta con Moss cerrada enciende su estrella al abrirla. */
+  ayer?: { dia: ClaveDia; valores: LoDeSalud['valores'] };
   noches: Noche[];
   soloEnCama: Map<ClaveDia, { minutos: number; fuente: Fuente }>;
   lecturas: { frecuencia: Medida[]; variabilidad: Medida[]; respiracion: Medida[]; reposo: Map<ClaveDia, number> };

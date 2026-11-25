@@ -1,6 +1,6 @@
 // Inicio el primer día, recién instalada y sin nada anotado (la maqueta del 29/10/2026; galeria/src/inicio.js): cada
 // bloque dice qué hacer y con qué se va a llenar, en vez de ceros y rayas. La meta de hoy con la luna nueva, el camino
-// a tu peso meta a un ritmo viable y el cielo de hoy con sus estrellas esperando.
+// a tu peso meta con la fecha de tu plan y el cielo de hoy con sus estrellas esperando.
 
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -8,14 +8,14 @@ import Animated, { Easing, FadeIn, ReduceMotion, useAnimatedStyle, useReducedMot
 
 import { useCieloDeHoy } from '@/cielo/dia';
 import { pesoCorporalEn } from '@/dominio/cantidades';
-import { edadDe } from '@/dominio/metas';
-import { BORDES, plazoConRitmo } from '@/dominio/progreso';
+import { edadDe, objetivoPermitido } from '@/dominio/metas';
 import { t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Boton, COLOR_DE_MACRO, MACROS } from '../comida/comunes';
 import { cifraDePeso, fechaDiaMes, metaDelDia, numero, sistemaDe, useEstado } from '../comida/datos';
 import { abrirRegistro } from '../comida/registro';
 import { usePersona } from '../ganchos';
+import { plazoDelPlan } from '../persona';
 import { MiniCielo } from '../graficos/Graficos';
 import { Camino } from '../kcal/Figuras';
 import { degradado } from '../sueno/comunes';
@@ -93,12 +93,13 @@ function TuCamino({ ancho, alIr }: { ancho: number; alIr: Ir }) {
   if (!e.perfil || desde === null) return null;
   const kg = (x: number) => cifraDePeso(x, sistema).cifra;
   const unidad = pesoCorporalEn(1, sistema).unidad;
-  const conMeta = metaKg !== null && e.perfil.objetivo !== 'mantener';
+  // Sin déficit, bajar queda en mantener (objetivoPermitido): sin camino.
+  const conMeta = metaKg !== null && objetivoPermitido(e.perfil) !== 'mantener';
   const plazo = conMeta
-    ? plazoConRitmo({
+    ? plazoDelPlan(e, {
       hoy: e.hoy, pesoKg: desde, pesoMeta: metaKg, sexo: e.perfil.sexo, edad: edadDe(e.perfil, e.hoy), gasto: p.gasto ?? metaDelDia(e, e.hoy)?.kcal ?? 2000,
       entrenaFuerza: e.entreno ? e.entreno.tipo !== 'resistencia' : null,
-    }, BORDES[e.perfil.objetivo === 'subir' ? 'subir' : 'bajar'][0])
+    })
     : null;
   return (
     <View style={bloques.bloque}>

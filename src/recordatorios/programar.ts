@@ -12,7 +12,7 @@ import { Platform } from 'react-native';
 import { horasDeComerDe, noSueleDe, reglasDeCuidados, type Estado } from '@/almacen/almacen';
 import { comidasHabituales, sesionesDelDia } from '@/dominio/alrededorDelEntreno';
 import {
-  avisosDeLaSemana, cuandoSuena, esDeEntrenar, horasDeSueno, horaDeReloj, textoDelAviso, tituloDelAviso, type Aviso, type Avisos, type Evento, type Notificacion, type Sueno as SuenoDeAvisos,
+  avisosDeLaSemana, cuandoSuena, esDeEntrenar, horasDeSueno, horaDeReloj, textoDelAviso, tituloDelAviso, yLasDeDespues, type Aviso, type Avisos, type Evento, type Notificacion, type Sueno as SuenoDeAvisos,
 } from '@/dominio/avisos';
 import type { Comida } from '@/dominio/comidas';
 import { apagaLoQueConviene, apagaLoQueFalta, metaDeAgua, type Reglas } from '@/dominio/cuidados';
@@ -108,6 +108,10 @@ export function suenoParaAvisos(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'no
   };
 }
 
+const despertarDe = (e: Pick<Estado, 'despertares'>): Pick<SuenoDeAvisos, 'despertarReal' | 'despertarSabido'> => ({
+  despertarReal: (dia) => e.despertares[dia]?.despertar ?? null, despertarSabido: (dia) => e.despertares[dia]?.sabido ?? null,
+});
+
 /**
  * Lo del sueño con el día que sigue tu despertar: el despertar real de cada día y cuándo se supo (los que guardó
  * buscarDespertar, en src/salud/despertar.ts), o null mientras no se sabe. Así lo de la mañana espera y la noche se
@@ -115,8 +119,17 @@ export function suenoParaAvisos(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'no
  */
 export function suenoDelDia(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'noches' | 'latencia' | 'necesidad' | 'despertares'>): SuenoDeAvisos | null {
   const s = suenoParaAvisos(e);
-  return s && { ...s, despertarReal: (dia) => e.despertares[dia]?.despertar ?? null, despertarSabido: (dia) => e.despertares[dia]?.sabido ?? null };
+  return s && { ...s, ...despertarDe(e) };
 }
+
+/**
+ * Sin noches de verdad, solo el despertar de cada día: lo de la mañana espera igual a que te despiertes, también para
+ * quien recién empieza (si no, pesarte sonaba a las 7:45 aunque te despertaras a las 10). Sin lo de siempre no hay
+ * noche: ni acostarte, ni melatonina, ni deuda.
+ */
+const soloElDespertar = (e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'noches' | 'necesidad' | 'despertares'>): SuenoDeAvisos => ({
+  habitual: () => null, necesidad: suenoDe(e.hoy, e.perfil, e.salud, e.noches, e.necesidad).necesidad, deuda: null, ...despertarDe(e),
+});
 
 /** La deuda de ayer, sin la noche de hoy: para decir al despertarte si bajó o subió. */
 function deudaDeAyer(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'noches' | 'necesidad'>): number | null {
@@ -184,8 +197,11 @@ const textoDe = (n: Notificacion, e: Pick<Estado, 'habitos' | 'registros'>): str
 const tituloDe = (n: Notificacion): string =>
   tituloDelAviso(n, { t: t as (clave: string, valores?: Record<string, string | number>) => string, habito: () => '', plan: () => '', duracion });
 
-/** Si hay que avisar de lo que falta: lo que se eligió o, sin elegir, si hay otro aviso prendido (y por lo tanto permiso). */
-export const conLoQueFalta = (ajustes: Avisos, alguno: boolean) => ajustes.falta?.encendido ?? alguno;
+/**
+ * Si hay que avisar de lo que falta: lo que se eligió y, sin elegir, no. Es de «Más avisos», apagados de fábrica; antes
+ * se prendía con cualquier otro aviso, y con lo de fábrica (25/11/2026) siempre hay alguno.
+ */
+export const conLoQueFalta = (ajustes: Avisos) => ajustes.falta?.encendido ?? false;
 
 /** Los interruptores sueltos: lo que conviene y lo del día que sigue tu despertar. */
 const SUELTOS = [...QUE_CONVIENE, 'deuda', 'melatonina', 'revoluciones', 'descarga', 'gafas'] as const;
@@ -240,7 +256,8 @@ const CATEGORIA_DORMIR = 'dormir';
 export const ME_VOY_A_DORMIR = 'meVoyADormir';
 /**
  * «¿Desayunas hoy?» trae sus dos respuestas. «Sí» abre Moss en el desayuno, para anotarlo; «Voy directo al almuerzo»
- * se guarda sin abrirla. Si iOS no le pasa la respuesta a Moss, anotar el almuerzo primero dice lo mismo.
+ * también abre Moss, y no abre nada adentro: con Moss cerrada, un botón que no la abre no le llega a Moss
+ * (expo-notifications) y la respuesta se perdía. Si igual no llega, anotar el almuerzo primero dice lo mismo.
  */
 const CATEGORIA_DESAYUNO = 'desayuno';
 const accionDelDesayuno = (r: RespuestaDelDesayuno) => `desayuno:${r}`;
@@ -251,7 +268,7 @@ const prepararCategorias = () =>
       { identifier: ME_VOY_A_DORMIR, buttonTitle: t('recordatorios.meVoyADormir'), options: { opensAppToForeground: true } },
     ]),
     Notifications.setNotificationCategoryAsync(CATEGORIA_DESAYUNO, RESPUESTAS_DEL_DESAYUNO.map((r) => (
-      { identifier: accionDelDesayuno(r), buttonTitle: t(`recordatorios.despertar.desayuno.${r}`), options: { opensAppToForeground: r === 'si' } }
+      { identifier: accionDelDesayuno(r), buttonTitle: t(`recordatorios.despertar.desayuno.${r}`), options: { opensAppToForeground: true } }
     ))),
   ]).catch(() => {}));
 
@@ -259,6 +276,9 @@ const prepararCategorias = () =>
 // empieza de cero. Dos a la vez se borraban lo programado y duplicaban el resto.
 let enCurso: Promise<void> = Promise.resolve();
 let vuelta = 0;
+
+/** iOS guarda 64 avisos pendientes por app; 60 deja margen. */
+const TOPE_DE_PENDIENTES = 60;
 
 /** Borra los avisos que había y programa los de la semana, si hay alguno encendido y permiso. */
 export function programarAvisos(e: Para): Promise<void> {
@@ -269,8 +289,9 @@ export function programarAvisos(e: Para): Promise<void> {
 
 /**
  * Los avisos que ya llegaron y ya no dicen nada salen del centro de notificaciones y de la pantalla
- * bloqueada: «¿Anotaste la cena?» con la cena anotada, «pesarse» con el peso de hoy, y los de días
- * anteriores (salvo el del fin de la prueba o del regalo).
+ * bloqueada: lo de una comida con esa o una de después anotada («Hora de la merienda» con la cena anotada,
+ * comer antes de entrenar, la última comida grande), lo que ya no falta, «pesarse» con el peso de hoy, y los
+ * de días anteriores (salvo el del fin de la prueba o del regalo).
  */
 async function sacarLosQueYaNoDicenNada(e: Para): Promise<void> {
   const llegados = await Notifications.getPresentedNotificationsAsync().catch(() => [] as Notifications.Notification[]);
@@ -278,20 +299,27 @@ async function sacarLosQueYaNoDicenNada(e: Para): Promise<void> {
   const hoy = diaLogico(new Date(), e.corte);
   const anotadas = new Set(vigentes(e.registros.values()).filter((r) => r.dia === hoy && !r.planificado).map((r) => r.comida));
   const pesadoHoy = e.pesos.some((p) => p.fecha === hoy);
+  // Lo que sigue bajo hoy, con lo planificado, como cuando se avisó.
+  const meta = metaDelDia(e, hoy);
+  const bajo: string[] = meta ? bajoAlFinal(meta, totalDelDia(e.registros.values(), hoy)) : [];
+  const aguaDesde = (llego: number) => vigentes(e.agua.values()).some((x) => x.dia === hoy && Date.parse(x.actualizado) >= llego);
   for (const n of llegados) {
     const datos = n.request.content.data as Partial<AlTocarUnAviso> | undefined;
     if (!datos?.tipo) continue;
-    // Los de antes no llevan su día. La hora en que llegó viene en segundos en iOS (timeIntervalSince1970) y en
-    // milisegundos en Android: leída como milisegundos, caía en 1970 y el aviso de hoy salía por «de otro día».
-    const dia = datos.dia ?? diaLogico(new Date(n.date < 1e11 ? n.date * 1000 : n.date), e.corte);
+    // La hora en que llegó viene en segundos en iOS (timeIntervalSince1970) y en milisegundos en Android: leída
+    // como milisegundos, caía en 1970 y el aviso de hoy salía por «de otro día». Los de antes no llevan su día.
+    const llego = n.date < 1e11 ? n.date * 1000 : n.date;
+    const dia = datos.dia ?? diaLogico(new Date(llego), e.corte);
     const deOtroDia = dia < hoy && datos.tipo !== 'prueba';
-    const comidaHecha = (datos.tipo === 'comida' || datos.tipo === 'horario' || datos.tipo === 'desayuno') && !!datos.comida && dia === hoy && anotadas.has(datos.comida);
+    const comidaHecha = !!datos.comida && dia === hoy && yLasDeDespues(datos.comida).some((c) => anotadas.has(c));
     const pesoHecho = datos.tipo === 'pesarse' && pesadoHoy;
     // «¿Desayunas hoy?» ya contestado, o con otra comida anotada: ya no pregunta nada.
     const desayunoDicho = datos.tipo === 'desayuno' && dia === hoy && (!!e.desayunos[hoy] || anotadas.size > 0);
     // «Lo que hay que hacer hoy», con todo tachado.
     const todoHecho = datos.tipo === 'pendientes' && dia === hoy && pendientesPara(e.pendientes, hoy).every((p) => p.hecho);
-    if (deOtroDia || comidaHecha || pesoHecho || desayunoDicho || todoHecho) await Notifications.dismissNotificationAsync(n.request.identifier).catch(() => {});
+    // El agua dice «toma uno ahora»: con un vaso anotado desde que llegó, ya está.
+    const yaNoFalta = datos.tipo === 'falta' && dia === hoy && (datos.que === 'agua' ? aguaDesde(llego) : !bajo.includes(datos.que ?? ''));
+    if (deOtroDia || comidaHecha || pesoHecho || desayunoDicho || todoHecho || yaNoFalta) await Notifications.dismissNotificationAsync(n.request.identifier).catch(() => {});
   }
 }
 
@@ -320,7 +348,7 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   // Cancelada, nada después de que vence: sin acceso no suena, aunque Moss no se abra para borrarlo.
   const hasta = avisosHasta(suscripcionActual(), accesoActual(), hastaDelRegaloActual());
   const elegido = algunAviso({ avisos: ajustes, recordatorios: ajustes.comidas ?? null });
-  const conFalta = conLoQueFalta(ajustes, elegido);
+  const conFalta = conLoQueFalta(ajustes);
   if ((!elegido && !conFalta && finDePrueba === null && avisoDeRegalo === null) || !(await Notifications.getPermissionsAsync()).granted) return;
   await prepararCategorias();
   const ahora = new Date();
@@ -339,7 +367,7 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   const entrenoDeHoy = entrenosDelDia(e.salud?.entrenamientos, hoy).at(-1);
   if (entrenoDeHoy) eventosHoy.entrenamiento = minutosEnElDia(new Date(entrenoDeHoy.hasta), hoy);
   const minutos = minutosEnElDia(ahora, hoy);
-  const sueno = suenoDelDia(e);
+  const sueno = suenoDelDia(e) ?? soloElDespertar(e);
   // El control es el día que se eligió o, sin elegir, el de la primera meta (como en el almacén).
   const diaDelControl = e.perfil?.diaDelControl ?? (e.metas[0] ? diaDeLaSemana(e.metas[0].desde) : undefined);
   // Según el deporte: los partidos de cada semana (el de mañana también cuenta para el último día) y la próxima carrera.
@@ -370,16 +398,37 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
     diaDelControl,
     pesadoHoy: e.pesos.some((p) => p.fecha === hoy),
   });
+  // iOS guarda 64 pendientes y descarta en silencio lo que sobra: primero el del fin de la prueba o del regalo, que
+  // suena una sola vez, y después los de la semana por fecha, hasta TOPE_DE_PENDIENTES. Lo que queda afuera es lo
+  // último de la semana, que se vuelve a programar al abrir Moss.
+  const pedidos: Notifications.NotificationRequestInput[] = [];
+  // Dos días antes de que termine la prueba, como dice la pantalla de pago.
+  if (finDePrueba !== null) {
+    pedidos.push({
+      content: { title: 'Moss', body: t('recordatorios.pruebaTermina'), data: { tipo: 'prueba' } },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(finDePrueba) },
+    });
+  }
+  // Dos días antes del último día del regalo, como dice la bienvenida («Moss te avisa unos días antes»).
+  if (finDelRegalo && avisoDeRegalo !== null) {
+    pedidos.push({
+      content: { title: t('recordatorios.regaloTermina.titulo'), body: t('recordatorios.regaloTermina.texto', { fecha: fechaLarga(finDelRegalo) }), data: { tipo: 'prueba' } },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(avisoDeRegalo) },
+    });
+  }
+  const deLaSemana: { en: number; pedido: Notifications.NotificationRequestInput }[] = [];
   for (const n of lista) {
-    if (vieja()) return;
     const c = cuandoSuena(n.dia, n.minutos);
     const [a, m, d] = c.dia.split('-').map(Number);
     const fecha = new Date(a, m - 1, d, c.hora, c.minuto);
     // iOS rechaza una fecha que ya pasó, y cortaría los que siguen.
     if (fecha.getTime() <= Date.now() || (hasta !== null && fecha.getTime() >= hasta)) continue;
     const { aviso } = n;
-    try {
-      await Notifications.scheduleNotificationAsync({
+    deLaSemana.push({
+      en: fecha.getTime(),
+      pedido: {
+        // Fijo, con su día y cuál es: así se puede sacar uno sin abrir Moss (un widget, en la próxima build).
+        identifier: `${n.dia}:${aviso.id}`,
         // Lo que lleva el aviso para abrir lo suyo al tocarlo (useAlTocarUnAviso).
         // Cada uno va con su día: la comida tocada pasada la medianoche o a la mañana se anota en el día del aviso, y
         // sacarLosQueYaNoDicenNada sabe de qué día es sin leer la hora que da el teléfono.
@@ -390,24 +439,17 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
         // A la hora del reloj y no «dentro de tantos segundos» (eso hace DATE en iOS): quien viaja a otra
         // zona horaria, o pasa el cambio de hora sin abrir Moss, lo recibe a la hora que dice.
         trigger: { type: Notifications.SchedulableTriggerInputTypes.CALENDAR, year: a, month: m, day: d, hour: c.hora, minute: c.minuto, second: 0, repeats: false },
-      });
+      },
+    });
+  }
+  deLaSemana.sort((x, y) => x.en - y.en);
+  for (const pedido of [...pedidos, ...deLaSemana.map((x) => x.pedido)].slice(0, TOPE_DE_PENDIENTES)) {
+    if (vieja()) return;
+    try {
+      await Notifications.scheduleNotificationAsync(pedido);
     } catch {
       // Uno que no se pudo programar no deja sin los demás.
     }
-  }
-  // Dos días antes de que termine la prueba, como dice la pantalla de pago.
-  if (finDePrueba !== null && !vieja()) {
-    await Notifications.scheduleNotificationAsync({
-      content: { title: 'Moss', body: t('recordatorios.pruebaTermina'), data: { tipo: 'prueba' } },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(finDePrueba) },
-    }).catch(() => {});
-  }
-  // Dos días antes del último día del regalo, como dice la bienvenida («Moss te avisa unos días antes»).
-  if (finDelRegalo && avisoDeRegalo !== null && !vieja()) {
-    await Notifications.scheduleNotificationAsync({
-      content: { title: t('recordatorios.regaloTermina.titulo'), body: t('recordatorios.regaloTermina.texto', { fecha: fechaLarga(finDelRegalo) }), data: { tipo: 'prueba' } },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(avisoDeRegalo) },
-    }).catch(() => {});
   }
 }
 

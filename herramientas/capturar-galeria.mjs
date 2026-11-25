@@ -3,7 +3,8 @@
 // Uso: npm run galeria:capturas            (necesita npm run galeria:ver prendido)
 //      node herramientas/capturar-galeria.mjs <carpeta> inicio deslizar comida registrar tocar…
 // La galería abre en Inicio; los escenarios del cielo pasan primero a Hábitos y los de la comida,
-// a Comida.
+// a Comida. La lista de escenarios está en CLAUDE.md; el último, widgets-mejores (lo que pediste el 25/11:
+// Hoy más limpio junto al de ahora, tu noche en StandBy y la pantalla bloqueada con la deuda y la cuenta).
 // La aurora y el cielo se dibujan por software (SwiftShader): los tiempos de la animación van
 // más lentos que en un teléfono, pero cada cuadro es el mismo.
 
@@ -3050,6 +3051,92 @@ const pasos = {
     await pagina.evaluate(() => window.__aparato('reloj'));
     await pagina.evaluate(() => window.__accion('reiniciar'));
     await espera(800);
+    await pestana(0);
+  },
+  // Lo que pediste el 25/11 (para aprobar), con los botones de la galería: Hoy, chico y mediano junto a los de ahora
+  // (entrando, quieto, con la cena anotada de un toque y pasado de la meta), y el grande con los últimos 7 días; tu
+  // noche en StandBy, con poca luz y a otras horas («en 5 min», «Ya es hora»); la pantalla bloqueada a la tardecita y
+  // a la mañana, con reloj y sin reloj (antes y después del «Sí»); tintado; y en inglés.
+  async 'widgets-mejores'() {
+    const widgets = (accion, arg) => pagina.evaluate(([a, x]) => window.__widgets(a, x), [accion, arg]);
+    const espera = (ms = 1100) => pagina.waitForTimeout(ms);
+    await pagina.evaluate(() => window.__aparato('reloj'));
+    await seccion('wmHoy');
+    await espera(260);
+    await foto('wm-hoy-entrando');
+    await espera();
+    await foto('wm-hoy');
+    await widgets('tocarComida', 'cena');
+    await espera(900);
+    await foto('wm-hoy-cena');
+    await widgets('olvidarTodo');
+    await widgets('pasarse');
+    await seccion('wmHoy');
+    await espera();
+    await foto('wm-hoy-pasada');
+    await widgets('noPasarse');
+    await seccion('wmGrande');
+    await espera(1500);
+    await foto('wm-grande');
+    await widgets('tocarComida', 'cena');
+    await espera(900);
+    await foto('wm-grande-cena');
+    await widgets('olvidarTodo');
+    await seccion('wmStandby');
+    await espera();
+    await foto('wm-standby');
+    await seccion('wmStandbyNoche');
+    await espera();
+    await foto('wm-standby-poca-luz');
+    // La hora de acostarte sale de tu periodo de melatonina: las otras horas, contadas desde la que muestra.
+    const aDormir = await pagina.evaluate(() => {
+      const [h, m] = document.querySelector('.wg-m-standby .wm-cifra').textContent.split(':').map(Number);
+      return h * 60 + m;
+    });
+    await widgets('mHora', aDormir - 5);
+    await espera(700);
+    await foto('wm-standby-poca-luz-5-min');
+    await widgets('mHora', aDormir + 10);
+    await espera(700);
+    await foto('wm-standby-ya-es-hora');
+    await widgets('mHora', null);
+    await widgets('deNoche', false);
+    await seccion('wmBloqueoTarde');
+    await espera();
+    await foto('wm-bloqueo-tardecita');
+    await seccion('wmBloqueoManana');
+    await espera();
+    await foto('wm-bloqueo-manana');
+    await pagina.evaluate(() => window.__aparato('iphone'));
+    await seccion('wmBloqueoManana');
+    await espera();
+    await foto('wm-bloqueo-manana-sin-reloj');
+    await widgets('mConfirmar');
+    await espera(1400);
+    await foto('wm-bloqueo-manana-confirmada');
+    await pagina.evaluate(() => window.__aparato('reloj'));
+    await widgets('modo', 'tintado');
+    await seccion('wmHoy');
+    await espera();
+    await foto('wm-hoy-tintado');
+    await widgets('modo', 'color');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await seccion('wmHoy');
+    await espera();
+    await foto('wm-hoy-ingles');
+    await seccion('wmGrande');
+    await espera(1500);
+    await foto('wm-grande-ingles');
+    await seccion('wmBloqueoManana');
+    await espera();
+    await foto('wm-bloqueo-manana-ingles');
+    await seccion('wmStandby');
+    await espera();
+    await foto('wm-standby-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await widgets('olvidar');
+    await widgets('cerrar');
+    await espera(600);
     await pestana(0);
   },
   // Los detalles de app profesional (6/11, para aprobar), cada uno donde va: «Listo» y «Siguiente» arriba del

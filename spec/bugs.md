@@ -166,6 +166,74 @@ de las comidas que encontró la tanda B y `faltaParaEstimar`. Cómo quedó:
 33. El widget Anotar alinea las medias horas en UTC (en Nepal, 15 min tarde; `src/widgets/anotar.ts:37`).
 34. `alAbrir` de Ascent queda viejo: vibra de más al tocar la entrada (`Secciones.tsx:230`).
 
+## La segunda búsqueda (25/11/2026, lo pediste antes de ir al gimnasio)
+
+Ocho revisores más, en lo que la primera no cubrió: los widgets y la tarea de fondo, registrar comida, Salud y la
+noche, los avisos en el teléfono, la entrada y Perfil, los textos, Progreso e Inicio, y los hábitos. Unos 75
+hallazgos. Pediste que lo armara y lo hiciera de una, así que se arregla todo lo claro, cada cosa con su test, y por
+aire. Queda afuera lo que es para decidir, lo que pide una migración, lo visual nuevo (va a la galería) y lo que pide
+la próxima build.
+
+**Tanda D (en siete grupos, sin compartir archivos; arreglada el 25/11, cada una con su test, y por aire):**
+- **Metas y Progreso:** subir con fecha sin tope (metas de miles de kcal); el embarazo que nunca suma el extra; Cuidados
+  que guarda la meta sin su regla; «Tus respuestas» que no suelta el ritmo de Progreso; el reparto y «A mano» que
+  pierden la fecha; el plazo por fecha que Progreso recalcula y la meta no; tocar el mismo objetivo que borra el plazo;
+  Inicio y Progreso con reglas distintas («En camino» y «Más lento»); el control y la llegada sin los pesos de Ascent;
+  el objetivo fijado después de la entrada que nunca llega al mantenimiento; la regla del ritmo que guarda al
+  desplazar; el balance corrido en «Más datos»; «0 kg» sin pesadas; la fecha del primer día.
+- **La entrada:** el trastorno de la alimentación que no oculta los números ni saca el peso meta; «Esto dice Salud»
+  con valores de fábrica; la fecha del plan que no es la de la meta (cuidados y el piso); el peso meta y el plan en kg
+  con el sistema imperial; la proteína que no es la de la meta con cuidados; el día del partido que queda.
+- **Los avisos:** «Si voy muy bajo en algo» prendido aunque Perfil dice apagado; el tope de 64 de iOS (el del regalo
+  se perdía); sin noches, la mañana a hora fija; «Voy directo al almuerzo» con Moss cerrada; al anotar, que salgan
+  también los que ya no dicen nada; un nombre fijo para cada aviso (para que en la próxima build el widget pueda
+  sacarlo).
+- **El sueño y Salud:** con el iPhone bloqueado, Salud volvía vacía y borraba lo leído (lo encontraron dos revisores);
+  Sleep Cycle o AutoSleep dejaban Sueño sin deuda ni periodo; la energía con noches que «no cuentan»; con el corte a
+  las 5 o 6, la noche de ayer a la mañana; Todo lo de hoy que dice «estimado» con la noche confirmada.
+- **La comida:** «pan» era el panettone en Uruguay y Decir lo recordaba; el buscador sin plurales («melones», «panes»);
+  los atajos de un toque con valores viejos; la foto que quedaba sin anotar con «Buscarlo»; corregir lo anotado de una
+  receta editada; pegar una receta que ignora lo que rinde; «un cuarto de pollo» de 25 g; los ml que se ven como g; la
+  comida que sale de franjas fijas y no de tus horas; «7 h 05 min».
+- **Los widgets:** el «Sí» que tapaba la noche del reloj con «Confirmada»; Hoy y Anotar con calorías aunque los números
+  estén ocultos; «260 kcal» pasada la meta (sin el «+»); la comida de 0 kcal que se veía sin anotar; «8 h 00 min».
+- **Los textos:** «8 semanas» fijo en los estancados; el idioma del teléfono cuando el primero no es español ni inglés;
+  plurales («1 elegidos», «Rinde 1 porciones», «en 2 a 2 semanas»); «y isquios»; «Saca una foto» → «Toma una foto»;
+  VoiceOver sin las cifras; «Puedes dejarla fuera» sin forma de hacerlo; «8 h 0 min».
+
+**Después, en el almacén** (el mismo archivo que las metas; arreglado el 25/11 y por aire, y lo mismo para el gimnasio
+automático de Ascent, que también volvía a prender lo que apagabas a mano): los pasos de anoche que nunca encienden la estrella de
+ayer; apagar a mano una estrella de Salud que se vuelve a prender; «Registrar todas las comidas» que pide el desayuno
+aunque digas «No suelo»; lo de Salud de la madrugada en el día siguiente; el agua anotada en Moss que no enciende «Agua
+2 L»; «Dormir 7 h» sin reloj; la comida anotada para un día sin abrir Moss; tu universo que no se actualiza al cambiar
+un día pasado; «Tu mes» que cuenta hoy antes de que termine; copiar a hoy que deja la sugerencia del plan (y «Comí
+esto» anota las dos); la estimación que pisa una hora recién corregida; «Tardo en dormirme» que le gana a lo
+confirmado en otro teléfono. Y a quien ya le había quedado que «pan» es el panettone, Moss se lo olvida al abrir.
+
+**Para decidir:**
+- **Las horas en 12 h** (EE. UU., México, Colombia): todo sale en 24 h aunque el iPhone use 12 h. Son unas 150
+  frases y dos funciones de hora; se puede hacer, pero cambia cómo se ve en todos lados.
+- **Los separadores de miles y decimales por país** (en México «1.850 kcal» se lee 1,85).
+- **Sleep Cycle y AutoSleep:** se tratan como si no hubiera noche (Moss estima y gana lo confirmado). La otra opción es
+  darles confianza media, como pide el nivel 2 de `spec/aparatos.md`.
+- **En Uruguay, «crema» da primero «Crema volteada» y «queso», «Queso untable».**
+
+**Para la galería:** los widgets mejores (escenario `widgets-mejores`, lo que pediste el 25/11); el widget del agua con el riñón (sin meta, sin barra); elegir un plan durante el regalo; volver a
+entrar si se corta la sesión.
+
+**Para más adelante:**
+- **La zona horaria de cada noche:** de viaje, las noches anteriores se ven en la hora de ahora. Pide guardar la zona
+  de cada muestra.
+- **Dejar fuera una noche cortada:** pide una marca en la noche, con migración.
+- **El agua en onzas, el embarazo y pesarse antes y después de entrenar en libras**, con el sistema imperial.
+- **Lo que se toca en un widget** (próxima build): que el AppIntent saque el aviso de esa comida sin abrir Moss.
+- **Lo anotado en otro teléfono con Moss cerrada:** que la tarea de fondo baje la cuenta antes de programar.
+- **Los atajos con valores viejos, en lo que falta:** «Copiar de ayer» y lo de la base (que cambia solo con una base
+  nueva) siguen con lo que valían al anotarlo; corregir algo que espera en la comida que se arma, si la receta cambió.
+- **«Dormir 7 h» con Sleep Cycle o AutoSleep y sin noche de Moss** sigue contando la de Salud: va con la decisión de
+  arriba.
+- **Detalles del inglés:** comillas del español en «Disconnect», «%» con y sin espacio, «centimetre» y «grey».
+
 ## Para decidir (no son bugs)
 
 - **La siesta:** «Sugerencias para hoy» dice «una siesta de 30 minutos»; el estudio de la noche

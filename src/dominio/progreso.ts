@@ -13,8 +13,12 @@ const DIAS_DEL_RITMO = 21;
 const DIAS_MINIMOS = 14;
 /** A medio kilo de la meta ya llegaste: la tendencia se mueve más que eso en una semana común. */
 export const LLEGASTE_KG = 0.5;
-/** Con menos de la mitad del ritmo del plan, vas despacio; casi sin moverte, estás quieto. */
-const DESPACIO = 0.5;
+/**
+ * Al ritmo es estar a un cuarto del plan, o a 100 g por semana con un plan lento: más despacio (en Progreso, más
+ * lento), solo si todo el margen queda debajo de eso. Casi sin moverte, estás quieto.
+ */
+const AL_RITMO = 0.25;
+const AL_RITMO_KG = 0.1;
 const QUIETO_KG_SEMANA = 0.05;
 /** Manteniendo, moverse menos de esto por semana es estar estable. */
 const ESTABLE_KG_SEMANA = 0.15;
@@ -196,7 +200,7 @@ export function progresoAlObjetivo(e: EntradaDelProgreso): Progreso {
   const fecha = fechas ? sumarDias(e.hoy, Math.ceil((faltan / avance) * 7)) : null;
   const estado: EstadoDelObjetivo = avance + margen < 0 ? 'alReves'
     : avance - margen <= 0 ? 'quieto'
-    : avance + medio < DESPACIO * plan ? 'despacio'
+    : avance + medio < plan - Math.max(AL_RITMO * plan, AL_RITMO_KG) ? 'despacio'
     : 'enCamino';
   return { ...base, faltan, hecho, fecha, fechas, estado };
 }
@@ -330,6 +334,8 @@ export const direccionDe = (pesoKg: number, pesoMeta: number): Direccion | null 
   Math.abs(pesoMeta - pesoKg) <= SIN_CAMINO_KG ? null : pesoMeta < pesoKg ? 'bajar' : 'subir';
 
 const fechaConRitmo = (hoy: ClaveDia, faltan: number, kgPorSemana: number) => sumarDias(hoy, Math.ceil((faltan / kgPorSemana) * 7));
+/** El ritmo que hace falta para llegar en esa fecha, en % del peso de hoy por semana. */
+const pctHasta = (hoy: ClaveDia, pesoKg: number, pesoMeta: number, fecha: ClaveDia) => ((Math.abs(pesoMeta - pesoKg) / (diasEntre(hoy, fecha) / 7)) / pesoKg) * 100;
 
 function armarPlazo(e: EntradaDelPlazo, direccion: Direccion, pct: number, fecha: ClaveDia): Plazo {
   const faltan = Math.abs(e.pesoMeta - e.pesoKg);
@@ -365,10 +371,8 @@ export function plazoConRitmo(e: EntradaDelPlazo, pct: number): Plazo | null {
 /** Con la fecha, el ritmo que hace falta. null si no hay camino o la fecha no es de acá en adelante. */
 export function plazoConFecha(e: EntradaDelPlazo, fecha: ClaveDia): Plazo | null {
   const direccion = direccionDe(e.pesoKg, e.pesoMeta);
-  const dias = diasEntre(e.hoy, fecha);
-  if (!direccion || dias < 7 || !(e.pesoKg > 0)) return null;
-  const pct = ((Math.abs(e.pesoMeta - e.pesoKg) / (dias / 7)) / e.pesoKg) * 100;
-  return armarPlazo(e, direccion, pct, fecha);
+  if (!direccion || diasEntre(e.hoy, fecha) < 7 || !(e.pesoKg > 0)) return null;
+  return armarPlazo(e, direccion, pctHasta(e.hoy, e.pesoKg, e.pesoMeta, fecha), fecha);
 }
 
 // ------------------------------------------------------------ el plazo elegido
@@ -398,12 +402,23 @@ export function plazoVigente(elegido: PlazoElegido | null, delCuestionario: { fe
 }
 
 /**
- * El ritmo que usa la meta con lo elegido, con su signo (metas.ts, Eleccion). Bajando, nunca más que el borde
- * de lo exigente (el 1 %, sin pasar de un kilo por semana ni de 1.000 kcal por día) ni, antes de los 18, que el
- * recomendado: como la fecha del cuestionario (pctDelPlan). El plan que se muestra sigue siendo el elegido.
+ * El ritmo de hoy de un plazo, en % del peso por semana: con una fecha, el que hace falta para llegar ese día
+ * desde el peso de hoy, como el plan de Progreso, que lo vuelve a sacar cada día (plazoConFecha). Sin fecha,
+ * sin camino hacia ese lado o a menos de una semana, el elegido.
+ */
+export function pctDeHoy(plazo: PlazoElegido, hoy: ClaveDia, pesoKg: number, pesoMeta: number | null | undefined, direccion: Direccion): number {
+  if (!plazo.fecha || !pesoMeta || !(pesoKg > 0) || direccionDe(pesoKg, pesoMeta) !== direccion || diasEntre(hoy, plazo.fecha) < 7) return plazo.pct;
+  return pctHasta(hoy, pesoKg, pesoMeta, plazo.fecha);
+}
+
+/**
+ * El ritmo que usa la meta con lo elegido, con su signo (metas.ts, Eleccion). Nunca más que el borde de lo
+ * exigente (bajando, el 1 %, sin pasar de un kilo por semana ni de 1.000 kcal por día; subiendo, el 0,5 %) ni,
+ * bajando antes de los 18, que el recomendado: como la fecha del cuestionario (pctDelPlan). El plan que se
+ * muestra sigue siendo el elegido.
  */
 export function pctParaLaMeta(direccion: Direccion, pct: number, pesoKg: number, edad: number): number {
-  if (direccion === 'subir') return pct;
+  if (direccion === 'subir') return Math.min(pct, bordeDe('subir', 'exigente', pesoKg));
   const menor = edad < MAYORIA_DE_EDAD ? Math.abs(RITMOS.bajar.recomendado) : Infinity;
   return -Math.min(pct, bordeDe('bajar', 'exigente', pesoKg), menor);
 }
@@ -438,9 +453,6 @@ const SEMANAS_POR_HITO = 4;
 const HITOS_MAXIMOS = 3;
 export const SEMANAS_DE_MANTENIMIENTO = 2;
 const ETAPA_QUE_SIGUE: Record<Exclude<Despues, 'despues'>, TipoDeEtapa> = { mantener: 'mantener', grasa: 'bajar', recomponer: 'recomponer', musculo: 'subir' };
-/** Al ritmo es estar a un cuarto del plan, o a 100 g por semana con un plan lento. */
-const AL_RITMO = 0.25;
-const AL_RITMO_KG = 0.1;
 
 export function planPorEtapas(e: {
   hoy: ClaveDia;

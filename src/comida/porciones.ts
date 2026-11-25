@@ -15,6 +15,8 @@ const INVARIABLES: Record<Idioma, Set<string>> = {
   es: new Set(['g', 'kg', 'ml', 'l', 'cm', 'oz', 'fl', 'muy', 'más', 'extra']),
   en: new Set(['g', 'kg', 'ml', 'l', 'cm', 'oz', 'fl', 'tbsp', 'tsp', 'medium', 'large', 'small', 'regular', 'extra', 'thin', 'thick', 'jumbo', 'mini']),
 };
+/** Las medidas en inglés que terminan como una palabra en español («can» no es «canes»). */
+const DEL_INGLES = new Set(['can', 'bar', 'jar', 'container']);
 /** En español, las palabras que vienen después de estas no van en plural: «2 porciones de referencia». */
 const PREPOSICIONES = new Set(['de', 'del', 'en', 'con', 'a', 'al', 'para', 'sin', 'por']);
 
@@ -99,6 +101,9 @@ function pluralDePalabra(palabra: string, idioma: Idioma): string {
     return `${palabra}s`;
   }
   if (/[aeiouáéó]$/i.test(palabra)) return `${palabra}s`;
+  // Lo que llega en inglés de Open Food Facts («1 can», «1 serving», «1 cup») va con su plural, no «canes»: lo que
+  // termina como ninguna palabra nuestra y las medidas de allá que terminan como las nuestras.
+  if (/[^aeiouáéíóúsxzlnrdjy]$/i.test(palabra) || DEL_INGLES.has(palabra.toLowerCase())) return pluralDePalabra(palabra, 'en');
   if (/[sx]$/i.test(palabra)) return palabra;
   if (/z$/i.test(palabra)) return `${palabra.slice(0, -1)}ces`;
   // Las agudas en -n pierden la tilde: porción, porciones.
@@ -199,6 +204,9 @@ export function conUnaUnidad<P extends { nombre: string; gramos: number }>(porci
 /** Lo que se comió, con palabras: `veces` porciones de `porcion` («1 rebanada», «½ taza», «30 g»). */
 export function cantidadDePorcion(veces: number, porcion: string, idioma: Idioma): string {
   if (Math.abs(veces - 1) < 1e-9) return porcion;
+  // En gramos o ml, también sin el espacio («30g», como llega de Open Food Facts): por dos son «60 g».
+  const pegada = /^(\d+(?:[.,]\d+)?)\s*(\p{L}+)$/u.exec(porcion);
+  if (pegada && METRICAS.test(pegada[2])) return `${decimal(Number(pegada[1].replace(',', '.')) * veces, idioma)} ${pegada[2]}`;
   // La fracción también con barra: «1/2 litro», «1 1/2 cups».
   const m = /^(\d+(?:[.,]\d+)?)?(?:\s*([¼⅓½⅔¾])|(?:^|\s+)(\d+)\/(\d+))?\s+(\S.*)$/.exec(porcion);
   // Sin número («Porción típica»): es una.

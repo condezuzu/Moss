@@ -150,6 +150,17 @@ describe('pluralDePorcion', () => {
     expect(pluralDePorcion('onza líquida', 'es')).toBe('onzas líquidas');
   });
 
+  it('en español, lo que llega en inglés de Open Food Facts va con su plural: «3 cans», no «3 canes»', () => {
+    expect(cantidadDePorcion(3, '1 can (330 ml)', 'es')).toBe('3 cans (330 ml)');
+    expect(pluralDePorcion('serving', 'es')).toBe('servings');
+    expect(pluralDePorcion('cup', 'es')).toBe('cups');
+    expect(pluralDePorcion('bar', 'es')).toBe('bars');
+    // Lo nuestro, como siempre.
+    expect(pluralDePorcion('pan', 'es')).toBe('panes');
+    expect(pluralDePorcion('porción', 'es')).toBe('porciones');
+    expect(pluralDePorcion('sándwich', 'es')).toBe('sándwiches');
+  });
+
   it('en inglés cambia solo la última palabra, y los tamaños quedan igual', () => {
     expect(pluralDePorcion('cup, mashed', 'en')).toBe('cups, mashed');
     expect(pluralDePorcion('large egg', 'en')).toBe('large eggs');
@@ -194,6 +205,9 @@ describe('cantidadDePorcion', () => {
     expect(cantidadDePorcion(1.5, '100 g', 'es')).toBe('150 g');
     expect(cantidadDePorcion(2, '30 g', 'en')).toBe('60 g');
     expect(cantidadDePorcion(5, '250 ml', 'es')).toBe('1.250 ml');
+    // Sin espacio, como llega de Open Food Facts.
+    expect(cantidadDePorcion(2, '30g', 'es')).toBe('60 g');
+    expect(cantidadDePorcion(1.5, '250ml', 'en')).toBe('375 ml');
   });
 
   it('lo que ya está en plural sigue en plural', () => {

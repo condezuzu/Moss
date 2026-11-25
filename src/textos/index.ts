@@ -39,8 +39,9 @@ export type ClaveDePlural = Rutas<typeof es, Plural>;
 let elegido: Idioma | undefined;
 
 // iOS reinicia la app cuando cambia el idioma del teléfono: basta con leerlo una vez.
+// Como iOS, el primero de la lista que Moss tiene: con catalán primero y español después, español.
 export function idioma(): Idioma {
-  elegido ??= /^es(-|$)/i.test(getLocales()[0].languageTag) ? 'es' : 'en';
+  elegido ??= /^es(-|$)/i.test(getLocales().find((l) => /^(es|en)(-|$)/i.test(l.languageTag))?.languageTag ?? '') ? 'es' : 'en';
   return elegido;
 }
 

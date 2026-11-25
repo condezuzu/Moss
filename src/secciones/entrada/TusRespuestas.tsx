@@ -82,6 +82,8 @@ function Cuestionario({ alCerrar, empezarEn }: { alCerrar: () => void; empezarEn
     const { c, nuevo } = paraGuardar({ ...r, horarios }, hoy, noches);
     // Si solo cambiaron las horas de comer, la meta queda como está: cambiar cuándo comes no cambia cuánto.
     const sinHoras = (x: Contestado) => JSON.stringify({ ...x, horarios: null, noSuele: null });
+    // Como en Perfil › Cuidados: marcar un trastorno de la alimentación oculta los números (D9).
+    if (r.cuidados.includes('tca') && !elAlmacen().estado().cuidados?.marcados.includes('tca')) elAlmacen().ponerNumeros(false);
     elAlmacen().cambiarRespuestas(c, 'manual', sinHoras(r) === sinHoras(inicio.r) ? { ...nuevo, meta: null } : nuevo);
     elAlmacen().ponerHorasDeComer(horasPuestasAMano({ mostradas: inicio.mostradas, elegidas: r.horarios, noSuele: r.noSuele, antes: elAlmacen().estado().horasDeComer }));
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});

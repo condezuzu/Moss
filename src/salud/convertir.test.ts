@@ -1,8 +1,26 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 
 import { armarNoches } from '@/dominio/sueno';
 import { CORTE_DE_FABRICA } from '@/dominio/fechas';
 import { cuentaComoEntrenar, entrenoDeSalud, entrenosDelDia, fuentesDe, lecturasDe, minutosDe, muestraDeSueno, pasosDe, primeraPorDia, tipoDeFuente, ultimaPorDia, type DeSalud, type DeSaludEntreno } from './convertir';
+import { leerSalud } from './leer';
+
+// Salud de mentira, sin nada salvo los pasos de `mockPasos`: con el iPhone bloqueado, HealthKit no deja leer y cada consulta falla.
+let mockBloqueado = false;
+let mockPasos: [Date, number][] = [];
+jest.mock('@kingstinct/react-native-healthkit', () => {
+  const consulta = (vacio: unknown) => async () => {
+    if (mockBloqueado) throw new Error('Protected health data is inaccessible');
+    return vacio;
+  };
+  const suma = async (id: string, _: unknown, { filter: { date } }: { filter: { date: { startDate: Date; endDate: Date } } }) => {
+    if (mockBloqueado) throw new Error('Protected health data is inaccessible');
+    if (id !== 'HKQuantityTypeIdentifierStepCount') return {};
+    return { sumQuantity: { quantity: mockPasos.filter(([en]) => en >= date.startDate && en < date.endDate).reduce((s, [, n]) => s + n, 0) } };
+  };
+  return { queryCategorySamples: consulta([]), queryQuantitySamples: consulta([]), queryWorkoutSamples: consulta([]), queryStatisticsForQuantity: suma };
+});
+jest.mock('./salud', () => ({ saludPedida: async () => true, entrenamientosPedidos: async () => true }));
 
 const reloj = { source: { name: 'Apple Watch de Ana', bundleIdentifier: 'com.apple.health.A1' }, productType: 'Watch7,3' };
 const iphone = { source: { name: 'iPhone de Ana', bundleIdentifier: 'com.apple.health.B2' }, productType: 'iPhone15,2' };
@@ -117,5 +135,24 @@ describe('los entrenamientos de Salud', () => {
     const lista = [de(50, 60), de(52, 45), entrenoDeSalud(w(37, local('2026-11-18', '07:00'), local('2026-11-18', '07:30')), CORTE_DE_FABRICA)!, entrenoDeSalud(w(37, local('2026-11-17', '07:00'), local('2026-11-17', '07:30')), CORTE_DE_FABRICA)!];
     expect(entrenosDelDia(lista, '2026-11-18').map((e) => [e.tipo, e.minutos])).toEqual([[37, 30], [50, 60]]);
     expect(entrenosDelDia(undefined, '2026-11-18')).toEqual([]);
+  });
+});
+
+describe('leer Salud', () => {
+  it('con el iPhone bloqueado no se lee nada (null), no un día vacío; sin noches de verdad, sí vacío', async () => {
+    mockBloqueado = true;
+    expect(await leerSalud(local('2026-10-22', '09:00'))).toBeNull();
+    mockBloqueado = false;
+    expect(await leerSalud(local('2026-10-22', '09:00'))).toMatchObject({ dia: '2026-10-22', noches: [], valores: { mindfulness: 0 } });
+  });
+
+  it('los pasos de hoy y los de ayer, cada uno de corte a corte (D32): lo de la madrugada es del día anterior', async () => {
+    mockPasos = [[local('2026-10-21', '03:30'), 100], [local('2026-10-21', '18:00'), 5000], [local('2026-10-21', '23:00'), 4000], [local('2026-10-22', '01:30'), 1000], [local('2026-10-22', '08:00'), 2000]];
+    const s = await leerSalud(local('2026-10-22', '09:00'));
+    expect(s?.valores.pasos).toBe(2000);
+    expect(s?.ayer).toMatchObject({ dia: '2026-10-21', valores: { pasos: 10000 } });
+    // Con el corte a la medianoche, el día del calendario.
+    expect((await leerSalud(local('2026-10-22', '09:00'), null, 0))?.valores.pasos).toBe(3000);
+    mockPasos = [];
   });
 });

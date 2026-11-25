@@ -191,12 +191,13 @@ describe('el widget Hoy, en la extensión', () => {
     meta: { kcal: 2600, p: 150, c: 325, g: 78 },
     comido: { kcal: 1575, p: 61, c: 210, g: 57 },
     comidas: [
-      { tipo: 'desayuno', nombre: 'Desayuno', anotado: { kcal: 412, p: 12, c: 79, g: 7 }, detalle: 'Café con leche', siempre: vacio, items: '[]', deshacer: '', confirmado: false },
-      { tipo: 'almuerzo', nombre: 'Almuerzo', anotado: { kcal: 792, p: 40, c: 90, g: 30 }, detalle: 'Milanesa', siempre: vacio, items: '[]', deshacer: '', confirmado: false },
-      { tipo: 'merienda', nombre: 'Merienda', anotado: vacio, detalle: '', siempre: vacio, items: '[]', deshacer: '', confirmado: false },
-      { tipo: 'cena', nombre: 'Cena', anotado: vacio, detalle: 'Fideos, Tuco', siempre: { kcal: 633, p: 21, c: 103, g: 14 }, items: '[{"nombre":"Fideos"}]', deshacer: '', confirmado: false },
+      { tipo: 'desayuno', nombre: 'Desayuno', anotada: true, anotado: { kcal: 412, p: 12, c: 79, g: 7 }, detalle: 'Café con leche', siempre: vacio, items: '[]', deshacer: '', confirmado: false },
+      { tipo: 'almuerzo', nombre: 'Almuerzo', anotada: true, anotado: { kcal: 792, p: 40, c: 90, g: 30 }, detalle: 'Milanesa', siempre: vacio, items: '[]', deshacer: '', confirmado: false },
+      { tipo: 'merienda', nombre: 'Merienda', anotada: false, anotado: vacio, detalle: '', siempre: vacio, items: '[]', deshacer: '', confirmado: false },
+      { tipo: 'cena', nombre: 'Cena', anotada: false, anotado: vacio, detalle: 'Fideos, Tuco', siempre: { kcal: 633, p: 21, c: 103, g: 14 }, items: '[{"nombre":"Fideos"}]', deshacer: '', confirmado: false },
     ],
     pendientes: [],
+    numeros: true,
     textos: {
       teQuedan: 'Te quedan', deMas: 'Arriba de la meta', kcal: 'kcal', de: '{comido} de {meta}', anotado: 'Anotado', sinAnotar: 'Sin anotar', miles: '.',
       macros: { p: 'Proteína', c: 'Carbohidratos', g: 'Grasas' }, cortos: { p: 'P', c: 'C', g: 'G' }, buscar: 'Buscar', decir: 'Decir', codigo: 'Código',
@@ -231,7 +232,7 @@ describe('el widget Hoy, en la extensión', () => {
     const anotada: PropsHoy = {
       ...HOY,
       comido: { kcal: 2208, p: 82, c: 313, g: 71 },
-      comidas: HOY.comidas.map((c) => (c.tipo === 'cena' ? { ...c, anotado: c.siempre, deshacer: 'r1,r2' } : c)),
+      comidas: HOY.comidas.map((c) => (c.tipo === 'cena' ? { ...c, anotada: true, anotado: c.siempre, deshacer: 'r1,r2' } : c)),
     };
     expect(textos(dibujar(anotada, mediano))).toEqual(expect.arrayContaining(['392', 'Anotado']));
     const otra = tocar(dibujar, anotada, mediano, 'comida|2026-10-21|cena');
@@ -260,6 +261,33 @@ describe('el widget Hoy, en la extensión', () => {
     expect(textos(dibujar(HOY, { widgetFamily: 'accessoryCircular', widgetRenderingMode: 'vibrant' }))).toEqual(['1.025']);
     expect(textos(dibujar(HOY, { widgetFamily: 'accessoryInline' }))).toEqual(['1.025 kcal · P 89']);
     expect(todos(dibujar(HOY, { widgetFamily: 'accessoryCircular', widgetRenderingMode: 'accented' }), 'Gauge')).toHaveLength(1);
+  });
+
+  it('en la pantalla bloqueada, pasada la meta, sin la etiqueta: con el «+»', () => {
+    const pasada = { ...HOY, comido: { kcal: 2860, p: 153, c: 335, g: 103 } };
+    expect(textos(dibujar(pasada, { widgetFamily: 'accessoryInline' }))).toEqual(['+260 kcal · P +3']);
+    expect(textos(dibujar(pasada, { widgetFamily: 'accessoryCircular', widgetRenderingMode: 'vibrant' }))).toEqual(['+260']);
+  });
+
+  it('una comida anotada con 0 kcal está anotada: abre Comida y no suma lo de siempre', () => {
+    const conCafe: PropsHoy = { ...HOY, comidas: HOY.comidas.map((c) => (c.tipo === 'cena' ? { ...c, anotada: true, detalle: 'Café negro' } : c)) };
+    expect(todos(dibujar(conCafe, mediano), 'Button')).toHaveLength(0);
+    expect(todos(dibujar(conCafe, mediano), 'Link').map((l) => l.props.destination)).toEqual(['moss://comida', 'moss://comida', 'moss://anotar?comida=merienda', 'moss://comida']);
+    expect(textos(dibujar(conCafe, mediano))).not.toContain('+633');
+  });
+
+  it('con los números ocultos, la luna y las comidas, sin kcal ni gramos', () => {
+    const sin: PropsHoy = { ...HOY, numeros: false };
+    for (const entorno of [{ widgetFamily: 'systemSmall' }, mediano, { widgetFamily: 'systemLarge' }, { widgetFamily: 'accessoryInline' }, { widgetFamily: 'accessoryCircular', widgetRenderingMode: 'vibrant' }, { widgetFamily: 'accessoryRectangular', widgetRenderingMode: 'vibrant' }]) {
+      const t = textos(dibujar(sin, entorno));
+      expect([entorno.widgetFamily, t.filter((x) => /\d|kcal|Te quedan/.test(x))]).toEqual([entorno.widgetFamily, []]);
+    }
+    // La luna sigue, y lo de siempre se anota de un toque.
+    expect(todos(dibujar(sin, { widgetFamily: 'accessoryCircular', widgetRenderingMode: 'vibrant' }), 'Circle').length).toBeGreaterThan(0);
+    expect(todos(dibujar(sin, mediano), 'Button').map((b) => b.props.target)).toEqual(['comida|2026-10-21|cena']);
+    expect(textos(dibujar(sin, { widgetFamily: 'systemLarge' }))).toEqual(expect.arrayContaining(['Desayuno', 'Café con leche', 'Fideos, Tuco', 'Proteína']));
+    // Sin el dato (una línea de antes), con números.
+    expect(textos(dibujar({ ...HOY, numeros: undefined }, mediano))).toContain('1.025');
   });
 
   it('antes de que Moss escriba la línea, se dibuja igual', () => {

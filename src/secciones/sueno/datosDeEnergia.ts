@@ -73,8 +73,8 @@ export function energiaDeHoy(e: Estado, s: Sueno, ahora: Date, ascent: TitularPa
   if (!e.perfil) return null;
   const hoy = e.hoy;
   const pesoKg = e.pesos[e.pesos.length - 1]?.kg ?? null;
-  // Las noches de ejemplo no son tuyas: no cuentan.
-  const noches = s.deEjemplo ? [] : s.noches;
+  // Las noches de ejemplo no son tuyas: no cuentan. Las de confianza baja tampoco, como en la deuda.
+  const noches = s.deEjemplo ? [] : s.noches.filter((n) => n.confianza.duracion !== 'baja');
   const anoche = noches.find((n) => n.clave === hoy) ?? null;
   const dos = ultimasNoches(noches, hoy, 14);
   const d = deudaDeSueno(dos, s.necesidad);

@@ -138,9 +138,9 @@ const GRAMOS_POR: Partial<Record<Unidad, number>> = { g: 1, kg: 1000, mg: 0.001,
  * Las que miden volumen, en ml. La taza, la cucharada y la cucharadita son las de Estados Unidos
  * (USDA); la pizca, un dieciseisavo de cucharadita; el vaso, el de 200 ml de las porciones de la base.
  */
-const ML_POR: Partial<Record<Unidad, number>> = { ml: 1, l: 1000, cl: 10, dl: 100, 'fl oz': 29.5735295625, taza: 236.6, cucharada: 14.8, cucharadita: 4.9, pizca: 0.31, vaso: 200 };
+export const ML_POR: Partial<Record<Unidad, number>> = { ml: 1, l: 1000, cl: 10, dl: 100, 'fl oz': 29.5735295625, taza: 236.6, cucharada: 14.8, cucharadita: 4.9, pizca: 0.31, vaso: 200 };
 /** Las de volumen que no tienen porción con nombre: van directo por la densidad. */
-const METRICAS = new Set<Unidad>(['ml', 'l', 'cl', 'dl', 'fl oz']);
+export const METRICAS = new Set<Unidad>(['ml', 'l', 'cl', 'dl', 'fl oz']);
 /** Las de un envase: el tamaño que sigue («1 lata de 400 g») es de cada uno. */
 const ENVASES = new Set<Unidad>(['lata', 'paquete', 'sobre']);
 

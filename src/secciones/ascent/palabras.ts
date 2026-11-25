@@ -20,8 +20,12 @@ export const nombreDelMusculo = (m: Musculo) => tx(`ascent.musculos.nombres.${m}
 /** Un nombre en el medio de una frase: «en sentadilla», «in squat». */
 export const enFrase = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 export const conMayuscula = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-/** «a, b y c». */
-export const enLista = (xs: readonly string[]) => (xs.length <= 1 ? (xs[0] ?? '') : `${xs.slice(0, -1).join(', ')} ${t('ascent.y')} ${xs[xs.length - 1]}`);
+/** «a, b y c»; delante de i o hi, «e» («glúteos e isquios»), como los avisos. */
+export function enLista(xs: readonly string[]): string {
+  if (xs.length <= 1) return xs[0] ?? '';
+  const ultimo = xs[xs.length - 1];
+  return `${xs.slice(0, -1).join(', ')} ${t(/^(i|hi(?!e))/i.test(ultimo) ? 'ascent.ye' : 'ascent.y')} ${ultimo}`;
+}
 /** Los nombres de unos músculos en una lista: «cuádriceps y glúteos». */
 export const listaDeMusculos = (ms: readonly Musculo[]) => enLista(ms.map((m) => nombreDelMusculo(m).toLowerCase()));
 export const cuandoDe = (c: Cuando) => tx(`ascent.titular.cuando.${c}`);

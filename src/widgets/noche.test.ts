@@ -11,7 +11,7 @@ import { confirmacionesDeLaLinea, decidir, despertadorPara, lineaDeLaNoche, noch
 const ZONA = -180;
 const TEXTOS = {
   anoche: 'Anoche', si: 'Sí', fueAsi: '¿Fue así?', confirmada: 'Confirmada', seVeEnMoss: 'Se ve al abrir Moss', seAnotaEnMoss: 'Anótala en Moss',
-  horas: '{desde} → {hasta}', duracion: '{h} h {m} min', horasCorto: '{h} h {m}', siLargo: 'Sí, fue así', aDormir: 'A dormir', enTiempo: 'en {tiempo}', minutos: '{m} min', yaEsHora: 'Ya es hora',
+  horas: '{desde} → {hasta}', duracion: '{h} h {m} min', soloHoras: '{h} h', horasCorto: '{h} h {m}', siLargo: 'Sí, fue así', aDormir: 'A dormir', enTiempo: 'en {tiempo}', minutos: '{m} min', yaEsHora: 'Ya es hora',
   paraDespertar: 'para despertarte a las {hora}',
 };
 const iso = (clave: ClaveDia, minutos: number) => new Date(instanteDe(clave, ZONA, minutos)).toISOString();
@@ -119,6 +119,24 @@ describe('la línea de tiempo del widget de la noche', () => {
     expect(l[0].props).toMatchObject({ confirmada: 123, dormirse: 340, despertar: 790, horas: '23:40 → 07:10' });
   });
 
+  it('un «Sí» que espera no tapa la noche que llegó de Salud', () => {
+    const delReloj = { clave: '2026-10-21', fuente: { id: 'w', nombre: 'Apple Watch', tipo: 'reloj' }, dormirse: 341, despertar: 793, confianza: { horario: 'alta', duracion: 'alta' } } as unknown as Noche;
+    const salud = { noches: [delReloj] } as unknown as Estado['salud'];
+    const esperando: ConfirmacionDelWidget = { clave: '2026-10-21', dormirse: 300, despertar: 760, en: 123 };
+    const l = armar(estado('2026-10-21', undefined, salud), new Date(2026, 9, 21, 9, 0), { esperando });
+    expect(l[0].props).toMatchObject({ horas: '23:41 → 07:13', confirmada: 0, pregunta: false, nota: '7 h 32 min' });
+  });
+
+  it('las duraciones, sin el cero de relleno y sin los minutos cuando son cero', () => {
+    const delReloj = (despertar: number) => ({ clave: '2026-10-21', fuente: { id: 'w', nombre: 'Apple Watch', tipo: 'reloj' }, dormirse: 340, despertar, confianza: { horario: 'alta', duracion: 'alta' } }) as unknown as Noche;
+    const con = (despertar: number) => armar(estado('2026-10-21', undefined, { noches: [delReloj(despertar)] } as unknown as Estado['salud']), new Date(2026, 9, 21, 9, 0))[0].props;
+    expect(con(820)).toMatchObject({ nota: '8 h', notaConfirmada: 'Confirmada · 8 h' });
+    expect(con(765)).toMatchObject({ nota: '7 h 5 min' });
+    // A la cama a las 23:00: a las 22:10, «en 1 h»; a las 23:05, a las 21:00 faltan 2 h 5 min.
+    expect(armar(estado('2026-10-21'), new Date(2026, 9, 21, 22, 10), { dormir: { acostarse: 23 * 60, despertar: null } })[0].props.falta).toBe('en 1 h');
+    expect(armar(estado('2026-10-21'), new Date(2026, 9, 21, 21, 10), { dormir: { acostarse: 23 * 60 + 5, despertar: null } })[0].props.falta).toBe('en 2 h 5 min');
+  });
+
   it('las horas, de 0 a 23', () => {
     expect([reloj(340), reloj(790), reloj(-30), reloj(360)]).toEqual(['23:40', '07:10', '17:30', '00:00']);
   });
@@ -206,6 +224,13 @@ describe('el «Sí» del widget al abrir Moss', () => {
     expect(decidir(conf(340, 790, '2026-10-20'), undefined, '2026-10-21', ZONA)).toBe('olvidar');
     expect(decidir(conf(340, 790, '2026-10-20'), propia('2026-10-20', 'estimada'), '2026-10-21', ZONA)).toBe('aplicar');
     expect(decidir(conf(340, 790, '2026-10-18'), propia('2026-10-18', 'estimada'), '2026-10-21', ZONA)).toBe('olvidar');
+  });
+
+  it('se olvida si Salud ya tiene esa noche: lo medido gana', () => {
+    const deSalud = [{ clave: '2026-10-21' }] as Noche[];
+    expect(decidir(conf(), undefined, '2026-10-21', ZONA, deSalud)).toBe('olvidar');
+    expect(decidir(conf(), propia('2026-10-21', 'estimada'), '2026-10-21', ZONA, deSalud)).toBe('olvidar');
+    expect(decidir(conf(), undefined, '2026-10-21', ZONA, [{ clave: '2026-10-20' }] as Noche[])).toBe('esperar');
   });
 
   it('lee de la línea solo los «Sí» tocados, el último de cada noche', () => {

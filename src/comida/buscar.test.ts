@@ -23,9 +23,17 @@ describe('lo escrito', () => {
   });
 
   it('cada palabra es un prefijo, y nada de lo escrito rompe la consulta', () => {
-    expect(consultaDePalabras('pech poll')).toBe('"pech"* "poll"*');
-    expect(consultaDePalabras('100% "jugo" OR *')).toBe('"100"* "jugo"* "or"*');
+    expect(consultaDePalabras('pech poll')).toBe('"pech"* AND "poll"*');
+    expect(consultaDePalabras('100% "jugo" OR *')).toBe('"100"* AND "jugo"* AND "or"*');
     expect(consultaDePalabras(' ¡¿ ')).toBeNull();
+  });
+
+  it('una palabra en plural busca también su singular: «melones» es «melon»', () => {
+    expect(consultaDePalabras('melones')).toBe('("melones"* OR "melon"*)');
+    expect(consultaDePalabras('panes franceses')).toBe('("panes"* OR "pan"*) AND ("franceses"* OR "frances"*)');
+    // En la memoria (la web y la galería), igual.
+    const corpus = [textoEnMemoria(1, 'es', null, 0, 'Melón'), textoEnMemoria(2, 'es', null, 0, 'Sandía')];
+    expect(candidatosEnMemoria(corpus, 'melones', 'es').map((c) => c.alimento)).toEqual([1]);
   });
 
   it('los trigramas van en OR, y lo corto no tiene', () => {
@@ -48,6 +56,19 @@ describe('buscar alimentos', () => {
     expect((await primero('huevo')).nombre).toBe('Huevo');
     expect((await primero('cafe con leche')).nombre).toBe('Café con leche');
     expect((await primero('milanesa')).nombre).toBe('Milanesa');
+  });
+
+  it('en plural también encuentra, y lo de ese nombre primero', async () => {
+    expect((await primero('melones')).id).toBe(idDe('Melón'));
+    expect((await primero('flanes')).id).toBe(idDe('Flan'));
+    expect((await primero('panes franceses')).id).toBe(idDe('Pan francés'));
+    expect((await primero('limones')).id).toBe(idDe('Limón'));
+    expect((await primero('jugos')).nombre).toMatch(/^Jugo /);
+  });
+
+  it.each(['UY', 'AR', 'PY'])('en %s, «pan» es el pan francés; el pan dulce (el panettone), escrito entero', async (region) => {
+    expect((await primero('pan', { region })).id).toBe(idDe('Pan francés'));
+    expect((await primero('pan dulce', { region })).id).toBe(idDe('Panettone'));
   });
 
   it('la palabra entera va antes que el principio de otra', async () => {

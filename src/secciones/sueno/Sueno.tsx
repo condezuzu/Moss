@@ -22,6 +22,7 @@ import { edadDe } from '@/dominio/metas';
 import { segunElDeporte, textoDelDeporte } from '@/dominio/segunElDeporte';
 import { aparatoQueFalta } from '@/dominio/sinReloj';
 import { deudaDeSueno, pocoSuenoSostenido, ultimasNoches, type Noche } from '@/dominio/sueno';
+import { nocheDeLaManana } from '@/salud/nocheSinReloj';
 import { pedirEntrenamientos, saludPedida } from '@/salud/salud';
 import { plural, t, type Clave } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -220,7 +221,9 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
   // Las dos semanas antes de una noche: con eso se miden el horario de siempre y lo tuyo.
   const anterioresA = (c: ClaveDia) => ultimasNoches(s.noches, sumarDias(c, -1), DIAS);
   const noche = conNoches ? (s.noches.find((n) => n.clave === clave) ?? null) : null;
-  const deHoy = reales.find((n) => n.clave === e.hoy) ?? null;
+  // Con el corte a las 5 o a las 6, a las 5:10 la noche que terminó ya es la de hoy, aunque el día de Moss siga siendo ayer.
+  const manana = nocheDeLaManana(e.hoy, ahora);
+  const deLaManana = reales.find((n) => n.clave === manana) ?? null;
   const delDetalle = noche ?? deMuestra;
   const interior = ancho - 2 * LADOS - 34;
   const primera = reales.length ? reales.reduce((a, n) => (n.clave < a ? n.clave : a), reales[0].clave) : null;
@@ -294,7 +297,7 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
         {!conNoches && <Aparece><Invitacion muestra={muestra} ancho={interior} /></Aparece>}
         {/* La deuda, primera (17/11): es lo primero que se mira, y la pregunta de la mañana ya no la empuja para abajo. */}
         <LaDeuda noches={reales} hoy={e.hoy} clave={clave} necesidad={s.necesidad} edad={edad} conNoches={conNoches} muestra={muestra} acostarse={periodo?.acostarse ?? null} reflujo={reflujo} animar={animar} />
-        <LaManana hoy={e.hoy} noche={deHoy} propia={e.noches.get(e.hoy)} noches={reales} ancho={interior} desde={e.metas[0]?.desde ?? null} />
+        <LaManana hoy={manana} noche={deLaManana} propia={e.noches.get(manana)} noches={reales} ancho={interior} desde={e.metas[0]?.desde ?? null} />
         {/* Debajo, lo de esta noche (17/11): tu periodo de melatonina y, con su aviso activado, la nota de lo pendiente. */}
         {clave === e.hoy && (
           <Aparece>

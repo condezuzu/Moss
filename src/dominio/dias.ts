@@ -23,6 +23,12 @@ export type Dia = {
 
 export const claveDeMarca = (habito: string, dia: ClaveDia) => `${habito}|${dia}`;
 
+/**
+ * Si Salud o Ascent pueden encender solos un hábito ese día: sin marca, o con una suya apagada. Lo que apagaste a mano
+ * queda apagado (especificación, «Registro»), y nunca apagan nada.
+ */
+export const seEnciendeSola = (marca: Marca | undefined, origen: Origen) => !marca || (!marca.hecho && marca.origen === origen);
+
 function armarDia(clave: ClaveDia, habitos: string[], marcas: Marca[], constelacion: string | null): Dia {
   const hecho = new Map<string, Marca>();
   for (const m of marcas) {

@@ -3,7 +3,8 @@ import { describe, expect, it } from '@jest/globals';
 import type { RespuestasGuardadas } from '@/dominio/cuestionario';
 import { sumarDias } from '@/dominio/fechas';
 import type { MetaGuardada, Perfil } from '@/dominio/metas';
-import { calcularPersona, ritmoDelPlan, suenoDe } from './persona';
+import { plazoConRitmo } from '@/dominio/progreso';
+import { calcularPersona, plazoDelPlan, ritmoDelPlan, suenoDe } from './persona';
 
 const HOY = '2026-10-22';
 const vacio = { registros: new Map(), medidas: new Map() };
@@ -51,6 +52,30 @@ describe('la persona de Inicio y Progreso', () => {
     expect(p.pesoInicial!).toBeLessThan(86);
   });
 
+  it('con el objetivo fijado después de la entrada, empezaste con la tendencia de ese día: al llegar, llegaste', () => {
+    // Entró manteniendo en 80, subió a 85 y ahí eligió bajar a 82; ya está en 82. Desde la entrada, la meta
+    // estaba «del otro lado» y no llegaba nunca.
+    const perfil: Perfil = { sexo: 'm', nacimiento: 1990, alturaCm: 180, actividad: 'algo', objetivo: 'bajar', ritmo: 'recomendado', pesoMeta: 82, actualizado: `${HOY}T08:00:00Z` };
+    const kg = (i: number) => (i < 15 ? 80 + i / 3 : i < 35 ? 85 - (3 * (i - 15)) / 20 : 82);
+    const pesos = Array.from({ length: 61 }, (_, i) => ({ fecha: sumarDias(HOY, i - 60), kg: kg(i), origen: 'manual' as const, momento: `${HOY}T08:00:00Z` }));
+    const metas: MetaGuardada[] = [{ desde: sumarDias(HOY, -60), kcal: 2500, proteina: 150, carbohidratos: 280, grasas: 80, gasto: 2500, motivo: 'inicial', momento: '' }];
+    const desde = sumarDias(HOY, -45);
+    const p = calcularPersona({ hoy: HOY, perfil, pesos, metas, ...vacio, inicioDelObjetivo: desde });
+    expect(p.pesoInicial!).toBeCloseTo(p.tendencia.get(desde)!, 6);
+    expect(p.progreso.estado).toBe('llegaste');
+    expect(calcularPersona({ hoy: HOY, perfil, pesos, metas, ...vacio }).progreso.estado).toBe('otroLado');
+  });
+
+  it('sin pesadas en la última semana, el cambio de 7 días no es un dato (no «0 kg»)', () => {
+    const perfil: Perfil = { sexo: 'm', nacimiento: 1990, alturaCm: 180, actividad: 'algo', objetivo: 'bajar', ritmo: 'recomendado', pesoMeta: 80, actualizado: `${HOY}T08:00:00Z` };
+    const { pesos, metas } = conSalud();
+    const viejas = pesos.filter((x) => x.fecha <= sumarDias(HOY, -20));
+    const p = calcularPersona({ hoy: HOY, perfil, pesos: viejas, metas, ...vacio });
+    expect(p.cambio7).toBeNull();
+    expect(p.cambio30).not.toBeNull();
+    expect(calcularPersona({ hoy: HOY, perfil, pesos, metas, ...vacio }).cambio7).not.toBeNull();
+  });
+
   it('el ritmo del plan es el elegido en Ritmo y plazo, aunque el perfil diga otro (como en Progreso)', () => {
     const perfil: Perfil = { sexo: 'm', nacimiento: 1990, alturaCm: 180, actividad: 'algo', objetivo: 'bajar', ritmo: 'suave', pesoMeta: 80, actualizado: `${HOY}T08:00:00Z` };
     const { pesos, metas } = conSalud();
@@ -80,6 +105,35 @@ describe('el ritmo del plan, el mismo de Progreso', () => {
 
   it('sin déficit, bajar queda en mantener: no hay ritmo', () => {
     expect(ritmoDelPlan({ perfil: { ...perfil, sinDeficit: true }, plazo: { pct: 1, fecha: null }, respuestas: null })).toBeNull();
+  });
+
+  it('con una fecha, el que hace falta desde el peso de hoy, como Progreso lo vuelve a sacar cada día', () => {
+    // Quieto en 85, a 5 kg de la meta y a diez semanas de la fecha: el 0,59 %, no el 0,4 elegido hace un mes.
+    const pesos = Array.from({ length: 43 }, (_, i) => ({ fecha: sumarDias(HOY, i - 42), kg: 85, origen: 'manual' as const, momento: '' }));
+    const fecha = sumarDias(HOY, 70);
+    const pedido = (5 / 10 / 85) * 100;
+    expect(ritmoDelPlan({ perfil, plazo: { pct: 0.4, fecha }, respuestas: null, hoy: HOY, pesos })!).toBeCloseTo(pedido, 4);
+    expect(ritmoDelPlan({ perfil, plazo: null, respuestas: respuestas(fecha, -0.4), hoy: HOY, pesos })!).toBeCloseTo(pedido, 4);
+    expect(ritmoDelPlan({ perfil, plazo: { pct: 0.4, fecha: null }, respuestas: null, hoy: HOY, pesos })).toBe(0.4);
+  });
+});
+
+describe('el plazo del plan, para el primer día', () => {
+  const perfil: Perfil = { sexo: 'm', nacimiento: 1990, alturaCm: 180, actividad: 'algo', objetivo: 'bajar', ritmo: 'suave', pesoMeta: 80, actualizado: '' };
+  const pesos = [{ fecha: HOY, kg: 90, origen: 'manual' as const, momento: '' }];
+  const entrada = { hoy: HOY, pesoKg: 90, pesoMeta: 80, sexo: 'm' as const, edad: 36, gasto: 2600, entrenaFuerza: null };
+  const respuestas = (fecha: string | null, pct: number | null) => ({ fecha, eleccion: { pct } }) as unknown as RespuestasGuardadas;
+
+  it('es el de Progreso: la fecha elegida en el cuestionario o, sin ella, el ritmo del plan (no siempre el borde de lo viable)', () => {
+    const fecha = sumarDias(HOY, 140);
+    expect(plazoDelPlan({ hoy: HOY, perfil, pesos, plazo: null, respuestas: respuestas(fecha, -0.79) }, entrada)?.fecha).toBe(fecha);
+    expect(plazoDelPlan({ hoy: HOY, perfil, pesos, plazo: null, respuestas: null }, entrada)?.fecha).toBe(plazoConRitmo(entrada, 0.25)!.fecha);
+    expect(plazoDelPlan({ hoy: HOY, perfil, pesos, plazo: { pct: 0.7, fecha: null }, respuestas: null }, entrada)?.fecha).toBe(plazoConRitmo(entrada, 0.7)!.fecha);
+  });
+
+  it('sin déficit, bajar queda en mantener: no hay plazo; con la meta del otro lado, tampoco', () => {
+    expect(plazoDelPlan({ hoy: HOY, perfil: { ...perfil, sinDeficit: true }, pesos, plazo: null, respuestas: null }, entrada)).toBeNull();
+    expect(plazoDelPlan({ hoy: HOY, perfil, pesos, plazo: null, respuestas: null }, { ...entrada, pesoMeta: 95 })).toBeNull();
   });
 });
 

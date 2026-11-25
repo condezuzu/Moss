@@ -10,7 +10,7 @@ import { estadoConAscent, metaConAscent, suscribirConAscent } from '@/almacen/as
 import { conMayuscula } from '@/comida/buscar';
 import { cantidadDePorcion, decimal } from '@/comida/porciones';
 import { ACEITE, pesoCorporalEn, pesoEn, sistemaDeRegion, volumenEn, type Sistema } from '@/dominio/cantidades';
-import { comidaDeLaHora, COMIDAS, minutoDeLoDicho, type Comida } from '@/dominio/comidas';
+import { comidaDeLaHora, COMIDAS, CON_HORA, minutoDeLoDicho, type Comida } from '@/dominio/comidas';
 import { diaDeLaSemana, minutosEnElDia, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { metaRepartida, type Macros } from '@/dominio/metas';
 import { sugerenciaVencida } from '@/dominio/plan';
@@ -106,8 +106,15 @@ export function hora(minutos: number): string {
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 }
 
-/** La comida que toca ahora, con la hora a la que empieza el día (D32): a las 5:30 con el corte a las 6, todavía no es el desayuno. */
-export const comidaDeAhora = (): Comida => comidaDeLaHora(minutosDe(new Date()), elAlmacen().estado().corte);
+/**
+ * La comida que toca ahora: la de tu hora de comer que está cerca (la cena puesta a las 19 ya es la cena a las 18:50)
+ * o, lejos de todas, la de la franja; con la hora a la que empieza el día (D32): a las 5:30 con el corte a las 6,
+ * todavía no es el desayuno. `horas`, si ya las tiene quien llama (horasDeLasComidas).
+ */
+export function comidaDeAhora(horas?: Partial<Record<Comida, number>>): Comida {
+  const e = elAlmacen().estado();
+  return comidaDeLaHora(minutosDe(new Date()), e.corte, horas ?? horasDeLasComidas(e));
+}
 
 /**
  * La meta de un día, sin lo que no son macros, con la semana repartida si se reparte y, con Ascent
@@ -167,6 +174,12 @@ export function horasDeComer(e: Pick<Estado, 'hoy' | 'registros' | 'respuestas' 
   return (c) => (c === 'snack' ? 11 * 60 : tuyas(c).minutos);
 }
 
+/** Tus horas de comer de las comidas que tienen hora: con ellas se elige la comida de ahora (comidaDeAhora). */
+export function horasDeLasComidas(e: Pick<Estado, 'hoy' | 'registros' | 'respuestas' | 'horasDeComer'>): Partial<Record<Comida, number>> {
+  const horaDe = horasDeComer(e);
+  return Object.fromEntries(CON_HORA.map((c) => [c, horaDe(c)]));
+}
+
 /**
  * El momento de lo que se anota, por cualquier vía (la hoja, el «+», tu comida de siempre, lo rápido,
  * el código y Decir). Otro día, a la hora de esa comida. Hoy, ahora; pero una comida que no es la de la
@@ -200,14 +213,14 @@ export function fechaLarga(dia: ClaveDia): string {
   return t('fecha.larga', { dia: lista('fecha.dias')[p.diaSemana], num: p.dia, mes: lista('fecha.meses')[p.mes] });
 }
 
-/** «7 h 32 min», «8 h» o «45 min». */
+/** «7 h 32 min», «7 h 5 min» (con «min» detrás, sin el cero adelante), «8 h» o «45 min». */
 export function duracion(minutos: number): string {
   // Primero se redondea: 479,6 minutos son «8 h», no «7 h 60 min».
   const total = Math.round(minutos);
   const h = Math.floor(total / 60);
   const m = total % 60;
   if (!h) return t('fecha.minutos', { m });
-  return m ? t('fecha.horasMinutos', { h, m: String(m).padStart(2, '0') }) : t('fecha.horas', { h });
+  return m ? t('fecha.horasMinutos', { h, m }) : t('fecha.horas', { h });
 }
 
 /** Una hora del día en minutos, aunque pase de la medianoche: 1500 son las 01:00. */

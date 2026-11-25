@@ -570,6 +570,16 @@ describe('las noches de Moss junto a las de Salud', () => {
     }
   });
 
+  it('la noche de Sleep Cycle o AutoSleep (confianza baja, no cuenta para nada) no le gana a la de Moss; sin la de Moss, queda', () => {
+    const sleepCycle: Fuente = { id: 'com.northcube.sleepcycle', nombre: 'Sleep Cycle', tipo: 'telefono' };
+    const deSleepCycle = armarNoches([{ etapa: 'dormido', desde: hora('2026-10-21 23:30'), hasta: hora('2026-10-22 07:00'), fuente: sleepCycle.id, zona: UY }], [sleepCycle]);
+    expect(deSleepCycle[0].confianza.duracion).toBe('baja');
+    for (const origen of ['confirmada', 'estimada'] as const) {
+      expect(conNochesDeMoss(deSleepCycle, [propia('2026-10-22', origen)], UY).map((n) => n.fuente.id)).toEqual(['moss']);
+    }
+    expect(conNochesDeMoss(deSleepCycle, [], UY).map((n) => n.fuente.id)).toEqual([sleepCycle.id]);
+  });
+
   it('mientras la noche del anillo no llega, se sabe de cuál se espera; si ya llegó una de ese día o después, no se espera', () => {
     const anillo: Fuente = { id: 'com.moyoung.darings', nombre: 'Da Rings', tipo: 'otra' };
     const iphone: Fuente = { id: 'iphone', nombre: 'iPhone', tipo: 'telefono' };

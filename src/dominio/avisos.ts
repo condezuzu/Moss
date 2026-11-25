@@ -72,7 +72,7 @@ export type Avisos = {
   pesarse?: { encendido: boolean; todos?: boolean };
   /** Cuántas veces puede sonar por día, como mucho (6 de fábrica). */
   maximoPorDia?: number;
-  /** Lo que falta (loQueFalta.ts): sin elegir, anda si hay algún otro aviso prendido. */
+  /** Lo que falta (loQueFalta.ts): apagado de fábrica, como lo demás de «Más avisos». */
   falta?: { encendido: boolean };
   /** Lo que conviene hacer (loQueConviene.ts), cada uno con su interruptor y apagado de fábrica. */
   antesDeEntrenar?: { encendido: boolean };
@@ -388,6 +388,11 @@ const DE_ENTRENAR = /^(entrenar|entreno|entrenamiento|ir a entrenar|ir al gimnas
 export const esDeEntrenar = (h: Habito) => h.icono === 'dumbbell' || DE_ENTRENAR.test(h.nombre.trim());
 /** En este orden: anotada una, la de antes ya pasó. El snack va aparte: puede ser a cualquier hora. */
 const ORDEN_DE_COMIDAS: readonly Comida[] = ['desayuno', 'almuerzo', 'merienda', 'cena'];
+/** Una comida y las de después: anotada cualquiera, esa ya pasó (con la cena anotada, la merienda ya fue). */
+export const yLasDeDespues = (c: Comida): Comida[] => {
+  const i = ORDEN_DE_COMIDAS.indexOf(c);
+  return i < 0 ? [c] : ORDEN_DE_COMIDAS.slice(i);
+};
 
 export type DelDia = {
   dia: ClaveDia;
@@ -542,10 +547,7 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
   // hábito, al marcarlo; una comida, al anotarla a ella o a una de después (con la cena anotada, la merienda ya fue); y
   // pesarse, después de desayunar, ya no es lo mismo: al pesarte o al anotar el desayuno.
   const marcado = (a: Aviso): number => {
-    if (a.comida) {
-      const i = ORDEN_DE_COMIDAS.indexOf(a.comida);
-      return Math.min(anotada(a.comida), ...(i < 0 ? [] : ORDEN_DE_COMIDAS.slice(i + 1)).map(anotada));
-    }
+    if (a.comida) return Math.min(...yLasDeDespues(a.comida).map(anotada));
     if (a.tipo === 'pesarse') return op.pesado ? -Infinity : anotada('desayuno');
     const marca = a.habito ? op.marcas?.get(claveDeMarca(a.habito, dia)) : undefined;
     if (!marca?.hecho) return Infinity;

@@ -296,7 +296,7 @@ const Escena = (() => {
     function textoAuto(h) {
       if (h.encendido) return '';
       if (h.auto === 'pasos') return numero(h.valor);
-      if (h.auto === 'sueno') { const hs = Math.floor(h.valor / 60), m = h.valor % 60; return tx('cielo.horasMinutos', { h: hs, m }); }
+      if (h.auto === 'sueno') { const t = Math.round(h.valor), hs = Math.floor(t / 60), m = t % 60; return m ? tx('cielo.horasMinutos', { h: hs, m }) : tx('fecha.horas', { h: hs }); }
       return '';
     }
 

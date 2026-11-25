@@ -7,34 +7,35 @@ import type { Calidad } from '@/cielo/mundo';
 import type { Constelacion } from '@/datos/catalogo';
 import type { Sistema } from '@/dominio/cantidades';
 import { COMIDAS, CON_HORA, horasCorridas, type Comida } from '@/dominio/comidas';
+import { pesoUnico, type PesoCompartido } from '@/dominio/conAscent';
 import { asignar, mismosPeriodos, periodoDe, type Periodo } from '@/dominio/constelaciones';
 import { medidaValida, SITIOS, type Centimetros, type Medidas } from '@/dominio/cuerpo';
 import { controlSemanal, tendencia, ultimoDiaDeControl, type Peso } from '@/dominio/control';
-import { claveDeMarca, mismoResumen, rehacerDia, resumirDia, type Dia, type Marca, type Origen } from '@/dominio/dias';
+import { claveDeMarca, mismoResumen, rehacerDia, resumirDia, seEnciendeSola, type Dia, type Marca, type Origen } from '@/dominio/dias';
 import { CORTE_DE_FABRICA, CORTES, diaDeLaSemana, diaLogico, minutosEnElDia, partesDe, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
 import type { Entreno } from '@/dominio/alrededorDelEntreno';
 import {
   claveDeEtapa, DEPORTES, deportesDePerfil, etapaDelPlan, llegadaDe, llegadaDeHoy, loQueSigue, loQueToca, respuestasDe, type Despues, type EtapaDelPlan, type Llegada, type RespuestasGuardadas,
 } from '@/dominio/cuestionario';
-import { controlConCuidados, cuidadosDe, reglasDe, sinDeficitDe, type CuidadosGuardados, type Reglas } from '@/dominio/cuidados';
-import { archivar, cantidadesPorDia, habitosDelDia, type Habito } from '@/dominio/habitos';
+import { controlConCuidados, cuidadosDe, metaConCuidados, reglasDe, sinDeficitDe, type CuidadosGuardados, type Reglas } from '@/dominio/cuidados';
+import { archivar, cantidadesPorDia, habitosDelDia, type DatoDeSalud, type Habito } from '@/dominio/habitos';
 import { logrosNuevos, type Logro } from '@/dominio/logros';
 import {
   edadDe, metaManual, metaPara, metaRepartida, metasIniciales, motivoParaNo, objetivoPermitido, pesoMinimoSano, type Cuestionario, type Eleccion, type Macros, type MetaGuardada, type Perfil,
 } from '@/dominio/metas';
 import { limpiarNombre, type Nombre } from '@/dominio/nombre';
 import { diaDeLosPendientes, limpiarPendiente, pendientesDe, pendientesLlenos, pendientesVigentes, type Pendiente } from '@/dominio/pendientes';
-import { nivelDeHoy, pctParaLaMeta, plazoElegidoDe, ritmoConRango, type PlazoElegido } from '@/dominio/progreso';
+import { nivelDeHoy, pctDeHoy, pctParaLaMeta, plazoElegidoDe, plazoVigente, ritmoConRango, type PlazoElegido } from '@/dominio/progreso';
 import { adaptarRegistros, PREFERENCIAS_DE_FABRICA, sugerenciasQueSobran, type ComidaPlaneada, type Preferencias } from '@/dominio/plan';
 import { horasDeComer, noSueleComer, type DeDondeSale } from '@/dominio/recordatorios';
 import {
-  borrado, claveDeFavorito, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, restaurado,
+  aguaDelDia, borrado, claveDeFavorito, COMIDAS_DEL_DIA, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, restaurado,
   type AlimentoPropio, type Fuente, type Item, type Receta, type Registro, type TomaDeAgua,
 } from '@/dominio/registros';
 import { aplicar, ganadores, type Datos } from './mezclar';
 import type { LoDeSalud } from '@/salud/convertir';
 import { NECESIDADES, type Cara, type NochePropia } from '@/dominio/sueno';
-import { MARGENES, margenParaDormirte, NOCHES_QUE_SE_REARMAN, sinLasRestas } from '@/dominio/sinReloj';
+import { aceptadaSinCambios, conNochesDeMoss, MARGENES, margenParaDormirte, NOCHES_QUE_SE_REARMAN, sinLasRestas } from '@/dominio/sinReloj';
 import type { AvisoDeHabito, Avisos } from '@/dominio/avisos';
 import { RESPUESTAS_DEL_DESAYUNO, type RespuestaDelDesayuno } from '@/dominio/sigueElDespertar';
 import { DE_COMIDA, NOMBRE, nombreDeAjuste, sinCambios, type Coleccion, type DeComida, type Guardado, type ListasDeComida, type Repositorio } from './repositorio';
@@ -100,6 +101,11 @@ export type Estado = MapasDeComida & {
   pendientes: Pendiente[];
   /** El ritmo o la fecha elegidos en Progreso › Ritmo y plazo (D35); sin elegir, null. Queda en el teléfono. */
   plazo: PlazoElegido | null;
+  /**
+   * El día en que cambió el objetivo o el peso meta después de la entrada: el camino se mide desde la tendencia de ese
+   * día. Sin cambiarlos, null (vale el de la primera meta). Queda en el teléfono.
+   */
+  inicioDelObjetivo: ClaveDia | null;
   /** Cuándo llegaste al peso meta y lo que Moss ya aplicó de lo que sigue (cuestionario.ts, Llegada); sin llegar, null. Queda en el teléfono. */
   llegada: Llegada | null;
   /** El país de los alimentos (ISO 3166-1), elegido en Perfil aparte del idioma; sin elegir, el del teléfono. Queda en el teléfono. */
@@ -193,6 +199,7 @@ const DESAYUNOS = 'desayunos';
 const DIAS_DEL_DESPERTAR = 14;
 const PENDIENTES = 'pendientes';
 const PLAZO = 'plazo';
+const INICIO_DEL_OBJETIVO = 'inicioDelObjetivo';
 const LLEGADA = 'llegada';
 const PAIS = 'paisDeAlimentos';
 const FUENTE_DEL_SUENO = 'fuenteDelSueno';
@@ -316,10 +323,33 @@ export function horasDeComerDe(e: Pick<Estado, 'hoy' | 'registros' | 'respuestas
 /** Si esa comida, en tu día, dice «No suelo»: no avisa a su hora. */
 export const noSueleDe = (e: Pick<Estado, 'respuestas'>) => (c: Comida) => noSueleComer(e.respuestas?.horarios, c);
 
+/**
+ * Lo que lleva ese día un hábito de Salud (el almacén y el cielo, dia.ts): lo que dijo Salud y, del agua, también la
+ * anotada en Moss. Lo dormido, sin la noche de Salud (o con una de confianza baja), es la noche de Moss, salvo la
+ * estimada con confianza baja.
+ */
+export function valorDeSalud(e: Pick<Estado, 'salud' | 'agua' | 'noches'>, dato: Exclude<DatoDeSalud, 'acostarse'>, dia: ClaveDia): number | undefined {
+  const s = e.salud;
+  const deSalud = s?.dia === dia ? s.valores : s?.ayer?.dia === dia ? s.ayer.valores : {};
+  if (dato === 'agua') {
+    const enMoss = aguaDelDia(e.agua.values(), dia);
+    return enMoss ? (deSalud.agua ?? 0) + enMoss : deSalud.agua;
+  }
+  if (dato === 'sueno') {
+    const noche = conNochesDeMoss(s?.noches ?? [], [...e.noches.values()], (ms) => -new Date(ms).getTimezoneOffset()).find((n) => n.clave === dia);
+    if (noche?.moss && noche.confianza.duracion !== 'baja') return Math.round(noche.dormido);
+  }
+  return deSalud[dato];
+}
+
+// Hasta el 25/11/2026, «pan» en el Río de la Plata y Paraguay daba primero el panettone, y Decir lo recordaba al
+// aceptarlo: ese recuerdo se olvida.
+const PANETTONE = 2707704;
+
 function leerAlias(texto: string | undefined): Record<string, number> {
   try {
     const x = texto ? (JSON.parse(texto) as Record<string, unknown>) : {};
-    return Object.fromEntries(Object.entries(x).filter((p): p is [string, number] => typeof p[1] === 'number'));
+    return Object.fromEntries(Object.entries(x).filter((p): p is [string, number] => typeof p[1] === 'number' && !(p[0] === 'pan' && p[1] === PANETTONE)));
   } catch {
     return {};
   }
@@ -455,7 +485,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: diaLogico(ahora(), CORTE_DE_FABRICA, zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, nombre: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), sistema: null, inicio: null,
-    recordatorios: null, avisos: {}, horasDeComer: {}, calidad: null, uso: [], despertares: {}, desayunos: {}, fuenteDelSueno: null, numeros: true, kcal: 'luna', entreno: null, respuestas: null, cuidados: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, suenoRehecho: false, necesidad: null, pendientes: [], plazo: null, llegada: null, paisDeAlimentos: null, semilla: '',
+    recordatorios: null, avisos: {}, horasDeComer: {}, calidad: null, uso: [], despertares: {}, desayunos: {}, fuenteDelSueno: null, numeros: true, kcal: 'luna', entreno: null, respuestas: null, cuidados: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, suenoRehecho: false, necesidad: null, pendientes: [], plazo: null, inicioDelObjetivo: null, llegada: null, paisDeAlimentos: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -471,6 +501,11 @@ export function crearAlmacen(op: Opciones) {
   let iniciando: Promise<void> | undefined;
   /** La meta que puso el control en esta sesión: si llegan pesos de Salud después, se rehace. */
   let controlDeHoy: MetaGuardada | null = null;
+  /** Con Ascent vinculada, sus pesos (los pone ascent.ts al llegar; sin vínculo, ninguno): en memoria, no se guardan. */
+  let pesosDeAscent: readonly PesoCompartido[] = [];
+  /** Los pesos de las dos apps (spec/ascent.md, función 4), los mismos de las pantallas (usePesoUnico). */
+  const pesosConAscent = () => (pesosDeAscent.length ? pesoUnico(estado.pesos, pesosDeAscent) : estado.pesos);
+  const pesoDeHoy = () => pesosConAscent().at(-1)?.kg;
   /**
    * Algo bajado de la cuenta no se pudo guardar y quedó solo en memoria: hasta volver a cargar lo guardado, lo bajado
    * no se da por bajado (si no, no se volvería a pedir nunca).
@@ -509,13 +544,15 @@ export function crearAlmacen(op: Opciones) {
    * Los hábitos de comida de un día se encienden, y se apagan, solos con lo registrado ese día,
    * contra la meta que se ve ese día (con el reparto de la semana). Devuelve las marcas nuevas.
    */
-  function marcasDeLaComida(base: Pick<Estado, 'habitos' | 'registros' | 'metas' | 'perfil'>, dia: ClaveDia, antes: Map<string, Marca>) {
+  function marcasDeLaComida(base: Pick<Estado, 'habitos' | 'registros' | 'metas' | 'perfil' | 'respuestas'>, dia: ClaveDia, antes: Map<string, Marca>) {
     let marcas = antes;
     const vigente = metaVigente(base, dia);
     const meta = vigente ? metaRepartida(soloMacros(vigente), base.perfil, diaDeLaSemana(dia)) : null;
+    // «Registrar» pide las comidas de tu día, sin las que dicen «No suelo» (si dicen eso las tres, las tres).
+    const suele = COMIDAS_DEL_DIA.filter((c) => !noSueleComer(base.respuestas?.horarios, c));
     for (const h of habitosDelDia(base.habitos, dia)) {
       if (h.fuente.tipo !== 'comida') continue;
-      const cumple = cumpleLaComida(h.fuente.meta, base.registros.values(), dia, meta, h.fuente.comidas);
+      const cumple = cumpleLaComida(h.fuente.meta, base.registros.values(), dia, meta, h.fuente.comidas ?? (suele.length ? suele : COMIDAS_DEL_DIA));
       const clave = claveDeMarca(h.id, dia);
       if ((marcas.get(clave)?.hecho ?? false) === cumple) continue;
       const marca: Marca = { habito: h.id, dia, hecho: cumple, momento: despuesDe(marcas.get(clave)?.momento), origen: 'comida' };
@@ -530,7 +567,7 @@ export function crearAlmacen(op: Opciones) {
    * cantidad de hábitos de cada día, el resumen de hoy y los logros que se ganen. Guarda lo que
    * cambió y devuelve el estado nuevo.
    */
-  function alDia(base: Pick<Estado, 'hoy' | 'habitos' | 'periodos' | 'dias' | 'marcas' | 'logros' | 'semilla' | 'registros' | 'metas' | 'perfil'>) {
+  function alDia(base: Pick<Estado, 'hoy' | 'habitos' | 'periodos' | 'dias' | 'marcas' | 'logros' | 'semilla' | 'registros' | 'metas' | 'perfil' | 'respuestas'>) {
     const { hoy, habitos } = base;
     const marcas = marcasDeLaComida(base, hoy, base.marcas);
     const periodos = asignar(base.periodos, cantidadesPorDia(habitos, hoy), hoy, op.catalogo, base.semilla);
@@ -571,6 +608,7 @@ export function crearAlmacen(op: Opciones) {
       guardar((r) => r.guardarHabitos(h));
     }
     const comida = mapasDe(g);
+    const respuestas = respuestasDe(leerAvance(g.ajustes[RESPUESTAS]));
     const { estado: nuevo } = alDia({
       hoy,
       habitos,
@@ -582,6 +620,7 @@ export function crearAlmacen(op: Opciones) {
       registros: comida.registros,
       metas: g.metas,
       perfil: g.perfil,
+      respuestas,
     });
     const avisos = leerAvisos(g.ajustes[AVISOS]);
     const horas = horasDeComerGuardadas(g.ajustes[HORAS_DE_COMER], g.ajustes[AVISOS]);
@@ -594,7 +633,7 @@ export function crearAlmacen(op: Opciones) {
     cambiarLaCanasta(leerCanasta(g.ajustes[CANASTA]));
     // Lo de la memoria es otra vez lo guardado.
     nubeSinGuardar = false;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos, horasDeComer: horas.horas, calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), despertares: porDia(g.ajustes[DESPERTARES], esDespertar), desayunos: porDia(g.ajustes[DESAYUNOS], esRespuesta), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', kcal: ESTILOS_DE_KCAL.find((k) => k === g.ajustes[KCAL]) ?? 'luna', entreno: leerEntreno(g.ajustes[ENTRENO]), respuestas: respuestasDe(leerAvance(g.ajustes[RESPUESTAS])), cuidados: cuidadosDe(leerAvance(g.ajustes[CUIDADOS])), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), suenoRehecho: g.ajustes[SUENO_REHECHO] === 'si', necesidad: necesidadDe(g.ajustes[NECESIDAD]), pendientes: pendientesVigentes(pendientesDe(leerAvance(g.ajustes[PENDIENTES])), hoy), plazo: plazoElegidoDe(leerAvance(g.ajustes[PLAZO])), llegada: llegadaDe(leerAvance(g.ajustes[LLEGADA])), paisDeAlimentos: /^[A-Z]{2}$/.test(g.ajustes[PAIS] ?? '') ? g.ajustes[PAIS] : null, listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos, horasDeComer: horas.horas, calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), despertares: porDia(g.ajustes[DESPERTARES], esDespertar), desayunos: porDia(g.ajustes[DESAYUNOS], esRespuesta), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', kcal: ESTILOS_DE_KCAL.find((k) => k === g.ajustes[KCAL]) ?? 'luna', entreno: leerEntreno(g.ajustes[ENTRENO]), respuestas, cuidados: cuidadosDe(leerAvance(g.ajustes[CUIDADOS])), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), suenoRehecho: g.ajustes[SUENO_REHECHO] === 'si', necesidad: necesidadDe(g.ajustes[NECESIDAD]), pendientes: pendientesVigentes(pendientesDe(leerAvance(g.ajustes[PENDIENTES])), hoy), plazo: plazoElegidoDe(leerAvance(g.ajustes[PLAZO])), inicioDelObjetivo: /^\d{4}-\d{2}-\d{2}$/.test(g.ajustes[INICIO_DEL_OBJETIVO] ?? '') ? g.ajustes[INICIO_DEL_OBJETIVO] : null, llegada: llegadaDe(leerAvance(g.ajustes[LLEGADA])), paisDeAlimentos: /^[A-Z]{2}$/.test(g.ajustes[PAIS] ?? '') ? g.ajustes[PAIS] : null, listo: true }, true);
     revisarControl();
     revisarEtapa();
   }
@@ -633,45 +672,78 @@ export function crearAlmacen(op: Opciones) {
    */
   function metaDeLaEstrategia(antes: Perfil, perfil: Perfil): boolean {
     const ultima = estado.metas[estado.metas.length - 1];
-    const pesoKg = estado.pesos[estado.pesos.length - 1]?.kg;
+    const pesoKg = pesoDeHoy();
     const cambiaLaMeta = perfil.objetivo !== antes.objetivo || perfil.ritmo !== antes.ritmo || perfil.estilo !== antes.estilo || !!perfil.sinDeficit !== !!antes.sinDeficit;
     if (!ultima || ultima.motivo === 'manual' || pesoKg === undefined || !cambiaLaMeta) return false;
-    const c = { edad: edadDe(perfil, estado.hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo, sinDeficit: perfil.sinDeficit };
-    // Con un ritmo elegido en Progreso (otro objetivo u otro ritmo ya lo soltaron), el reparto nuevo lo sigue.
-    const meta: MetaGuardada = { ...metaPara(ultima.gasto, c, perfil.estilo, estado.plazo ? eleccionDeAhora() : undefined), desde: estado.hoy, gasto: ultima.gasto, motivo: 'objetivo', momento: horaDeMeta(estado.hoy) };
-    guardar((r) => r.guardarMeta(meta));
-    ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
+    const metas = metaDeAhora(ultima.gasto, perfil, pesoKg);
+    if (!metas) return false;
+    ponerMetaDesdeHoy(metas, ultima.gasto);
     return true;
   }
 
   /**
    * Lo que la meta sigue de lo elegido (metas.ts, Eleccion): la proteína del cuestionario y el ritmo, el de
-   * Progreso › Ritmo y plazo si se eligió ahí (D35) o, si no, el de la fecha del cuestionario.
+   * Progreso › Ritmo y plazo si se eligió ahí (D35) o, si no, el de la fecha del cuestionario. Con una fecha, el
+   * que hace falta desde el peso de hoy, como el plan de Progreso, que lo vuelve a sacar cada día.
    */
   function eleccionDeAhora(): Eleccion | undefined {
-    const delCuestionario = estado.respuestas?.eleccion;
-    const { perfil, plazo } = estado;
-    const pesoKg = estado.pesos[estado.pesos.length - 1]?.kg;
+    const r0 = estado.respuestas;
+    const { perfil, hoy } = estado;
+    const pesos = pesosConAscent();
     const objetivo = perfil ? objetivoPermitido(perfil) : 'mantener';
-    if (!perfil || !plazo || objetivo === 'mantener' || pesoKg === undefined) return delCuestionario;
-    return { proteinaPorKg: delCuestionario?.proteinaPorKg ?? null, pct: pctParaLaMeta(objetivo, plazo.pct, pesoKg, edadDe(perfil, estado.hoy)) };
+    const vigente = plazoVigente(estado.plazo, r0 ? { fecha: r0.fecha, pct: r0.eleccion.pct } : null);
+    if (!perfil || objetivo === 'mantener' || !pesos.length || !vigente) return r0?.eleccion;
+    const pesoKg = pesos[pesos.length - 1].kg;
+    // El peso de hoy sin el atraso de la tendencia, como Progreso (Plan.tsx, calcularPlan).
+    const nivel = vigente.fecha ? (nivelDeHoy(tendencia(pesos, hoy), hoy, pesos, ritmoConRango(pesos, hoy)) ?? pesoKg) : pesoKg;
+    const pct = pctDeHoy(vigente, hoy, nivel, perfil.pesoMeta, objetivo);
+    return { proteinaPorKg: r0?.eleccion.proteinaPorKg ?? null, pct: pctParaLaMeta(objetivo, pct, pesoKg, edadDe(perfil, hoy)) };
   }
 
   /**
-   * La meta desde hoy con el ritmo elegido en Progreso (o, al soltarlo, con el del perfil) y el gasto que se venía
-   * midiendo. Con las metas a mano quedan las que había; con cuidados marcados, la pone el control con su regla.
+   * La meta para un gasto con lo de ahora: con cuidados marcados, la de su regla (cuidados.ts); sin ellos, la del
+   * objetivo con lo elegido (eleccionDeAhora). Con las metas del equipo (diálisis, embarazada antes de los 18), null.
    */
-  function metaDelPlazo() {
-    const { perfil } = estado;
-    const ultima = estado.metas[estado.metas.length - 1];
-    const pesoKg = estado.pesos[estado.pesos.length - 1]?.kg;
-    if (!perfil || !ultima || ultima.motivo === 'manual' || pesoKg === undefined || estado.cuidados?.marcados.length) return;
+  function metaDeAhora(gasto: number, perfil: Perfil, pesoKg: number): Macros | null {
     const c = { edad: edadDe(perfil, estado.hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo, sinDeficit: perfil.sinDeficit };
-    const metas = metaPara(ultima.gasto, c, perfil.estilo, eleccionDeAhora());
-    if (metas.kcal === ultima.kcal && metas.proteina === ultima.proteina && metas.carbohidratos === ultima.carbohidratos && metas.grasas === ultima.grasas) return;
-    const meta: MetaGuardada = { ...metas, desde: estado.hoy, gasto: ultima.gasto, motivo: 'objetivo', momento: horaDeMeta(estado.hoy) };
+    const reglas = reglasDeCuidados(estado, pesoKg);
+    if (reglas?.cuidados.length) return metaConCuidados(gasto, c, perfil.estilo ?? 'equilibrada', reglas);
+    return metaPara(gasto, c, perfil.estilo, eleccionDeAhora());
+  }
+
+  function ponerMetaDesdeHoy(metas: Macros, gasto: number): MetaGuardada {
+    const meta: MetaGuardada = { ...metas, desde: estado.hoy, gasto, motivo: 'objetivo', momento: horaDeMeta(estado.hoy) };
     guardar((r) => r.guardarMeta(meta));
     ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
+    return meta;
+  }
+
+  /**
+   * La meta desde hoy con lo de ahora (metaDeAhora: el ritmo elegido en Progreso o, al soltarlo, el del perfil; los
+   * cuidados marcados) y el gasto que se venía midiendo, si cambia. Con las metas a mano quedan las que había.
+   */
+  function metaDeHoy() {
+    const { perfil } = estado;
+    const ultima = estado.metas[estado.metas.length - 1];
+    const pesoKg = pesoDeHoy();
+    if (!perfil || !ultima || ultima.motivo === 'manual' || pesoKg === undefined) return;
+    const metas = metaDeAhora(ultima.gasto, perfil, pesoKg);
+    if (metas && !soloMacrosIguales(metas, ultima)) ponerMetaDesdeHoy(metas, ultima.gasto);
+  }
+
+  /** Lo elegido en Progreso › Ritmo y plazo ya no vale (otro objetivo, otro ritmo, otra fecha o la llegada). */
+  function soltarElPlazo() {
+    if (!estado.plazo) return;
+    guardar((r) => r.guardarAjuste(PLAZO, ''));
+    cambiar({ plazo: null }, false);
+  }
+
+  /** Otro objetivo u otro peso meta: el camino se mide desde hoy (persona.ts y revisarEtapa). */
+  function fijarElObjetivo(antes: Perfil | null, perfil: Perfil) {
+    if (!antes || (perfil.objetivo === antes.objetivo && perfil.pesoMeta === antes.pesoMeta)) return;
+    const { hoy } = estado;
+    guardar((r) => r.guardarAjuste(INICIO_DEL_OBJETIVO, hoy));
+    cambiar({ inicioDelObjetivo: hoy }, false);
   }
 
   /**
@@ -698,6 +770,7 @@ export function crearAlmacen(op: Opciones) {
     const peso: Peso | null = siempreElPeso || ultimo !== pesoKg ? { fecha: estado.hoy, kg: pesoKg, origen: origenDelPeso, momento: despuesDe(estado.pesos.find((p) => p.fecha === estado.hoy)?.momento) } : null;
     if (peso) guardar((r) => r.guardarPeso(peso));
     cambiar({ perfil, pesos: peso ? [...estado.pesos.filter((p) => p.fecha !== peso.fecha), peso].sort(porFecha((p) => p.fecha)) : estado.pesos }, false);
+    fijarElObjetivo(antes, perfil);
     if (nuevo) {
       const { respuestas, cuidados } = nuevo;
       // La próxima carrera es de Perfil › Entrenamiento: el cuestionario no la pregunta, y mientras siga corriendo, queda.
@@ -748,25 +821,31 @@ export function crearAlmacen(op: Opciones) {
    * El control de la semana (src/dominio/control.ts): corre solo, una vez por semana, el día que se
    * eligió en Progreso o, sin elegir, el día de la semana en que se fijó la primera meta (como
    * MacroFactor). Si ese día no se abrió Moss, corre la próxima vez. Con las metas a mano, mide el
-   * gasto pero deja los macros. Con `rehacer`, el de hoy se vuelve a hacer (llegaron pesos de Salud
-   * después de correrlo).
+   * gasto pero deja los macros. Con `rehacer`, el de hoy se vuelve a hacer (llegaron pesos de Salud o de
+   * Ascent después de correrlo). Con Ascent vinculada, mide con los pesos de las dos apps.
    */
   function revisarControl(rehacer = false) {
-    const { hoy, perfil, pesos } = estado;
+    const { hoy, perfil } = estado;
+    const pesos = pesosConAscent();
     const metas = rehacer ? estado.metas.filter((m) => m !== controlDeHoy) : estado.metas;
     const ultima = metas[metas.length - 1];
     if (!perfil || !ultima) return;
     const diaDelControl = ultimoDiaDeControl(hoy, perfil.diaDelControl ?? diaDeLaSemana(metas[0].desde));
     const pesoKg = pesos[pesos.length - 1]?.kg;
     if (diaDelControl <= ultima.desde || pesoKg === undefined) return;
-    // Lo elegido en el cuestionario (la proteína del nivel y el ritmo de la fecha) y, con cuidados, su regla: en pausa, nada.
+    const reglas = estado.cuidados?.marcados.length ? reglasDeCuidados(estado, pesoKg) : null;
+    // En pausa (el embarazo) no se mide el gasto: lo que sube no es grasa. La meta sí sigue la semana (el extra de NASEM).
+    if (reglas?.control === 'pausa') {
+      metaDeHoy();
+      return;
+    }
+    // Lo elegido en el cuestionario (la proteína del nivel y el ritmo de la fecha) y, con cuidados, su regla.
     const eleccion = eleccionDeAhora();
     const entrada = {
       hoy, pesadas: pesos, comidas: comidasParaElControl(estado.registros.values()), gastoAnterior: ultima.gasto, metasAnteriores: soloMacros(ultima),
       perfil: { edad: edadDe(perfil, hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo, sinDeficit: perfil.sinDeficit }, estilo: perfil.estilo,
       ...(eleccion ? { eleccion } : {}),
     };
-    const reglas = estado.cuidados?.marcados.length ? reglasDeCuidados(estado, pesoKg) : null;
     const c = reglas ? controlConCuidados(entrada, reglas) : controlSemanal(entrada);
     if (!c) return;
     const aMano = ultima.motivo === 'manual';
@@ -802,12 +881,13 @@ export function crearAlmacen(op: Opciones) {
    * antes la meta de hoy, el control de ese día no mediría.
    */
   function revisarEtapa() {
-    const { perfil, pesos, hoy } = estado;
+    const { perfil, hoy } = estado;
+    const pesos = pesosConAscent();
     if (!perfil || !pesos.length) return;
     const t = tendencia(pesos, hoy);
     const nivel = nivelDeHoy(t, hoy, pesos, ritmoConRango(pesos, hoy));
-    // Se empezó con la primera meta (la entrada), como en Progreso (persona.ts).
-    const empezo = estado.metas[0]?.desde;
+    // Se empezó el día en que se fijó el objetivo o, sin cambiarlo, con la primera meta (la entrada), como en Progreso (persona.ts).
+    const empezo = estado.inicioDelObjetivo ?? estado.metas[0]?.desde;
     const pesoInicial = (empezo ? t.get(empezo) : undefined) ?? t.values().next().value ?? null;
     const llegada = llegadaDeHoy({
       hoy, guardada: estado.llegada, objetivo: objetivoPermitido(perfil), pesoMeta: perfil.pesoMeta, nivel, pesoInicial,
@@ -836,16 +916,13 @@ export function crearAlmacen(op: Opciones) {
     if (toca.sinPesoMeta) delete perfil.pesoMeta;
     guardar((r) => r.guardarPerfil(perfil));
     cambiar({ perfil }, false);
-    if (estado.plazo) {
-      guardar((r) => r.guardarAjuste(PLAZO, ''));
-      cambiar({ plazo: null }, false);
-    }
+    soltarElPlazo();
     if (r0) {
       const respuestas: RespuestasGuardadas = { ...r0, fecha: null, recomponer: toca.recomponer, eleccion: toca.eleccion };
       guardar((r) => r.guardarAjuste(RESPUESTAS, JSON.stringify(respuestas)));
       cambiar({ respuestas }, false);
     }
-    metaDelPlazo();
+    if (!estado.cuidados?.marcados.length) metaDeHoy();
   }
 
   /** Encender o apagar un hábito hoy. Devuelve los logros que se ganaron con eso. */
@@ -877,8 +954,22 @@ export function crearAlmacen(op: Opciones) {
       }
     }
     const { estado: nuevo, ganados } = alDia({ ...estado, marcas, dias });
-    cambiar(nuevo, false);
+    // Un día que ya pasó cambia tu universo y la riqueza del cielo (dia.ts los rehace con la forma).
+    cambiar(nuevo, dia !== estado.hoy);
     return ganados;
+  }
+
+  /**
+   * Los hábitos de Salud de ese día que llegaron a su meta se encienden solos. Salud nunca los apaga, ni enciende lo
+   * que apagaste a mano: una estrella de Salud también se corrige tocándola (especificación, «Registro»).
+   */
+  function encenderConSalud(dia: ClaveDia) {
+    for (const h of habitosDelDia(estado.habitos, dia)) {
+      if (h.fuente.tipo !== 'salud' || h.fuente.dato === 'acostarse') continue;
+      if (!seEnciendeSola(estado.marcas.get(claveDeMarca(h.id, dia)), 'salud')) continue;
+      const valor = valorDeSalud(estado, h.fuente.dato, dia);
+      if (valor !== undefined && valor >= h.fuente.meta) marcarEnDia(h.id, dia, true, 'salud');
+    }
   }
 
   function cambiarHabitos(lista: Habito[]) {
@@ -909,13 +1000,19 @@ export function crearAlmacen(op: Opciones) {
       return y;
     });
     guardar((r) => r.guardarComida(coleccion, lista));
-    const alDiaConComida = coleccion === 'registros' ? conLaComida({ ...estado, registros: mapa as Estado['registros'] }, lista as Registro[]) : {};
-    cambiar({ [coleccion]: mapa, ...alDiaConComida } as Partial<Estado>, false);
+    const conComida = coleccion === 'registros' ? conLaComida({ ...estado, registros: mapa as Estado['registros'] }, lista as Registro[]) : null;
+    // El agua anotada y la noche de Moss cambian lo que llevan hoy los hábitos de Salud, que se ve en el cielo (dia.ts).
+    const dato = coleccion === 'agua' ? 'agua' : coleccion === 'noches' ? 'sueno' : null;
+    const conHabito = !!dato && habitosDelDia(estado.habitos, estado.hoy).some((h) => h.fuente.tipo === 'salud' && h.fuente.dato === dato);
+    const llevaHoy = (e: Pick<Estado, 'salud' | 'agua' | 'noches'>) => (dato && conHabito ? valorDeSalud(e, dato, estado.hoy) : undefined);
+    cambiar({ [coleccion]: mapa, ...conComida?.estado } as Partial<Estado>, !!conComida?.pasado || llevaHoy(estado) !== llevaHoy({ ...estado, [coleccion]: mapa }));
+    if (dato) for (const dia of new Set((lista as (TomaDeAgua | NochePropia)[]).map((x) => ('dia' in x ? x.dia : x.fecha)))) encenderConSalud(dia);
   }
 
   /**
    * Lo registrado enciende o apaga los hábitos de comida de hoy y, si fue en otro de los días
-   * recientes (la cena que se anotó al día siguiente, o pasada la medianoche), los de ese día.
+   * recientes (la cena que se anotó al día siguiente, o pasada la medianoche), los de ese día; si Moss
+   * no se abrió ese día, lo arma, como marcarEnDia. Dice también si cambió un día que ya pasó.
    */
   function conLaComida(base: Estado, cambiados: Registro[]) {
     const desde = sumarDias(base.hoy, -DIAS_DE_MARCAS);
@@ -923,16 +1020,19 @@ export function crearAlmacen(op: Opciones) {
     let dias = base.dias;
     for (const dia of new Set(cambiados.map((r) => r.dia))) {
       if (dia >= base.hoy || dia < desde) continue;
+      const previas = marcas;
       marcas = marcasDeLaComida(base, dia, marcas);
       const antes = dias.get(dia);
-      if (!antes) continue;
-      const rehecho = rehacerDia(antes, [...marcas.values()]);
+      if (!antes && marcas === previas) continue;
+      const rehecho = antes
+        ? rehacerDia(antes, [...marcas.values()])
+        : resumirDia(dia, habitosDelDia(base.habitos, dia), [...marcas.values()], periodoDe(base.periodos, dia)?.constelacion ?? null);
       if (mismoResumen(antes, rehecho)) continue;
-      const nuevo: Dia = { ...rehecho, actualizado: despuesDe(antes.actualizado) };
+      const nuevo: Dia = { ...rehecho, actualizado: despuesDe(antes?.actualizado) };
       dias = new Map(dias).set(dia, nuevo);
       guardar((r) => r.guardarDia(nuevo));
     }
-    return alDia({ ...base, marcas, dias }).estado;
+    return { estado: alDia({ ...base, marcas, dias }).estado, pasado: dias !== base.dias };
   }
 
   /** Borrar deja la marca, con su hora: así el borrado llega a los otros teléfonos. */
@@ -1159,12 +1259,16 @@ export function crearAlmacen(op: Opciones) {
     /**
      * «Tus respuestas», desde Perfil: el cuestionario contestado otra vez. Guarda lo contestado como al final de la
      * entrada y rehace la meta desde hoy con lo nuevo (sin meta, con diálisis o embarazada antes de los 18, quedan
-     * las que había: van a mano). Devuelve la meta que vale desde hoy.
+     * las que había: van a mano). Con otro objetivo, otro ritmo u otra fecha, lo elegido en Progreso › Ritmo y plazo
+     * ya no vale (como en ponerEstrategia). Devuelve la meta que vale desde hoy.
      */
     cambiarRespuestas(c: Cuestionario, origenDelPeso: Peso['origen'], nuevo: CuestionarioNuevo): MetaGuardada | null {
-      if (!estado.perfil) return null;
+      const antes = estado.perfil;
+      if (!antes) return null;
+      const fechaAntes = estado.respuestas?.fecha ?? null;
       soltarLaLlegada();
-      guardarRespuestas(c, origenDelPeso, nuevo, false);
+      const perfil = guardarRespuestas(c, origenDelPeso, nuevo, false);
+      if (perfil.objetivo !== antes.objetivo || perfil.ritmo !== antes.ritmo || nuevo.respuestas.fecha !== fechaAntes) soltarElPlazo();
       if (!nuevo.meta) {
         cambiar(alDia(estado).estado, false);
         return metaVigente(estado, estado.hoy);
@@ -1176,18 +1280,22 @@ export function crearAlmacen(op: Opciones) {
     },
     /**
      * Perfil › Cuidados: lo marcado y lo que se preguntó además, solo en el teléfono. A la cuenta va «sin déficit»,
-     * y si cambia, la meta de hoy con él (como en Progreso).
+     * y la meta de hoy sale con la regla de lo marcado (el riñón: 0,8 g de proteína por kilo; el embarazo, el extra de
+     * su semana) o, sin nada, con la de siempre.
      */
     ponerCuidados(cuidados: CuidadosGuardados) {
+      if (JSON.stringify(cuidados) === JSON.stringify(estado.cuidados)) return;
       guardar((r) => r.guardarAjuste(CUIDADOS, JSON.stringify(cuidados)));
       cambiar({ cuidados }, false);
       const antes = estado.perfil;
       const reglas = reglasDeCuidados(estado);
-      if (!antes || !reglas || !!antes.sinDeficit === sinDeficitDe(reglas)) return;
-      const perfil: Perfil = { ...antes, sinDeficit: sinDeficitDe(reglas), actualizado: despuesDe(antes.actualizado) };
-      guardar((r) => r.guardarPerfil(perfil));
-      cambiar({ perfil }, false);
-      metaDeLaEstrategia(antes, perfil);
+      if (!antes || !reglas) return;
+      if (!!antes.sinDeficit !== sinDeficitDe(reglas)) {
+        const perfil: Perfil = { ...antes, sinDeficit: sinDeficitDe(reglas), actualizado: despuesDe(antes.actualizado) };
+        guardar((r) => r.guardarPerfil(perfil));
+        cambiar({ perfil }, false);
+      }
+      metaDeHoy();
     },
     /**
      * La estrategia de Progreso: el objetivo y su ritmo, cómo se reparten los macros, el peso al que
@@ -1205,6 +1313,7 @@ export function crearAlmacen(op: Opciones) {
       guardar((r) => r.guardarPerfil(perfil));
       cambiar({ perfil }, false);
       if (perfil.objetivo !== antes.objetivo || perfil.pesoMeta !== antes.pesoMeta) soltarLaLlegada();
+      fijarElObjetivo(antes, perfil);
       // Otro objetivo u otro ritmo: la fecha y la proteína elegidas en el cuestionario ya no son las de ahora.
       const r0 = estado.respuestas;
       if (r0 && (perfil.objetivo !== antes.objetivo || perfil.ritmo !== antes.ritmo)) {
@@ -1213,10 +1322,7 @@ export function crearAlmacen(op: Opciones) {
         cambiar({ respuestas }, false);
       }
       // …ni lo elegido en Ritmo y plazo.
-      if (estado.plazo && (perfil.objetivo !== antes.objetivo || perfil.ritmo !== antes.ritmo)) {
-        guardar((r) => r.guardarAjuste(PLAZO, ''));
-        cambiar({ plazo: null }, false);
-      }
+      if (perfil.objetivo !== antes.objetivo || perfil.ritmo !== antes.ritmo) soltarElPlazo();
       // El reparto de la semana cambia la meta de hoy, y con eso la estrella de las calorías.
       if (!metaDeLaEstrategia(antes, perfil) && 'semana' in cambios) cambiar(alDia(estado).estado, false);
     },
@@ -1252,7 +1358,7 @@ export function crearAlmacen(op: Opciones) {
         guardar((r) => r.guardarAjuste(RESPUESTAS, JSON.stringify(respuestas)));
         cambiar({ respuestas }, false);
       }
-      metaDelPlazo();
+      metaDeHoy();
     },
     /**
      * Tus datos, desde Perfil: el sexo, el año de nacimiento, la altura y la actividad. Las metas no
@@ -1279,8 +1385,8 @@ export function crearAlmacen(op: Opciones) {
       cambiar({ nombre }, false);
     },
     /**
-     * Lo que se leyó de Salud. Los hábitos automáticos de hoy que llegaron a su meta se encienden
-     * solos (Salud nunca los apaga), y los días sin peso toman el de Salud.
+     * Lo que se leyó de Salud. Los hábitos automáticos de hoy y de ayer que llegaron a su meta se
+     * encienden solos (encenderConSalud), y los días sin peso toman el de Salud.
      */
     ponerSalud(s: LoDeSalud) {
       const nuevos: Peso[] = [];
@@ -1298,24 +1404,31 @@ export function crearAlmacen(op: Opciones) {
       cambiar({ salud: s, pesos }, JSON.stringify(estado.salud?.valores ?? null) !== JSON.stringify(s.valores));
       rehacerElControlCon(nuevos);
       revisarEtapa();
-      if (s.dia !== estado.hoy) return;
-      for (const h of habitosDelDia(estado.habitos, estado.hoy)) {
-        if (h.fuente.tipo !== 'salud' || h.fuente.dato === 'acostarse') continue;
-        const valor = s.valores[h.fuente.dato];
-        if (valor !== undefined && valor >= h.fuente.meta && !estado.marcas.get(claveDeMarca(h.id, estado.hoy))?.hecho) marcar(h.id, true, 'salud');
-      }
+      // Lo de ayer, entero: lo que llegó a la meta con Moss cerrada.
+      if (s.ayer) encenderConSalud(s.ayer.dia);
+      encenderConSalud(s.dia);
     },
-    /** Volver de las metas a mano a las de Moss: las del objetivo y el reparto, con el gasto que se venía midiendo. */
+    /**
+     * Con Ascent vinculada, sus pesos (sin vínculo, ninguno): los pone ascent.ts cuando llegan. Si el control de hoy ya
+     * corrió sin ellos, se vuelve a hacer, como con los de Salud, y se mira si llegaste.
+     */
+    ponerPesosDeAscent(pesos: readonly PesoCompartido[]) {
+      const antes = pesosDeAscent;
+      pesosDeAscent = pesos;
+      rehacerElControlCon(pesoUnico([], pesos).filter((p) => !antes.some((a) => a.fecha === p.fecha && a.kg === p.kg)));
+      revisarEtapa();
+    },
+    /**
+     * Volver de las metas a mano a las de Moss: las del objetivo y el reparto con lo elegido (la fecha, el ritmo y la
+     * proteína) o las de los cuidados, con el gasto que se venía midiendo.
+     */
     metasDeMoss(): MetaGuardada | null {
       const ultima = estado.metas[estado.metas.length - 1];
       const perfil = estado.perfil;
-      const pesoKg = estado.pesos[estado.pesos.length - 1]?.kg;
+      const pesoKg = pesoDeHoy();
       if (!ultima || !perfil || pesoKg === undefined) return null;
-      const c = { edad: edadDe(perfil, estado.hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo, sinDeficit: perfil.sinDeficit };
-      const meta: MetaGuardada = { ...metaPara(ultima.gasto, c, perfil.estilo), desde: estado.hoy, gasto: ultima.gasto, motivo: 'objetivo', momento: horaDeMeta(estado.hoy) };
-      guardar((r) => r.guardarMeta(meta));
-      ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
-      return meta;
+      const metas = metaDeAhora(ultima.gasto, perfil, pesoKg);
+      return metas ? ponerMetaDesdeHoy(metas, ultima.gasto) : null;
     },
     /**
      * Las metas a mano, desde hoy: los gramos de cada macro (y las kcal, si se dan), con el gasto que
@@ -1382,16 +1495,25 @@ export function crearAlmacen(op: Opciones) {
       const p = partesDe(hacia.dia);
       const copia = copiar(elegidos.filter((r) => r.dia === primero.dia && r.comida === primero.comida), { dia: primero.dia, comida: primero.comida }, hacia, { hoy: estado.hoy, ahora: momento(), nuevoId })
         .map((r, i) => (hacia.minutos === undefined ? r : { ...r, momento: new Date(p.anio, p.mes, p.dia, 0, hacia.minutos, 0, i).toISOString() }));
-      ponerComida('registros', copia);
+      // Lo que queda comido es como anotarlo: lo que cambia al comer va en el mismo cambio.
+      const comidos = copia.filter((r) => !r.planificado);
+      ponerComida('registros', [...copia, ...(comidos.length ? alComer(hacia.dia, hacia.comida, comidos[0].momento, comidos) : [])]);
       return copia;
     },
     /**
      * Llegó el día: lo planificado a mano pasa a registrado. Devuelve cuántos. Lo que armó el plan se
      * anota de a una comida («Comí esto»): si no, se anotaría también la cena que todavía no se comió.
+     * Como al anotar, lo sugerido de esas comidas se va; lo que sigue no corre: ya estaba a su hora.
      */
     confirmarPlanificados(dia: ClaveDia = estado.hoy): number {
       const hechos = confirmar(estado.registros.values(), dia, momento()).filter((r) => !r.plan);
-      ponerComida('registros', hechos);
+      const sacados = new Map([...new Set(hechos.map((r) => r.comida))].flatMap((c) => {
+        const de = hechos.filter((r) => r.comida === c);
+        return alComer(dia, c, de[0].momento, de, { correr: false });
+      }).map((r) => [r.id, r]));
+      // Deshacer (volverAPlanificar) devuelve lo sugerido de todas esas comidas, no solo de la última.
+      sacado = sacados.size ? { anotados: new Set(hechos.map((r) => r.id)), cambios: [...sacados.values()].map((d) => ({ antes: estado.registros.get(d.id)!, despues: d })), confirmados: [] } : null;
+      ponerComida('registros', [...hechos, ...sacados.values()]);
       return hechos.length;
     },
     // ---------------------------------------------------------------- el plan de comidas
@@ -1510,7 +1632,8 @@ export function crearAlmacen(op: Opciones) {
       const desde = sumarDias(estado.hoy, -NOCHES_QUE_SE_REARMAN);
       ponerComida('noches', [...estado.noches.values()].flatMap((n) => {
         const hora = n.fecha >= desde && !n.borrado ? sinLasRestas(n.hora, margenParaDormirte(elegida)) : null;
-        return hora ? [{ ...n, hora, actualizado: momento() }] : [];
+        // Como lo que estima el teléfono solo (ponerHoraDeLaNoche): no le gana a lo confirmado en otro teléfono que todavía no llegó.
+        return hora ? [{ ...n, hora, actualizado: despuesDe(n.actualizado, DESDE_SIEMPRE) }] : [];
       }));
     },
     /** Las noches de las últimas dos semanas ya se rehicieron con la regla nueva: no se vuelve a hacer. */
@@ -1655,6 +1778,10 @@ export function crearAlmacen(op: Opciones) {
      */
     ponerHoraDeLaNoche(fecha: ClaveDia, hora: NonNullable<NochePropia['hora']>, sola = false) {
       const antes = estado.noches.get(fecha);
+      // La estimación lee la noche y espera al movimiento: lo que confirmaste o corregiste mientras tanto queda. La
+      // aceptada con «Sí» tal como se propuso, no, mientras se rehacen las noches de la regla de antes (rehacerLasNoches).
+      const guardada = antes && !antes.borrado ? antes.hora : undefined;
+      if (sola && guardada && guardada.origen !== 'estimada' && (estado.suenoRehecho || !aceptadaSinCambios(guardada))) return;
       ponerComida('noches', [{ ...(antes && !antes.borrado ? antes : {}), fecha, hora, actualizado: sola ? despuesDe(antes?.actualizado, DESDE_SIEMPRE) : momento() }]);
     },
     borrarMedidas(fecha: ClaveDia) {
@@ -1721,6 +1848,7 @@ export function crearAlmacen(op: Opciones) {
         registros: comida.registros,
         metas: d.metas,
         perfil: d.perfil,
+        respuestas: estado.respuestas,
       });
       cambiar({ ...nuevo, semilla, perfil: d.perfil, nombre: d.nombre ?? null, metas: d.metas, pesos: d.pesos, ...comida }, true);
       revisarEtapa();

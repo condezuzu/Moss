@@ -1,14 +1,15 @@
-// Leer Salud al abrir la app y al volver (spec/plan.md, etapa 8; spec/sueno.md): lo de hoy para los
+// Leer Salud al abrir la app y al volver (spec/plan.md, etapa 8; spec/sueno.md): lo de hoy y de ayer para los
 // hábitos que se encienden solos (pasos, agua, atención plena y lo dormido anoche), las noches de las
 // últimas cuatro semanas con lo que mide el reloj, el peso y los entrenamientos. Solo si ya se pidió Salud: leer un
-// tipo que no se pidió cierra la app. Lo que falla vuelve vacío: nunca se inventa.
+// tipo que no se pidió cierra la app. Lo que falla vuelve vacío: nunca se inventa. Si falla el sueño (con el iPhone
+// bloqueado Salud no deja leer nada), no se devuelve nada: un día vacío pisaría lo leído antes.
 
 import {
   queryCategorySamples, queryQuantitySamples, queryStatisticsForQuantity, queryWorkoutSamples, type CategoryTypeIdentifier, type QuantityTypeIdentifier,
 } from '@kingstinct/react-native-healthkit';
 
 import { promedioDePasos } from '@/dominio/cuestionario';
-import { CORTE_DE_FABRICA, diaLogico, partesDe } from '@/dominio/fechas';
+import { CORTE_DE_FABRICA, diaLogico, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { armarNoches, soloEnCama } from '@/dominio/sueno';
 import { entrenoDeSalud, fuentesDe, lecturasDe, minutosDe, muestraDeSueno, pasosDe, primeraPorDia, ultimaPorDia, type DeSalud, type DeSaludEntreno, type LoDeSalud } from './convertir';
 import { entrenamientosPedidos, saludPedida } from './salud';
@@ -47,11 +48,12 @@ async function deLasNoches(id: QuantityTypeIdentifier, unidad: string, ventanas:
   }
 }
 
-async function categoria(id: CategoryTypeIdentifier, desde: Date, hasta: Date): Promise<DeSalud[]> {
+/** Las muestras de una categoría, o null si Salud no dejó leerlas (no es lo mismo que no haya ninguna). */
+async function categoria(id: CategoryTypeIdentifier, desde: Date, hasta: Date): Promise<DeSalud[] | null> {
   try {
     return (await queryCategorySamples(id, { limit: 0, filter: { date: { startDate: desde, endDate: hasta } } })) as unknown as DeSalud[];
   } catch {
-    return [];
+    return null;
   }
 }
 
@@ -82,24 +84,29 @@ export async function leerPasos(desde: Date, hasta: Date): Promise<LoDeSalud['pa
 }
 
 /**
- * Todo lo de Salud que usa Moss, o null si Salud no se pidió en este teléfono. `elegida` es el
+ * Todo lo de Salud que usa Moss, o null si Salud no se pidió en este teléfono o no se pudo leer. `elegida` es el
  * aparato del que sale la noche, si se eligió en Perfil › Aparatos. Los valores del día son los del
- * día de Moss (D32): a la 1 de la mañana, antes del corte, son los de ayer, el día que sigue.
+ * día de Moss (D32), de corte a corte: a la 1 de la mañana, antes del corte, son los de ayer, el día que sigue.
+ * También van los del día anterior, enteros.
  */
 export async function leerSalud(ahora: Date = new Date(), elegida: string | null = null, corte = CORTE_DE_FABRICA): Promise<LoDeSalud | null> {
   if (!(await saludPedida())) return null;
   const clave = diaLogico(ahora, corte);
+  const ayer = sumarDias(clave, -1);
   const p = partesDe(clave);
   const hoy = new Date(p.anio, p.mes, p.dia);
-  // Lo del día, del día del calendario de Moss: pasada la medianoche, hasta su fin.
-  const finDelDia = new Date(Math.min(ahora.getTime(), new Date(p.anio, p.mes, p.dia + 1).getTime()));
+  const desde = new Date(p.anio, p.mes, p.dia, 0, corte);
+  const desdeAyer = new Date(p.anio, p.mes, p.dia - 1, 0, corte);
   const hace = (dias: number) => new Date(hoy.getTime() - dias * DIA_MS);
   // Las noches empiezan a las 18 del día anterior.
   const desdeLasNoches = new Date(hace(28).getTime() - 6 * 3_600_000);
-  const [pasos, agua, mindful, sueno, reposo, pesos, recientes, entrenos] = await Promise.all([
-    suma('HKQuantityTypeIdentifierStepCount', 'count', hoy, finDelDia),
-    suma('HKQuantityTypeIdentifierDietaryWater', 'mL', hoy, finDelDia),
-    categoria('HKCategoryTypeIdentifierMindfulSession', hoy, finDelDia),
+  const [pasos, agua, mindful, pasosAyer, aguaAyer, mindfulAyer, sueno, reposo, pesos, recientes, entrenos] = await Promise.all([
+    suma('HKQuantityTypeIdentifierStepCount', 'count', desde, ahora),
+    suma('HKQuantityTypeIdentifierDietaryWater', 'mL', desde, ahora),
+    categoria('HKCategoryTypeIdentifierMindfulSession', desde, ahora),
+    suma('HKQuantityTypeIdentifierStepCount', 'count', desdeAyer, desde),
+    suma('HKQuantityTypeIdentifierDietaryWater', 'mL', desdeAyer, desde),
+    categoria('HKCategoryTypeIdentifierMindfulSession', desdeAyer, desde),
     categoria('HKCategoryTypeIdentifierSleepAnalysis', desdeLasNoches, ahora),
     cantidades('HKQuantityTypeIdentifierRestingHeartRate', 'count/min', hace(28), ahora),
     cantidades('HKQuantityTypeIdentifierBodyMass', 'kg', hace(60), ahora),
@@ -108,6 +115,7 @@ export async function leerSalud(ahora: Date = new Date(), elegida: string | null
     // Los entrenamientos de las dos semanas: cuentan como «entrenaste» y, con sus calorías, para tu energía.
     entrenamientos(hace(14), ahora),
   ]);
+  if (!sueno) return null;
   const muestras = sueno.flatMap((m) => muestraDeSueno(m) ?? []);
   const fuentes = fuentesDe(sueno);
   const noches = armarNoches(muestras, fuentes, elegida ?? undefined);
@@ -126,16 +134,20 @@ export async function leerSalud(ahora: Date = new Date(), elegida: string | null
     deLasNoches('HKQuantityTypeIdentifierHeartRateVariabilitySDNN', 'ms', ventanas),
     deLasNoches('HKQuantityTypeIdentifierRespiratoryRate', 'count/min', ventanas),
   ]);
-  // La noche de ese día (la que terminó a su mañana).
-  const anoche = noches.find((n) => n.clave === clave);
-  return {
-    dia: clave,
-    valores: {
+  // Lo dormido es la noche de ese día (la que terminó a su mañana).
+  const valoresDe = (dia: ClaveDia, pasos: number | null, agua: number | null, mindful: DeSalud[] | null): LoDeSalud['valores'] => {
+    const noche = noches.find((n) => n.clave === dia);
+    return {
       ...(pasos !== null ? { pasos: Math.round(pasos) } : {}),
       ...(agua !== null ? { agua: Math.round(agua) } : {}),
-      mindfulness: minutosDe(mindful),
-      ...(anoche ? { sueno: Math.round(anoche.dormido) } : {}),
-    },
+      mindfulness: minutosDe(mindful ?? []),
+      ...(noche ? { sueno: Math.round(noche.dormido) } : {}),
+    };
+  };
+  return {
+    dia: clave,
+    valores: valoresDe(clave, pasos, agua, mindful),
+    ayer: { dia: ayer, valores: valoresDe(ayer, pasosAyer, aguaAyer, mindfulAyer) },
     noches,
     soloEnCama: soloEnCama(muestras, fuentes, noches),
     fuentes,

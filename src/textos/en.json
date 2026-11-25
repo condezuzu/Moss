@@ -1035,7 +1035,7 @@
       "decir": "Say it",
       "caloriasTexto": "Start with the next thing you eat: in a few days, Moss knows your meals and suggests them.",
       "camino": "Your path",
-      "caminoTexto": "At a sustainable pace, you'd get there on {fecha}. Weigh in tomorrow when you wake up: after two weeks of weigh-ins, Moss starts to see which way you're heading; after four to six, how fast.",
+      "caminoTexto": "With your plan, you'd get there on {fecha}. Weigh in tomorrow when you wake up: after two weeks of weigh-ins, Moss starts to see which way you're heading; after four to six, how fast.",
       "pesarme": "Log my weight",
       "cieloTexto": "Every habit you check lights up a star; with all of them, today's constellation is drawn.",
       "habitos": "Choose my habits"
@@ -1653,6 +1653,10 @@
       "ritmo": "Pace",
       "porSemana": "{pct} % of your weight a week · {kg} kg",
       "enSemanas": "in {n} weeks",
+      "enCuantasSemanas": {
+        "uno": "in {n} week",
+        "otros": "in {n} weeks"
+      },
       "elegirFecha": "Pick the date",
       "elegirRitmo": "Pick the pace",
       "antes": "A week earlier",
@@ -1807,7 +1811,7 @@
     "nocheDel": "Night of {desde} to {hasta}",
     "dormido": "asleep",
     "horas": "Fell asleep at {desde}, woke up at {hasta}",
-    "incompleta": "This night looks incomplete: you slept much less than usual and woke up early. Did your watch run out of battery? You can leave it out.",
+    "incompleta": "This night looks incomplete: you slept much less than usual and woke up early. Did your watch run out of battery?",
     "etapas": {
       "despierto": "Awake",
       "rem": "REM",
@@ -3307,7 +3311,7 @@
         "comida": "days with food logged"
       },
       "desde": "Moss counts from {fecha}.",
-      "horas": "{h}h {m}m",
+      "horas": "{h} h {m}",
       "texto2": "Every day you trained, colored by what you worked most; the dot is a personal best. Tap a day to see it.",
       "hastaHoy": "{anio}, so far",
       "mapa": "{n} training days and {m} personal bests this year.",
@@ -3543,6 +3547,7 @@
       }
     },
     "y": "and",
+    "ye": "and",
     "recuperado": {
       "estas": "You're",
       "palabra": {
@@ -3840,7 +3845,7 @@
     },
     "estancados": {
       "titulo": "Reasons for plateaus",
-      "texto": "Exercises that haven't improved in 8 weeks or more.",
+      "texto": "Exercises that haven't improved in {n} weeks or more.",
       "ninguno": "No exercise has plateaued: over 12 weeks, they're all going up or it's too early to tell.",
       "dato": "{n} weeks without a best · {marca}",
       "sinCausa": "No clear cause in your sets, your food or your sleep.",
@@ -3852,7 +3857,8 @@
       },
       "series": {
         "titulo": "Fewer hard {musculo} sets",
-        "texto": "Per week, counting all its exercises: what weighs most for strength (Pelland 2026)."
+        "texto": "Per week, counting all its exercises: what weighs most for strength (Pelland 2026).",
+        "etiqueta": "Hard sets a week: {antes} while it was going up, {ahora} now."
       },
       "frecuencia": {
         "titulo": "You do it less often",
@@ -4208,7 +4214,14 @@
       "noSeSabe": "After 6 sessions of this exercise, it can estimate when you'll get there.",
       "noSube": "Not at this pace: it hasn't clearly gone up in 12 weeks. See “Why you might be stuck”.",
       "enCamino": "At the pace of your last 12 weeks, in {de} to {a} weeks.",
-      "enCaminoAbierto": "At the pace of your last 12 weeks, in {de} weeks or more.",
+      "enCaminoExacto": {
+        "uno": "At the pace of your last 12 weeks, in {n} week.",
+        "otros": "At the pace of your last 12 weeks, in {n} weeks."
+      },
+      "enCaminoAbierto": {
+        "uno": "At the pace of your last 12 weeks, in {n} week or more.",
+        "otros": "At the pace of your last 12 weeks, in {n} weeks or more."
+      },
       "lejana": "It's a distant goal: set an intermediate one.",
       "comer": "To get there: eat about {g} g of protein a day.",
       "alejaSueno": "It could slip: you sleep {h} on average.",
@@ -4299,6 +4312,10 @@
       "titulo": "Pick your first habits",
       "texto": "3 to 5 to start: they make your first constellation. The food ones light up on their own with what you log.",
       "cuantos": "{n} chosen · at least 3",
+      "elegidos": {
+        "uno": "{n} chosen · at least 3",
+        "otros": "{n} chosen · at least 3"
+      },
       "listo": "Make my constellation",
       "despues": "Later you can add, change or archive each one.",
       "leer": "Read 20 pages",
@@ -4374,7 +4391,10 @@
   },
   "compartir": {
     "boton": "Share",
-    "rinde": "Makes {n} servings",
+    "rinde": {
+      "uno": "Makes {porciones} serving",
+      "otros": "Makes {porciones} servings"
+    },
     "porPorcion": "Per serving: {kcal} kcal · {p} g protein · {c} g carbs · {g} g fat",
     "por100": "Per 100 g: {kcal} kcal · {p} g protein · {c} g carbs · {g} g fat",
     "ingredientes": "Ingredients:",

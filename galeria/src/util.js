@@ -91,9 +91,9 @@ const Util = (() => {
     const fechaCorta = (clave) => { const p = partes(clave); return tx('fecha.corta', { num: p.num, mes: tx('fecha.mesesCortos.' + p.mes) }); };
     const horaMin = (min) => `${String(Math.floor(((min % 1440) + 1440) % 1440 / 60)).padStart(2, '0')}:${String(Math.round(((min % 60) + 60) % 60)).padStart(2, '0')}`;
     const duracion = (min) => {
-      const h = Math.floor(min / 60), m = Math.round(min % 60);
+      const total = Math.round(min), h = Math.floor(total / 60), m = total % 60;
       if (!h) return tx('fecha.minutos', { m });
-      return m ? tx('fecha.horasMinutos', { h, m: String(m).padStart(2, '0') }) : tx('fecha.horas', { h });
+      return m ? tx('fecha.horasMinutos', { h, m }) : tx('fecha.horas', { h });
     };
     return { tx, plural, numero, peso, conSigno, el, boton, icono, partes, fechaLarga, fechaCorta, horaMin, duracion, idioma };
   }

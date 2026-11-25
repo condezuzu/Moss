@@ -153,6 +153,17 @@ export function tendencia(pesadas: readonly Pesada[], hasta: ClaveDia): Map<Clav
 }
 
 /**
+ * Cuánto cambió la tendencia de `desde` a `hasta`, si hubo alguna pesada después de `desde`: sin ninguna, la
+ * tendencia solo sigue la pendiente de antes o queda quieta, y ese cambio (un «0 kg») no es un dato.
+ */
+export function cambioDeLaTendencia(t: Map<ClaveDia, number>, pesadas: readonly Pesada[], desde: ClaveDia, hasta: ClaveDia): number | null {
+  const antes = t.get(desde);
+  const despues = t.get(hasta);
+  if (antes === undefined || despues === undefined || !pesadas.some((p) => p.fecha > desde && p.fecha <= hasta)) return null;
+  return despues - antes;
+}
+
+/**
  * Cuántos kilos por día cambió el peso de `desde` a `hasta`: la pendiente de la recta por las pesadas de
  * ese tramo, como cuentan, sin inventar los días sin pesada (con una por semana, rellenar después de la
  * última achataba el ritmo un 23 %). Con menos de dos pesadas, o a menos de una semana una de otra, null.

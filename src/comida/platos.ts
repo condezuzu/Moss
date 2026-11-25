@@ -54,6 +54,9 @@ const PLATO_CUALQUIERA: PorcionesDePlato = { chico: 160, mediano: 250, grande: 3
 const ENTERAS: readonly (readonly [RegExp, number])[] = [
   [/\bpizzas?\b/, 8 * 120],
   [/\b(?:tartas?|pascualina|quiche)\b/, 6 * 180],
+  // El pollo entero, no una presa: «un cuarto de pollo». Lo que se come de uno asado con piel, sin hueso: FNDDS da
+  // 300 g por medio pollo («1/2 chicken, yield after cooking, bone removed», 2705933 y 2705936).
+  [/^pollos?\b/, 2 * 300],
 ];
 
 const llano = (texto: string) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();

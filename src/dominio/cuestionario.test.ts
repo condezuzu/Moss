@@ -277,6 +277,14 @@ describe('la meta de arranque', () => {
     expect(pctDelPlan({ ...menor, sinDeficit: true })).toBeNull();
   });
 
+  it('subiendo, una fecha tampoco pide más que el borde de lo exigente (el 0,5 %)', () => {
+    // De 60 a 78 kg en una semana: la fecha pide un 30 % por semana, unas 22.000 kcal por día.
+    const apurado: Respuestas = { edad: 30, sexo: 'm', alturaCm: 175, pesoKg: 60, movimiento: 'sentado', entreno: null, objetivo: 'subir', ritmo: 'recomendado', pct: 30 };
+    expect(pctDelPlan(apurado)).toBe(bordeDe('subir', 'exigente', 60));
+    const superavit = metaDelCuestionario(apurado).metas.kcal - gastoEstimado(apurado).total;
+    expect(Math.abs(superavit - kcalPorDia(0.3))).toBeLessThanOrEqual(5);
+  });
+
   it('una fecha que pide el 2 % por semana: la meta usa el borde de lo exigente y el plan llega más tarde', () => {
     const conFecha: Respuestas = { ...BASE, objetivo: 'bajar', pct: 2 };
     expect(pctDelPlan(conFecha)).toBe(1);

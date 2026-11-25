@@ -1,10 +1,10 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { estadoDelControl, tendencia, ultimoDiaDeControl, type Pesada } from './control';
+import { cambioDeLaTendencia, estadoDelControl, tendencia, ultimoDiaDeControl, type Pesada } from './control';
 import { diaDeLaSemana, diasEntre, sumarDias, type DiaSemana } from './fechas';
 import { estadoDeMacro, RITMOS } from './metas';
 import {
-  balance, bordeDe, direccionDe, faltaParaEstimar, fechasDeLlegada, pctParaLaMeta, planPorEtapas, plazoConFecha, plazoConRitmo, plazoElegidoDe, plazoVigente, progresoAlObjetivo, ritmoConRango, ritmoSemanal,
+  balance, bordeDe, direccionDe, faltaParaEstimar, fechasDeLlegada, pctDeHoy, pctParaLaMeta, planPorEtapas, plazoConFecha, plazoConRitmo, plazoElegidoDe, plazoVigente, progresoAlObjetivo, ritmoConRango, ritmoSemanal,
   SEMANAS_DE_MANTENIMIENTO, viabilidad,
   type EntradaDelPlazo,
 } from './progreso';
@@ -39,6 +39,18 @@ describe('el ritmo de la tendencia', () => {
     const domingo = '2026-10-25';
     const lunes = Array.from({ length: 9 }, (_, i) => ({ fecha: sumarDias('2026-10-19', -7 * (8 - i)), kg: 85 - 0.5 * i }));
     expect(Math.abs(ritmoSemanal(tendencia(lunes, domingo), domingo, lunes)! + 0.5)).toBeLessThanOrEqual(0.01);
+  });
+
+  it('sin pesadas en el tramo, el cambio no es un dato: la tendencia solo sigue la de antes, o queda quieta', () => {
+    // La última pesada, hace 20 días: la tendencia sigue una semana con su pendiente y después queda plana.
+    const pesadas = bajando(60, 80, -0.5).filter((p) => p.fecha <= sumarDias(HOY, -20));
+    const t = tendencia(pesadas, HOY);
+    expect(t.get(HOY)! - t.get(sumarDias(HOY, -7))!).toBe(0);
+    expect(cambioDeLaTendencia(t, pesadas, sumarDias(HOY, -7), HOY)).toBeNull();
+    expect(cambioDeLaTendencia(t, pesadas, sumarDias(HOY, -30), HOY)!).toBeLessThan(0);
+    // Una pesada en el tramo alcanza; la del primer día, no (es de antes).
+    expect(cambioDeLaTendencia(t, pesadas, sumarDias(HOY, -27), sumarDias(HOY, -20))).not.toBeNull();
+    expect(cambioDeLaTendencia(t, pesadas, sumarDias(HOY, -20), sumarDias(HOY, -13))).toBeNull();
   });
 });
 
@@ -171,6 +183,20 @@ describe('el progreso al objetivo', () => {
     expect(progresoAlObjetivo({ ...base, tendencia: quieto, pesoMeta: 70 })).toMatchObject({ estado: 'quieto', fecha: null });
     const subiendo = tendencia(bajando(60, 78, 0.3), HOY);
     expect(progresoAlObjetivo({ ...base, tendencia: subiendo, pesoMeta: 70 })).toMatchObject({ estado: 'alReves', fecha: null });
+  });
+
+  it('más despacio con la misma regla que el plan de Progreso: Inicio y Progreso dicen lo mismo', () => {
+    // −0,2 kg por semana contra un plan de −0,42 (el 0,5 % de 84): con su margen, debajo del plan menos su cuarto.
+    const pesadas = bajando(42, 85, -0.2);
+    const p = progresoAlObjetivo({ hoy: HOY, tendencia: tendencia(pesadas, HOY), pesadas, objetivo: 'bajar', ritmo: 'recomendado', pesoMeta: 70 });
+    const rango = ritmoConRango(pesadas, HOY)!;
+    const plazo = plazoConRitmo({ hoy: HOY, pesoKg: p.nivel!, pesoMeta: 70, sexo: 'm', edad: 30, gasto: 2500, entrenaFuerza: true }, 0.5);
+    const plan = planPorEtapas({ hoy: HOY, pesoKg: p.nivel!, objetivo: 'bajar', pesoMeta: 70, plazo, ritmo: rango.kgPorSemana, rango });
+    expect(plan.comoVienes).toBe('atrasado');
+    expect(p.estado).toBe('despacio');
+    // Al ritmo del plan, los dos dicen que va bien.
+    const alRitmo = bajando(42, 85, -0.42);
+    expect(progresoAlObjetivo({ hoy: HOY, tendencia: tendencia(alRitmo, HOY), pesadas: alRitmo, objetivo: 'bajar', ritmo: 'recomendado', pesoMeta: 70 }).estado).toBe('enCamino');
   });
 
   it('subir es lo mismo para el otro lado', () => {
@@ -416,6 +442,26 @@ describe('el plazo elegido en Progreso', () => {
     // Antes de los 18, bajando, nunca más que el recomendado.
     expect(pctParaLaMeta('bajar', 0.75, 70, 17)).toBeCloseTo(RITMOS.bajar.recomendado);
     expect(pctParaLaMeta('bajar', 0.3, 70, 17)).toBeCloseTo(-0.3);
+  });
+
+  it('subiendo, la meta tampoco pasa de lo exigente (el 0,5 %): de 60 a 78 kg en una semana no son 22.000 kcal', () => {
+    expect(pctParaLaMeta('subir', 30, 60, 30)).toBeCloseTo(bordeDe('subir', 'exigente', 60));
+    expect(pctParaLaMeta('subir', 0.4, 60, 30)).toBeCloseTo(0.4);
+  });
+
+  it('con una fecha, el ritmo de hoy es el que hace falta desde hoy, como en el plan; sin fecha o a menos de una semana, el elegido', () => {
+    const e: EntradaDelPlazo = { hoy: HOY, pesoKg: 80, pesoMeta: 72, sexo: 'f', edad: 34, gasto: 2300, entrenaFuerza: true };
+    const fecha = sumarDias(HOY, 140);
+    expect(pctDeHoy({ pct: 0.3, fecha }, HOY, 80, 72, 'bajar')).toBeCloseTo(plazoConFecha(e, fecha)!.pct, 9);
+    // Diez semanas después, sin haber bajado nada: ahora pide el doble.
+    const despues = sumarDias(HOY, 70);
+    expect(pctDeHoy({ pct: 0.3, fecha }, despues, 80, 72, 'bajar')).toBeCloseTo(plazoConFecha({ ...e, hoy: despues }, fecha)!.pct, 9);
+    expect(pctDeHoy({ pct: 0.3, fecha }, despues, 80, 72, 'bajar')).toBeCloseTo(1, 9);
+    expect(pctDeHoy({ pct: 0.3, fecha: null }, HOY, 80, 72, 'bajar')).toBe(0.3);
+    expect(pctDeHoy({ pct: 0.3, fecha: sumarDias(HOY, 5) }, HOY, 80, 72, 'bajar')).toBe(0.3);
+    // Con la meta del otro lado, o sin meta, no hay camino: el elegido.
+    expect(pctDeHoy({ pct: 0.3, fecha }, HOY, 80, 72, 'subir')).toBe(0.3);
+    expect(pctDeHoy({ pct: 0.3, fecha }, HOY, 80, null, 'bajar')).toBe(0.3);
   });
 });
 

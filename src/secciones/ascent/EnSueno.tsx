@@ -22,7 +22,8 @@ export function RecuperacionEnSueno() {
   const hoy = useEstado().hoy;
   const s = useSueno();
   if (!titular) return null;
-  const noches = s.deEjemplo ? [] : s.noches;
+  // Las de confianza baja no cuentan, como en la deuda.
+  const noches = s.deEjemplo ? [] : s.noches.filter((n) => n.confianza.duracion !== 'baja');
   const anoche = noches.find((n) => n.clave === hoy) ?? null;
   const ultimas3 = [0, 1, 2].flatMap((k) => noches.find((n) => n.clave === sumarDias(hoy, -k))?.dormido ?? []);
   const linea = titular.que !== 'suenoCorto' && anoche && lineaDelRendimiento({ dormido: anoche.dormido, necesidad: s.necesidad, despertoAntes: null }, ultimas3)

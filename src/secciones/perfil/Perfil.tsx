@@ -1007,7 +1007,7 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
       </TarjetaDeAviso>
       <TarjetaDeAviso
         icono="bolt" color="violeta" titulo={t('perfil.avisos.falta')} texto={t('perfil.avisos.faltaTexto')}
-        prendido={prendida('falta', conLoQueFalta(a, algunAviso({ avisos: a, recordatorios: comidas })))}
+        prendido={prendida('falta', conLoQueFalta(a))}
         alCambiar={(si) => (si ? conPermiso('falta', () => elAlmacen().ponerAvisos({ falta: { encendido: true } })) : elAlmacen().ponerAvisos({ falta: { encendido: false } }))}
       />
       {sinPermiso && (

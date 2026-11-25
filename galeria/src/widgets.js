@@ -146,6 +146,7 @@ const SeccionWidgets = (() => {
     document.head.appendChild(estilo);
 
     let nuevos = null;
+    let mejores = null;
     // Lo que se tocó en el widget y la app todavía no vio: por hábito, encendido o no.
     const pendientes = new Map();
     const s = { vista: null, modo: 'color', confirmada: false, deNoche: false };
@@ -448,6 +449,18 @@ const SeccionWidgets = (() => {
       movimientoReducido: opciones.movimientoReducido,
       alCambiar: opciones.alCambiar,
     });
+    // Lo que pediste el 25/11, para aprobar: Hoy más limpio, tu noche en StandBy y la pantalla bloqueada.
+    mejores = WidgetsMejores.crear(raiz, {
+      u,
+      nuevos,
+      abrirMoss,
+      comida: opciones.comida,
+      anoche: opciones.anoche,
+      paraLaNoche: opciones.paraLaNoche,
+      sinReloj: opciones.sinReloj,
+      movimientoReducido: opciones.movimientoReducido,
+      repintar: () => pintar(),
+    });
 
     // ------------------------------------------------------------ lo que se revisa, a la derecha
     // Va antes de «Para decidir», que pasa a ser la siguiente.
@@ -568,7 +581,7 @@ const SeccionWidgets = (() => {
         const b = ev.target.closest('button');
         if (!b) return;
         seccion.querySelectorAll('#s-wg-noche button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-        raiz.querySelectorAll('.wg-standby, .wg-n-standby').forEach((v) => v.classList.toggle('de-noche', b.dataset.valor === 'noche'));
+        raiz.querySelectorAll('.wg-standby, .wg-n-standby, .wg-m-standby').forEach((v) => v.classList.toggle('de-noche', b.dataset.valor === 'noche'));
       });
     }
     // El idioma de la galería cambia los textos del widget.
@@ -583,7 +596,10 @@ const SeccionWidgets = (() => {
       cerrar,
       abrirMoss,
       ponerModo,
-      deNoche(si) { s.deNoche = si; raiz.querySelectorAll('.wg-standby, .wg-n-standby').forEach((v) => v.classList.toggle('de-noche', si)); },
+      deNoche(si) { s.deNoche = si; raiz.querySelectorAll('.wg-standby, .wg-n-standby, .wg-m-standby').forEach((v) => v.classList.toggle('de-noche', si)); },
+      // Los del 25/11: la hora de la tardecita (sin hora, 21:47) y el «Sí» de la pantalla bloqueada.
+      horaDeLaTarde: (min) => mejores.hora(min),
+      confirmarMejores: () => mejores.confirmar(),
       // La propuesta: la hora del día de mentira, lo que se toca y el día completo.
       momento(m) { nuevos.ponerMomento(m); pintar(); opciones.alCambiar(); },
       tocarComida: (tipo) => nuevos.tocarComida(tipo),

@@ -14,7 +14,7 @@ import { comienzoDe, DIAS_ARMADOS, DIAS_QUE_ESPERA } from './cielo';
 import type { ComidaDeHoy, PropsHoy, ToqueDeComida, ValoresDelWidget } from './tipos';
 
 type Entrada = { date: Date; props: PropsHoy };
-type ParaHoy = Pick<Estado, 'hoy' | 'registros'> & Partial<Pick<Estado, 'corte'>>;
+type ParaHoy = Pick<Estado, 'hoy' | 'registros'> & Partial<Pick<Estado, 'corte' | 'numeros'>>;
 
 /** Las comidas que siempre están a la vista. El snack aparece si se anotó. */
 export const COMIDAS_DE_HOY: readonly Comida[] = ['desayuno', 'almuerzo', 'merienda', 'cena'];
@@ -61,6 +61,7 @@ export function lineaDeHoy(e: ParaHoy, d: {
       return {
         tipo,
         nombre: d.nombres[tipo],
+        anotada: anotados.length > 0,
         anotado: sumaDe(anotados),
         detalle: mostrar.map((x) => x.nombre).join(', '),
         siempre: sumaDe(siempre),
@@ -80,6 +81,7 @@ export function lineaDeHoy(e: ParaHoy, d: {
         comido: sumaDe(comidos),
         comidas: comidas.sort((a, b) => a.minutos - b.minutos).map(({ minutos: _m, ...c }) => c),
         pendientes: [],
+        numeros: e.numeros !== false,
         textos: d.textos,
         urls: d.urls,
         fondo: d.fondo ?? '',

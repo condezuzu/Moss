@@ -131,7 +131,7 @@ async function unaVuelta() {
       for (const c of confirmacionesDeLaLinea(linea)) {
         const e = a.estado();
         const propia = e.noches.get(c.clave);
-        const que = decidir(c, propia, nocheDeAhora(new Date()), zona);
+        const que = decidir(c, propia, nocheDeAhora(new Date()), zona, e.salud?.noches);
         if (que === 'aplicar' && propia?.hora) a.ponerHoraDeLaNoche(c.clave, { ...propia.hora, origen: 'confirmada' });
         if (que === 'esperar') esperando = c;
       }
@@ -143,7 +143,7 @@ async function unaVuelta() {
         despertador: despertadorPara(alarma, sumarDias(nocheDeAhora(ahora), 1), ahora),
         textos: {
           anoche: t('widgets.anoche'), si: t('widgets.si'), fueAsi: t('widgets.fueAsi'), confirmada: t('widgets.confirmada'),
-          seVeEnMoss: t('widgets.seVeEnMoss'), seAnotaEnMoss: t('widgets.seAnotaEnMoss'), horas: t('widgets.horas'), duracion: t('cielo.horasMinutos'),
+          seVeEnMoss: t('widgets.seVeEnMoss'), seAnotaEnMoss: t('widgets.seAnotaEnMoss'), horas: t('widgets.horas'), duracion: t('cielo.horasMinutos'), soloHoras: t('fecha.horas'),
           horasCorto: t('widgets.horasCorto'), siLargo: t('widgets.siFueAsi'), aDormir: t('widgets.aDormir'), enTiempo: t('widgets.enTiempo'),
           minutos: t('fecha.minutos'), yaEsHora: t('widgets.yaEsHora'), paraDespertar: t('widgets.paraDespertar'),
         },
@@ -215,6 +215,7 @@ async function unaVuelta() {
           const queda = meta.kcal - totalDe(e.registros, dia, dia).kcal;
           return t(queda >= 0 ? 'widgets.teQuedanCorto' : 'widgets.deMasCorto', { n: numero(Math.abs(Math.round(queda))) });
         },
+        numeros: e.numeros,
         corte: e.corte,
         acciones: ([['buscar', 'magnifyingglass'], ['decir', 'mic'], ['codigo', 'barcode.viewfinder'], ['etiqueta', 'doc.text.viewfinder']] as const).map(([id, icono]) => ({
           id, icono, nombre: t(`widgets.acciones.${id}`), url: enlaceDeAnotar({ via: id }),
@@ -261,7 +262,7 @@ export function actualizarWidgets(): Promise<void> {
 }
 
 /** Lo que muestran los widgets: si cambia, se escriben de nuevo. */
-const queMuestran = (e: Estado) => [e.listo, e.hoy, e.corte, e.latencia, e.necesidad, e.despertares, e.perfil, e.habitos, e.periodos, e.dias, e.marcas, e.noches, e.salud, e.metas, ...(CON_WIDGETS_NUEVOS ? [e.registros, e.agua, e.pesos, e.cuidados] : [])] as const;
+const queMuestran = (e: Estado) => [e.listo, e.hoy, e.corte, e.latencia, e.necesidad, e.despertares, e.perfil, e.habitos, e.periodos, e.dias, e.marcas, e.noches, e.salud, e.metas, ...(CON_WIDGETS_NUEVOS ? [e.registros, e.agua, e.pesos, e.cuidados, e.numeros] : [])] as const;
 
 /**
  * En la raíz de la app: al estar listo el almacén, al volver a Moss y cuando cambia algo que muestran,

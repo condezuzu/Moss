@@ -35,6 +35,8 @@ const Hoy = (props: PropsHoy, entorno: WidgetEnvironment) => {
   let base = props.comido || { kcal: 0, p: 0, c: 0, g: 0 };
   let comido = { kcal: base.kcal, p: base.p, c: base.c, g: base.g };
   let pendientes = props.pendientes || [];
+  // Con los números ocultos (Perfil): la luna, las barras y las comidas, sin kcal ni gramos.
+  let numeros = props.numeros !== false;
 
   function numero(n: number) {
     return String(Math.round(Math.abs(n))).replace(/\B(?=(\d{3})+(?!\d))/g, tx.miles);
@@ -56,7 +58,7 @@ const Hoy = (props: PropsHoy, entorno: WidgetEnvironment) => {
         comido.g -= c.anotado.g;
         filas.push({ c: c, estado: 'siempre', kcal: c.siempre.kcal || c.anotado.kcal });
       } else filas.push({ c: c, estado: 'tocada', kcal: c.anotado.kcal });
-    } else if (c.anotado.kcal > 0) {
+    } else if (c.anotada) {
       filas.push({ c: c, estado: 'anotada', kcal: c.anotado.kcal });
     } else if (c.siempre.kcal > 0) {
       if (toque && toque.hecho) {
@@ -74,6 +76,8 @@ const Hoy = (props: PropsHoy, entorno: WidgetEnvironment) => {
   let fraccion = meta.kcal > 0 ? comido.kcal / meta.kcal : 0;
   let etiqueta = pasada ? tx.deMas : tx.teQuedan;
   let cifra = numero(queda);
+  // Donde no va la etiqueta («Arriba de la meta»), pasada la meta lleva el «+», como los macros.
+  let conSigno = (pasada ? '+' : '') + cifra;
   let macros = [
     { k: 'p', nombre: tx.macros.p, corto: tx.cortos.p, color: LUZ, come: comido.p, tope: meta.p },
     { k: 'c', nombre: tx.macros.c, corto: tx.cortos.c, color: SALVIA, come: comido.c, tope: meta.c },
@@ -150,7 +154,7 @@ const Hoy = (props: PropsHoy, entorno: WidgetEnvironment) => {
 
   // ---------------------------------------------------------------- la pantalla bloqueada
   if (familia === 'accessoryInline') {
-    return <Text modifiers={[widgetURL(urls.inicio)]}>{cifra + ' ' + tx.kcal + ' · ' + tx.cortos.p + ' ' + falta(macros[0])}</Text>;
+    return <Text modifiers={[widgetURL(urls.inicio)]}>{numeros ? conSigno + ' ' + tx.kcal + ' · ' + tx.cortos.p + ' ' + falta(macros[0]) : ''}</Text>;
   }
   if (familia === 'accessoryCircular') {
     return (
@@ -158,9 +162,16 @@ const Hoy = (props: PropsHoy, entorno: WidgetEnvironment) => {
         <AccessoryWidgetBackground />
         <VStack spacing={1}>
           {luna(36)}
-          <Text modifiers={[font({ size: 12.5, weight: 'semibold' }), monospacedDigit(), lineLimit(1), minimumScaleFactor(0.7)]}>{cifra}</Text>
+          {numeros ? <Text modifiers={[font({ size: 12.5, weight: 'semibold' }), monospacedDigit(), lineLimit(1), minimumScaleFactor(0.7)]}>{conSigno}</Text> : null}
         </VStack>
       </ZStack>
+    );
+  }
+  if (familia === 'accessoryRectangular' && !numeros) {
+    return (
+      <VStack alignment="leading" modifiers={[frame({ maxWidth: Infinity, maxHeight: Infinity, alignment: 'leading' }), containerBackground('clear', 'widget'), widgetURL(urls.inicio)]}>
+        {luna(36)}
+      </VStack>
     );
   }
   if (familia === 'accessoryRectangular') {
@@ -205,14 +216,18 @@ const Hoy = (props: PropsHoy, entorno: WidgetEnvironment) => {
     let tocada = f.estado === 'tocada';
     let abierta = f.estado === 'siempre' || f.estado === 'vacia';
     let valor = f.estado === 'anotada' ? (
-      <Text modifiers={[font({ size: 13, weight: 'medium' }), monospacedDigit(), foregroundStyle(TEXTO), lineLimit(1)]}>{numero(f.kcal)}</Text>
+      numeros ? (
+        <Text modifiers={[font({ size: 13, weight: 'medium' }), monospacedDigit(), foregroundStyle(TEXTO), lineLimit(1)]}>{numero(f.kcal)}</Text>
+      ) : (
+        <Image systemName="checkmark" size={11} color={TEXTO} modifiers={[opacity(0.5)]} />
+      )
     ) : tocada ? (
       <HStack spacing={2}>
         <Text modifiers={[font({ size: 11, weight: 'medium' }), foregroundStyle(LUZ), lineLimit(1), minimumScaleFactor(0.75)]}>{tx.anotado}</Text>
         <Image systemName="checkmark" size={9} color={LUZ} />
       </HStack>
     ) : (
-      <Text modifiers={[font({ size: 13, weight: 'medium' }), monospacedDigit(), foregroundStyle(LUZ), lineLimit(1)]}>{f.estado === 'siempre' ? '+' + numero(f.kcal) : '+'}</Text>
+      <Text modifiers={[font({ size: 13, weight: 'medium' }), monospacedDigit(), foregroundStyle(LUZ), lineLimit(1)]}>{f.estado === 'siempre' && numeros ? '+' + numero(f.kcal) : '+'}</Text>
     );
     let contenido = (
       <VStack
@@ -240,7 +255,7 @@ const Hoy = (props: PropsHoy, entorno: WidgetEnvironment) => {
           {tocada ? tx.anotado : f.c.detalle || tx.sinAnotar}
         </Text>
         <Text modifiers={[font({ size: 12.5, weight: 'medium' }), monospacedDigit(), foregroundStyle(f.estado === 'anotada' ? TEXTO : LUZ), lineLimit(1)]}>
-          {f.estado === 'vacia' ? '' : (f.estado === 'siempre' ? '+' : '') + numero(f.kcal)}
+          {f.estado === 'vacia' || !numeros ? '' : (f.estado === 'siempre' ? '+' : '') + numero(f.kcal)}
         </Text>
         <Image
           systemName={tocada ? 'checkmark.circle.fill' : f.estado === 'anotada' ? 'checkmark' : 'plus.circle'}
@@ -269,11 +284,13 @@ const Hoy = (props: PropsHoy, entorno: WidgetEnvironment) => {
       <VStack key="grande" alignment="leading" spacing={0} modifiers={[frame({ maxWidth: Infinity, maxHeight: Infinity, alignment: 'topLeading' })]}>
         <HStack spacing={12}>
           {luna(72)}
-          <VStack alignment="leading" spacing={3}>
-            {etiquetaVista}
-            {cifraVista(40)}
-            <Text modifiers={[font({ size: 12 }), monospacedDigit(), foregroundStyle(TEXTO), opacity(0.55), lineLimit(1)]}>{tx.de.replace('{comido}', numero(comido.kcal)).replace('{meta}', numero(meta.kcal))}</Text>
-          </VStack>
+          {numeros ? (
+            <VStack alignment="leading" spacing={3}>
+              {etiquetaVista}
+              {cifraVista(40)}
+              <Text modifiers={[font({ size: 12 }), monospacedDigit(), foregroundStyle(TEXTO), opacity(0.55), lineLimit(1)]}>{tx.de.replace('{comido}', numero(comido.kcal)).replace('{meta}', numero(meta.kcal))}</Text>
+            </VStack>
+          ) : null}
           <Spacer />
         </HStack>
         <Rectangle modifiers={[frame({ height: 0.5 }), foregroundStyle(TEXTO), opacity(0.12), padding({ vertical: 8 })]} />
@@ -281,7 +298,7 @@ const Hoy = (props: PropsHoy, entorno: WidgetEnvironment) => {
           {macros.map((m) => (
             <VStack key={m.k} alignment="leading" spacing={3} modifiers={[frame({ maxWidth: Infinity, alignment: 'leading' })]}>
               <Text modifiers={[font({ size: 9.5 }), foregroundStyle(TEXTO), opacity(0.6), lineLimit(1), minimumScaleFactor(0.8)]}>{m.nombre}</Text>
-              <Text modifiers={[font({ size: 14, weight: 'medium' }), monospacedDigit(), foregroundStyle(TEXTO), lineLimit(1)]}>{falta(m) + ' g'}</Text>
+              {numeros ? <Text modifiers={[font({ size: 14, weight: 'medium' }), monospacedDigit(), foregroundStyle(TEXTO), lineLimit(1)]}>{falta(m) + ' g'}</Text> : null}
               {barra(m, 90)}
             </VStack>
           ))}
@@ -306,17 +323,19 @@ const Hoy = (props: PropsHoy, entorno: WidgetEnvironment) => {
       <VStack key="mediano" alignment="leading" spacing={0} modifiers={[frame({ maxWidth: Infinity, maxHeight: Infinity, alignment: 'topLeading' })]}>
         <HStack spacing={10}>
           {luna(58)}
-          <VStack alignment="leading" spacing={2}>
-            {etiquetaVista}
-            {cifraVista(29)}
-          </VStack>
+          {numeros ? (
+            <VStack alignment="leading" spacing={2}>
+              {etiquetaVista}
+              {cifraVista(29)}
+            </VStack>
+          ) : null}
           <VStack alignment="leading" spacing={4} modifiers={[frame({ maxWidth: Infinity, alignment: 'leading' })]}>
             {macros.map((m) => (
               <VStack key={m.k} alignment="leading" spacing={2}>
                 <HStack spacing={4}>
                   <Text modifiers={[font({ size: 10 }), foregroundStyle(TEXTO), opacity(0.62), lineLimit(1), minimumScaleFactor(0.75)]}>{m.nombre}</Text>
                   <Spacer />
-                  <Text modifiers={[font({ size: 11.5, weight: 'medium' }), monospacedDigit(), foregroundStyle(TEXTO), lineLimit(1)]}>{falta(m) + ' g'}</Text>
+                  {numeros ? <Text modifiers={[font({ size: 11.5, weight: 'medium' }), monospacedDigit(), foregroundStyle(TEXTO), lineLimit(1)]}>{falta(m) + ' g'}</Text> : null}
                 </HStack>
                 {barra(m, 112)}
               </VStack>
@@ -336,14 +355,14 @@ const Hoy = (props: PropsHoy, entorno: WidgetEnvironment) => {
           <Image systemName="plus.circle" size={24} color={LUZ} />
         </HStack>
         <Spacer />
-        {etiquetaVista}
-        {cifraVista(32)}
+        {numeros ? etiquetaVista : null}
+        {numeros ? cifraVista(32) : null}
         <HStack spacing={7} modifiers={[padding({ top: 6 })]}>
           {macros.map((m) => (
             <VStack key={m.k} alignment="leading" spacing={3}>
               <HStack spacing={3}>
                 <Text modifiers={[font({ size: 11 }), foregroundStyle(TEXTO), opacity(0.55)]}>{m.corto}</Text>
-                <Text modifiers={[font({ size: 11 }), monospacedDigit(), foregroundStyle(TEXTO), lineLimit(1), minimumScaleFactor(0.8)]}>{falta(m)}</Text>
+                {numeros ? <Text modifiers={[font({ size: 11 }), monospacedDigit(), foregroundStyle(TEXTO), lineLimit(1), minimumScaleFactor(0.8)]}>{falta(m)}</Text> : null}
               </HStack>
               {barra(m, 36)}
             </VStack>
@@ -367,6 +386,7 @@ const INICIAL: PropsHoy = {
   comido: { kcal: 0, p: 0, c: 0, g: 0 },
   comidas: [],
   pendientes: [],
+  numeros: true,
   textos: { teQuedan: '', deMas: '', kcal: 'kcal', de: '', anotado: '', sinAnotar: '', miles: '.', macros: { p: '', c: '', g: '' }, cortos: { p: 'P', c: 'C', g: 'G' }, buscar: '', decir: '', codigo: '' },
   urls: { anotar: 'moss://', inicio: 'moss://', comida: 'moss://', anotarComida: 'moss://', buscar: 'moss://', decir: 'moss://', codigo: 'moss://' },
   fondo: '',

@@ -492,15 +492,15 @@ export type MetaDelCuestionario = {
 };
 
 /**
- * El ritmo de la fecha elegida que usa la meta, en % del peso por semana. Bajando, una fecha nunca pide más
- * que el borde de lo exigente (el 1 %, sin pasar de un kilo por semana ni de 1.000 kcal por día) y, antes de
- * los 18, más que el recomendado (como ritmoPermitido). El plan que se muestra llega a ese ritmo, más tarde
- * que la fecha. Sin fecha, o si no cambia el peso, null.
+ * El ritmo de la fecha elegida que usa la meta, en % del peso por semana. Una fecha nunca pide más que el borde
+ * de lo exigente (bajando, el 1 %, sin pasar de un kilo por semana ni de 1.000 kcal por día; subiendo, el 0,5 %)
+ * y, bajando antes de los 18, más que el recomendado (como ritmoPermitido). El plan que se muestra llega a ese
+ * ritmo, más tarde que la fecha. Sin fecha, o si no cambia el peso, null.
  */
 export function pctDelPlan(r: Pick<Respuestas, 'edad' | 'objetivo' | 'pct' | 'sinDeficit' | 'pesoKg'>): number | null {
   const objetivo = objetivoGuardado(objetivoUsado(r));
   if (objetivo === 'mantener' || r.pct == null || !(r.pct > 0)) return null;
-  if (objetivo === 'subir') return r.pct;
+  if (objetivo === 'subir') return Math.min(r.pct, bordeDe('subir', 'exigente', r.pesoKg));
   const menor = r.edad < MAYORIA_DE_EDAD ? Math.abs(RITMOS.bajar.recomendado) : Infinity;
   return Math.min(r.pct, bordeDe('bajar', 'exigente', r.pesoKg), menor);
 }

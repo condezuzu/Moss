@@ -78,10 +78,18 @@ const FUERA_DE_TU_PAIS = 30;
 export const normalizar = (texto: string) =>
   texto.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 
-/** Las palabras de lo escrito, cada una como prefijo: «pech poll» → "pech"* "poll"*. */
+/** Una palabra sin el plural: «melones» → «melon», «jugos» → «jugo». Las de hasta tres letras quedan («gas», «mes»). */
+export const sinPlural = (palabra: string) => (palabra.length > 3 ? palabra.replace(/(?:es|s)$/, '') : palabra);
+
+/** Si una palabra del nombre empieza con lo escrito o con lo escrito sin plural. */
+export const empiezaCon = (palabra: string, escrita: string) => palabra.startsWith(escrita) || palabra.startsWith(sinPlural(escrita));
+
+/** Las palabras de lo escrito, cada una como prefijo y también sin plural: «pech melones» → "pech"* AND ("melones"* OR "melon"*). */
 export function consultaDePalabras(texto: string): string | null {
   const palabras = normalizar(texto).split(' ').filter(Boolean);
-  return palabras.length ? palabras.map((p) => `"${p}"*`).join(' ') : null;
+  const prefijo = (p: string) => (sinPlural(p) === p ? `"${p}"*` : `("${p}"* OR "${sinPlural(p)}"*)`);
+  // FTS5 no junta un paréntesis con lo que sigue sin el AND.
+  return palabras.length ? palabras.map(prefijo).join(' AND ') : null;
 }
 
 /** Los trigramas de lo escrito, en OR: cuantos más tenga un nombre, más arriba sale. */
@@ -145,15 +153,26 @@ export function puntaje(c: Candidato, escrito: string, op: Opciones, curado: boo
   const enTuPais = seVendeEnTuPais(c, op);
   const nombrada = c.marca && enTuPais && !c.aproximado && c.idioma === op.idioma ? nombraLaMarca(escrito, c.marca) : null;
   if (nombrada) return (nombrada === 'entera' ? 8 : 11) + (c.orden ?? 0) * 0.002 - (op.premio?.(c.alimento) ?? 0);
+  const nivel = (x: string): number | null => {
+    if (t === x) return 0;
+    // «pan» encuentra antes «Pan blanco» (la palabra entera) que «Pancho» (el principio de otra).
+    if (t.startsWith(`${x} `)) return 5;
+    // En inglés el sustantivo va al final: «Grilled chicken breast» es tan «chicken breast» como
+    // «Chicken breast with mushroom sauce», y el largo desempata a favor del más simple.
+    if (c.idioma === 'en' && t.endsWith(` ${x}`)) return 5;
+    if (t.startsWith(x)) return 10;
+    if (` ${t} `.includes(` ${x} `)) return 15;
+    return null;
+  };
+  // Lo escrito en plural también vale sin él («melones» es «Melón» entero), un punto después que tal cual.
+  const singular = q.split(' ').map(sinPlural).join(' ');
+  const tal = nivel(q);
+  const sin = singular === q ? null : nivel(singular);
+  // Con lo que se comparó: lo escrito tal cual o sin el plural.
+  const comparado = sin !== null && (tal === null || sin + 1 < tal) ? singular : q;
+  const encontrado = comparado === q ? tal : sin! + 1;
   let p: number;
-  if (t === q) p = 0;
-  // «pan» encuentra antes «Pan blanco» (la palabra entera) que «Pancho» (el principio de otra).
-  else if (t.startsWith(`${q} `)) p = 5;
-  // En inglés el sustantivo va al final: «Grilled chicken breast» es tan «chicken breast» como
-  // «Chicken breast with mushroom sauce», y el largo desempata a favor del más simple.
-  else if (c.idioma === 'en' && t.endsWith(` ${q}`)) p = 5;
-  else if (t.startsWith(q)) p = 10;
-  else if (` ${t} `.includes(` ${q} `)) p = 15;
+  if (encontrado !== null) p = encontrado;
   else if (!c.aproximado) p = 20;
   // Con errores: entre 30 y 50 según el parecido. Como sin errores, una palabra del medio suma 5:
   // «frutila» es antes «Frutillas» que «yogurt de frutilla».
@@ -163,14 +182,14 @@ export function puntaje(c: Candidato, escrito: string, op: Opciones, curado: boo
   }
   // Lo que sigue con «con …» es otro plato: «pechuga de pollo» da antes la pechuga que la pechuga
   // con salsa, y «arroz», el arroz antes que el arroz con leche.
-  if (p <= 10 && /^,?\s*(con|with|in|en salsa)\b/.test(t.slice(q.length))) p += 6;
+  if (p <= 11 && /^,?\s*(con|with|in|en salsa)\b/.test(t.slice(comparado.length))) p += 6;
   if (c.idioma !== op.idioma) p += 100;
   if (!curado) p += 8;
   // Un producto de marca, después de lo genérico.
   if (c.marca) p += 7;
   if (!enTuPais) p += FUERA_DE_TU_PAIS;
   // Las variantes, después de lo de siempre: «pan» da el blanco y el integral antes que el de cebolla. Escrita entera, no pierde.
-  if (c.variante && t !== q) p += VARIANTE;
+  if (c.variante && t !== comparado) p += VARIANTE;
   // El nombre de la región gana un poco; uno de otra región pierde (plátano es banana en España y otra cosa en Colombia).
   if (c.region) p += c.region !== op.region ? 4 : c.principal ? -2 : 0;
   p -= op.premio?.(c.alimento) ?? 0;
@@ -228,7 +247,7 @@ export function candidatosEnMemoria(corpus: TextoEnMemoria[], texto: string, idi
   const comoCandidato = (t: TextoEnMemoria, aproximado: boolean): Candidato => ({
     alimento: t.alimento, idioma: t.idioma, region: t.region, principal: t.principal, texto: t.texto, rango: 0, aproximado, marca: t.marca, orden: t.orden, paises: t.paises, variante: t.variante,
   });
-  const candidatos = corpus.filter((t) => palabras.every((p) => t.palabras.some((w) => w.startsWith(p)))).map((t) => comoCandidato(t, false));
+  const candidatos = corpus.filter((t) => palabras.every((p) => t.palabras.some((w) => empiezaCon(w, p)))).map((t) => comoCandidato(t, false));
   if (normal.length >= 3 && new Set(candidatos.map((c) => c.alimento)).size < POCOS) {
     const buscados = new Set<string>();
     for (const p of palabras) for (let k = 0; k + 3 <= p.length; k++) buscados.add(p.slice(k, k + 3));

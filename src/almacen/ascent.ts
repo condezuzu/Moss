@@ -14,7 +14,7 @@ import {
   type AjustesDeAscent, type MarcaDeAscent, type PesoCompartido, type RutinaDeAscent, type SesionDeAscent,
 } from '@/dominio/conAscent';
 import { ultimoDiaDeControl, type Peso } from '@/dominio/control';
-import { claveDeMarca } from '@/dominio/dias';
+import { claveDeMarca, seEnciendeSola } from '@/dominio/dias';
 import { diaDeLaSemana, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { habitosDelDia } from '@/dominio/habitos';
 import type { Macros } from '@/dominio/metas';
@@ -83,6 +83,7 @@ const DIAS_DE_PESOS = 120;
 const DIAS_DE_NOCHES = 400;
 
 const SIN_VINCULO: EstadoDelVinculo = { vinculada: false, nombre: null, desde: null };
+const SIN_PESOS: readonly PesoCompartido[] = [];
 const vacio = (): Omit<DeAscent, 'listo' | 'conCuenta' | 'version'> => ({ vinculo: SIN_VINCULO, sesiones: [], marcas: [], pesos: [], rutina: null, ajustes: null, metas: [], desde: null, llego: null, noches: {}, siente: null });
 const porFecha = <T extends { fecha: ClaveDia }>(a: T, b: T) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0);
 
@@ -339,13 +340,21 @@ export function deAscent(): AlmacenDeAscent {
   // con la fuente «Ascent» se encienden solos, como los de Salud (y como Salud, nunca los apagan).
   // Y lo dormido de cada noche se va guardando mientras está vinculada.
   let antes: { salud: unknown; noches: unknown } = { salud: null, noches: null };
+  // Los pesos de Ascent también cuentan para el control (sin vínculo, ninguno): van al almacén cuando cambian.
+  let pesosPuestos: readonly PesoCompartido[] | null = null;
   const revisar = () => {
     const e = almacen.estado();
     const d = a.estado();
-    if (!e.listo || !d.vinculo.vinculada) return;
+    if (!e.listo) return;
+    const pesos = d.vinculo.vinculada ? d.pesos : SIN_PESOS;
+    if (pesos !== pesosPuestos) {
+      pesosPuestos = pesos;
+      almacen.ponerPesosDeAscent(pesos);
+    }
+    if (!d.vinculo.vinculada) return;
     if (entrenoEl(d.sesiones, e.hoy)) {
       for (const h of habitosDelDia(e.habitos, e.hoy)) {
-        if (h.fuente.tipo === 'ascent' && !e.marcas.get(claveDeMarca(h.id, e.hoy))?.hecho) almacen.marcar(h.id, true, 'ascent');
+        if (h.fuente.tipo === 'ascent' && seEnciendeSola(e.marcas.get(claveDeMarca(h.id, e.hoy)), 'ascent')) almacen.marcar(h.id, true, 'ascent');
       }
     }
     if (e.salud !== antes.salud || e.noches !== antes.noches) {

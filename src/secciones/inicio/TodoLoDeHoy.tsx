@@ -85,7 +85,9 @@ function Contenido({ alVerComida }: { alVerComida: () => void }) {
     if (!p.deEjemplo && numeros && p.gasto !== null && p.control) sabe.push([t('progreso.gasto'), `${numero(p.gasto)} ${t('inicio.kcalPorDia')}`, t('inicio.todo.origen.control', { fecha: fechaDiaMes(p.control.fecha) })]);
     if (!p.deEjemplo && p.grasa) sabe.push([t('progreso.grasa'), t('cuerpo.rango', { desde: numero(p.grasa.desde), hasta: numero(p.grasa.hasta) }), t('inicio.todo.origen.medidas')]);
     const noche = s.deEjemplo ? null : s.noches.find((n) => n.clave === e.hoy);
-    if (noche) sabe.push([t('inicio.bloques.sueno'), duracion(noche.dormido), noche.fuente.tipo !== 'moss' ? t('inicio.todo.origen.aparato', { aparato: noche.fuente.nombre }) : t('inicio.todo.origen.estimado')]);
+    // La de Moss es «estimado con el teléfono» solo mientras no la confirmaste, corregiste o escribiste.
+    const deMoss = noche?.moss && noche.moss.origen !== 'estimada' ? t(`sueno.origen.${noche.moss.origen}`).toLowerCase() : t('inicio.todo.origen.estimado');
+    if (noche) sabe.push([t('inicio.bloques.sueno'), duracion(noche.dormido), noche.fuente.tipo !== 'moss' ? t('inicio.todo.origen.aparato', { aparato: noche.fuente.nombre }) : deMoss]);
   }
 
   // Lo que le falta a Moss para estimar mejor (faltaParaEstimar, la regla de Progreso).

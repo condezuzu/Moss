@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { luzAcumulada, progresoPorConstelacion, resumirDia, type Dia, type Marca } from './dias';
+import { luzAcumulada, progresoPorConstelacion, resumirDia, seEnciendeSola, type Dia, type Marca } from './dias';
 import type { Habito } from './habitos';
 import { historial, logrosNuevos, type Logro } from './logros';
 
@@ -79,5 +79,16 @@ describe('los logros', () => {
   it('nunca repite uno que ya estaba', () => {
     const tenidos: Logro[] = [{ id: 'primeraLuz', desde: '2026-10-01' }];
     expect(ids(logrosNuevos([dia('2026-10-21', 3, 3)], tenidos, '2026-10-21'))).toEqual(['constelacion']);
+  });
+});
+
+describe('lo que Salud o Ascent encienden solos', () => {
+  it('sin marca o con una suya apagada, sí; lo hecho o lo que apagaste a mano, no', () => {
+    const m = (hecho: boolean, origen: Marca['origen']): Marca => ({ habito: 'h', dia: '2026-11-25', hecho, momento: '2026-11-25T10:00:00.000Z', origen });
+    expect(seEnciendeSola(undefined, 'ascent')).toBe(true);
+    expect(seEnciendeSola(m(false, 'ascent'), 'ascent')).toBe(true);
+    expect(seEnciendeSola(m(true, 'ascent'), 'ascent')).toBe(false);
+    expect(seEnciendeSola(m(false, 'toque'), 'ascent')).toBe(false);
+    expect(seEnciendeSola(m(false, 'deshacer'), 'salud')).toBe(false);
   });
 });

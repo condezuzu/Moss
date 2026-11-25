@@ -50,6 +50,26 @@ describe('comidaDeLaHora', () => {
     expect(comidaDeLaHora(4 * 60, 4 * 60)).toBe('desayuno');
     expect(comidaDeLaHora(3 * 60 + 59, 4 * 60)).toBe('snack');
   });
+
+  it('con tus horas de comer, la que está cerca de ahora; lejos de todas, la franja', () => {
+    const tuyas = { ...HORA_TIPICA, almuerzo: 11 * 60 + 30, cena: 19 * 60 };
+    const con = (h: number, m = 0) => comidaDeLaHora(h * 60 + m, 4 * 60, tuyas);
+    // La cena puesta a las 19: a las 18:50 ya es la cena, no la merienda.
+    expect(con(18, 50)).toBe('cena');
+    // El almuerzo a las 11:30: a las 11 ya es el almuerzo, no un snack.
+    expect(con(11)).toBe('almuerzo');
+    expect(con(17, 30)).toBe('merienda');
+    // Lejos de todas, la franja.
+    expect(con(15, 15)).toBe('almuerzo');
+    expect(con(2)).toBe('snack');
+    // Con las horas típicas, lo mismo que las franjas.
+    for (let m = 0; m < 24 * 60; m += 5) expect(comidaDeLaHora(m, 4 * 60, HORA_TIPICA)).toBe(comidaDeLaHora(m, 4 * 60));
+  });
+
+  it('la cena tarde pasada la medianoche sigue siendo la cena; el desayuno, no antes de que empiece el día', () => {
+    expect(comidaDeLaHora(24 * 60 + 15, 4 * 60, { ...HORA_TIPICA, cena: 23 * 60 + 30 })).toBe('cena');
+    expect(comidaDeLaHora(5 * 60 + 30, 6 * 60, { ...HORA_TIPICA, desayuno: 6 * 60 })).toBe('snack');
+  });
 });
 
 describe('horasCorridas: lo que falta corre con la última que comiste', () => {

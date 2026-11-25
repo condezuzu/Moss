@@ -4,7 +4,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 
 import { t } from '@/textos';
-import { enLaUnidad, kilosDeLaMeta, nivelEn, pesoEn, siguienteEn } from './palabras';
+import { enLaUnidad, enLista, kilosDeLaMeta, nivelEn, pesoEn, siguienteEn } from './palabras';
 
 jest.mock('expo-localization', () => ({ getLocales: () => [{ languageTag: 'es-UY', regionCode: 'UY' }] }));
 
@@ -52,5 +52,14 @@ describe('los pesos de Ascent con el sistema imperial', () => {
     expect(enLaUnidad(t('ascent.tus.proxima.subirA', { kg: '140' }), 'imperial')).toBe('Próxima vez: sube a 140 lb.');
     expect(enLaUnidad(t('ascent.estancamiento.marca', { kg: '135', reps: 5 }), 'imperial')).toBe('135 lb × 5');
     expect(enLaUnidad(t('ascent.metas.objetivoVarias', { kg: '225', reps: 3 }), 'imperial')).toBe('Levantar 225 lb 3 veces');
+  });
+});
+
+describe('una lista de músculos', () => {
+  it('lleva «e» delante de i o hi, y «y» delante de hie', () => {
+    expect(enLista(['cuádriceps', 'glúteos', 'isquios'])).toBe('cuádriceps, glúteos e isquios');
+    expect(enLista(['pecho', 'hombros'])).toBe('pecho y hombros');
+    expect(enLista(['pecho', 'hierro'])).toBe('pecho y hierro');
+    expect(enLista(['pecho'])).toBe('pecho');
   });
 });

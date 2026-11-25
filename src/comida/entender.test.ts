@@ -82,6 +82,17 @@ describe('lo dicho, en alimentos de la base', () => {
     expect('porcion' in d ? [d.porcion.split(' (')[0], d.veces] : d).toEqual(['1 cucharada', 2]);
   });
 
+  it('lo dicho en ml queda en ml: «200 ml de leche» se ve «200 ml», con sus gramos', async () => {
+    const [leche] = await decir('200 ml de leche entera', { conocido: () => true });
+    expect(leche.opciones[leche.elegida].cantidad).toEqual({ gramos: expect.any(Number), ml: 200 });
+  });
+
+  it('en Uruguay, «pan» es el pan francés y no el pan dulce (el panettone): sin preguntar ni recordarlo', async () => {
+    const [pan] = await decir('pan');
+    expect(nombre(pan)).toBe('Pan francés');
+    expect(pan.pregunta).not.toBe('cual');
+  });
+
   it('una taza de arroz también pregunta crudo o cocido, cada una con su peso', async () => {
     const [arroz] = await decir('una taza de arroz', { conocido: () => true });
     expect(arroz.pregunta).toBe('crudo');
@@ -241,6 +252,15 @@ describe('los platos dichos sin cantidad (D36)', () => {
     // Media empanada sí es media.
     const [empanada] = await decir('media empanada');
     expect(empanada.opciones[empanada.elegida].cantidad).toMatchObject({ veces: 0.5 });
+  });
+
+  it('«un cuarto de pollo» es un cuarto del pollo entero (lo que se come, FNDDS), no de 100 g; la pechuga, no', async () => {
+    const [cuarto] = await decir('un cuarto de pollo', { conocido: () => true });
+    expect(gramos(cuarto)).toEqual([150]);
+    const [medio] = await decir('medio pollo', { conocido: () => true });
+    expect(gramos(medio)).toEqual([300]);
+    const [pechuga] = await decir('media pechuga de pollo', { conocido: () => true });
+    expect(pechuga.opciones[pechuga.elegida].cantidad).toMatchObject({ veces: 0.5 });
   });
 
   it('un plato sin «plato» y sin cantidad también; lo contado o lo ya comido, no', async () => {

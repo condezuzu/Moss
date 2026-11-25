@@ -415,6 +415,9 @@ La gente registra 4 a 6 veces por día: cada toque cuenta. Las reglas:
     - de 15:30 a 19:30, merienda;
     - de 19:30 a medianoche, cena;
     - entre medio y de madrugada, snack;
+    - con tus horas de comer (Perfil), gana la comida que esté a una hora o menos de ahora
+      (la cena de las 23:30 sigue siendo la cena a las 0:15), y el desayuno nunca antes de
+      que empiece el día; lejos de todas, la franja (`comidaDeLaHora`, desde el 25/11/2026);
   - debajo, lo que solés comer a esa hora, tus recientes y tus favoritos.
 - **Registrar es armar la comida y revisarla antes de agregarla** (lo pediste el 21/10/2026):
   - el «+» de cada fila abre la ventana del alimento: sus porciones, la cantidad en medios o los gramos, y cuánto queda en el día; viene con la última porción que usaste o, la primera vez, con la típica;

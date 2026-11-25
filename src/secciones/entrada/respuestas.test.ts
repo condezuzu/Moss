@@ -1,8 +1,13 @@
 import { describe, expect, it } from '@jest/globals';
 
 import type { Estado } from '@/almacen/almacen';
-import { deportesDe, partesRedondas } from '@/dominio/cuestionario';
-import { conObjetivo, DE_FABRICA, desdeLoGuardado, despuesDe, lugarDe, metaDeAhora, movimientoUsado, objetivoPosible, paraGuardar, preguntasDe, sinDeficit, type Contestado } from './respuestas';
+import { deportesDe, NIVELES_DE_PROTEINA, partesRedondas } from '@/dominio/cuestionario';
+import { sumarDias } from '@/dominio/fechas';
+import { KCAL_POR_KG } from '@/dominio/metas';
+import {
+  conElPartido, conObjetivo, conSalud, DE_FABRICA, desdeLoGuardado, despuesDe, llegadaDe, lugarDe, metaDeAhora, movimientoUsado, objetivoPosible, paraGuardar, pctDe,
+  plazoElegido, preguntasDe, proteinaDe, sinDeficit, type Contestado,
+} from './respuestas';
 
 const HOY = '2026-11-16';
 const el: Contestado = { ...DE_FABRICA, sexo: 'm' };
@@ -19,6 +24,87 @@ describe('las preguntas que aparecen', () => {
     expect(preguntasDe({ ...el, cuidados: ['reflujo'] })).not.toContain('grasa');
     expect(preguntasDe({ ...el, entreno: { ...el.entreno, tipos: [] } })).not.toContain('cuando');
     expect(preguntasDe(conObjetivo(el, 'subir'))).toContain('experiencia');
+  });
+
+  it('si Salud no trae los cuatro datos (sin altura ni peso, o sin permiso), se preguntan de a uno con lo que trajo', () => {
+    const todo = conSalud(el, { edad: 40, sexo: 'f', alturaCm: 165, pesoKg: 60 }, null);
+    expect(preguntasDe(todo).slice(0, 3)).toEqual(['salud', 'tu', 'cuidado']);
+    const sinPeso = conSalud(el, { edad: 40, sexo: 'f' }, 9000);
+    expect(sinPeso).toMatchObject({ salud: true, edad: 40, sexo: 'f', pasosDeSalud: 9000 });
+    expect(preguntasDe(sinPeso).slice(0, 6)).toEqual(['salud', 'sexo', 'edad', 'altura', 'peso', 'cuidado']);
+    expect(preguntasDe(conSalud(el, {}, null))).not.toContain('tu');
+  });
+
+  it('con un trastorno de la alimentación no hay peso meta ni plan (D9): ni se pregunta ni se guarda', () => {
+    const r: Contestado = { ...conObjetivo({ ...el, cuidados: ['tca'], consentido: true }, 'subir'), fecha: '2027-03-01' };
+    expect(preguntasDe(r)).not.toContain('meta');
+    expect(preguntasDe(r)).not.toContain('despues');
+    const { nuevo } = paraGuardar(r, HOY, []);
+    expect(nuevo.perfil?.pesoMeta).toBeUndefined();
+    expect(nuevo.respuestas).toMatchObject({ fecha: null, despues: null });
+    expect(nuevo.respuestas.eleccion.pct).toBeNull();
+  });
+});
+
+describe('la fecha del plan es la de la meta', () => {
+  // El ritmo que usa la meta: lo que se come de menos, en % del peso por semana.
+  const pctDeLaMeta = (r: Contestado) => {
+    const m = metaDeAhora(r, HOY);
+    return (((m.gasto.total - m.metas.kcal) * 7) / KCAL_POR_KG / r.pesoKg) * 100;
+  };
+
+  it('con diabetes 1, «Rápido» y una fecha cerca van al ritmo suave, como la meta', () => {
+    const r: Contestado = { ...conObjetivo({ ...el, pesoKg: 80, cuidados: ['diabetes1'], consentido: true }, 'bajar'), ritmo: 'rapido' };
+    expect(pctDe(r, 'rapido', HOY)).toBe(0.25);
+    expect(plazoElegido(r, HOY)!.pct).toBeCloseTo(pctDeLaMeta(r), 1);
+    const conFecha: Contestado = { ...r, fecha: sumarDias(HOY, 28) };
+    expect(plazoElegido(conFecha, HOY)!.pct).toBeCloseTo(0.25, 5);
+    expect(pctDeLaMeta(conFecha)).toBeCloseTo(0.25, 1);
+  });
+
+  it('con mucho peso, «Rápido» no pasa de 1.000 kcal por día, como la meta', () => {
+    const r: Contestado = { ...conObjetivo({ ...el, pesoKg: 150, alturaCm: 180 }, 'bajar'), ritmo: 'rapido' };
+    expect(pctDe(r, 'rapido', HOY)).toBeCloseTo(pctDeLaMeta(r), 1);
+    expect(pctDe(r, 'rapido', HOY)).toBeLessThan(0.75);
+  });
+
+  it('con el piso de kcal (el de siempre o el de lo marcado), se llega cuando llega lo que se come de verdad', () => {
+    const casos: Contestado[] = [
+      { ...conObjetivo({ ...el, sexo: 'f', edad: 75, alturaCm: 152, pesoKg: 52, entreno: { ...el.entreno, tipos: [] } }, 'bajar'), ritmo: 'recomendado' },
+      // Con GLP-1, un hombre no baja de 1.800.
+      { ...conObjetivo({ ...el, cuidados: ['glp1'], consentido: true }, 'bajar'), ritmo: 'rapido' },
+    ];
+    for (const r of casos) {
+      const plazo = plazoElegido(r, HOY)!;
+      expect(plazo.avisos).toContain('piso');
+      const m = metaDeAhora(r, HOY);
+      const kgPorSemana = ((m.gasto.total - m.metas.kcal) * 7) / KCAL_POR_KG;
+      const dias = Math.ceil(((r.pesoKg - r.pesoMeta!) / kgPorSemana) * 7);
+      expect(Math.abs(dias - (Date.parse(llegadaDe(plazo)!) - Date.parse(HOY)) / 864e5)).toBeLessThanOrEqual(1);
+      expect(llegadaDe(plazo)! > plazo.fecha).toBe(true);
+    }
+  });
+});
+
+describe('cómo quieres comer', () => {
+  it('con el riñón, los gramos de cada nivel son los de la meta: 0,8 g por kilo', () => {
+    const r: Contestado = { ...el, pesoKg: 80, cuidados: ['renal'], consentido: true };
+    for (const n of NIVELES_DE_PROTEINA) expect(proteinaDe(r, HOY, n)).toBe(64);
+    expect(metaDeAhora(r, HOY).metas.proteina).toBe(64);
+  });
+});
+
+describe('el día del partido', () => {
+  it('cambiarlo o apagar los partidos saca el día que había sumado; uno que ya era de entrenar queda', () => {
+    let r: Contestado = conElPartido({ ...el, entreno: { ...el.entreno, tipos: ['equipo'], partidos: true, diaDePartido: 6 } });
+    expect(r.entreno.de.equipo.dias).toEqual([2, 4, 6]);
+    r = conElPartido({ ...r, entreno: { ...r.entreno, diaDePartido: 0 } });
+    expect(r.entreno.de.equipo.dias).toEqual([2, 4, 0]);
+    r = conElPartido({ ...r, entreno: { ...r.entreno, partidos: false } });
+    expect(r.entreno.de.equipo.dias).toEqual([2, 4]);
+    let propio = conElPartido({ ...r, entreno: { ...r.entreno, partidos: true, diaDePartido: 4 } });
+    propio = conElPartido({ ...propio, entreno: { ...propio.entreno, diaDePartido: 6 } });
+    expect(propio.entreno.de.equipo.dias).toEqual([2, 4, 6]);
   });
 });
 

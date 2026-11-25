@@ -7,16 +7,19 @@ import type { CuestionarioNuevo, Estado } from '@/almacen/almacen';
 import { CON_HORA, HORA_TIPICA } from '@/dominio/comidas';
 import {
   actividadEquivalente, DEPORTES, eleccionDe, entrenaFuerza, entrenoParaGuardar, gastoEstimado, grasaDeFigura, loQueSigue, metaDelCuestionario, movimientoPorPasos,
-  NOCHES_PARA_NO_PREGUNTAR, pctDelPlan, pesoMetaSugerido, preguntasDelEntreno, rangoDelPesoMeta, ritmoSugerido,
+  NOCHES_PARA_NO_PREGUNTAR, pctDelPlan, pesoMetaSugerido, preguntasDelEntreno, proteinaDelNivel, rangoDelPesoMeta, ritmoSugerido,
   type Deporte, type Despues, type EntrenoDicho, type Experiencia, type GrasaDicha, type Horarios, type MetaDelCuestionario, type Movimiento,
   type NivelDeProteina, type ObjetivoDicho, type ParaLoQueSigue, type Respuestas, type RespuestasGuardadas,
 } from '@/dominio/cuestionario';
 import { rangoDeGrasa } from '@/dominio/cuerpo';
-import { fechaProbableDe, metaDelCuestionarioConCuidados, reglasDe, semanaDeEmbarazo, semanasDesdeElParto, sinDeficitDe, type Cuidado, type CuidadosGuardados, type DatosDelCuidado, type Reglas } from '@/dominio/cuidados';
+import {
+  fechaProbableDe, metaDelCuestionarioConCuidados, pisoConCuidados, proteinaConCuidados, reglasDe, ritmoConCuidados, semanaDeEmbarazo, semanasDesdeElParto, sinDeficitDe,
+  type Cuidado, type CuidadosGuardados, type DatosDelCuidado, type Reglas,
+} from '@/dominio/cuidados';
 import { sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
-import { edadDe, MAYORIA_DE_EDAD, RITMOS, ritmoPermitido, type Cuestionario, type Estilo, type Ritmo, type Sexo } from '@/dominio/metas';
+import { edadDe, MAYORIA_DE_EDAD, pisoDe, RITMOS, ritmoPermitido, type Cuestionario, type Estilo, type Ritmo, type Sexo } from '@/dominio/metas';
 import type { Dieta } from '@/dominio/plan';
-import { plazoConFecha, plazoConRitmo, type EntradaDelPlazo, type Plazo } from '@/dominio/progreso';
+import { bordeDe, plazoConFecha, plazoConRitmo, type EntradaDelPlazo, type Plazo } from '@/dominio/progreso';
 import { horario, ultimasNoches, type Noche } from '@/dominio/sueno';
 
 export type Principal = (typeof CON_HORA)[number];
@@ -26,19 +29,24 @@ export type ModoDeGrasa = 'no' | 'dicha' | 'imagen' | 'cinta';
 export type DatosDeCuidado = { semana: number; pesoAntes: number | null; mellizos: boolean; semanasParto: number; soloPecho: boolean; bajaElAzucar: boolean | null; dialisis: boolean };
 
 /**
- * Lo contestado. Con Salud, la edad, el sexo, la altura y el peso vienen de ahí. Cada deporte tiene sus días, su
+ * Lo contestado. Con Salud, la edad, el sexo, la altura y el peso vienen de ahí; si no vinieron los cuatro
+ * (`saludIncompleta`), se preguntan de a uno. Cada deporte tiene sus días, su
  * hora y cuánto dura en `entreno.de`; los elegidos están en `entreno.tipos` (vacío: no entrena, y lo de cada uno
  * espera por si cambia de idea). Una comida en `noSuele` no se suele hacer.
  */
 export type Contestado = {
-  salud: boolean; edad: number; sexo: Sexo | null; alturaCm: number; pesoKg: number;
+  salud: boolean; saludIncompleta: boolean; edad: number; sexo: Sexo | null; alturaCm: number; pesoKg: number;
   /** Lo que sugirieron los pasos de Salud, si los hubo, y cuántos son por día. */
   movimientoSugerido: Movimiento | null;
   pasosDeSalud?: number | null;
   cuidados: Cuidado[]; consentido: boolean; datosCuidado: DatosDeCuidado;
   grasaModo: ModoDeGrasa; grasaPct: number; figura: number | null; cinta: { cintura: number; cuello: number; cadera: number };
   movimiento: Movimiento;
-  entreno: { tipos: Deporte[]; de: Record<Deporte, DeCadaDeporte>; viaje: number; partidos: boolean; diaDePartido: DiaSemana; horaDePartido: number | null; categoriaDePeso: boolean };
+  entreno: {
+    tipos: Deporte[]; de: Record<Deporte, DeCadaDeporte>; viaje: number; partidos: boolean; diaDePartido: DiaSemana; horaDePartido: number | null; categoriaDePeso: boolean;
+    /** El día que sumó el partido a los de su deporte (no era de entrenar): se va si el partido cambia o se apaga. */
+    sumadoPorElPartido?: { tipo: Deporte; dia: DiaSemana } | null;
+  };
   objetivo: ObjetivoDicho; pesoMeta: number | null; ritmo: Ritmo; fecha: ClaveDia | null; experiencia: Experiencia; despues: Despues;
   estilo: Estilo; proteina: NivelDeProteina; dieta: Dieta;
   horarios: Record<Principal, number>; noSuele: Partial<Record<Principal, boolean>>;
@@ -46,7 +54,7 @@ export type Contestado = {
 };
 
 export const DE_FABRICA: Contestado = {
-  salud: false, edad: 29, sexo: null, alturaCm: 172, pesoKg: 74.5, movimientoSugerido: null,
+  salud: false, saludIncompleta: false, edad: 29, sexo: null, alturaCm: 172, pesoKg: 74.5, movimientoSugerido: null,
   cuidados: [], consentido: false,
   datosCuidado: { semana: 20, pesoAntes: null, mellizos: false, semanasParto: 8, soloPecho: true, bajaElAzucar: null, dialisis: false },
   grasaModo: 'no', grasaPct: 18, figura: null, cinta: { cintura: 86, cuello: 38, cadera: 98 },
@@ -70,6 +78,15 @@ export const DE_FABRICA: Contestado = {
 // ------------------------------------------------------------------ lo que sale de lo contestado
 export const sexoDe = (r: Contestado): Sexo => r.sexo ?? 'm';
 export const cambiaPeso = (r: Pick<Contestado, 'objetivo'>) => r.objetivo === 'bajar' || r.objetivo === 'subir';
+/** Bajando o subiendo hay peso meta y plan, salvo con un trastorno de la alimentación (D9; `pesoMeta` en cuidados.ts). */
+export const conPlan = (r: Pick<Contestado, 'objetivo' | 'cuidados'>) => cambiaPeso(r) && !r.cuidados.includes('tca');
+
+/** Lo que trajo Salud. Sin los cuatro datos (sin altura ni peso, o sin permiso) no van en la tarjeta: se preguntan de a uno, con lo que trajo puesto. */
+export function conSalud(r: Contestado, d: Partial<Pick<Contestado, 'edad' | 'sexo' | 'alturaCm' | 'pesoKg'>>, pasos: number | null): Contestado {
+  const sugerido = movimientoPorPasos(pasos);
+  const completa = d.edad !== undefined && d.sexo !== undefined && d.alturaCm !== undefined && d.pesoKg !== undefined;
+  return { ...r, ...d, salud: true, saludIncompleta: !completa, pasosDeSalud: pasos, movimientoSugerido: sugerido, movimiento: sugerido ?? r.movimiento };
+}
 
 /** Lo que entrena, como lo recibe la regla: los deportes, la sesión de cada uno, el viaje, los partidos y la categoría de peso. */
 export function entrenoDicho(r: Contestado): EntrenoDicho | null {
@@ -88,6 +105,25 @@ export function entrenoDicho(r: Contestado): EntrenoDicho | null {
 export const levantaPesas = (r: Contestado) => entrenaFuerza(entrenoDicho(r));
 /** El deporte que lleva el día del partido: el de partidos o, si no, el de choques. */
 export const deporteDelPartido = (r: Contestado): Deporte => (r.entreno.tipos.includes('equipo') ? 'equipo' : 'contacto');
+
+/** El día del partido también es un día de ese deporte: se suma, y el que sumó antes se va si el partido cambió de día o se apagó. */
+export function conElPartido(x: Contestado): Contestado {
+  const e = x.entreno;
+  const tipo = deporteDelPartido(x);
+  const de = { ...e.de };
+  let sumado = e.sumadoPorElPartido ?? null;
+  if (sumado && (!e.partidos || sumado.tipo !== tipo || sumado.dia !== e.diaDePartido)) {
+    const { tipo: t0, dia } = sumado;
+    de[t0] = { ...de[t0], dias: de[t0].dias.filter((d) => d !== dia) };
+    sumado = null;
+  }
+  if (e.partidos && !de[tipo].dias.includes(e.diaDePartido)) {
+    de[tipo] = { ...de[tipo], dias: [...de[tipo].dias, e.diaDePartido] };
+    sumado = { tipo, dia: e.diaDePartido };
+  }
+  if (sumado === (e.sumadoPorElPartido ?? null)) return x;
+  return { ...x, entreno: { ...e, de, sumadoPorElPartido: sumado } };
+}
 
 /** Lo que se pregunta además de lo marcado, como lo recibe la regla. */
 export function datosDelCuidado(r: Contestado, hoy: ClaveDia): DatosDelCuidado {
@@ -136,28 +172,48 @@ const persona = (r: Contestado, hoy: ClaveDia) => ({ edad: r.edad, sexo: sexoDe(
 const gastoTotal = (r: Contestado, hoy: ClaveDia, pasos: number | null) => gastoEstimado({ ...persona(r, hoy), movimiento: movimientoUsado(r, pasos), entreno: entrenoDicho(r) }).total;
 
 function entradaDelPlazo(r: Contestado, hoy: ClaveDia, pasos: number | null): EntradaDelPlazo {
-  return { hoy, pesoKg: r.pesoKg, pesoMeta: r.pesoMeta ?? r.pesoKg, sexo: sexoDe(r), edad: r.edad, gasto: gastoTotal(r, hoy, pasos), entrenaFuerza: levantaPesas(r) };
+  const sexo = sexoDe(r);
+  const reglas = r.cuidados.length ? reglasDeAhora(r, hoy, pasos) : null;
+  // El plazo mide el piso de siempre contra el gasto: con lo marcado, el extra (la lactancia) y un piso más alto (GLP-1) corren el gasto.
+  const conCuidados = reglas ? reglas.extraKcal - (pisoConCuidados(sexo, reglas) - pisoDe(sexo)) : 0;
+  return { hoy, pesoKg: r.pesoKg, pesoMeta: r.pesoMeta ?? r.pesoKg, sexo, edad: r.edad, gasto: gastoTotal(r, hoy, pasos) + conCuidados, entrenaFuerza: levantaPesas(r) };
 }
-/** El ritmo de cada opción, en % del peso por semana: antes de los 18, bajando, «Rápido» queda en el recomendado. */
-export function pctDe(r: Contestado, ritmo: Ritmo): number {
+/** Lo más rápido que dejan bajar los cuidados, en % del peso por semana (como metaDelCuestionarioConCuidados). */
+function topeDeLosCuidados(r: Contestado, hoy: ClaveDia): number {
+  if (r.objetivo !== 'bajar' || !r.cuidados.length) return Infinity;
+  const maximo = reglasDeAhora(r, hoy).ritmoMaximo;
+  return maximo === 'suave' || maximo === 'recomendado' ? Math.abs(RITMOS.bajar[maximo]) : Infinity;
+}
+/**
+ * El ritmo de cada opción, en % del peso por semana, el que usa la meta: antes de los 18, bajando, «Rápido» queda en
+ * el recomendado; lo marcado puede frenarlo más (ritmoConCuidados), y nunca pasa de un kilo ni de 1.000 kcal por día.
+ */
+export function pctDe(r: Contestado, ritmo: Ritmo, hoy: ClaveDia): number {
   const objetivo = r.objetivo === 'bajar' || r.objetivo === 'subir' ? r.objetivo : 'bajar';
-  return Math.abs(RITMOS[objetivo][ritmoPermitido({ edad: r.edad, objetivo, ritmo })]);
+  const permitido = ritmoPermitido({ edad: r.edad, objetivo, ritmo });
+  const usado = r.cuidados.length ? ritmoConCuidados(permitido, objetivo, reglasDeAhora(r, hoy)) : permitido;
+  const pct = Math.abs(RITMOS[objetivo][usado]);
+  return objetivo === 'bajar' ? Math.min(pct, bordeDe('bajar', 'exigente', r.pesoKg)) : pct;
 }
 export const plazoDeRitmo = (r: Contestado, hoy: ClaveDia, ritmo: Ritmo, pasos: number | null = null): Plazo | null =>
-  cambiaPeso(r) && r.pesoMeta !== null ? plazoConRitmo(entradaDelPlazo(r, hoy, pasos), pctDe(r, ritmo)) : null;
+  conPlan(r) && r.pesoMeta !== null ? plazoConRitmo(entradaDelPlazo(r, hoy, pasos), pctDe(r, ritmo, hoy)) : null;
 
 /**
- * El plazo de lo elegido. Con una fecha, el ritmo que pide; pero antes de los 18, bajando, la meta no pasa del
- * recomendado (pctDelPlan), y el plan llega cuando llega a ese ritmo.
+ * El plazo de lo elegido. Con una fecha, el ritmo que pide; pero bajando, la meta no pasa del borde de lo exigente
+ * ni, antes de los 18, del recomendado (pctDelPlan), ni de lo que dejan los cuidados: el plan llega cuando llega a
+ * ese ritmo.
  */
 export function plazoElegido(r: Contestado, hoy: ClaveDia, pasos: number | null = null): Plazo | null {
-  if (!cambiaPeso(r) || r.pesoMeta === null) return null;
+  if (!conPlan(r) || r.pesoMeta === null) return null;
   if (!r.fecha) return plazoDeRitmo(r, hoy, r.ritmo, pasos);
   const e = entradaDelPlazo(r, hoy, pasos);
   const conFecha = plazoConFecha(e, r.fecha);
-  const usado = conFecha && pctDelPlan({ edad: r.edad, objetivo: r.objetivo, sinDeficit: sinDeficit(r, hoy), pct: conFecha.pct, pesoKg: r.pesoKg });
+  const delPlan = conFecha && pctDelPlan({ edad: r.edad, objetivo: r.objetivo, sinDeficit: sinDeficit(r, hoy), pct: conFecha.pct, pesoKg: r.pesoKg });
+  const usado = delPlan && Math.min(delPlan, topeDeLosCuidados(r, hoy));
   return usado && usado < conFecha.pct ? plazoConRitmo(e, usado) : conFecha;
 }
+/** Cuándo se llega de verdad: si el piso de kcal frena el ritmo, más tarde; si con el piso no se llega en dos años, null. */
+export const llegadaDe = (p: Plazo): ClaveDia | null => (p.avisos.includes('pisoNoLlega') ? null : p.fechaConPiso ?? p.fecha);
 
 export function respuestasPara(r: Contestado, hoy: ClaveDia, pasos: number | null = null): Respuestas {
   const plazo = r.fecha ? plazoElegido(r, hoy, pasos) : null;
@@ -172,6 +228,10 @@ export function metaDeAhora(r: Contestado, hoy: ClaveDia, pasos: number | null =
   const resp = respuestasPara(r, hoy, pasos);
   return (r.cuidados.length ? metaDelCuestionarioConCuidados(resp, reglasDeAhora(r, hoy, pasos)) : null) ?? metaDelCuestionario(resp);
 }
+
+/** Los gramos de proteína de un nivel, como los usa la meta: con lo marcado, los de cuidados.ts (el riñón, 0,8 g por kilo). */
+export const proteinaDe = (r: Contestado, hoy: ClaveDia, nivel: NivelDeProteina): number =>
+  proteinaConCuidados(proteinaDelNivel({ ...respuestasPara(r, hoy), proteina: nivel }), r.pesoKg, reglasDeAhora(r, hoy));
 
 /** Bajando o subiendo, siempre hay un peso meta: el que se propone, si todavía no se eligió (o quedó fuera de lo posible). */
 export function conPesoMeta(r: Contestado): Contestado {
@@ -220,17 +280,18 @@ export type Pregunta =
   | 'objetivo' | 'experiencia' | 'meta' | 'despues' | 'comer' | 'dia';
 
 /**
- * Una pregunta por pantalla, con lo que va junto agrupado. `si`: cuándo aparece (con Salud, los cuatro datos van
+ * Una pregunta por pantalla, con lo que va junto agrupado. `si`: cuándo aparece (con los cuatro datos de Salud, van
  * en una tarjeta para confirmar; la grasa, desde los 18 y sin cuidados; la experiencia, al subir o recomponer con
- * pesas; el peso meta y lo que sigue, al bajar o subir). Lo que no aparece se saltea.
+ * pesas; el peso meta y lo que sigue, al bajar o subir, sin un trastorno de la alimentación). Lo que no aparece se saltea.
  */
+const enLaTarjeta = (r: Contestado) => r.salud && !r.saludIncompleta;
 export const PREGUNTAS: readonly { id: Pregunta; si?: (r: Contestado) => boolean }[] = [
   { id: 'salud' },
-  { id: 'tu', si: (r) => r.salud },
-  { id: 'sexo', si: (r) => !r.salud },
-  { id: 'edad', si: (r) => !r.salud },
-  { id: 'altura', si: (r) => !r.salud },
-  { id: 'peso', si: (r) => !r.salud },
+  { id: 'tu', si: enLaTarjeta },
+  { id: 'sexo', si: (r) => !enLaTarjeta(r) },
+  { id: 'edad', si: (r) => !enLaTarjeta(r) },
+  { id: 'altura', si: (r) => !enLaTarjeta(r) },
+  { id: 'peso', si: (r) => !enLaTarjeta(r) },
   { id: 'cuidado' },
   { id: 'grasa', si: preguntaGrasa },
   { id: 'movimiento' },
@@ -238,8 +299,8 @@ export const PREGUNTAS: readonly { id: Pregunta; si?: (r: Contestado) => boolean
   { id: 'cuando', si: (r) => r.entreno.tipos.length > 0 },
   { id: 'objetivo' },
   { id: 'experiencia', si: (r) => (r.objetivo === 'subir' || r.objetivo === 'recomponer') && levantaPesas(r) },
-  { id: 'meta', si: cambiaPeso },
-  { id: 'despues', si: cambiaPeso },
+  { id: 'meta', si: conPlan },
+  { id: 'despues', si: conPlan },
   { id: 'comer' },
   { id: 'dia' },
 ];
@@ -261,7 +322,7 @@ export function paraGuardar(r: Contestado, hoy: ClaveDia, noches: readonly Noche
   const meta = metaDeAhora(r, hoy, pasos);
   const reglas = reglasDeAhora(r, hoy, pasos);
   const resp = respuestasPara(r, hoy, pasos);
-  const usaPeso = cambiaPeso(r) && meta.objetivo !== 'mantener';
+  const usaPeso = conPlan(r) && meta.objetivo !== 'mantener';
   const deSalud = suenoDeSalud(r, noches, hoy);
   const respuestas: RespuestasGuardadas = {
     movimiento: resp.movimiento,

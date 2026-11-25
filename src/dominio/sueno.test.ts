@@ -1,5 +1,6 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 
+import { sumarDias } from './fechas';
 import {
   armarNoches, calidadDeNoche, despiertoDeLaNoche, deudaDeSueno, faltaDeLaNoche, horario, marcaDe, necesidad, necesidadesPara, necesidadPropuesta, nivelDeLaNoche, nochesDeLaDeuda, juicioDeLaDeuda, pareceIncompleta, pocoSuenoSostenido, redondearDeuda,
   soloEnCama, TOPES_DE_UNA_NOCHE, ultimasNoches, vitalDeNoche,
@@ -497,5 +498,25 @@ describe('lo que mide el reloj de noche', () => {
     expect(vitalDeNoche('variabilidad', cada(120, () => 48), { intervalos }, [40, 50])).toMatchObject({ valor: 48, comparado: null });
     // Lo medido fuera del sueño no cuenta.
     expect(vitalDeNoche('respiracion', [{ en: hora('2026-10-21 12:00'), valor: 18 }, { en: hora('2026-10-21 13:00'), valor: 18 }], { intervalos }, [])).toBeNull();
+  });
+});
+
+describe('las noches que no cuentan', () => {
+  it('tampoco cuentan para tu energía: con dos semanas de Sleep Cycle (confianza baja), es como sin noches', () => {
+    // Solo la energía: la hora de los avisos y la meta del día no importan acá.
+    jest.doMock('@/recordatorios/programar', () => ({ suenoDelDia: () => null, horasDeComida: () => () => 12 * 60 }));
+    jest.doMock('@/secciones/comida/datos', () => ({ metaDelDia: () => null }));
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { energiaDeHoy } = require('@/secciones/sueno/datosDeEnergia') as typeof import('@/secciones/sueno/datosDeEnergia');
+    const hoy = '2026-10-21';
+    const e = { hoy, perfil: { sexo: 'm', objetivo: 'mantener', alturaCm: 175 }, pesos: [], registros: new Map(), salud: null, entreno: null } as unknown as Parameters<typeof energiaDeHoy>[0];
+    // Cinco horas cada noche: de la 1 a las 6.
+    const cortas = armarNoches(Array.from({ length: 14 }, (_, i) => sumarDias(hoy, -i)).map((dia) => m('dormido', `${dia} 01:00`, `${dia} 06:00`, SLEEP_CYCLE.id)), [SLEEP_CYCLE]);
+    expect(cortas.every((n) => n.confianza.duracion === 'baja')).toBe(true);
+    const con = (noches: Noche[]) => energiaDeHoy(e, {
+      deEjemplo: false, noches, soloEnCama: new Map(), lecturas: { frecuencia: [], variabilidad: [], respiracion: [], reposo: new Map() }, fuentes: [SLEEP_CYCLE], necesidad: 480,
+    }, new Date(2026, 9, 21, 10));
+    expect(con(cortas)).toEqual(con([]));
+    expect(con(cortas)?.dormido).toBeNull();
   });
 });

@@ -6,7 +6,7 @@ import type { Constelacion } from '../datos/catalogo';
 import datos from '../datos/constelaciones.json';
 import type { Movimiento } from '../dominio/sinReloj';
 import { armarNoches, type Fuente, type NochePropia } from '../dominio/sueno';
-import { estimarAnoche, nocheDeAhora, rehacerLasNoches } from './nocheSinReloj';
+import { estimarAnoche, nocheDeAhora, nocheDeLaManana, rehacerLasNoches } from './nocheSinReloj';
 
 // Sin los Atajos (no hay módulo en los tests): la noche sale de cuándo se usó Moss y del movimiento de mentira.
 jest.mock('./anclas', () => ({ leerSenales: async () => [] }));
@@ -42,6 +42,14 @@ describe('la noche de anoche, sin reloj', () => {
     expect(a.estado().noches.has('2026-10-21')).toBe(false);
   });
 
+  it('la pregunta de la mañana es de la noche más nueva: con el corte a las 6, a las 5:10 la de hoy, como el widget', () => {
+    // Con el corte a las 6, a las 5:10 el día de Moss todavía es el 21; la noche que terminó, la del 22.
+    expect(nocheDeLaManana('2026-10-21', el(22, 5, 10))).toBe('2026-10-22');
+    expect(nocheDeLaManana('2026-10-22', el(22, 9))).toBe('2026-10-22');
+    // Con el corte a las 2, a las 3 ya es el 22 aunque la noche de ahora todavía sea la del 21.
+    expect(nocheDeLaManana('2026-10-22', el(22, 3))).toBe('2026-10-22');
+  });
+
   it('con un anillo, estima igual desde temprano, sin esperar a las 14 (lo pediste el 21/11/2026); si ya llegó la del anillo, no estima', async () => {
     mockMovimiento = [];
     const instante = el(22, 7, 30);
@@ -66,6 +74,25 @@ describe('la noche de anoche, sin reloj', () => {
     expect((await conAnillo([20, 21]))?.origen).toBe('estimada');
     // Ya la mandó: la noche es la suya.
     expect(await conAnillo([20, 21, 22])).toBeUndefined();
+  });
+
+  it('con Sleep Cycle o AutoSleep en Salud estima igual: sus noches tienen confianza baja y no cuentan para nada', async () => {
+    mockMovimiento = [];
+    const instante = el(22, 9);
+    const sleepCycle: Fuente = { id: 'com.northcube.sleepcycle', nombre: 'Sleep Cycle', tipo: 'telefono' };
+    const zona = -instante.getTimezoneOffset();
+    const a = almacenCon(() => instante);
+    await a.iniciar();
+    a.ponerSalud({
+      dia: '2026-10-22', valores: {}, soloEnCama: new Map(), fuentes: [sleepCycle], aparatos: [], pasosRecientes: [],
+      noches: armarNoches([21, 22].map((d) => ({ etapa: 'dormido' as const, desde: el(d - 1, 23, 30).getTime(), hasta: el(d, 7).getTime(), fuente: sleepCycle.id, zona })), [sleepCycle]),
+      lecturas: { frecuencia: [], variabilidad: [], respiracion: [], reposo: new Map() }, pesos: new Map(),
+    });
+    a.anotarUso('abrir', el(21, 23, 0).getTime());
+    a.anotarUso('cerrar', el(21, 23, 10).getTime());
+    a.anotarUso('abrir', el(22, 7, 20).getTime());
+    await estimarAnoche(a, instante);
+    expect(a.estado().noches.get('2026-10-22')?.hora?.origen).toBe('estimada');
   });
 
   it('una siesta en Salud no es la noche: con el anillo cargando de noche y una siesta de 14:00 a 14:40, estima igual', async () => {

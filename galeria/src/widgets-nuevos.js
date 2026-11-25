@@ -909,6 +909,15 @@ const WidgetsNuevos = (() => {
         s.vasos = 0;
         return r;
       },
+      // Lo que usa la propuesta del 25/11 (widgets-mejores.js): los de ahora, para ponerlos al lado de los nuevos,
+      // y el mismo día, los mismos toques y el mismo «Sí».
+      piezas: {
+        hoyChico, hoyMediano, hoyGrande, hoyRectangular, nuevaLuna, conFondo, elDia, macrosDe, cifraDe, estadoDe, alTocarFila, comidaDeAhora, poner, icono,
+        alPintar: (f) => pintores.push(f),
+        get momento() { return s.momento; },
+        get confirmada() { return s.confirmada; },
+        confirmar() { s.confirmada = true; pintar(); o.alCambiar(); },
+      },
     };
   }
 

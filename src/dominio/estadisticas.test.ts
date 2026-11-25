@@ -31,10 +31,12 @@ describe('las estadísticas de Hábitos', () => {
     expect(r).toEqual({ completos: 1, conLuz: 2, conHabitos: 3, luz: 3 });
   });
 
-  it('cada hábito, contra los días que le tocaban', () => {
+  it('cada hábito, contra los días que le tocaban; hoy cuenta solo si ya está hecho', () => {
     const dias = mapa([dia('2026-10-20', ['a', 'b'], ['a']), dia('2026-10-21', ['a'], ['a']), dia('2026-10-22', ['a', 'b'], ['b'])]);
-    expect(cumplimiento('a', dias, '2026-10-22')).toEqual({ hechos: 2, total: 3 });
+    expect(cumplimiento('a', dias, '2026-10-22')).toEqual({ hechos: 2, total: 2 });
     expect(cumplimiento('b', dias, '2026-10-22')).toEqual({ hechos: 1, total: 2 });
     expect(cumplimiento('c', dias, '2026-10-22')).toEqual({ hechos: 0, total: 0 });
+    // Un hábito recién creado no es «0 de 1» antes de que termine el día.
+    expect(cumplimiento('a', mapa([dia('2026-10-22', ['a'], [])]), '2026-10-22')).toEqual({ hechos: 0, total: 0 });
   });
 });

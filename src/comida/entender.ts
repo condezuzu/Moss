@@ -10,7 +10,7 @@ import { normalizar, type Resultado } from './buscar';
 import type { Detalle } from './detalle';
 import { TAMANO_DE_LA_RECETA, type Dicho } from './frase';
 import { gramosDeLaEntera, porcionesAlDecirPlato, porcionesDePlato, porcionesDesde, TAMANOS as TAMANOS_DE_PLATO, type PorcionesDePlato, type Tamano as TamanoDePlato } from './platos';
-import { gramosDeLinea } from './recetaDeTexto';
+import { gramosDeLinea, METRICAS as DE_VOLUMEN, ML_POR } from './recetaDeTexto';
 
 export type AlimentoDicho = { ref: string; nombre: string; por100g: Valores; porciones: { nombre: string; gramos: number }[] };
 export type Opcion = { alimento: AlimentoDicho; cantidad: Exclude<Cantidad, null>; valores: Valores };
@@ -122,6 +122,8 @@ export function cantidadPara(dicho: Dicho, d: Pick<Detalle, 'porciones' | 'densi
       const porcion = propia ? { porcion: propia.nombre, gramosPorcion: propia.gramos } : { porcion: `1 ${dicho.medida}`, gramosPorcion: Math.round(gramos / cantidad) };
       return { cantidad: { ...porcion, veces: cantidad }, supuesto: false };
     }
+    // Lo dicho en ml («200 ml de leche») guarda también los ml: se ve como se dijo, no «206 g».
+    if (gramos && unidad && DE_VOLUMEN.has(unidad)) return { cantidad: { gramos, ml: Math.round(cantidad * ML_POR[unidad]!) }, supuesto: false };
     if (gramos) return { cantidad: { gramos }, supuesto: false };
     if (unidad === 'pocillo') return { cantidad: { porcion: '1 pocillo', gramosPorcion: Math.round(ML_DEL_POCILLO * (d.densidad ?? 1)), veces: cantidad }, supuesto: false };
   }
@@ -234,7 +236,7 @@ const POR_CUANTO = { poco: 0.5, mucho: 1.5 } as const;
 function conCuanto(dicho: Dicho, c: Exclude<Cantidad, null>): Exclude<Cantidad, null> {
   if (!dicho.cuanto) return c;
   const f = POR_CUANTO[dicho.cuanto];
-  return 'gramos' in c ? { ...c, gramos: Math.round(c.gramos * f) } : { ...c, veces: c.veces * f };
+  return 'gramos' in c ? { ...c, gramos: Math.round(c.gramos * f), ...(c.ml !== undefined ? { ml: Math.round(c.ml * f) } : {}) } : { ...c, veces: c.veces * f };
 }
 
 const alimentoDe = (d: Detalle): AlimentoDicho => ({ ref: String(d.id), nombre: d.nombre, por100g: d.por100g as Valores, porciones: d.porciones });

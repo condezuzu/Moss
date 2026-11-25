@@ -127,6 +127,12 @@ describe('el título de Anotar', () => {
     expect(l.find((e) => e.date.getTime() === alCorte)?.props).toMatchObject({ titulo: 'Anotar el desayuno', queda: 'te quedan 2.000' });
   });
 
+  it('con los números ocultos, sin lo que queda', () => {
+    const l = anotar(new Date(2026, 9, 21, 22, 0), { queda: () => 'te quedan 150', numeros: false });
+    expect(l.map((e) => e.props.queda)).toEqual(l.map(() => ''));
+    expect(anotar(new Date(2026, 9, 21, 22, 0), { queda: () => 'te quedan 150' })[0].props.queda).toBe('te quedan 150');
+  });
+
   it('cambia en punto también en Nepal (UTC+5:45), no 15 minutos tarde', () => {
     // La hora del teléfono en Nepal: Jest no deja cambiar la zona, así que la hora local se corre 5:45 de UTC.
     const NEPAL = (5 * 60 + 45) * 60_000;

@@ -33,7 +33,6 @@ import { abrirPagina } from '@/lib/sitio';
 import { haySupabase } from '@/lib/supabase';
 import { pasosPorDia } from '@/salud/leer';
 import { datosDelCuestionario, haySalud, pedirPermisos } from '@/salud/salud';
-import { movimientoPorPasos } from '@/dominio/cuestionario';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { anunciar } from '../anuncio';
@@ -53,7 +52,7 @@ import { EjemploDeJuntos, ofrecerPremium, usePreciosDeLaEntrada } from '../premi
 import { Anillos, Casiopea } from './Lienzos';
 import { Boton } from './piezas';
 import { Cabeza, Desliza, Espacio, PantallaDePregunta, Pie, Resultado, Texto, Titulo, TOPE, type DeSalud } from './Preguntas';
-import { aplica, DE_FABRICA, desdeLoGuardado, lugarDe, paraGuardar, PREGUNTAS, type Contestado, type Pregunta } from './respuestas';
+import { aplica, conSalud, DE_FABRICA, desdeLoGuardado, lugarDe, paraGuardar, PREGUNTAS, reglasDeAhora, type Contestado, type Pregunta } from './respuestas';
 
 /** Cada pantalla y dónde queda la cámara: sube a medida que se avanza, como en la galería. */
 const PASOS: readonly { id: Paso; camara: number }[] = [
@@ -370,6 +369,8 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
         return;
       }
       elAlmacen().responderCuestionario(c, deSalud.has('pesoKg') ? 'salud' : 'manual', nuevo, !llego);
+      // Con un trastorno de la alimentación, los números se ocultan de entrada (D9); se vuelven a ver en Perfil.
+      if (reglasDeAhora(r, hoy).numerosOcultos) elAlmacen().ponerNumeros(false);
       // Los primeros hábitos suben cuando el viaje ya llegó, como en la galería: antes tapaban a Inicio llegando.
       if (alTerminar) setTimeout(alTerminar, reducido ? 0 : DURACION_DEL_VIAJE * (1 - MITAD_DEL_VIAJE));
     }));
@@ -465,8 +466,7 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
                 <Salud
                   alSeguir={siguiente}
                   alLeer={(d, pasos) => {
-                    const sugerido = movimientoPorPasos(pasos);
-                    const x: Contestado = { ...r, ...d, salud: true, pasosDeSalud: pasos, movimientoSugerido: sugerido, movimiento: sugerido ?? r.movimiento };
+                    const x = conSalud(r, d, pasos);
                     setR(x);
                     setDeSalud(new Set(Object.keys(d) as ('edad' | 'sexo' | 'alturaCm' | 'pesoKg')[]));
                     return x;

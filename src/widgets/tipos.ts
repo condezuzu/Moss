@@ -72,7 +72,9 @@ export type ValoresDelWidget = { kcal: number; p: number; c: number; g: number }
 export type ComidaDeHoy = {
   tipo: Comida;
   nombre: string;
-  /** Lo anotado en esa comida; todo en 0, nada. */
+  /** Si hay algo anotado en esa comida, aunque sea de 0 kcal (un café negro). */
+  anotada: boolean;
+  /** Lo anotado en esa comida. */
   anotado: ValoresDelWidget;
   /** Lo anotado, o lo de siempre: «Café con leche, Tostada». */
   detalle: string;
@@ -96,6 +98,8 @@ export type PropsHoy = {
   comido: ValoresDelWidget;
   comidas: ComidaDeHoy[];
   pendientes: ToqueDeComida[];
+  /** Los números de la comida (Perfil): ocultos, solo la luna, las barras y las comidas, sin kcal ni gramos. */
+  numeros: boolean;
   textos: {
     teQuedan: string; deMas: string; kcal: string; de: string; anotado: string; sinAnotar: string; miles: string;
     macros: { p: string; c: string; g: string }; cortos: { p: string; c: string; g: string };

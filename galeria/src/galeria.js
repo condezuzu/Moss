@@ -1132,6 +1132,14 @@
 
   // Los botones de la galería para las secciones nuevas.
   const accionesSeccion = {
+    // Lo que pediste el 25/11, para aprobar: Hoy tan limpio como el de la pantalla bloqueada (junto al de ahora), tu
+    // noche en StandBy y la pantalla bloqueada a la mañana y a la tardecita. La tardecita empieza a las 21:47.
+    wmHoy: () => { cerrarHojas(); widgets.momento('noche'); widgets.ir('m-hoy'); },
+    wmGrande: () => { cerrarHojas(); widgets.momento('noche'); widgets.ir('m-grande'); },
+    wmStandby: () => { cerrarHojas(); widgets.momento('noche'); widgets.horaDeLaTarde(null); widgets.deNoche(false); widgets.ir('m-standby'); },
+    wmStandbyNoche: () => { cerrarHojas(); widgets.momento('noche'); widgets.horaDeLaTarde(null); widgets.deNoche(true); widgets.ir('m-standby'); },
+    wmBloqueoManana: () => { cerrarHojas(); widgets.momento('manana'); widgets.ir('m-bloqueo'); },
+    wmBloqueoTarde: () => { cerrarHojas(); widgets.momento('noche'); widgets.horaDeLaTarde(null); widgets.ir('m-bloqueo'); },
     // Lo que pediste el 23/11, para aprobar: el nombre de la estrella al tocarla, Inicio con el cielo y los picos.
     nombreEstrella: () => { cerrarHojas(); pestanas.ir(4); setTimeout(() => escena.tocarPorNombre('Escribir'), 520); },
     inicioCielo: () => { cerrarHojas(); inicio.primerDia(false); pestanas.ir(0); inicio.subir(); },
@@ -1509,6 +1517,7 @@
   widgets = SeccionWidgets.crear(tel, Object.assign({}, opcionesDeSeccion, {
     cielo: () => escena.hoy,
     anoche: () => sueno.anoche(),
+    paraLaNoche: () => sueno.paraLosWidgets(),
     sinReloj: () => soloIphone,
     comida: () => comida,
     movimientoReducido,
@@ -1541,6 +1550,7 @@
       abrirMoss: () => widgets.abrirMoss(arg), olvidar: () => widgets.olvidar(),
       n: () => widgets.ir('n-' + arg), momento: () => widgets.momento(arg), tocarComida: () => widgets.tocarComida(arg), vasos: () => widgets.vasos(arg),
       completar: () => widgets.completar(), olvidarTodo: () => widgets.olvidarTodo(),
+      m: () => widgets.ir('m-' + arg), mHora: () => widgets.horaDeLaTarde(arg), mConfirmar: () => widgets.confirmarMejores(),
       pasarse: () => { cenaDeMas = comida.simularCena(); widgets.pintar(); }, noPasarse: () => { if (cenaDeMas) cenaDeMas.deshacer(); cenaDeMas = null; widgets.pintar(); },
     };
     return pasos[accion]();

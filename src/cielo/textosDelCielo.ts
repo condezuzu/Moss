@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import type { Texto } from '@/datos/catalogo';
+import { duracion } from '@/secciones/comida/datos';
 import { idioma, t } from '@/textos';
 import type { HabitoDelCielo } from './dia';
 
@@ -18,10 +19,7 @@ export function nombreEn(texto: Texto) {
 export function valorAutomatico(h: HabitoDelCielo) {
   if (h.valor === undefined) return '';
   if (h.auto === 'pasos') return `${miles(h.valor)} / ${miles(h.meta ?? 0)}`;
-  if (h.auto === 'sueno') {
-    const minutos = Math.round(h.valor);
-    return t('cielo.horasMinutos', { h: Math.floor(minutos / 60), m: minutos % 60 });
-  }
+  if (h.auto === 'sueno') return duracion(h.valor);
   return '';
 }
 

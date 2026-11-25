@@ -815,7 +815,12 @@ const SeccionAscent = (() => {
     const velocidadMin = () => (opciones.velocidadMin ? opciones.velocidadMin() : 0.35);
     const conNumeros = () => !tel.classList.contains('sin-numeros');
     const sinDeficit = () => !!(opciones.sinDeficit && opciones.sinDeficit());
-    const lista =(xs) => (xs.length <= 1 ? xs[0] || '' : `${xs.slice(0, -1).join(', ')} ${tx('ascent.y')} ${xs[xs.length - 1]}`);
+    // «a, b y c»; delante de i o hi, «e» («glúteos e isquios»), como en la app (palabras.ts).
+    const lista = (xs) => {
+      if (xs.length <= 1) return xs[0] || '';
+      const ultimo = xs[xs.length - 1];
+      return `${xs.slice(0, -1).join(', ')} ${tx(/^(i|hi(?!e))/i.test(ultimo) ? 'ascent.ye' : 'ascent.y')} ${ultimo}`;
+    };
     let vinculada = false;
     // Cuánto bajó: 0 es arriba, escondida; 1, abierta.
     let p = 0;
@@ -2171,7 +2176,7 @@ const SeccionAscent = (() => {
       if (x.que === 'series') {
         cab.append(el('b', null, tx('ascent.estancados.series.titulo', { musculo })), el('span', null, `${v1(x.antes)} → ${v1(x.ahora)}`));
         const b = barras(est.antes, est.ahora);
-        b.setAttribute('aria-label', tx('ascent.estancados.series.texto', { antes: v1(x.antes), ahora: v1(x.ahora) }));
+        b.setAttribute('aria-label', tx('ascent.estancados.series.etiqueta', { antes: v1(x.antes), ahora: v1(x.ahora) }));
         const leyenda = el('div', 'as-leyenda');
         leyenda.append(el('span', 'as-leyenda-con', tx('ascent.estancados.leyenda.antes')), el('span', 'as-leyenda-ahora', tx('ascent.estancados.leyenda.ahora')));
         li.append(cab, b, leyenda, linea(null, tx('ascent.estancados.series.texto', { antes: v1(x.antes), ahora: v1(x.ahora) })));

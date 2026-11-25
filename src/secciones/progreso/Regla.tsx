@@ -74,7 +74,8 @@ export function Regla({ valor, min, max, viable, exigente, etiqueta, textoDe, al
       'worklet';
       mover(ev.x);
     },
-    onFinalize: () => {
+    // Solo si se arrastró: onFinalize corre también cuando el gesto falla (un deslizamiento vertical que empieza acá).
+    onDeactivate: () => {
       'worklet';
       scheduleOnRN(soltar, ultimo.get());
     },

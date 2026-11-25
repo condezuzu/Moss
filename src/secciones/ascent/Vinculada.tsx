@@ -455,11 +455,11 @@ function RazonVista({ x, est }: { x: Razon; est: Estancado }) {
   );
   const p = (texto: string) => <Text style={st.razonTexto}>{texto}</Text>;
   if (x.que === 'series') {
-    const texto = t('ascent.estancados.series.texto', { antes: v1(x.antes), ahora: v1(x.ahora) });
+    const texto = t('ascent.estancados.series.texto');
     return (
       <View style={st.razon}>
         {cab(t('ascent.estancados.series.titulo', { musculo: nombreDelMusculo(est.musculo).toLowerCase() }), `${v1(x.antes)} → ${v1(x.ahora)}`)}
-        <View accessible accessibilityRole="image" accessibilityLabel={texto}><Barras est={est} /></View>
+        <View accessible accessibilityRole="image" accessibilityLabel={t('ascent.estancados.series.etiqueta', { antes: v1(x.antes), ahora: v1(x.ahora) })}><Barras est={est} /></View>
         <View style={st.leyendaRazon}>
           <View style={st.leyendaItem}><View style={[st.leyendaCuadro, st.barraAntes, { backgroundColor: a.claro }]} /><Text style={st.leyendaTexto}>{t('ascent.estancados.leyenda.antes')}</Text></View>
           <View style={st.leyendaItem}><View style={[st.leyendaCuadro, st.barraAhora, { borderColor: a.principal }]} /><Text style={st.leyendaTexto}>{t('ascent.estancados.leyenda.ahora')}</Text></View>
@@ -552,7 +552,9 @@ function FilaDeMeta({ x, todo, tm, primera, sistema }: { x: MetaConProyeccion; t
   const p = x.proyeccion;
   const parte = x.nivel === null ? null : Math.min(1, x.nivel / x.objetivo);
   const linea = p.estado === 'enCamino'
-    ? (p.semanas[1] === null ? t('ascent.metas.enCaminoAbierto', { de: p.semanas[0] }) : t('ascent.metas.enCamino', { de: p.semanas[0], a: p.semanas[1] })) + (p.realista ? '' : ' ' + t('ascent.metas.lejana'))
+    ? (p.semanas[1] === null ? plural('ascent.metas.enCaminoAbierto', p.semanas[0])
+      : p.semanas[1] === p.semanas[0] ? plural('ascent.metas.enCaminoExacto', p.semanas[0])
+      : t('ascent.metas.enCamino', { de: p.semanas[0], a: p.semanas[1] })) + (p.realista ? '' : ' ' + t('ascent.metas.lejana'))
     : t(`ascent.metas.${p.estado}`);
   const ej = tm.ejercicios.find((y) => y.e.id === x.meta.ejercicio);
   const proxima = ej?.proxima;

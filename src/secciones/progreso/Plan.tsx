@@ -17,7 +17,7 @@ import {
   bordeDe, direccionDe, nivelDeHoy, planPorEtapas, plazoConFecha, plazoConRitmo, ritmoConRango, SEMANAS_DE_MANTENIMIENTO,
   type ComoVienes, type Direccion, type EntradaDelPlazo, type Fechas, type PlanPorEtapas, type Plazo, type TipoDeEtapa,
 } from '@/dominio/progreso';
-import { lista, t } from '@/textos';
+import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { anunciar } from '../anuncio';
 import { Icono, MACROS, Punto } from '../comida/comunes';
@@ -465,8 +465,9 @@ export function LaEstrategia({ p, calculo, hoy, u, numeros, abierto, alternar, e
             opciones={(['bajar', 'mantener', 'subir'] as const).map((o) => [o, t(`progreso.objetivos.${o}`)] as const)}
             elegida={objetivo}
             alElegir={(o) => {
-              // Sin déficit, bajar de peso no se elige acá (src/dominio/metas.ts, objetivoPermitido).
-              if (o === 'bajar' && perfil.sinDeficit) return;
+              // El mismo otra vez no cambia nada: soltaría la fecha y el ritmo elegidos. Sin déficit, bajar de peso no se
+              // elige acá (src/dominio/metas.ts, objetivoPermitido).
+              if (o === objetivo || (o === 'bajar' && perfil.sinDeficit)) return;
               ponerEstrategia({ objetivo: o });
               alElegir(SIN_ELEGIR);
             }}
@@ -573,7 +574,7 @@ function ElPlazo({ entrada, plazo, hoy, ritmo, sexo, u, numeros, eleccion, alMov
     <View style={s.plazo}>
       <View style={s.plazoRes}>
         <View style={s.plazoCifra}>
-          <Cifra valor={fechaDiaMes(plazo.fecha)} texto={t('progreso.plazo.enSemanas', { n: Math.round(plazo.semanas) })} />
+          <Cifra valor={fechaDiaMes(plazo.fecha)} texto={plural('progreso.plazo.enCuantasSemanas', Math.round(plazo.semanas))} />
         </View>
         <Text style={[s.viab, COLOR_DE_VIABILIDAD[plazo.viabilidad]]}>{t(`progreso.plazo.viabilidad.${plazo.viabilidad}`)}</Text>
       </View>

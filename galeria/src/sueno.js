@@ -2078,6 +2078,13 @@ const SeccionSueno = (() => {
         const q = Sueno.calidadDeNoche(n, necesidadDeFabrica, Sueno.ultimasNoches(todasLasNoches(), Fechas.sumarDias(n.clave, -1), DIAS));
         return { fuente: n.fuente, dormido: n.dormido, dormirse: n.dormirse + 18 * 60, despertar: n.despertar + 18 * 60, calidad: q ? q.puntos : null, enCamaDesde: n.dormirse, enCamaHasta: n.despertar, tramos: n.tramos };
       },
+      // Para los widgets del 25/11: a qué hora acostarte, de tu periodo de melatonina (como el aviso), y la palabra de
+      // la deuda de hoy (Sueno.juicioDeLaDeuda), la misma de la tarjeta. Sin noches, null.
+      paraLosWidgets() {
+        const p = periodoDeHoy();
+        const d = hayNoches() ? Sueno.deudaDeSueno(ultimas(Datos.HOY), necesidad()) : null;
+        return { acostarse: p ? p.acostarse + 18 * 60 : null, deuda: d ? Sueno.juicioDeLaDeuda(d) : null };
+      },
       // Para mirar la propuesta: `datos`, `dos`, `una`, `vacio`, `pagada` o `mucha`.
       ponerEstado,
       // La noche del anillo que todavía no llegó (21/11/2026): `estimada`, `sinEstimar` o null.

@@ -29,12 +29,23 @@ const DIAS_CON_SENALES = 6;
 
 type Pasos = LoDeSalud['pasosRecientes'];
 const zonaEn = (ms: number) => -new Date(ms).getTimezoneOffset();
+/**
+ * Si Salud ya tiene la noche de `clave`. La de confianza baja (Sleep Cycle, AutoSleep: apps del teléfono) no cuenta
+ * para nada, así que es como si faltara: la estima Moss (y le gana, conNochesDeMoss).
+ */
+const laTieneSalud = (e: Estado, clave: ClaveDia) => !!e.salud?.noches.some((n) => n.clave === clave && n.confianza.duracion !== 'baja');
 
 /**
  * La noche de un momento, por el día en que te despiertas: hasta las 4 sigue siendo «anoche» la de ayer.
  * No es el día de Moss (D32): con el corte a las 5 o a las 6, a las 5 el día todavía es ayer y la noche ya es la de hoy.
  */
 export const nocheDeAhora = (ahora: Date): ClaveDia => diaLogico(ahora, DESDE_LAS * 60);
+
+/** La noche de la pregunta de la mañana: la más nueva entre el día de Moss (`hoy`) y la de ahora, la que estima Moss y propone el widget. */
+export function nocheDeLaManana(hoy: ClaveDia, ahora: Date): ClaveDia {
+  const deAhora = nocheDeAhora(ahora);
+  return deAhora > hoy ? deAhora : hoy;
+}
 
 // Cómo llegó a la hora de anoche, para contarlo a la mañana. No se guarda: se rehace cada vez que se abre Moss.
 type ComoLlego = { clave: ClaveDia; estimacion: Estimacion; margen: number };
@@ -80,8 +91,7 @@ export async function estimarAnoche(a: Almacen, ahora = new Date()): Promise<voi
   const e = a.estado();
   if (!e.listo || ahora.getHours() < DESDE_LAS) return;
   const clave = nocheDeAhora(ahora);
-  const deSalud = e.salud?.noches ?? [];
-  if (deSalud.some((n) => n.clave === clave)) return;
+  if (laTieneSalud(e, clave)) return;
   const antes = e.noches.get(clave);
   if (antes?.hora && antes.hora.origen !== 'estimada') return;
 
@@ -113,7 +123,7 @@ export async function rehacerLasNoches(a: Almacen, ahora = new Date(), leerPasos
     const clave = sumarDias(hoy, -i);
     const e = a.estado();
     const antes = e.noches.get(clave);
-    if (!antes?.hora || antes.borrado || e.salud?.noches.some((n) => n.clave === clave)) continue;
+    if (!antes?.hora || antes.borrado || laTieneSalud(e, clave)) continue;
     const sinRestas = sinLasRestas(antes.hora, margenParaDormirte(e.latencia), true);
     // Una aceptada con «Sí» se rehace solo si su propuesta era de la regla de antes: si ya son las horas de su ventana, ese «Sí» vale.
     if (antes.hora.origen !== 'estimada' && !(aceptadaSinCambios(antes.hora) && sinRestas)) continue;

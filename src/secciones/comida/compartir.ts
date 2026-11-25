@@ -6,7 +6,7 @@ import { Share } from 'react-native';
 import { elAlmacen } from '@/almacen';
 import { enlaceDe, porPorcion, type Compartido } from '@/dominio/compartir';
 import type { Fuente, Valores } from '@/dominio/registros';
-import { t } from '@/textos';
+import { plural, t } from '@/textos';
 import { cantidadDeTexto, numero, sistemaDe } from './datos';
 
 const macros = (v: Valores) => ({ kcal: numero(Math.round(v.kcal)), p: numero(Math.round(v.proteina)), c: numero(Math.round(v.carbohidratos)), g: numero(Math.round(v.grasas)) });
@@ -34,7 +34,7 @@ export function textoDe(c: Compartido): string {
   const r = c.receta;
   return [
     r.nombre,
-    `${r.tipo === 'receta' ? `${t('compartir.rinde', { n: numero(r.porciones) })} · ` : ''}${t('compartir.porPorcion', macros(porPorcion(r)))}`,
+    `${r.tipo === 'receta' ? `${plural('compartir.rinde', r.porciones, { porciones: numero(r.porciones) })} · ` : ''}${t('compartir.porPorcion', macros(porPorcion(r)))}`,
     '',
     t('compartir.ingredientes'),
     ...r.items.map((i) => `· ${i.nombre}${i.cantidad ? ` (${cantidadDeTexto(i.cantidad, sistema)})` : ''}`),

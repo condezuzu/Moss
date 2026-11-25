@@ -523,7 +523,7 @@ const SeccionHabitos = (() => {
         lista.appendChild(fila);
       });
       cuerpo.append(lista, el('p', 'aj-nota', tx('habitos.sugeridos.despues')));
-      pie.appendChild(el('p', 'hh-cuantos', tx('habitos.sugeridos.cuantos', { n: s.elegidos.length })));
+      pie.appendChild(el('p', 'hh-cuantos', u.plural('habitos.sugeridos.elegidos', s.elegidos.length)));
       const listo = boton('cm-accion principal', '', () => armarConstelacion());
       listo.textContent = tx('habitos.sugeridos.listo');
       listo.disabled = s.elegidos.length < MINIMO || s.elegidos.length > MAXIMO;

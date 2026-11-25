@@ -55,6 +55,18 @@ describe('la línea de Hoy', () => {
     expect(cena.items).toBe('');
   });
 
+  it('una comida con 0 kcal anotada está anotada', () => {
+    const comidas = linea(mapa([registro(HOY, 'almuerzo', 'Café negro', 0), ...conCenaDeSiempre()]))[0].props.comidas;
+    expect(comidas.find((c) => c.tipo === 'almuerzo')).toMatchObject({ anotada: true, anotado: { kcal: 0 } });
+    expect(comidas.find((c) => c.tipo === 'cena')).toMatchObject({ anotada: false });
+  });
+
+  it('lleva si se ven los números: ocultos, el widget no los muestra', () => {
+    expect(linea(mapa([]))[0].props.numeros).toBe(true);
+    const sin = lineaDeHoy({ hoy: HOY, registros: mapa([]), corte: 240, numeros: false }, { metaDe: () => null, nombres: NOMBRES, textos: TEXTOS, urls: URLS });
+    expect(sin.every((x) => x.props.numeros === false)).toBe(true);
+  });
+
   it('el snack aparece si se anotó, y va por su hora', () => {
     const l = linea(mapa([registro(HOY, 'snack', 'Manzana', 90, { momento: `${HOY}T14:00:00.000Z` })]));
     expect(l[0].props.comidas.map((c) => c.tipo)).toContain('snack');

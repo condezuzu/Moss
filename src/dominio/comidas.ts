@@ -30,6 +30,9 @@ export const minutoDeLoDicho = (hora: number | undefined, ahora: number): number
 /** Las que tienen hora en el día, en orden: el snack va a cualquier hora y no corre nada. */
 export const CON_HORA = ['desayuno', 'almuerzo', 'merienda', 'cena'] as const;
 
+/** Hasta cuánto antes o después de su hora es esa comida: con las horas típicas, lo mismo que las franjas. */
+const CERCA_DE_SU_HORA = 60;
+
 /** El horario de comidas va de las 5:00 a las 23:45 (spec/avisos.md): lo corrido de los avisos, también. */
 const PRIMERA_HORA = 5 * 60;
 const ULTIMA_HORA = 23 * 60 + 45;
@@ -74,9 +77,21 @@ export function horasCorridas(base: Partial<Record<Comida, number>>, anotadas: P
  * `corte` es la hora a la que empieza el día (D32): el desayuno empieza a las 4 o, si el día empieza
  * más tarde, con el día. Antes todavía es el día anterior, y lo de esa hora es un snack, no un segundo
  * desayuno de ayer.
+ * Con `horas` (tus horas de comer, una sola lista: horasDeComer en recordatorios.ts), la comida cuya hora está a menos
+ * de CERCA_DE_SU_HORA de ahora: la cena puesta a las 19 ya es la cena a las 18:50. Lejos de todas, la franja.
  */
-export function comidaDeLaHora(minutos: number, corte = 0): Comida {
+export function comidaDeLaHora(minutos: number, corte = 0, horas?: Partial<Record<Comida, number>>): Comida {
   const reloj = ((minutos % 1440) + 1440) % 1440;
+  let cerca: Comida | null = null;
+  let menor = CERCA_DE_SU_HORA;
+  for (const c of CON_HORA) {
+    const hora = horas?.[c];
+    if (hora === undefined || (c === 'desayuno' && reloj < Math.max(4 * 60, corte))) continue;
+    // En el reloj: la cena de las 23:30 está cerca de las 0:15.
+    const d = Math.abs(reloj - (((hora % 1440) + 1440) % 1440));
+    if (Math.min(d, 1440 - d) <= menor) [cerca, menor] = [c, Math.min(d, 1440 - d)];
+  }
+  if (cerca) return cerca;
   let elegida: Comida = 'snack';
   for (const [desde, comida] of FRANJAS) if (reloj >= (comida === 'desayuno' ? Math.max(desde, corte) : desde)) elegida = comida;
   return elegida;

@@ -4,7 +4,7 @@
 import { useSyncExternalStore } from 'react';
 
 import { elAlmacen } from '@/almacen';
-import type { Estado } from '@/almacen/almacen';
+import { valorDeSalud, type Estado } from '@/almacen/almacen';
 import { fraseDelDia, type Frase } from '@/contenido/frases';
 import { catalogo, type Constelacion } from '@/datos/catalogo';
 import { periodoDe } from '@/dominio/constelaciones';
@@ -50,10 +50,10 @@ export type DiaDelCielo = {
   fecha: { diaSemana: DiaSemana; diaMes: number; mes: number };
 };
 
-function automatico(h: Habito, salud: Estado['salud'], hoy: ClaveDia): Pick<HabitoDelCielo, 'auto' | 'meta' | 'valor' | 'comida'> {
+function automatico(h: Habito, e: Estado, hoy: ClaveDia): Pick<HabitoDelCielo, 'auto' | 'meta' | 'valor' | 'comida'> {
   if (h.fuente.tipo === 'salud') {
-    // Lo que lleva hoy, si Salud lo dijo.
-    const valor = salud?.dia === hoy && h.fuente.dato !== 'acostarse' ? salud.valores[h.fuente.dato] : undefined;
+    // Lo que lleva hoy, con lo anotado en Moss (valorDeSalud).
+    const valor = h.fuente.dato !== 'acostarse' ? valorDeSalud(e, h.fuente.dato, hoy) : undefined;
     return { auto: h.fuente.dato, meta: h.fuente.meta, ...(valor !== undefined ? { valor } : {}) };
   }
   if (h.fuente.tipo === 'manual') return {};
@@ -80,7 +80,7 @@ export function armarCieloDeHoy(e: Estado): DiaDelCielo {
   return {
     clave: e.hoy,
     constelacion: paraHabitos(e.dias.get(e.hoy)?.constelacion ?? periodoDe(e.periodos, e.hoy)?.constelacion, habitos.length),
-    habitos: habitos.map((h) => ({ id: h.id, nombre: h.nombre, icono: h.icono, ...automatico(h, e.salud, e.hoy) })),
+    habitos: habitos.map((h) => ({ id: h.id, nombre: h.nombre, icono: h.icono, ...automatico(h, e, e.hoy) })),
     frase: fraseDelDia(e.hoy),
     luzAcumulada: luzAcumulada(e.dias.values(), CRECE_DE_NOCHE ? e.hoy : undefined),
     semana,

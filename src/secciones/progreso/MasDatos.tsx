@@ -4,7 +4,7 @@
 import { useMemo, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import type { ComidaDelDia } from '@/dominio/control';
+import { cambioDeLaTendencia, type ComidaDelDia } from '@/dominio/control';
 import { largoEn, type Sistema } from '@/dominio/cantidades';
 import { cambioDe, cinturaAltura, claseDeCintura, SITIOS } from '@/dominio/cuerpo';
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
@@ -51,17 +51,17 @@ export function Semanas({ p, hoy, comidas, ancho, u, numeros }: { p: Persona; ho
     return Array.from({ length: SEMANAS }, (_, i) => {
       const fin = sumarDias(ayer, -7 * (SEMANAS - 1 - i));
       const inicio = sumarDias(fin, -6);
-      const antes = p.tendencia.get(sumarDias(inicio, -1));
-      const despues = p.tendencia.get(fin);
+      // Una semana sin pesadas no tiene cambio: la tendencia solo seguiría la de antes.
+      const cambio = cambioDeLaTendencia(p.tendencia, p.pesos, sumarDias(inicio, -1), fin);
       const conComida = comidas.filter((x) => x.kcal > 0 && x.fecha >= inicio && x.fecha <= fin);
       return {
         inicio,
-        cambio: antes !== undefined && despues !== undefined ? u.enUnidad(despues - antes) : null,
+        cambio: cambio === null ? null : u.enUnidad(cambio),
         // Sin tres días anotados, la semana no cuenta.
         kcal: conComida.length >= 3 ? conComida.reduce((suma, x) => suma + x.kcal, 0) / conComida.length : null,
       };
     });
-  }, [p.tendencia, comidas, hoy, u]);
+  }, [p.tendencia, p.pesos, comidas, hoy, u]);
   const meta = p.meta?.kcal ?? null;
   return (
     <Carta titulo={t('progreso.graficos.semanas')}>
@@ -120,7 +120,7 @@ export function LasMedidas({ p, hoy, sistema, alMedir }: { p: Persona; hoy: Clav
 }
 
 // ------------------------------------------------------------------ el gasto y el balance
-export function ElGasto({ p, u, abierto, alAbrir }: { p: Persona; u: U; abierto: boolean; alAbrir: () => void }) {
+export function ElGasto({ p, hoy, u, abierto, alAbrir }: { p: Persona; hoy: ClaveDia; u: U; abierto: boolean; alAbrir: () => void }) {
   if (p.gasto === null) return null;
   const k = p.control?.datos;
   return (
@@ -135,7 +135,8 @@ export function ElGasto({ p, u, abierto, alAbrir }: { p: Persona; u: U; abierto:
           </Text>
           <Text style={s.balanceNota}>{p.balance.dias.length ? t('progreso.balanceTexto', { n: p.balance.dias.length }) : t('progreso.sinBalance')}</Text>
         </View>
-        {p.balance.dias.length > 0 && <Balance dias={p.balance.dias} gasto={p.gasto} ancho={150} alto={52} />}
+        {/* El balance llega hasta ayer (persona.ts): cada barra va en su día. */}
+        {p.balance.dias.length > 0 && <Balance dias={p.balance.dias} hasta={sumarDias(hoy, -1)} gasto={p.gasto} ancho={150} alto={52} />}
       </View>
       {p.control && k && k.gastoMedido === null && <Parrafo>{t('progreso.controlSinMedir')}</Parrafo>}
       {p.control && k && k.gastoMedido !== null && (

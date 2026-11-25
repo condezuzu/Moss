@@ -24,12 +24,12 @@ import { aCm, largoEn, pesoCorporalEn, pesoParaGuardar } from '@/dominio/cantida
 import { tendencia } from '@/dominio/control';
 import { medidaValida, rangoDeGrasa, SITIOS, ultimasMedidas, type Centimetros, type Sitio } from '@/dominio/cuerpo';
 import type { ClaveDia } from '@/dominio/fechas';
-import { claveDeAlimento, deEstaHora, deSiempre, itemsParaRegistrar, sumarValores, vigentes, type Item } from '@/dominio/registros';
+import { alDia, claveDeAlimento, deEstaHora, deSiempre, itemsParaRegistrar, sumarValores, vigentes, type Item } from '@/dominio/registros';
 import { idioma, lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { CabezaQueBaja, ScrollQueBaja, seCierra, useArrastre, vuelta, type Arrastre } from './arrastre';
 import { AvisoFlotante, Icono, type Aviso } from './comida/comunes';
-import { cantidadDeTexto, comidaDeAhora, fechaDiaMes, momentoDe, numero, sistemaDe, textoDePeso, useEstado, useNumeros } from './comida/datos';
+import { cantidadDeTexto, comidaDeAhora, fechaDiaMes, horasDeLasComidas, momentoDe, numero, sistemaDe, textoDePeso, useEstado, useNumeros } from './comida/datos';
 import { abrirRegistro, avisar as avisarEnLaApp } from './comida/registro';
 import { confirmarDescartar } from './descartar';
 import { Figura } from './Figura';
@@ -255,12 +255,22 @@ function Menu({ abierta, arrastre, alCerrar, alIr, avisar }: { abierta: boolean;
   const a = elAlmacen();
   const numeros = useNumeros();
   const sistema = sistemaDe(e);
-  const comida = comidaDeAhora();
   // Con la hoja abierta, lo de un toque no se reordena con lo que se anota: lo tocado no salta de lugar.
   const [registros, setRegistros] = useState(e.registros);
   if (!abierta && registros !== e.registros) setRegistros(e.registros);
+  // El menú está armado aunque la hoja esté cerrada: tus horas de comer se recorren solo cuando cambia lo anotado.
+  const horas = useMemo(
+    () => horasDeLasComidas({ hoy: e.hoy, registros, respuestas: e.respuestas, horasDeComer: e.horasDeComer }),
+    [e.hoy, registros, e.respuestas, e.horasDeComer],
+  );
+  const comida = comidaDeAhora(horas);
+  // Lo de un toque se anota con lo que vale ahora lo tuyo o la receta, si lo corregiste después (alDia).
+  const conLoDeAhora = useCallback((items: Item[]) => items.map((i) => alDia(i, e.propios, e.recetas)), [e.propios, e.recetas]);
   // Tu comida de siempre de esta hora, de un toque (lo pediste el 2/11/2026: «tocas desayuno y se suma»).
-  const siempre = useMemo(() => deSiempre(registros.values(), comida, e.hoy), [registros, comida, e.hoy]);
+  const siempre = useMemo(() => {
+    const items = deSiempre(registros.values(), comida, e.hoy);
+    return items && conLoDeAhora(items);
+  }, [registros, comida, e.hoy, conLoDeAhora]);
   const kcalDe = (items: Item[]) => (numeros ? `${numero(Math.round(sumarValores(items.map((i) => i.valores)).kcal))} kcal` : '');
   // Lo marcado con ✓, con el día en que se marcó: si pasa la hora de corte con la hoja abierta, lo de
   // ayer no sigue marcado (se reiniciaba solo al cerrarla).
@@ -271,7 +281,7 @@ function Menu({ abierta, arrastre, alCerrar, alIr, avisar }: { abierta: boolean;
   const detallePeso = ultimo
     ? t('mas.ultimoPeso', { cuando: ultimo.fecha === e.hoy ? t('mas.hoy') : fechaDiaMes(ultimo.fecha), peso: textoDePeso(ultimo.kg, sistema) })
     : t('mas.hoy');
-  const deEstaComida = useMemo(() => deEstaHora(registros.values(), comida, e.hoy, 6), [registros, comida, e.hoy]);
+  const deEstaComida = useMemo(() => conLoDeAhora(deEstaHora(registros.values(), comida, e.hoy, 6)), [registros, comida, e.hoy, conLoDeAhora]);
   const guardadas = useMemo(() => vigentes(e.recetas.values()).filter((r) => r.tipo === 'comida'), [e.recetas]);
   const grasa = useMemo(() => {
     if (!e.perfil) return null;
@@ -405,7 +415,7 @@ function Menu({ abierta, arrastre, alCerrar, alIr, avisar }: { abierta: boolean;
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={estilos.carril} contentContainerStyle={estilos.chips} scrollsToTop={false}>
             {guardadas.map((r) => {
               const clave = `g-${r.id}`;
-              const items = itemsParaRegistrar(r, t('comida.receta.plato'));
+              const items = conLoDeAhora(itemsParaRegistrar(r, t('comida.receta.plato')));
               return (
                 <Chip
                   key={clave}

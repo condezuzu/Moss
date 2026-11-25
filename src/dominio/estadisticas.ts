@@ -37,6 +37,8 @@ export function cumplimiento(habito: string, dias: ReadonlyMap<ClaveDia, Dia>, h
   for (let i = 0; i < cuantos; i++) {
     const d = dias.get(sumarDias(hoy, -i));
     if (!d || !d.habitos.includes(habito)) continue;
+    // Hoy, que no terminó, cuenta solo si ya está hecho: un hábito recién creado no es «0 de 1».
+    if (i === 0 && !d.hechos.includes(habito)) continue;
     total++;
     if (d.hechos.includes(habito)) hechos++;
   }

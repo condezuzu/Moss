@@ -311,7 +311,7 @@ function Principal({ ancho, alAbrirMas, alVerMetas, ascent }: { ancho: number; a
       <MasDatos abierto={masDatos} alTocar={() => setMasDatos((x) => !x)}>
         <Semanas p={p} hoy={e.hoy} comidas={comidas} ancho={interior} u={u} numeros={numeros} />
         <LasMedidas p={p} hoy={e.hoy} sistema={sistema} alMedir={() => alAbrirMas('medidas')} />
-        {numeros && <ElGasto p={p} u={u} abierto={abierto === 'gasto'} alAbrir={() => alternar('gasto')} />}
+        {numeros && <ElGasto p={p} hoy={e.hoy} u={u} abierto={abierto === 'gasto'} alAbrir={() => alternar('gasto')} />}
       </MasDatos>
     </>
   );

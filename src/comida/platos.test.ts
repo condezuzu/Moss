@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { porcionesDePlato } from './platos';
+import { gramosDeLaEntera, porcionesDePlato } from './platos';
 
 const GUISO = { chico: 200, mediano: 300, grande: 450 };
 const ENSALADA = { chico: 75, mediano: 150, grande: 250 };
@@ -34,5 +34,13 @@ describe('los platos por su nombre (D36)', () => {
 
   it('lo dicho en singular también: «canelón», «macarrón», «tirabuzón», «raviol»', () => {
     expect(['canelón', 'macarrón', 'tirabuzón', 'raviol', 'guisos'].map((n) => porcionesDePlato(n))).toEqual([GUISO, GUISO, GUISO, GUISO, GUISO]);
+  });
+});
+
+describe('lo que se corta en porciones, entero', () => {
+  it('el pollo entero: lo que se come de uno asado con piel (FNDDS, medio pollo sin hueso: 300 g); la pechuga o el muslo, no', () => {
+    expect(gramosDeLaEntera('Pollo asado', 'pollo')).toBe(600);
+    expect(gramosDeLaEntera('Pollo asado', 'pollo al spiedo')).toBe(600);
+    expect(['Pechuga de pollo a la plancha', 'Muslo de pollo', 'Milanesa de pollo', 'Sándwich de pollo'].filter((n) => gramosDeLaEntera(n, n))).toEqual([]);
   });
 });
