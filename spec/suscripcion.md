@@ -214,12 +214,19 @@ Cuando le falte nada, el estado de cada uno pasa a **Ready to Submit**.
    unos minutos, así que sirve para ver la pantalla de cuando vence, y **el aviso del día 5 no se puede ver
    ahí**: suena a los dos días antes de la fecha que da Apple, y en sandbox esa fecha ya pasó.
 
+**El corte pasó al 23/11 (24/11/2026).** Con el 14/11 (el día de la 1.0) quedaban sin regalo las cinco cuentas creadas
+del 14 al 18/11, las de los amigos del dueño, aunque los términos dicen «antes de que Moss fuera de pago», y Moss pasó
+a ser de pago el 23/11 con la 1.1. Ahora  en  y , por aire el
+24/11 (production df2389bb, preview fce2d1c1): las seis cuentas que había tienen el regalo hasta el 23/2/2027, sin
+hacer nada. Ninguna se creó después del 18/11. Quien ya hubiera empezado la prueba de 7 días la tiene que cancelar en
+Ajustes para que no se cobre al terminar: el regalo sigue igual.
+
 **La cuenta del dueño no ve la pantalla de pago (21/11/2026):** Moss entra solo con Apple, y su cuenta es de
-antes del corte (`EXPO_PUBLIC_PREMIUM_SALE=2026-11-14`): es de regalo en cualquier build, también en TestFlight.
+antes del corte (`EXPO_PUBLIC_PREMIUM_SALE`, hoy 2026-11-23): es de regalo en cualquier build, también en TestFlight.
 Para probar la compra con su iPhone hace falta que el corte sea anterior a su cuenta **solo en `preview`** (por
 ejemplo `2026-01-01`, en las variables de EAS de `preview`, con su sí), una build `telefono` de la 1.1 y la
-cuenta de sandbox. `production` no se toca: ahí el corte sigue en el 14/11. Al terminar la prueba, `preview`
-vuelve al 14/11 y se publica de nuevo por aire. Quien revisa en Apple entra con su propio Apple ID, que es una
+cuenta de sandbox. `production` no se toca. Al terminar la prueba, `preview`
+vuelve al corte de `production` y se publica de nuevo por aire. Quien revisa en Apple entra con su propio Apple ID, que es una
 cuenta nueva, y sí la ve.
 
 **No hace falta** la clave de In-App Purchase ni las App Store Server Notifications: el teléfono le

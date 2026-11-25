@@ -109,8 +109,9 @@ Hecho:
 **El regalo pasa a ser de 3 meses (lo pediste y lo aprobaste el 22/11), ya en la app:** quien ya tenía cuenta ve una vez
 «¡Felicidades!», con sus 3 meses gratis y hasta qué día, y «Mira lo nuevo», un pase de seis capturas de la app de verdad
 (`assets/novedades`). En Perfil, «Regalo hasta el…», y desde ahí, lo nuevo otra vez. Moss avisa dos días antes del último
-día. Los términos ya lo dicen, publicados el 22/11 (`condezuzu/moss-app` 6bf5306). El corte queda en el 14/11 (lo decidiste
-el 22/11): el regalo termina el 14/2/2027. **Salió por aire el 23/11** (abajo, «La 1.1 publicada»).
+día. Los términos ya lo dicen, publicados el 22/11 (`condezuzu/moss-app` 6bf5306). **El corte pasó al 23/11 el 24/11** (estaba en el 14/11 y dejaba
+afuera a tus amigos y a tu viejo, aunque los términos dicen «antes de que Moss fuera de pago»): el regalo termina el
+23/2/2027 para las seis cuentas, por aire (production df2389bb, preview fce2d1c1). **Salió por aire el 23/11** (abajo, «La 1.1 publicada»).
 
 **La 1.1 publicada (23/11/2026).** Apple aprobó la 1.1.0 con la build 8 y las dos suscripciones antes de que llegáramos a
 sacarla de revisión, así que el camino A ya no hizo falta: la versión salió el 23/11 a las 12:12 de Uruguay, y la página de
