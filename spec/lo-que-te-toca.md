@@ -168,14 +168,13 @@ Falta (vos):
 
 ## 1. Ahora (no espera a nada)
 
-### Probar en tu iPhone
+### Ya en tu iPhone
 
-**Los widgets mejores (aprobados el 25/11), por aire solo en `preview`** (commit a68e1c5, preview 6eae28d0; spec/widgets.md,
-«Los widgets mejores»): Hoy limpio en los tres tamaños, con la semana en el grande; Tu noche con la hora de acostarte y
-cuánto falta, de a 5 minutos, y a la mañana lo dormido con la deuda en una palabra. Quedaron como en la galería: los
-últimos 7 días (no de lunes a domingo) y sin el snack en la lista. **Te toca:** en la build `telefono`, cerrar y abrir
-Moss dos veces (para que tome la OTA y vuelva a registrar los widgets) y mirar Hoy chico, mediano y grande, StandBy a la
-noche y la pantalla bloqueada a la tardecita y a la mañana. Si se ven bien, decime y lo mando a `production`. Para ver la
+**Los widgets mejores (aprobados el 25/11), por aire en las dos builds** (commit a68e1c5; preview 6eae28d0 y, después de
+que los miraste en la build `telefono`, production 10db1ac0; spec/widgets.md, «Los widgets mejores»): Hoy limpio en los
+tres tamaños, con la semana en el grande; Tu noche con la hora de acostarte y cuánto falta, de a 5 minutos, y a la
+mañana lo dormido con la deuda en una palabra. Quedaron como en la galería: los últimos 7 días (no de lunes a domingo) y
+sin el snack en la lista. Quien ya tiene un widget lo ve nuevo al abrir Moss después de la actualización. Para ver la
 noche sin abrir Moss hace falta la próxima build (spec/estudio/widgets-y-noche.md).
 
 ### Aprobar en la galería

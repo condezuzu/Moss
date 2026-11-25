@@ -7,8 +7,8 @@ Investigado el 21/10/2026 y hecho el 26/10/2026, para la build de la revisión. 
 
 Lo pediste el 25/11 (spec/estudio/widgets-y-noche.md, 1.1, 1.3 y las filas 2 y 3 de la pantalla bloqueada) y lo
 aprobaste el mismo día en la galería 61 (escenario `widgets-mejores`, cada uno al lado del de antes). Va por aire: todos
-los tamaños ya estaban declarados en la build 8 (commit a68e1c5; por aire en `preview` el 25/11, 6eae28d0, para probarlo
-en tu iPhone antes de `production`).
+los tamaños ya estaban declarados en la build 8 (commit a68e1c5; por aire el 25/11: preview 6eae28d0 y, después de que lo
+miraste en tu iPhone, production 10db1ac0).
 
 | Widget | Qué cambió |
 |---|---|
