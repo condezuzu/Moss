@@ -585,7 +585,7 @@ function ElPlazo({ entrada, plazo, hoy, ritmo, sexo, u, numeros, eleccion, alMov
         viable={pos(bordeDe(dir, 'viable', entrada.pesoKg))}
         exigente={pos(bordeDe(dir, 'exigente', entrada.pesoKg))}
         etiqueta={t('progreso.plazo.ritmo')}
-        textoDe={(pct) => `${fijo(pct, 2)} %`}
+        textoDe={(pct) => t('comida.porcentaje', { n: fijo(pct, 2) })}
         alMover={(pct) => alMover(pct)}
         alSoltar={(pct) => {
           alMover(null);

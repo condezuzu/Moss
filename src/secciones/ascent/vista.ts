@@ -15,11 +15,11 @@ import {
 } from '@/dominio/progresoCompartido';
 import { calidadParaRecuperar } from '@/dominio/entrenamiento';
 import { puntosDelEjercicio, semanaDeEntreno, semanasParaLasRazones } from '@/dominio/estancados';
-import { fatigaMuscular, musculosParaLaFatiga } from '@/dominio/fatiga';
+import { musculosParaLaFatiga } from '@/dominio/fatiga';
 import { diaDeLaSemana, diasEntre, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import {
-  CATALOGO, claveDelEjercicio, esfuerzoDeSerie, grupoDelEjercicio, mejorE1rm, MUSCULOS, musculosDe, musculosTrabajados, PARTES,
-  type Bloque, type GrupoDeAscent, type Musculo, type Parte, type SesionConBloques, type UnoRMDe,
+  CATALOGO, claveDelEjercicio, esfuerzoDeSerie, grupoDelEjercicio, mejorE1rm, MUSCULOS, musculosDe, musculosTrabajados, PARTES, peorEstado,
+  type Bloque, type Cuando, type EstadoMuscular, type GrupoDeAscent, type Musculo, type Parte, type SesionConBloques, type UnoRMDe,
 } from '@/dominio/musculos';
 import {
   DE_PIERNAS, DIAS_DEL_E1RM, dentroDeLaSemana, e1rm, diasHastaListo, esDeTrabajo, esDura, estadoDeFatiga, estadoDelPuntaje, listoEl, mejorE1rm as mejorDeLasSeries, notaDeLaRutina,
@@ -53,6 +53,10 @@ export type SesionDelDia = { como: 'prevista' | 'hecha'; nombre: string; inicio:
 export type NocheDeHoy = NocheDelRendimiento & { estado: EstadoDeLaNoche; seguidas: boolean; calidad: number | null; siesta: boolean };
 export type SesionConFecha = SesionConBloques & { fecha: ClaveDia };
 
+/** Un músculo de lo de hoy, con la misma cuenta en días que Tus músculos (puntajeMuscular.ts, la de Ascent). */
+export type MusculoEnDias = { musculo: Musculo; dias: number; estado: EstadoMuscular; cuando: Cuando };
+export type FatigaEnDias = { musculos: MusculoEnDias[]; peor: EstadoMuscular | null };
+
 /** Lo de hoy: la sesión, la noche, los músculos de hoy y el titular. Es lo que también se ve afuera (titularDeHoy.ts). */
 export type Hoy = {
   hoy: ClaveDia;
@@ -63,9 +67,9 @@ export type Hoy = {
   deuda: number | null;
   comoTeSientes: number | null;
   titular: Titular;
-  /** La fatiga de lo de hoy al momento que se mira; ya hecha, cómo quedó después. */
-  f: ReturnType<typeof fatigaMuscular>;
-  despues: ReturnType<typeof fatigaMuscular> | null;
+  /** La fatiga de lo de hoy, en días; ya hecha, cómo quedó después. */
+  f: FatigaEnDias;
+  despues: FatigaEnDias | null;
   musculosHoy: Musculo[];
   ultima: SesionConFecha | null;
   trabajados: { musculo: Musculo; series: number }[];
@@ -139,10 +143,20 @@ export function calcularHoy({ e, d, sueno, ahora }: Entradas): Hoy {
     };
   };
   const unoRM = unoRMEn(en);
-  const opciones = { unoRM, novato: !entrenado, minuto: minuto(en) };
   const musculosHoy = musculosParaLaFatiga({ deHoy: sesion?.bloques ?? null, sesiones, en });
-  const f = fatigaMuscular({ musculos: musculosHoy, sesiones, en, ...opciones });
-  const despues = sesion?.como === 'hecha' ? fatigaMuscular({ musculos: musculosHoy, sesiones, en: ahoraMs, ...opciones, unoRM: unoRMEn(ahoraMs), minuto: minuto(ahoraMs) }) : null;
+  // La misma cuenta que Tus músculos y Ascent: con lo hecho hasta ahora, cuántos días le faltan a cada músculo. Con la
+  // sesión ya hecha, es cómo quedó después.
+  const { listoDe } = fatigaEnDias({ sesiones, hoy, ahora: ahoraMs, rutina });
+  const deLosDias = (musculos: readonly Musculo[]): FatigaEnDias => {
+    const lista = musculos.map((musculo) => {
+      const dias = diasHastaListo(listoDe(musculo), hoy);
+      const estado = estadoDeFatiga(dias);
+      return { musculo, dias, estado: estado === 'descansado' ? 'recuperado' : estado, cuando: CUANDO[Math.min(dias, CUANDO.length - 1)] } as const;
+    });
+    return { musculos: lista, peor: peorEstado(lista.map((m) => m.estado)) };
+  };
+  const f = deLosDias(musculosHoy);
+  const despues = sesion?.como === 'hecha' ? f : null;
 
   // La noche: la de Salud o la de Moss sin reloj (sin las de ejemplo), con la calidad del reloj o de la mañana.
   const noches = sueno.deEjemplo ? [] : sueno.noches;
@@ -376,10 +390,16 @@ const DIAS_DE_LA_FATIGA = 14;
 /** Un ejercicio es nuevo si no estuvo en las 26 semanas anteriores. */
 const DIAS_DE_NUEVO = 182;
 
-/** Tus músculos de la semana con las cuentas compartidas con Ascent (puntajeMuscular.ts), la nota de tu rutina y los fatigados. */
-export function calcularTusMusculos(h: Hoy): TusMusculos {
+/** Cuándo está listo un músculo, por los días que le faltan: 0, 1, 2 y 3 o más. */
+const CUANDO: readonly Cuando[] = ['ya', 'manana', 'pasadoManana', 'enUnosDias'];
+
+/**
+ * La fatiga en días con lo hecho hasta `ahora` (las cuentas compartidas con Ascent, puntajeMuscular.ts): cada sesión
+ * de las últimas 2 semanas, por cada músculo principal, con sus series de trabajo.
+ */
+function fatigaEnDias(x: { sesiones: readonly SesionConFecha[]; hoy: ClaveDia; ahora: number; rutina: RutinaDeAscent | null }) {
   // El 1RM de referencia de cada ejercicio: el mejor de sus series de los últimos 126 días (como en Ascent).
-  const previas = h.sesiones.filter((s) => s.inicio < h.ahora && s.inicio >= h.ahora - DIAS_DEL_E1RM * DIA);
+  const previas = x.sesiones.filter((s) => s.inicio < x.ahora && s.inicio >= x.ahora - DIAS_DEL_E1RM * DIA);
   const vistos = new Map<string, number | null>();
   const unoRM = (b: Bloque) => {
     const k = claveDelEjercicio(b);
@@ -387,7 +407,7 @@ export function calcularTusMusculos(h: Hoy): TusMusculos {
     return vistos.get(k)!;
   };
   const topeDe = new Map<string, number>();
-  for (const d of h.rutina?.dias ?? []) for (const y of d.ejercicios) if (y.reps) topeDe.set(y.id, y.reps);
+  for (const d of x.rutina?.dias ?? []) for (const y of d.ejercicios) if (y.reps) topeDe.set(y.id, y.reps);
   /** Un ejercicio con sus series de trabajo (la entrada en calor no cuenta), como lo reciben las cuentas compartidas. */
   const hechoDe = (b: Bloque): EjercicioHecho | null => {
     const m = musculosDe(b);
@@ -399,46 +419,49 @@ export function calcularTusMusculos(h: Hoy): TusMusculos {
       series: b.series.filter((x) => esDeTrabajo(x, uno)).map((x) => ({ reps: x.reps, rir: x.rir ?? null })),
     };
   };
-  const hechos = h.sesiones.filter((s) => dentroDeLaSemana(s.fecha, h.hoy)).flatMap((s) => s.bloques.flatMap((b) => {
-    const x = hechoDe(b);
-    return x ? [{ b, x }] : [];
-  }));
-  const porMusculo = seriesDurasPorMusculo(hechos.map((y) => y.x));
-
-  // La fatiga, en días: cada sesión de las últimas 2 semanas, por cada músculo principal.
-  const primera = h.sesiones[0]?.fecha;
+  const primera = x.sesiones[0]?.fecha;
   const nuevoEl = (b: Bloque, fecha: ClaveDia) => {
     const desde = sumarDias(fecha, -DIAS_DE_NUEVO);
     // Sin 26 semanas de datos no se puede saber: no se suma el día.
     if (!primera || primera > desde) return false;
     const k = claveDelEjercicio(b);
-    return !h.sesiones.some((s) => s.fecha >= desde && s.fecha < fecha && s.bloques.some((y) => claveDelEjercicio(y) === k));
+    return !x.sesiones.some((s) => s.fecha >= desde && s.fecha < fecha && s.bloques.some((y) => claveDelEjercicio(y) === k));
   };
   const porSesion = new Map<Musculo, MusculoEnLaSesion[]>();
-  for (const s of h.sesiones) {
-    if (s.inicio > h.ahora || diasEntre(s.fecha, h.hoy) > DIAS_DE_LA_FATIGA) continue;
+  for (const s of x.sesiones) {
+    if (s.inicio > x.ahora || diasEntre(s.fecha, x.hoy) > DIAS_DE_LA_FATIGA) continue;
     const delDia = new Map<Musculo, MusculoEnLaSesion>();
     for (const b of s.bloques) {
       const m = musculosDe(b);
-      const x = hechoDe(b);
-      if (!m || !x || !x.series.length) continue;
-      const rirs = x.series.flatMap((y) => (y.rir != null ? [y.rir] : []));
+      const hecho = hechoDe(b);
+      if (!m || !hecho || !hecho.series.length) continue;
+      const rirs = hecho.series.flatMap((y) => (y.rir != null ? [y.rir] : []));
       const multi = !!(b.id && CATALOGO[b.id]?.multiarticular);
       for (const musculo of m.principal) {
         const antes = delDia.get(musculo);
         const rirMinimo = rirs.length ? Math.min(...rirs, ...(antes?.rirMinimo != null ? [antes.rirMinimo] : [])) : (antes?.rirMinimo ?? null);
         delDia.set(musculo, {
           fecha: s.fecha,
-          series: (antes?.series ?? 0) + x.series.length,
+          series: (antes?.series ?? 0) + hecho.series.length,
           rirMinimo,
           multiarticularDePiernas: (antes?.multiarticularDePiernas ?? false) || (multi && (DE_PIERNAS as readonly string[]).includes(musculo)),
           nuevo: (antes?.nuevo ?? false) || nuevoEl(b, s.fecha),
         });
       }
     }
-    for (const [musculo, x] of delDia) porSesion.set(musculo, [...(porSesion.get(musculo) ?? []), x]);
+    for (const [musculo, y] of delDia) porSesion.set(musculo, [...(porSesion.get(musculo) ?? []), y]);
   }
-  const listoDe = (m: Musculo) => listoEl(porSesion.get(m) ?? []);
+  return { hechoDe, porSesion, listoDe: (m: Musculo) => listoEl(porSesion.get(m) ?? []) };
+}
+
+/** Tus músculos de la semana con las cuentas compartidas con Ascent (puntajeMuscular.ts), la nota de tu rutina y los fatigados. */
+export function calcularTusMusculos(h: Hoy): TusMusculos {
+  const { hechoDe, porSesion, listoDe } = fatigaEnDias(h);
+  const hechos = h.sesiones.filter((s) => dentroDeLaSemana(s.fecha, h.hoy)).flatMap((s) => s.bloques.flatMap((b) => {
+    const x = hechoDe(b);
+    return x ? [{ b, x }] : [];
+  }));
+  const porMusculo = seriesDurasPorMusculo(hechos.map((y) => y.x));
 
   const musculos = MUSCULOS.map((musculo): MusculoDeLaSemana => {
     const x = porMusculo.get(musculo);
@@ -462,9 +485,12 @@ export function calcularTusMusculos(h: Hoy): TusMusculos {
   const nocheCorta = !!h.noche && (h.noche.dormido <= NOCHE_CORTA || (h.noche.despertoAntes ?? 0) >= DESPERTO_ANTES);
   const deHoy = new Set(h.sesion?.como === 'prevista' ? (h.sesion.bloques ?? []).map(claveDelEjercicio) : []);
   const ejercicios = [...juntos.entries()].map(([k, { b, x, duras, alFallo, rir }]): EjercicioDeLaSemana => {
-    const sesiones = h.sesiones.map((s) => ({ series: s.bloques.filter((y) => claveDelEjercicio(y) === k).flatMap((y) => hechoDe(y)?.series ?? []) })).filter((s) => s.series.length);
-    const ultima = [...h.sesiones].reverse().find((s) => s.bloques.some((y) => claveDelEjercicio(y) === k));
-    const peso = Math.max(0, ...(ultima?.bloques.filter((y) => claveDelEjercicio(y) === k).flatMap((y) => y.series.map((z) => z.peso)) ?? []));
+    // Lo copiado con «Registrar el día» repite la sesión de antes: contaría como una segunda vez en el tope y haría subir
+    // el peso. Como en Ascent, la próxima vez sale de las sesiones de verdad.
+    const deVerdad = (y: Bloque) => claveDelEjercicio(y) === k && !y.copiada;
+    const sesiones = h.sesiones.map((s) => ({ series: s.bloques.filter(deVerdad).flatMap((y) => hechoDe(y)?.series ?? []) })).filter((s) => s.series.length);
+    const ultima = [...h.sesiones].reverse().find((s) => s.bloques.some(deVerdad));
+    const peso = Math.max(0, ...(ultima?.bloques.filter(deVerdad).flatMap((y) => y.series.map((z) => z.peso)) ?? []));
     const fatigadoHoy = deHoy.has(k) && x.principal.some((m) => (musculos.find((y) => y.musculo === m)?.dias ?? 0) > 0);
     return {
       e: { id: b.id, ejercicio: b.ejercicio }, principal: x.principal as Musculo[], ayudan: x.ayuda as Musculo[], parte: (x.parte as Parte | undefined) ?? null, tope: x.objetivo ?? null,

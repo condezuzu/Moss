@@ -59,11 +59,14 @@ export function semanaDeEntreno(
   return { lunes, series, veces, pesadas, conReps };
 }
 
-/** Las sesiones de un ejercicio en puntos para la tendencia: la semana (desde `origen`) y el 1RM estimado de su mejor serie. */
+/**
+ * Las sesiones de un ejercicio en puntos para la tendencia: la semana (desde `origen`) y el 1RM estimado de su mejor
+ * serie. Lo copiado con «Registrar el día» no cuenta: repetir los mismos kilos aplanaría la línea (como en Ascent).
+ */
 export function puntosDelEjercicio(sesiones: readonly (SesionConBloques & { fecha: ClaveDia })[], ejercicio: Pick<Bloque, 'id' | 'ejercicio'>, origen: ClaveDia): { t: number; e1rm: number; fecha: ClaveDia }[] {
   const clave = claveDelEjercicio(ejercicio);
   return sesiones.flatMap((s) => {
-    const mejor = s.bloques.filter((b) => claveDelEjercicio(b) === clave).reduce<number | null>((m, b) => {
+    const mejor = s.bloques.filter((b) => claveDelEjercicio(b) === clave && !b.copiada).reduce<number | null>((m, b) => {
       const v = mejorDeLasSeries(b.series);
       return v !== null && (m === null || v > m) ? v : m;
     }, null);

@@ -72,6 +72,8 @@ function kcalDelDia(e: Estado, dia: ClaveDia, pesoKg: number): number {
 export function energiaDeHoy(e: Estado, s: Sueno, ahora: Date, ascent: TitularParaAfuera | null = null): DatosDeEnergia | null {
   if (!e.perfil) return null;
   const hoy = e.hoy;
+  // Con Ascent, entrenas hoy solo si queda una sesión por hacer: no el día de descanso ni después de entrenar.
+  const entrenaHoy = !!ascent && ascent.que !== 'hecha' && ascent.que !== 'descanso' && ascent.que !== 'sinHorario';
   const pesoKg = e.pesos[e.pesos.length - 1]?.kg ?? null;
   // Las noches de ejemplo no son tuyas: no cuentan. Las de confianza baja tampoco, como en la deuda.
   const noches = s.deEjemplo ? [] : s.noches.filter((n) => n.confianza.duracion !== 'baja');
@@ -101,7 +103,7 @@ export function energiaDeHoy(e: Estado, s: Sueno, ahora: Date, ascent: TitularPa
   });
   const deEstosDias = pesoKg
     ? energiaDeEstosDias({
-        hoy, sexo: e.perfil.sexo, objetivo: e.perfil.objetivo, pesoKg, alturaCm: e.perfil.alturaCm, dias, entrenaHoy: !!ascent,
+        hoy, sexo: e.perfil.sexo, objetivo: e.perfil.objetivo, pesoKg, alturaCm: e.perfil.alturaCm, dias, entrenaHoy,
         comidasDeSiempre: comidasHabituales(e.registros.values(), hoy),
       })
     : null;
@@ -133,7 +135,7 @@ export function energiaDeHoy(e: Estado, s: Sueno, ahora: Date, ascent: TitularPa
   const comoMusculos: ComoMusculos | null = !ascent ? null
     : ascent.que === 'cargado' ? 'cargados' : ascent.que === 'hecha' ? 'entrenaste' : ascent.que === 'descanso' || ascent.que === 'sinHorario' ? 'descanso' : 'listos';
   const dia = energiaDeAhora({
-    deEstosDias, sueno, musculos, entrenaHoy: !!ascent, ahora: ahoraMin, despertar, cama, sesion,
+    deEstosDias, sueno, musculos, entrenaHoy, ahora: ahoraMin, despertar, cama, sesion,
     hoy: meta > 0 ? { meta, comido: deHoy.reduce((t, r) => t + r.valores.kcal, 0), comidas, ultima } : null,
   });
   return {

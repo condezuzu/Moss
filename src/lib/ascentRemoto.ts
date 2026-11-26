@@ -32,6 +32,11 @@ export type EjercicioDeAscent = {
   series: SerieDeAscent[];
   /** El id del ejercicio en Ascent ('sentadilla', o 'propio_…' si lo creó la persona). */
   id?: string;
+  /**
+   * De una sesión copiada (0019_sesiones_copiadas.sql): «Registrar el día» en Ascent copió el último entrenamiento de
+   * ese día de la rutina. Cuenta para los músculos, el volumen y la fatiga, y no para la tendencia de fuerza.
+   */
+  copiada?: true;
 };
 
 /**
@@ -219,6 +224,7 @@ function ejercicioDe(e: Objeto): EjercicioDeAscent[] {
     musculos: Array.isArray(e.musculos) ? e.musculos.filter((m): m is string => typeof m === 'string') : [],
     series: lista(e.series).map(serieDe),
     ...(id ? { id } : {}),
+    ...(e.copiada === true ? { copiada: true as const } : {}),
   }];
 }
 

@@ -95,7 +95,9 @@ function useSugerenciasDeHoy(h: Hoy, tm: DeTusMusculos): SugerenciasDeHoy {
   const sueno = useSueno();
   return useMemo(() => {
     const musculos = h.sesion?.bloques ? musculosPrincipales(h.sesion.bloques) : [];
-    const sinRecuperar = musculos.filter((m) => tm.fatigados.some((f) => f.musculo === m));
+    // Más liviano solo con el músculo cargado (2 días o más), como el titular: con 1 día, la sesión no cambia
+    // (spec/estudio/sugerencias-de-hoy.md, E6).
+    const sinRecuperar = musculos.filter((m) => tm.fatigados.some((f) => f.musculo === m && f.fatiga === 'cargado'));
     const noches = sueno.deEjemplo ? [] : sueno.noches;
     const periodo = noches.length ? periodoDeMelatonina(noches, e.hoy, { margen: e.latencia, deuda: h.deuda }) : null;
     const ayer = sumarDias(e.hoy, -1);

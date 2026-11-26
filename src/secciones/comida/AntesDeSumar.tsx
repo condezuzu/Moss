@@ -122,7 +122,7 @@ export function Micronutrientes({ micros, persona }: { micros: Micros; persona: 
         {lo.map((d) => (
           <View key={d.micro} style={estilos.chip}>
             <Text style={estilos.chipNombre}>{t(`comida.micros.nombres.${d.micro}`)}</Text>
-            <Text style={estilos.chipParte}>{`${numero(Math.round(d.parte * 100))} %`}</Text>
+            <Text style={estilos.chipParte}>{t('comida.porcentaje', { n: numero(Math.round(d.parte * 100)) })}</Text>
           </View>
         ))}
         {!lo.length && <Text style={estilos.poco}>{t('comida.micros.poco')}</Text>}

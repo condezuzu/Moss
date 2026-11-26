@@ -12,6 +12,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { registrarTareaDeFondo } from '@/fondo/tarea';
 import { useActualizaciones } from '@/lib/actualizaciones';
+import { useResena } from '@/lib/resena';
 import { RecibirAnclas } from '@/secciones/sueno/RecibirAnclas';
 import { colores } from '@/tema';
 import { useWidgets } from '@/widgets';
@@ -48,6 +49,8 @@ export default function Raiz() {
   // Los widgets aplican lo tocado en ellos y quedan al día; la tarea de fondo los refresca con Moss cerrada.
   useWidgets();
   useActualizaciones();
+  // La reseña de la App Store, en un buen momento (con la build que la trae).
+  useResena();
   useEffect(() => {
     registrarTareaDeFondo();
   }, []);

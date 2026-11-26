@@ -18,7 +18,7 @@ const leerJson = (p) => (existsSync(join(raiz, p)) ? JSON.parse(leer(p)) : null)
 
 // Los módulos de src/dominio que puede importar otro módulo de la galería, con el nombre de su
 // constante. Van antes en el armado que los que los usan.
-const DEL_DOMINIO = { porciones: 'Porciones', recetaDeTexto: 'RecetaDeTexto', fechas: 'Fechas', metas: 'Metas', micronutrientes: 'Micronutrientes', dejaElDia: 'DejaElDia', plan: 'Plan', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', sinReloj: 'SinReloj', entrenamiento: 'Entrenamiento', cuestionario: 'Cuestionario', cuidados: 'Cuidados', puntajeMuscular: 'PuntajeMuscular', progresoCompartido: 'ProgresoCompartido', musculos: 'Musculos', rendimiento: 'Rendimiento', estadisticas: 'Estadisticas', comidas: 'Comidas', luz: 'Luz', dias: 'Dias', habitos: 'Habitos', recordatorios: 'Recordatorios', loQueFalta: 'LoQueFalta', avisos: 'Avisos', alrededorDelEntreno: 'AlrededorDelEntreno', diagnostico: 'Diagnostico', fatiga: 'Fatiga', recuperado: 'Recuperado', estancados: 'Estancados', segunElDeporte: 'SegunElDeporte', rangoDeAscent: 'RangoDeAscent', energia: 'Energia', loQueConviene: 'LoQueConviene', sigueElDespertar: 'SigueElDespertar', melatonina: 'Melatonina' };
+const DEL_DOMINIO = { porciones: 'Porciones', recetaDeTexto: 'RecetaDeTexto', fechas: 'Fechas', metas: 'Metas', micronutrientes: 'Micronutrientes', dejaElDia: 'DejaElDia', plan: 'Plan', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', sinReloj: 'SinReloj', entrenamiento: 'Entrenamiento', cuestionario: 'Cuestionario', cuidados: 'Cuidados', puntajeMuscular: 'PuntajeMuscular', progresoCompartido: 'ProgresoCompartido', musculos: 'Musculos', rendimiento: 'Rendimiento', estadisticas: 'Estadisticas', comidas: 'Comidas', luz: 'Luz', dias: 'Dias', habitos: 'Habitos', recordatorios: 'Recordatorios', loQueFalta: 'LoQueFalta', avisos: 'Avisos', alrededorDelEntreno: 'AlrededorDelEntreno', diagnostico: 'Diagnostico', fatiga: 'Fatiga', recuperado: 'Recuperado', estancados: 'Estancados', segunElDeporte: 'SegunElDeporte', rangoDeAscent: 'RangoDeAscent', energia: 'Energia', loQueConviene: 'LoQueConviene', sigueElDespertar: 'SigueElDespertar', melatonina: 'Melatonina', tuSesion: 'TuSesion' };
 
 // Un módulo de src/ pasado a JavaScript, como una constante con lo que exporta. Solo puede
 // importar otros módulos de la galería (DEL_DOMINIO), que se leen de su constante; los imports de
@@ -213,6 +213,7 @@ const js = [
   modulo('Fatiga', 'src/dominio/fatiga.ts'),
   modulo('Recuperado', 'src/dominio/recuperado.ts'),
   modulo('Estancados', 'src/dominio/estancados.ts'),
+  modulo('TuSesion', 'src/dominio/tuSesion.ts'),
   modulo('Estadisticas', 'src/dominio/estadisticas.ts'),
   modulo('Premium', 'src/dominio/premium.ts'),
   modulo('SenalDeAscent', 'src/dominio/senalDeAscent.ts'),

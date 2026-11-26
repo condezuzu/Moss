@@ -147,7 +147,8 @@ await db.exec(`
   create table public.sesiones (
     id uuid primary key default gen_random_uuid(), user_id uuid not null references public.profiles (id) on delete cascade,
     log_id uuid not null references public.logs (id) on delete cascade, inicio timestamptz not null default now(), fin timestamptz,
-    estado text not null default 'corriendo', series int not null default 0, bloques jsonb not null default '[]');
+    estado text not null default 'corriendo', series int not null default 0, bloques jsonb not null default '[]',
+    copiada boolean not null default false);
   create table public.ejercicios (id text primary key, nombre text not null, grupo text not null, creado_por uuid references public.profiles (id) on delete cascade);
   create table public.rutinas (
     id uuid primary key default gen_random_uuid(), user_id uuid not null references public.profiles (id) on delete cascade,
@@ -961,9 +962,9 @@ await db.query(`insert into public.rutinas (user_id, nombre, activa, dias) value
   TERCERO,
 ]);
 const diaDeAscent = async (usuario, fecha, descanso = false) => (await db.query('insert into public.logs (user_id, fecha, es_descanso) values ($1, $2, $3) returning id', [usuario, fecha, descanso])).rows[0].id;
-const sesionDeAscent = (usuario, log, { inicio, minutos = null, estado = 'terminada', series, bloques }) => db.query(
-  'insert into public.sesiones (user_id, log_id, inicio, fin, estado, series, bloques) values ($1, $2, $3, $4, $5, $6, $7)',
-  [usuario, log, inicio, minutos === null ? null : new Date(Date.parse(inicio) + minutos * 60_000).toISOString(), estado, series, JSON.stringify(bloques)]);
+const sesionDeAscent = (usuario, log, { inicio, minutos = null, estado = 'terminada', series, bloques, copiada = false }) => db.query(
+  'insert into public.sesiones (user_id, log_id, inicio, fin, estado, series, bloques, copiada) values ($1, $2, $3, $4, $5, $6, $7, $8)',
+  [usuario, log, inicio, minutos === null ? null : new Date(Date.parse(inicio) + minutos * 60_000).toISOString(), estado, series, JSON.stringify(bloques), copiada]);
 // ASCENT: el 20 una sesión abandonada (con bloques rotos, que se ignoran) y una de 55 minutos con barra,
 // mancuernas y lastre; el 21 una de 3 minutos (no cuenta como duración) con el peso del cuerpo y otra
 // con un ejercicio propio de un lado por vez; el 22 descanso; el 23 anotado sin cronómetro; el 24 un
@@ -1279,9 +1280,20 @@ comprobar(
   'metas de fuerza: al desvincular se borran',
 );
 await vincularConLaClave(MOSS, ASCENT, 'moss');
+// Las sesiones copiadas (0019_sesiones_copiadas.sql, de la migración 103 de Ascent): «Registrar el día» copia el último
+// entrenamiento de ese día de la rutina. Cada ejercicio llega con la marca de su sesión, para dejarlo fuera de la tendencia.
+const dia27 = await diaDeAscent(ASCENT, '2026-10-27');
+await sesionDeAscent(ASCENT, dia27, { inicio: '2026-10-27T21:00:00Z', minutos: 45, series: 3, copiada: true, bloques: [
+  { ejercicio: 'sentadilla', series: 3, pesos: [100, 100, 100], reps: [5, 5, 5], carga: 'total' }] });
+const copiadas = (await sesionesDe(MOSS, '2026-10-26')).filter((s) => s.fecha === '2026-10-26' || s.fecha === '2026-10-27');
+comprobar(
+  copiadas.length === 2 && copiadas.find((s) => s.fecha === '2026-10-27')?.ejercicios.every((e) => e.copiada === true)
+    && copiadas.find((s) => s.fecha === '2026-10-26')?.ejercicios.every((e) => e.copiada === false),
+  `sesiones copiadas: cada ejercicio trae la marca de su sesión (${JSON.stringify(copiadas.map((s) => [s.fecha, s.ejercicios.map((e) => e.copiada)]))})`,
+);
 // Lo de esta prueba se va: lo que sigue cuenta las sesiones de esta cuenta.
-await db.query('delete from public.sesiones where log_id = $1', [dia26]);
-await db.query('delete from public.logs where id = $1', [dia26]);
+await db.query('delete from public.sesiones where log_id = any($1)', [[dia26, dia27]]);
+await db.query('delete from public.logs where id = any($1)', [[dia26, dia27]]);
 
 // Cuánto bajas y tu experiencia (0017_baja_y_experiencia.sql): Moss los sube con el resumen de hoy y moss_objetivo() los
 // devuelve, del último día que los tenga; si un día no vienen, quedan los de antes.

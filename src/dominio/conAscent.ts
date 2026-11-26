@@ -17,7 +17,7 @@ import { claveDelEjercicio, grupoDelEjercicio, unRmDeAscent, type Bloque, type G
 /** `rir`: las repeticiones que quedaban, si se anotaron en Ascent («al fallo» es 0). */
 export type SerieDeAscent = { kilos: number | null; reps: number | null; rir?: number | null };
 /** Un ejercicio de una sesión: el nombre de Ascent, su grupo (uno solo), sus series y su id ('sentadilla', o 'propio_…'). */
-export type EjercicioDeAscent = { nombre: string; musculos: string[]; series: SerieDeAscent[]; id?: string };
+export type EjercicioDeAscent = { nombre: string; musculos: string[]; series: SerieDeAscent[]; id?: string; copiada?: true };
 /** Un día de gimnasio en Ascent; sin cronómetro llega con 0 series, 0 kilos, 0 minutos y sin ejercicios. */
 export type SesionDeAscent = Sesion & { ejercicios: EjercicioDeAscent[]; inicio?: string };
 export type MarcaDeAscent = { ejercicio: string; fecha: ClaveDia; kilos: number; reps: number; id?: string };
@@ -132,7 +132,7 @@ export function sesionesConBloques(sesiones: readonly SesionDeAscent[], inicioDe
   return sesiones.filter((s) => s.ejercicios.length).map((s) => ({
     fecha: s.fecha,
     inicio: inicioDe(s),
-    bloques: s.ejercicios.map((e) => ({ ejercicio: e.nombre, ...(e.id ? { id: e.id } : {}), grupo: grupoDe(e), series: e.series.map((x) => ({ peso: x.kilos ?? 0, reps: x.reps, ...(x.rir != null ? { rir: x.rir } : {}) })) })),
+    bloques: s.ejercicios.map((e) => ({ ejercicio: e.nombre, ...(e.id ? { id: e.id } : {}), grupo: grupoDe(e), series: e.series.map((x) => ({ peso: x.kilos ?? 0, reps: x.reps, ...(x.rir != null ? { rir: x.rir } : {}) })), ...(e.copiada ? { copiada: true } : {}) })),
   }));
 }
 

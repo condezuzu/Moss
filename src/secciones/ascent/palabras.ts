@@ -79,7 +79,7 @@ export function textosDelTitular(h: Hoy): [string, string] {
     return [t('ascent.titular.hecha.titulo', { sesion }), cuando === 'ya' ? t('ascent.titular.hecha.yaListos') : t('ascent.titular.hecha.texto', { musculos, cuando: cuandoDe(cuando) })];
   }
   if (que === 'descanso' || que === 'sinHorario') {
-    const falta = h.f.musculos.filter((m) => m.estado !== 'recuperado').sort((a, b) => b.residual - a.residual)[0];
+    const falta = h.f.musculos.filter((m) => m.estado !== 'recuperado').sort((a, b) => b.dias - a.dias)[0];
     return [
       tx(`ascent.titular.${que}.titulo`),
       falta ? t('ascent.titular.descanso.texto', { musculo: nombreDelMusculo(falta.musculo).toLowerCase(), cuando: cuandoDe(falta.cuando) }) : t('ascent.titular.descanso.listos'),

@@ -123,7 +123,7 @@ export function LaNoche({ n, hoy, ancho, anteriores, lista: noches, animar }: { 
                   <Text style={st.etapaTexto}>{t(`sueno.etapas.${x}`)}</Text>
                 </View>
                 <Text style={st.etapaValor}>{duracion(Math.round(min))}</Text>
-                <Text style={st.etapaPorcentaje}>{`${numero(Math.round((min / Math.max(1, n.dormido)) * 100))} %`}</Text>
+                <Text style={st.etapaPorcentaje}>{t('comida.porcentaje', { n: numero(Math.round((min / Math.max(1, n.dormido)) * 100)) })}</Text>
               </View>
             ))}
           </View>

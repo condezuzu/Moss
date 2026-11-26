@@ -118,4 +118,10 @@ describe('lo de cada semana, con las sesiones de Ascent', () => {
     const p = puntosDelEjercicio(sesiones, { id: 'press_banca', ejercicio: 'Press de banca' }, '2026-10-05');
     expect(p.map((x) => [x.t, Math.round(x.e1rm * 10) / 10])).toEqual([[0, 93.3], [1, 93.3]]);
   });
+  it('lo copiado con «Registrar el día» no entra en la tendencia, pero sí en las series de la semana', () => {
+    const copiada = dia('2026-10-14', [{ ejercicio: 'Press de banca', id: 'press_banca', copiada: true, series: [{ peso: 80, reps: 5 }, { peso: 80, reps: 5 }] }]);
+    const p = puntosDelEjercicio([...sesiones, copiada], { id: 'press_banca', ejercicio: 'Press de banca' }, '2026-10-05');
+    expect(p.map((x) => x.fecha)).toEqual(['2026-10-05', '2026-10-12']);
+    expect(semanaDeEntreno([...sesiones, copiada], '2026-10-12', { id: 'press_banca', ejercicio: 'Press de banca' }, 'pecho').series).toBe(3);
+  });
 });

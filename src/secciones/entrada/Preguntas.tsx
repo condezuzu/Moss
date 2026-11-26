@@ -567,7 +567,7 @@ function LaGrasa({ r, poner, alSeguir }: PropsDePregunta) {
             <Text style={[s.numeroValor, { fontSize: 56, lineHeight: 62 }]} maxFontSizeMultiplier={TOPE}>{numero(r.grasaPct, 1)}</Text>
             <Text style={s.numeroUnidad}>%</Text>
           </View>
-          <Deslizador style={{ marginTop: 14 }} valor={r.grasaPct} min={minPct} max={maxPct} paso={0.5} pasoDeAccesibilidad={1} alCambiar={(v) => poner((x) => ({ ...x, grasaPct: v }))} etiqueta={t('entrada.cuestionario.grasa.titulo')} textoDe={(v) => `${numero(v, 1)} %`} />
+          <Deslizador style={{ marginTop: 14 }} valor={r.grasaPct} min={minPct} max={maxPct} paso={0.5} pasoDeAccesibilidad={1} alCambiar={(v) => poner((x) => ({ ...x, grasaPct: v }))} etiqueta={t('entrada.cuestionario.grasa.titulo')} textoDe={(v) => t('comida.porcentaje', { n: numero(v, 1) })} />
           <Chico izquierda>{t('entrada.cuestionario.grasa.dichaTexto')}</Chico>
         </Plegable>
         <Plegable abierto={r.grasaModo === 'imagen'}>

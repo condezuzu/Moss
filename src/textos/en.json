@@ -1059,7 +1059,7 @@
         "pesadas": "from your weigh-ins",
         "dijiste": "you told Moss when you started",
         "elegiste": "you chose it",
-        "ritmo": "you chose it, at {pct} % a week",
+        "ritmo": "you chose it, at {pct}% a week",
         "control": "measured by the {fecha} check-in",
         "medidas": "from your measurements",
         "aparato": "from {aparato}",
@@ -1088,7 +1088,7 @@
         },
         "macros": {
           "titulo": "The macros",
-          "texto": "Protein goes by body weight: 2 g per kilo when losing, 1.6 maintaining and 1.8 gaining. Fat is at least 27 % of calories and 0.6 g per kilo. Carbs are what's left, unless you choose another split."
+          "texto": "Protein goes by body weight: 2 g per kilo when losing, 1.6 maintaining and 1.8 gaining. Fat is at least 27% of calories and 0.6 g per kilo. Carbs are what's left, unless you choose another split."
         },
         "peso": {
           "titulo": "Your weight",
@@ -1511,8 +1511,8 @@
     "rangoCorto": "{desde}–{hasta}%",
     "estimacion": "tape estimate",
     "aviso": "This is an estimate from your measurements, not a measurement: a lab scan (DEXA) could read about 4 points higher or lower, sometimes more. Over a few weeks the tape may miss a change in fat, especially in women: your waist shows it better. It’s less precise with very little fat, a lot of muscle or a lot of fat, and it doesn’t apply during pregnancy or under 18. Measure the same way every time and watch the trend.",
-    "comoSeEstimaHombre": "With the US Navy method (Hodgdon and Beckett, 1984): body density comes from your waist minus your neck and your height, and body fat from the Siri equation. The range is the estimate plus and minus how much it changes if the tape shifts 1 cm at the waist and half a centimetre at the neck, rounded to whole points. With very little or a lot of fat, it opens one more point on each side.",
-    "comoSeEstimaMujer": "With the US Navy method (Hodgdon and Beckett, 1984): body density comes from your waist plus your hips minus your neck and your height, and body fat from the Siri equation. The range is the estimate plus and minus how much it changes if the tape shifts 1 cm at the waist and hips and half a centimetre at the neck, rounded to whole points. With very little or a lot of fat, it opens one more point on each side."
+    "comoSeEstimaHombre": "With the US Navy method (Hodgdon and Beckett, 1984): body density comes from your waist minus your neck and your height, and body fat from the Siri equation. The range is the estimate plus and minus how much it changes if the tape shifts 1 cm at the waist and half a centimeter at the neck, rounded to whole points. With very little or a lot of fat, it opens one more point on each side.",
+    "comoSeEstimaMujer": "With the US Navy method (Hodgdon and Beckett, 1984): body density comes from your waist plus your hips minus your neck and your height, and body fat from the Siri equation. The range is the estimate plus and minus how much it changes if the tape shifts 1 cm at the waist and hips and half a centimeter at the neck, rounded to whole points. With very little or a lot of fat, it opens one more point on each side."
   },
   "progreso": {
     "titulo": "Progress",
@@ -1651,7 +1651,7 @@
     "plazo": {
       "fila": "Pace and date",
       "ritmo": "Pace",
-      "porSemana": "{pct} % of your weight a week · {kg} kg",
+      "porSemana": "{pct}% of your weight a week · {kg} kg",
       "enSemanas": "in {n} weeks",
       "enCuantasSemanas": {
         "uno": "in {n} week",
@@ -1941,7 +1941,7 @@
       "media": "approximate",
       "baja": "estimate"
     },
-    "fuentesTexto": "Moss uses a single source per night: the one you choose in Profile › Devices or, if not, the one that best tells sleep from wake. It never adds two together. Without a watch or a ring, it estimates the night with your phone. If a night is missing, it stays grey: nothing is made up.",
+    "fuentesTexto": "Moss uses a single source per night: the one you choose in Profile › Devices or, if not, the one that best tells sleep from wake. It never adds two together. Without a watch or a ring, it estimates the night with your phone. If a night is missing, it stays gray: nothing is made up.",
     "noMedico": "Moss isn’t a medical device. If you’re worried about your sleep, talk to a doctor.",
     "vacio": {
       "ejemplo": "Sample",
@@ -2752,7 +2752,7 @@
           }
         },
         "soloSalud": "RingConn, Amazfit, Xiaomi, Huawei, Da Rings and other rings only come in through Health: turn on Apple Health in their app.",
-        "nota": "Connecting asks you to sign in to that brand's account. The permission stays on your iPhone, and «Disconnect» removes it and deletes what it brought."
+        "nota": "Connecting asks you to sign in to that brand's account. The permission stays on your iPhone, and “Disconnect” removes it and deletes what it brought."
       },
       "guia": {
         "titulo": "Connect a watch or a ring",
@@ -3378,7 +3378,7 @@
         "algoMenos": "a little less",
         "menos": "less than usual"
       },
-      "margen": "Give or take {n} %: that’s how much it changes from one day to the next.",
+      "margen": "Give or take {n}%: that’s how much it changes from one day to the next.",
       "motivos": {
         "durmioPoco": "You slept {horas}",
         "despertoAntes": "You woke up earlier than usual",
@@ -3387,8 +3387,8 @@
         "caraMala": "You said you slept badly",
         "ayuno": "You’re coming in after 8 hours without food",
         "pocosCarbos": "You ate few carbs yesterday",
-        "bajandoRapido": "You’re losing more than 1 % a week",
-        "comioPoco": "You ate less than 80 % of your calories yesterday",
+        "bajandoRapido": "You’re losing more than 1% a week",
+        "comioPoco": "You ate less than 80% of your calories yesterday",
         "musculoCargado": "{musculo}: still recovering",
         "descarga": "You’re coming off a deload week, with the same load",
         "sinEntrenarlo": "You haven’t trained it in {dias} days"
@@ -3406,8 +3406,8 @@
       "conReloj": "From what your {aparato} measured.",
       "como": [
         "Two numbers, in % of your usual: max strength (1 to 3 reps) and reps. Short sleep barely touches max strength and hits reps much harder.",
-        "It adds up last night’s sleep (or several short nights in a row), how you said you slept, food (coming in fasted, few carbs, losing fast), muscle fatigue and deloads. Between −15 and +4 %.",
-        "Your strength moves about 3 % from one day to the next: that’s why it says “as usual” most days. It isn’t a guarantee."
+        "It adds up last night’s sleep (or several short nights in a row), how you said you slept, food (coming in fasted, few carbs, losing fast), muscle fatigue and deloads. Between −15 and +4%.",
+        "Your strength moves about 3% from one day to the next: that’s why it says “as usual” most days. It isn’t a guarantee."
       ],
       "previsto": "{sesion}, like every {dia}",
       "sinSesion": "Once you log sessions in Ascent, you’ll see here what to expect today."
@@ -3454,13 +3454,13 @@
       "titulo": "Personal record",
       "texto": "When your conditions look like the ones of your PRs, it lets you know: you slept well, your muscles rested and you’re close.",
       "en": "Good day to try a PR in {ejercicio}",
-      "porque": "You slept {horas}; {musculos}: {dias} days of rest. Your best recent set is {g} % from your PR.",
-      "probabilidad": "{p} % chance",
+      "porque": "You slept {horas}; {musculos}: {dias} days of rest. Your best recent set is {g}% from your PR.",
+      "probabilidad": "{p}% chance",
       "seguridad": "{nivel} confidence · {marcas} PRs in {semanas} weeks",
       "aciertos": "I flagged it {veces} times; you hit a PR in {marcas}.",
       "nota": "It’s an estimate, not a promise. If your warm-up feels heavy, save it for another day.",
       "hoyNo": "No PR to try today: it lets you know when your conditions look like the ones of your PRs.",
-      "avisaDesde": "tells you from {p} %"
+      "avisaDesde": "tells you from {p}%"
     },
     "vincularHoja": {
       "titulo": "Link with Ascent",

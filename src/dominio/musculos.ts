@@ -198,7 +198,8 @@ export function musculosDe(e: RefDeEjercicio): DeEjercicio | null {
 /** Una serie: el peso y, si se anotaron, las repeticiones (opcionales en Ascent desde la migración 94). */
 export type Serie = { peso: number; reps: number | null; rir?: number | null };
 /** Un ejercicio de una sesión: su nombre (el de Ascent), su id, su grupo y sus series. */
-export type Bloque = RefDeEjercicio & { ejercicio: string; series: Serie[]; alFallo?: boolean };
+/** `copiada`: de una sesión que Ascent copió con «Registrar el día»; cuenta para la fatiga y no para la tendencia. */
+export type Bloque = RefDeEjercicio & { ejercicio: string; series: Serie[]; alFallo?: boolean; copiada?: boolean };
 /** Una sesión de Ascent con sus bloques; \`inicio\` en milisegundos. */
 export type SesionConBloques = { inicio: number; bloques: Bloque[] };
 
