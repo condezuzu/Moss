@@ -131,6 +131,19 @@ describe('la sesión con la cuenta', () => {
     nada.parar();
   });
 
+  it('con los datos de otra cuenta, la vuelta no sube nada: lo que falta tampoco se da por subido', async () => {
+    const pendientes: Pendientes = { ...sinComida(), habitos: [], periodos: null, marcas: [], dias: [], logros: [], perfil: null, metas: [], pesos: [], semilla: 'semilla', hasta: 1 };
+    const deOtra = {
+      iniciar: async () => {},
+      enCola: async (tarea: (r: object) => unknown) => tarea({ pendientes: async () => pendientes, leerAjuste: async () => 'otra-cuenta', guardarAjuste: async () => {} }),
+    } as unknown as Almacen;
+    const cuenta = sincronizarConLaCuenta(deOtra);
+    mockAvisar('SIGNED_IN', sesion);
+    await unRato();
+    await expect(subirLoQueFalta()).rejects.toThrow();
+    cuenta.parar();
+  });
+
   it('la entrada espera lo que ya tenía la cuenta, pero no más que el tope', async () => {
     const cuenta = sincronizarConLaCuenta(almacenCon(false));
     // Sin sesión no hay nada que esperar.

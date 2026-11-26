@@ -169,12 +169,11 @@ export function sincronizarConLaCuenta(a: Almacen) {
   });
   deLaCuenta = {
     async subirLoQueFalta() {
-      if (actual) {
-        await actual.sincronizador.vuelta(false);
-        return;
-      }
-      // Sin sincronización (la sesión se cortó sola) lo que falta no tiene cómo subir: no se da por subido.
-      if (!sinCambios(await a.enCola((r) => r.pendientes()))) throw new Error('Sin sesión: lo último no subió');
+      // Con sesión, una vuelta. Pero lo que quedó no se da por subido: con los datos de otra cuenta (o parada) la vuelta
+      // no sube nada y no falla, y cerrar sesión borraría lo de la cuenta de antes. Sin sincronización (la sesión se
+      // cortó sola), no hay cómo subir.
+      if (actual) await actual.sincronizador.vuelta(false);
+      if (!sinCambios(await a.enCola((r) => r.pendientes()))) throw new Error('Lo último no subió');
     },
     async soltar() {
       suelta = true;
