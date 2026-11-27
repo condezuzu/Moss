@@ -965,7 +965,7 @@ const diaDeAscent = async (usuario, fecha, descanso = false) => (await db.query(
 const sesionDeAscent = (usuario, log, { inicio, minutos = null, estado = 'terminada', series, bloques, copiada = false }) => db.query(
   'insert into public.sesiones (user_id, log_id, inicio, fin, estado, series, bloques, copiada) values ($1, $2, $3, $4, $5, $6, $7, $8)',
   [usuario, log, inicio, minutos === null ? null : new Date(Date.parse(inicio) + minutos * 60_000).toISOString(), estado, series, JSON.stringify(bloques), copiada]);
-// ASCENT: el 20 una sesión abandonada (con bloques rotos, que se ignoran) y una de 55 minutos con barra,
+// ASCENT: el 20 una sesión abandonada (que no cuenta, como en Ascent; con bloques rotos, que igual se ignorarían) y una de 55 minutos con barra,
 // mancuernas y lastre; el 21 una de 3 minutos (no cuenta como duración) con el peso del cuerpo y otra
 // con un ejercicio propio de un lado por vez; el 22 descanso; el 23 anotado sin cronómetro; el 24 un
 // descanso con una sesión que todavía corre; y uno viejo, de septiembre.
@@ -1050,8 +1050,9 @@ const sesiones = await sesionesDe(MOSS);
 const resumen = (lista) => lista.map((d) => `${d.fecha} ${d.series} ${Number(d.kilos)} ${Number(d.minutos)} ${d.inicio ? new Date(d.inicio).toISOString().slice(11, 16) : '-'}`).join(', ');
 const ejerciciosDel = (fecha) => sesiones.find((d) => d.fecha === fecha)?.ejercicios.map((e) => `${e.id}:${e.nombre}:${e.musculos.join('/')}:${e.series.map((x) => `${x.kilos ?? '-'}x${x.reps ?? '-'}`).join(' ')}`).join(', ');
 comprobar(
-  resumen(sesiones) === '2026-10-20 8 375 55 20:30, 2026-10-21 6 200 40 11:00, 2026-10-23 0 0 0 -, 2026-10-24 3 0 0 12:00',
-  `vínculo: los días de gimnasio de Ascent, juntando las sesiones de cada día, con el peso movido como lo cuenta Ascent (${resumen(sesiones)})`,
+  // El 20, sin la sesión abandonada de las 20:30 (0021_sin_sesiones_abandonadas.sql): ni su serie ni su hora.
+  resumen(sesiones) === '2026-10-20 7 375 55 21:00, 2026-10-21 6 200 40 11:00, 2026-10-23 0 0 0 -, 2026-10-24 3 0 0 12:00',
+  `vínculo: los días de gimnasio de Ascent, juntando las sesiones de cada día (las abandonadas no cuentan; la que todavía corre, sí), con el peso movido como lo cuenta Ascent (${resumen(sesiones)})`,
 );
 comprobar(
   ejerciciosDel('2026-10-20') === 'sentadilla:Sentadilla:piernas:100x5 100x5 105x3, press_mancuernas:Press con mancuernas:pecho:60x- -x-, dominadas:Dominadas:espalda:10x8 -x-'
@@ -1373,7 +1374,7 @@ const enLaApp = await ascentRemoto.sesionesDeAscent('2026-10-01');
 const primera = enLaApp[0]?.ejercicios[0];
 comprobar(
   estadoEnLaApp.vinculada && estadoEnLaApp.nombre === 'agus' && typeof estadoEnLaApp.desde === 'string'
-    && enLaApp.map((d) => `${d.fecha} ${d.series} ${d.kilos} ${d.minutos} ${'inicio' in d}`).join() === '2026-10-20 8 375 55 true,2026-10-21 6 200 40 true,2026-10-23 0 0 0 false,2026-10-24 3 0 0 true'
+    && enLaApp.map((d) => `${d.fecha} ${d.series} ${d.kilos} ${d.minutos} ${'inicio' in d}`).join() === '2026-10-20 7 375 55 true,2026-10-21 6 200 40 true,2026-10-23 0 0 0 false,2026-10-24 3 0 0 true'
     && primera?.id === 'sentadilla' && primera.nombre === 'Sentadilla' && primera.musculos.join() === 'piernas' && primera.series[2].kilos === 105 && primera.series[2].reps === 3
     && enLaApp[0].ejercicios[1].series[1].kilos === null,
   'app: el estado del vínculo y los días de gimnasio de Ascent llegan con la forma de src/lib/ascentRemoto.ts',
