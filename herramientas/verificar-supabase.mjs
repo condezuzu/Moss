@@ -1291,6 +1291,14 @@ comprobar(
     && copiadas.find((s) => s.fecha === '2026-10-26')?.ejercicios.every((e) => e.copiada === false),
   `sesiones copiadas: cada ejercicio trae la marca de su sesión (${JSON.stringify(copiadas.map((s) => [s.fecha, s.ejercicios.map((e) => e.copiada)]))})`,
 );
+// La carga de cada ejercicio (0020_carga_de_cada_ejercicio.sql): cómo se anotó en Ascent, para decir «por mancuerna» o
+// «por lado» en una meta de fuerza. Los kilos siguen llegando en total.
+const cargas = Object.fromEntries((await sesionesDe(MOSS, '2026-09-01')).flatMap((x) => x.ejercicios.map((e) => [`${x.fecha}:${e.id}`, e.carga])));
+comprobar(
+  cargas['2026-10-20:sentadilla'] === 'total' && cargas['2026-10-20:press_mancuernas'] === 'par' && cargas['2026-10-20:dominadas'] === 'lastre'
+    && cargas['2026-10-21:propio_abc'] === 'una' && cargas['2026-10-21:flexiones'] === 'corporal' && cargas['2026-09-01:sentadilla'] === null,
+  `la carga de cada ejercicio llega como se anotó y, sin ella, null (${JSON.stringify(cargas)})`,
+);
 // Lo de esta prueba se va: lo que sigue cuenta las sesiones de esta cuenta.
 await db.query('delete from public.sesiones where log_id = any($1)', [[dia26, dia27]]);
 await db.query('delete from public.logs where id = any($1)', [[dia26, dia27]]);
