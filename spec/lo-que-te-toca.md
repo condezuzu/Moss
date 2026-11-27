@@ -184,8 +184,8 @@ https://claude.ai/artifact/ACnkHK4EjUC5PqkTarHE1N, privado hasta que lo comparta
 (commit 510207b; preview aa6fe9e9, production 33b86d70), y el arreglo de cerrar sesión con los datos de otra cuenta (commit 6d23daa; preview 207effc1, production 4bf5c3ce): el titular de hoy usa la misma fatiga en días que Tus músculos
 (antes usaba una cuenta refutada y se contradecían), la energía ya no supone que entrenas todos los días y «una serie
 menos» sale solo con el músculo cargado. **Te toca:**
-- **La migración 0019** (las sesiones copiadas de Ascent, su migración 103): lista y probada en la base local; para la
-  base real hace falta tu sí. Sin ella no se rompe nada: lo copiado cuenta como una sesión más.
+- ~~**La migración 0019**~~ (las sesiones copiadas de Ascent, su migración 103): aplicada en la base real el 26/11, con tu sí,
+  y comprobada (la función tiene la marca, security definer y search_path vacío).
 - **Prender «Registrar RIR» en Ascent:** sin eso, la fatiga es un número fijo (2 días para todo músculo entrenado).
 - Decidir si sumar «¿Cómo te sientes para entrenar?» (antes) y cuánto costó la sesión de 1 a 10 (después).
 

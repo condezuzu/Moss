@@ -311,7 +311,7 @@ todavía sin aplicar en la base real); las demás, todavía no.
 
 | Función | De dónde sale | La usa |
 |---|---|---|
-| `moss.ascent_sesiones(desde)` | `public.logs`, `public.sesiones` (con sus `bloques`) y `public.ejercicios` | Moss: gimnasio automático, calorías y proteína del día, recuperación, rendimiento y músculos |
+| `moss.ascent_sesiones(desde)` | `public.logs`, `public.sesiones` (con sus `bloques` y, desde la 0019 del 26/11, `copiada`: lo que Ascent copia con «Registrar el día», que no cuenta para la tendencia ni para «Próxima vez») y `public.ejercicios` | Moss: gimnasio automático, calorías y proteína del día, recuperación, rendimiento y músculos |
 | `moss.ascent_marcas(desde)` | `public.prs` y `public.ejercicios` | Moss: los días para intentar marca |
 | `moss.pesos_compartidos(desde, app)` | `moss.pesos` y `public.weights` juntos | Moss (tendencia) y Ascent (DOTS, Stats › Peso) |
 | `moss.ascent_rutina()` | `public.rutinas` (la activa) y `public.ejercicios` | Moss: «Tu semana en Ascent», la sesión de hoy y «Tu fuerza» |
