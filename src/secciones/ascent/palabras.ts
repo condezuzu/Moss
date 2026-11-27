@@ -5,7 +5,6 @@ import { aKg, KG_POR_LIBRA, type Sistema } from '@/dominio/cantidades';
 import { diaDeLaSemana, diasEntre, type ClaveDia } from '@/dominio/fechas';
 import { esPropio, type Bloque, type Cuando, type Musculo } from '@/dominio/musculos';
 import { pesoSiguiente } from '@/dominio/puntajeMuscular';
-import { aDosYMedio } from '@/dominio/rendimiento';
 import es from '@/textos/es.json';
 import { lista, t, type Clave } from '@/textos';
 import type { Hoy } from './vista';
@@ -46,7 +45,9 @@ export function siguienteEn(kg: number, s: Sistema): number | null {
 }
 
 /** El nivel de hoy de una meta, como se carga en la barra: de a 2,5 kg o de a 5 lb. */
-export const nivelEn = (kg: number, s: Sistema) => (s === 'imperial' ? Math.round(kg / KG_POR_LIBRA / 5) * 5 : aDosYMedio(kg));
+// Para abajo, como en Ascent: redondeando al más cercano, un nivel de 98,6 kg decía «100 kg» al lado de una meta de 100
+// que todavía no se alcanzó. El 1e-9 es por la coma flotante (100 / 2,5 tiene que dar 40).
+export const nivelEn = (kg: number, s: Sistema) => (s === 'imperial' ? Math.floor(kg / KG_POR_LIBRA / 5 + 1e-9) * 5 : Math.floor(kg / 2.5 + 1e-9) * 2.5);
 
 /** Lo escrito en la meta nueva, en kg para guardar: de libras, con dos decimales (225 lb vuelven como 225). */
 export function kilosDeLaMeta(escrito: string, s: Sistema): number {

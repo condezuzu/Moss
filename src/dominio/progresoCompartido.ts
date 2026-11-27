@@ -1,6 +1,6 @@
 // Lo de la sección de músculos que no es del puntaje, IGUAL EN MOSS Y EN ASCENT (spec/musculos-compartido.md): la
-// tendencia de fuerza de 12 semanas con su rango, cuándo un ejercicio está estancado, por qué puede estarlo y el
-// grupo de cada día de tu año. Como puntajeMuscular.ts, se copia tal cual en las dos apps, no importa nada y sus
+// tendencia de fuerza de 12 semanas con su rango, cuándo un ejercicio está estancado, por qué puede estarlo, el
+// grupo de cada día de tu año, y cuándo y cómo llegas a una meta. Como puntajeMuscular.ts, se copia tal cual en las dos apps, no importa nada y sus
 // casos están en progresoCompartido.casos.json. Las fechas son claves AAAA-MM-DD (string).
 
 // ------------------------------------------------------------ la fuerza: la tendencia de cada ejercicio
@@ -289,4 +289,63 @@ export function proyeccionDeMeta(t: Pick<TendenciaDeFuerza, 'sesiones' | 'nivel'
   const lenta = lento > 0 ? semanas(lento) : null;
   const hasta = lenta !== null && lenta <= SEMANAS_TOPE ? lenta : null;
   return { estado: 'enCamino', semanas: [semanas(rapido), hasta], realista: hasta !== null && hasta <= SEMANAS_REALISTA };
+}
+
+/** Con menos de 10 series duras por semana del músculo, sumar puede ayudar; es una convención, no un umbral medido (Pelland 2026). */
+export const SERIES_PARA_LLEGAR = 10;
+/** Dos veces por semana con el ejercicio o más (ACSM 2026; Pelland 2026: la frecuencia ayuda a la fuerza). */
+export const VECES_PARA_LLEGAR = 2;
+
+export type EstadoDelPaso = 'bien' | 'mejorar' | 'noSeSabe';
+export type PasoParaLlegar =
+  | { que: 'ritmo'; estado: EstadoDelPaso; kgPorSemana: number | null }
+  | { que: 'series'; estado: EstadoDelPaso; porSemana: number | null; apunta: number }
+  | { que: 'veces'; estado: EstadoDelPaso; porSemana: number | null; apunta: number }
+  | { que: 'sueno'; estado: EstadoDelPaso; promedio: number | null; necesidad: number | null }
+  | { que: 'proteina'; estado: EstadoDelPaso; gPorKg: number | null; apunta: number };
+
+/**
+ * Cómo llegar a una meta (la A de la galería 27 de Ascent, 26/11): el ritmo, las series, las veces, el sueño y la
+ * proteína, cada uno bien, a mejorar o todavía no se sabe. Con lo que se puede sostener (spec/estudio/vinculo-ascent.md
+ * de Moss):
+ * - el ritmo está bien solo si la tendencia dice «sube» (el borde de abajo del rango pasa 0), nunca por el punto solo:
+ *   con una sesión por semana, 12 semanas dan un margen de ±0,5 % por semana;
+ * - las series duras del músculo, a mejorar por debajo de 10 por semana; por encima de 20 no se marca nada;
+ * - las veces por semana con el ejercicio, bien desde 2;
+ * - el sueño, a mejorar solo con menos de 6 h de promedio o 45 minutos o más por debajo de lo que necesitas (los mismos
+ *   cortes que las razones de estancado): lo de meses durmiendo un poco menos está poco estudiado (Knowles 2018);
+ * - la proteína, a mejorar por debajo de 1,6 g por kilo (Morton 2018), con 2 semanas de 4 días anotados o más.
+ */
+export function comoLlegar(p: {
+  tendencia: Pick<TendenciaDeFuerza, 'estado' | 'porMes' | 'nivel'>;
+  /** Las últimas semanas con alguna sesión, sin la que corre; vacía si el ejercicio no tiene músculo. */
+  semanas: readonly SemanaDeEntreno[];
+  /** La comida de cada semana: los días anotados y la proteína promedio de esos días. */
+  comida: readonly { dias: number; proteina: number }[];
+  pesoKg: number;
+  /** Lo dormido en promedio y lo que necesitas, en minutos (null si no se sabe). */
+  sueno: number | null;
+  necesidad: number | null;
+}): PasoParaLlegar[] {
+  const t = p.tendencia;
+  const sube = t.estado === 'sube' && t.porMes !== null && t.nivel !== null;
+  const ritmo: PasoParaLlegar = {
+    que: 'ritmo',
+    estado: sube ? 'bien' : t.estado === 'sinSubidaClara' ? 'mejorar' : 'noSeSabe',
+    kgPorSemana: sube ? t.nivel! * (Math.pow(1 + t.porMes! / 100, 1 / SEMANAS_POR_MES) - 1) : null,
+  };
+  const n = p.semanas.length;
+  const series = n ? promedio(p.semanas.map((s) => s.series)) : null;
+  const veces = n ? promedio(p.semanas.map((s) => s.veces)) : null;
+  const segun = (x: number | null, apunta: number): EstadoDelPaso => (x === null ? 'noSeSabe' : x < apunta ? 'mejorar' : 'bien');
+  const conComida = p.comida.filter((c) => c.dias >= DIAS_DE_COMIDA);
+  const gPorKg = conComida.length >= SEMANAS_DE_COMIDA && p.pesoKg > 0 ? promedio(conComida.map((c) => c.proteina)) / p.pesoKg : null;
+  const poco = p.sueno !== null && (p.sueno < SUENO_POCO || (p.necesidad !== null && p.necesidad - p.sueno >= SUENO_MENOS));
+  return [
+    ritmo,
+    { que: 'series', estado: segun(series, SERIES_PARA_LLEGAR), porSemana: series, apunta: SERIES_PARA_LLEGAR },
+    { que: 'veces', estado: segun(veces, VECES_PARA_LLEGAR), porSemana: veces, apunta: VECES_PARA_LLEGAR },
+    { que: 'sueno', estado: p.sueno === null ? 'noSeSabe' : poco ? 'mejorar' : 'bien', promedio: p.sueno, necesidad: p.necesidad },
+    { que: 'proteina', estado: segun(gPorKg, PROTEINA_POR_KG), gPorKg, apunta: PROTEINA_POR_KG },
+  ];
 }

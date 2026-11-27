@@ -17,7 +17,10 @@ describe('los pesos de Ascent con el sistema métrico', () => {
     expect(siguienteEn(60, 'metrico')).toBe(62.5);
     expect(siguienteEn(10, 'metrico')).toBe(11);
     expect(siguienteEn(0, 'metrico')).toBeNull();
-    expect(nivelEn(101.3, 'metrico')).toBe(102.5);
+    expect(nivelEn(101.3, 'metrico')).toBe(100);
+    // Para abajo: con 98,6 kg no dice 100 al lado de una meta de 100.
+    expect(nivelEn(98.6, 'metrico')).toBe(97.5);
+    expect(nivelEn(100, 'metrico')).toBe(100);
     expect(kilosDeLaMeta('62,5', 'metrico')).toBe(62.5);
     expect(enLaUnidad(t('ascent.tus.proxima.subirA', { kg: '62,5' }), 'metrico')).toBe('Próxima vez: sube a 62,5 kg.');
   });
@@ -37,8 +40,8 @@ describe('los pesos de Ascent con el sistema imperial', () => {
     expect(siguienteEn(0, 'imperial')).toBeNull();
   });
 
-  it('el nivel de hoy de una meta va de a 5 lb, como los 2,5 kg', () => {
-    expect(nivelEn(101.3, 'imperial')).toBe(225);
+  it('el nivel de hoy de una meta va de a 5 lb para abajo, como los 2,5 kg', () => {
+    expect(nivelEn(101.3, 'imperial')).toBe(220);
   });
 
   it('la meta nueva se escribe en libras y se guarda en kilos', () => {

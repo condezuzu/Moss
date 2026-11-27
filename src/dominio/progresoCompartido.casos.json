@@ -1000,6 +1000,400 @@
         ]
       ],
       "salida": null
+    },
+    {
+      "que": "cómo llegar: todo bien",
+      "funcion": "comoLlegar",
+      "entrada": [
+        {
+          "tendencia": {
+            "estado": "sube",
+            "porMes": 2,
+            "nivel": 100
+          },
+          "semanas": [
+            {
+              "lunes": "2026-10-26",
+              "series": 12,
+              "veces": 2,
+              "pesadas": 0,
+              "conReps": 0
+            },
+            {
+              "lunes": "2026-11-02",
+              "series": 12,
+              "veces": 2,
+              "pesadas": 0,
+              "conReps": 0
+            },
+            {
+              "lunes": "2026-11-09",
+              "series": 12,
+              "veces": 2,
+              "pesadas": 0,
+              "conReps": 0
+            },
+            {
+              "lunes": "2026-11-16",
+              "series": 12,
+              "veces": 2,
+              "pesadas": 0,
+              "conReps": 0
+            }
+          ],
+          "comida": [
+            {
+              "dias": 5,
+              "proteina": 1.8
+            },
+            {
+              "dias": 4,
+              "proteina": 1.7
+            }
+          ],
+          "pesoKg": 1,
+          "sueno": 450,
+          "necesidad": 480
+        }
+      ],
+      "salida": [
+        {
+          "que": "ritmo",
+          "estado": "bien",
+          "kgPorSemana": 0.45627057011112804
+        },
+        {
+          "que": "series",
+          "estado": "bien",
+          "porSemana": 12,
+          "apunta": 10
+        },
+        {
+          "que": "veces",
+          "estado": "bien",
+          "porSemana": 2,
+          "apunta": 2
+        },
+        {
+          "que": "sueno",
+          "estado": "bien",
+          "promedio": 450,
+          "necesidad": 480
+        },
+        {
+          "que": "proteina",
+          "estado": "bien",
+          "gPorKg": 1.75,
+          "apunta": 1.6
+        }
+      ]
+    },
+    {
+      "que": "cómo llegar: la maqueta (8 series, 6 h 20 min contra 7 h 30 min, 1,2 g por kilo)",
+      "funcion": "comoLlegar",
+      "entrada": [
+        {
+          "tendencia": {
+            "estado": "sube",
+            "porMes": 6.5,
+            "nivel": 82.5
+          },
+          "semanas": [
+            {
+              "lunes": "2026-11-02",
+              "series": 8,
+              "veces": 2,
+              "pesadas": 0,
+              "conReps": 0
+            },
+            {
+              "lunes": "2026-11-09",
+              "series": 7,
+              "veces": 2,
+              "pesadas": 0,
+              "conReps": 0
+            },
+            {
+              "lunes": "2026-11-16",
+              "series": 9,
+              "veces": 2,
+              "pesadas": 0,
+              "conReps": 0
+            }
+          ],
+          "comida": [
+            {
+              "dias": 6,
+              "proteina": 1.1
+            },
+            {
+              "dias": 5,
+              "proteina": 1.3
+            },
+            {
+              "dias": 2,
+              "proteina": 2.5
+            }
+          ],
+          "pesoKg": 1,
+          "sueno": 380,
+          "necesidad": 450
+        }
+      ],
+      "salida": [
+        {
+          "que": "ritmo",
+          "estado": "bien",
+          "kgPorSemana": 1.2030367889895772
+        },
+        {
+          "que": "series",
+          "estado": "mejorar",
+          "porSemana": 8,
+          "apunta": 10
+        },
+        {
+          "que": "veces",
+          "estado": "bien",
+          "porSemana": 2,
+          "apunta": 2
+        },
+        {
+          "que": "sueno",
+          "estado": "mejorar",
+          "promedio": 380,
+          "necesidad": 450
+        },
+        {
+          "que": "proteina",
+          "estado": "mejorar",
+          "gPorKg": 1.2000000000000002,
+          "apunta": 1.6
+        }
+      ]
+    },
+    {
+      "que": "cómo llegar: sin subida clara, sin semanas, sin noches y con una sola semana de comida",
+      "funcion": "comoLlegar",
+      "entrada": [
+        {
+          "tendencia": {
+            "estado": "sinSubidaClara",
+            "porMes": 0.2,
+            "nivel": 90
+          },
+          "semanas": [],
+          "comida": [
+            {
+              "dias": 4,
+              "proteina": 1.2
+            },
+            {
+              "dias": 3,
+              "proteina": 1.2
+            }
+          ],
+          "pesoKg": 1,
+          "sueno": null,
+          "necesidad": 480
+        }
+      ],
+      "salida": [
+        {
+          "que": "ritmo",
+          "estado": "mejorar",
+          "kgPorSemana": null
+        },
+        {
+          "que": "series",
+          "estado": "noSeSabe",
+          "porSemana": null,
+          "apunta": 10
+        },
+        {
+          "que": "veces",
+          "estado": "noSeSabe",
+          "porSemana": null,
+          "apunta": 2
+        },
+        {
+          "que": "sueno",
+          "estado": "noSeSabe",
+          "promedio": null,
+          "necesidad": 480
+        },
+        {
+          "que": "proteina",
+          "estado": "noSeSabe",
+          "gPorKg": null,
+          "apunta": 1.6
+        }
+      ]
+    },
+    {
+      "que": "cómo llegar: con pocas sesiones el ritmo no se sabe; más de 20 series no se marca; menos de 6 h, aunque necesites poco",
+      "funcion": "comoLlegar",
+      "entrada": [
+        {
+          "tendencia": {
+            "estado": "noSeSabe",
+            "porMes": null,
+            "nivel": null
+          },
+          "semanas": [
+            {
+              "lunes": "2026-10-26",
+              "series": 25,
+              "veces": 1.5,
+              "pesadas": 0,
+              "conReps": 0
+            },
+            {
+              "lunes": "2026-11-02",
+              "series": 25,
+              "veces": 1.5,
+              "pesadas": 0,
+              "conReps": 0
+            },
+            {
+              "lunes": "2026-11-09",
+              "series": 25,
+              "veces": 1.5,
+              "pesadas": 0,
+              "conReps": 0
+            },
+            {
+              "lunes": "2026-11-16",
+              "series": 25,
+              "veces": 1.5,
+              "pesadas": 0,
+              "conReps": 0
+            }
+          ],
+          "comida": [
+            {
+              "dias": 7,
+              "proteina": 140
+            },
+            {
+              "dias": 7,
+              "proteina": 150
+            }
+          ],
+          "pesoKg": 80,
+          "sueno": 350,
+          "necesidad": 360
+        }
+      ],
+      "salida": [
+        {
+          "que": "ritmo",
+          "estado": "noSeSabe",
+          "kgPorSemana": null
+        },
+        {
+          "que": "series",
+          "estado": "bien",
+          "porSemana": 25,
+          "apunta": 10
+        },
+        {
+          "que": "veces",
+          "estado": "mejorar",
+          "porSemana": 1.5,
+          "apunta": 2
+        },
+        {
+          "que": "sueno",
+          "estado": "mejorar",
+          "promedio": 350,
+          "necesidad": 360
+        },
+        {
+          "que": "proteina",
+          "estado": "bien",
+          "gPorKg": 1.8125,
+          "apunta": 1.6
+        }
+      ]
+    },
+    {
+      "que": "cómo llegar: 40 minutos por debajo de lo que necesitas todavía está bien; sin comida anotada, la proteína no se sabe",
+      "funcion": "comoLlegar",
+      "entrada": [
+        {
+          "tendencia": {
+            "estado": "sube",
+            "porMes": 1,
+            "nivel": 60
+          },
+          "semanas": [
+            {
+              "lunes": "2026-10-26",
+              "series": 10,
+              "veces": 2,
+              "pesadas": 0,
+              "conReps": 0
+            },
+            {
+              "lunes": "2026-11-02",
+              "series": 10,
+              "veces": 2,
+              "pesadas": 0,
+              "conReps": 0
+            },
+            {
+              "lunes": "2026-11-09",
+              "series": 10,
+              "veces": 2,
+              "pesadas": 0,
+              "conReps": 0
+            },
+            {
+              "lunes": "2026-11-16",
+              "series": 10,
+              "veces": 2,
+              "pesadas": 0,
+              "conReps": 0
+            }
+          ],
+          "comida": [],
+          "pesoKg": 0,
+          "sueno": 440,
+          "necesidad": 480
+        }
+      ],
+      "salida": [
+        {
+          "que": "ritmo",
+          "estado": "bien",
+          "kgPorSemana": 0.13740303296399414
+        },
+        {
+          "que": "series",
+          "estado": "bien",
+          "porSemana": 10,
+          "apunta": 10
+        },
+        {
+          "que": "veces",
+          "estado": "bien",
+          "porSemana": 2,
+          "apunta": 2
+        },
+        {
+          "que": "sueno",
+          "estado": "bien",
+          "promedio": 440,
+          "necesidad": 480
+        },
+        {
+          "que": "proteina",
+          "estado": "noSeSabe",
+          "gPorKg": null,
+          "apunta": 1.6
+        }
+      ]
     }
   ]
 }
