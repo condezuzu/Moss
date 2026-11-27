@@ -89,6 +89,19 @@ section.item p { margin: 0; max-width: 64ch; }
 .deslizador input { width: min(260px, 60vw); accent-color: var(--musgo); }
 .deslizador output { font: 400 13px var(--mono); color: var(--musgo); min-width: 4ch; }
 .panel { background: linear-gradient(180deg, rgba(14, 22, 46, 0.6), rgba(10, 16, 34, 0.35)); border: 1px solid var(--linea); border-radius: 20px; padding: 18px; display: grid; gap: 16px; }
+/* Las propuestas nuevas (galeria/src/propuestas): sus botones, arriba de todo, y su pantalla sobre el teléfono, que
+   entra y sale deslizándose. Con la barra a la vista, tapa solo las secciones. */
+#propuestas-nuevas { margin-bottom: 16px; border-color: rgba(232, 196, 106, 0.42); }
+#propuestas-nuevas[hidden] { display: none; }
+.boton[data-propuesta][aria-pressed="true"] { box-shadow: 0 0 0 2px rgba(246, 227, 166, 0.55); }
+.tel .pr-pantalla { position: absolute; inset: 0; z-index: 30; overflow: hidden; color: var(--tinta); background: #05060a; animation: pr-entra 0.38s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.tel .pr-pantalla.con-barra { z-index: 2; }
+.tel .pr-pantalla.con-barra::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--pestanas) + 40px); background: linear-gradient(180deg, rgba(3, 5, 12, 0), rgba(3, 5, 12, 0.85) 75%); pointer-events: none; }
+.tel .pr-pantalla[hidden] { display: none; }
+.tel .pr-pantalla.saliendo { animation: pr-sale 0.26s ease both; pointer-events: none; }
+@keyframes pr-entra { from { opacity: 0; transform: translateY(22px); } }
+@keyframes pr-sale { to { opacity: 0; transform: translateY(22px); } }
+@media (prefers-reduced-motion: reduce) { .tel .pr-pantalla, .tel .pr-pantalla.saliendo { animation-duration: 1ms; } }
 
 /* ---------------- el teléfono ---------------- */
 .tel {
@@ -2083,6 +2096,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
 
     <section class="item" id="nuevo">
       <h2><span class="n">1.1</span>Lo nuevo, para aprobar</h2>
+      <div class="panel" id="propuestas-nuevas" hidden></div>
       <p>Lo que pediste el 2/11 a la noche (lo que dictaste mirando la galería) y el 3/11, para aprobar: probalo acá y, si te cierra, se programa. La app no cambia hasta que lo apruebes. Lo que no es visual ya está en la rama <b>mejoras-1.1</b> y va por OTA cuando Apple apruebe la 1.0: las marcas nuevas (con los productos de código uruguayo), el arreglo de «Si voy muy bajo en algo» (apagarlo no se guardaba) y lo de la tanda anterior.</p>
       <div class="panel">
         <div class="grupo"><span>Lo que elegiste el 26/11 en la galería de Ascent (la A, «Todo a la vista»), ahora en Moss para aprobar: <b>las metas de fuerza</b>, en la sección de Ascent, arriba de las razones de estancamiento. Cada meta con su barra, «Hoy levantarías 82,5 kg · Llegas entre marzo y abril» (lo de hoy de a 2,5 kg para abajo; cuándo, en meses, del ritmo rápido al lento, con el año una sola vez si no es este) y «Cómo llegar»: el ritmo, las series del músculo, las veces por semana, el sueño y la proteína, cada uno con ✓, ↑ o sin marca si todavía no se sabe (con lo que falta). Abajo, la próxima vez con ese ejercicio. Las cuentas son las de Ascent tal cual (progresoCompartido.ts)</span>
@@ -2852,3 +2866,4 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
 <script>
 /*@SCRIPTS*/
 </script>
+<!--@PROPUESTAS-->

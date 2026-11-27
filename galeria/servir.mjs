@@ -1,12 +1,13 @@
 // Sirve galeria/dist en http://localhost:4173 para mirarla antes de publicarla.
 // Uso: node galeria/servir.mjs   (rearmá con node galeria/construir.mjs y recargá)
+// Con GALERIA_SALIDA y PORT, sirve la copia armada en otra carpeta, en otro puerto.
 
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { dirname, join, normalize } from 'node:path';
+import { dirname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const dist = join(dirname(fileURLToPath(import.meta.url)), 'dist');
+const dist = process.env.GALERIA_SALIDA ? resolve(process.env.GALERIA_SALIDA) : join(dirname(fileURLToPath(import.meta.url)), 'dist');
 const puerto = Number(process.env.PORT) || 4173;
 const tipos = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png' };
 

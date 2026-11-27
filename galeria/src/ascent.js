@@ -278,7 +278,7 @@ const SeccionAscent = (() => {
   // lo descansado, apenas. Los grupos del año, tres tonos apagados que pasan las comprobaciones de la skill dataviz
   // de a pares (daltonismo y visión normal) sobre el fondo de Ascent.
   const CSS = `
-.tel .ascent, .as-entrada, .as-techo, .tel .hb.as-hoja {
+.tel .ascent, .as-entrada, .as-techo, .tel .hb.as-hoja, .as-vars {
   --as-fondo: #05060a; --as-hoja: #0b0d13; --as-tinta: #e8ecf6; --as-sub: #aab2c4; --as-apagado: #9098ab; --as-tenue: #4a5163;
   --as-linea: #303748; --as-linea-fuerte: #3e4659; --as-principal: var(--rango-principal, #7e8ca8); --as-claro: var(--rango-claro, #c4c2ba); --as-lejos: #cb8569;
   --as-f-atencion: #cb8569; --as-f-aceptable: #5a6176; --as-f-bien: #8b94aa; --as-f-muyBien: #d2cfc5;
@@ -3231,6 +3231,8 @@ const SeccionAscent = (() => {
 
     // Se llega por abajo: lo principal (con la marca) va abajo, pegado a Progreso, y el resto, subiendo, del más al
     // menos importante; arriba de todo, el cielo. Al volver a pintar, se queda donde estaba contando desde abajo.
+    // Las propuestas de otra forma de ordenar la sección (galeria/src/propuestas) se enteran de cada cambio.
+    let alPintarPiezas = null;
     function pintar() {
       const desdeAbajo = cont.scrollHeight - cont.scrollTop;
       [...contenido.children].forEach((n) => n !== principal && n.remove());
@@ -3264,6 +3266,7 @@ const SeccionAscent = (() => {
       pintarEntrada();
       cont.scrollTop = cont.scrollHeight - desdeAbajo;
       ponerCielo();
+      if (alPintarPiezas) alPintarPiezas();
     }
 
     function abrirComo() {
@@ -3425,6 +3428,18 @@ const SeccionAscent = (() => {
       // Tu rango en Ascent (1 a 7; en el 4, el planeta del día).
       ponerRango,
       get rango() { return rangoActual; },
+      // Para las propuestas de otra forma de ordenar la sección (galeria/src/propuestas): el día de ejemplo calculado
+      // y cada parte suelta, las mismas que pinta la sección (su contenedor lleva la clase as-vars, con los colores).
+      piezas: {
+        dia: () => { const d = elDia(); return { d, k: calcularDia(d) }; },
+        cabeza: cabezaDelDia, foco: parteFoco, filas: parteFilas, cuerpo: parteCuerpo, fuerza: parteFuerza, marcas: parteMarcas, bajo: parteBajo,
+        estancamiento: parteEstancamiento, metas: parteMetas, anio: parteAnio, comparten: parteComparten, como: parteComo,
+        cuerpoDelRango: () => cuerpoDelHorizonte(RangoDeAscent.cuerpoDeAscent(RangoDeAscent.rachaDe(rangoActual.rango, rangoActual.planeta))),
+        marca: MARCA, marcaChica: MARCA_CHICA,
+        alPintar(fn) { alPintarPiezas = fn; },
+        // Lo que junta un ejercicio con la comida y el sueño de cada semana (para «¿Por qué no mejoro?»).
+        sesiones: () => sesionesDe(elDia()), ejercicios: ejerciciosDeLaFuerza, tendencia: (e) => tendenciaDe(e, elDia()), mossDeLaSemana, comidoEl, nombreDelEjercicio, nombreDelMusculo,
+      },
       // La entrada del encabezado de Progreso: siempre el mismo nodo.
       marcaDeProgreso() { pintarEntrada(); return entrada; },
       // Progreso se volvió a pintar o se movió: el borde del planeta, según lo arriba que esté.

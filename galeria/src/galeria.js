@@ -778,7 +778,10 @@
     habitosSec.cerrar();
   }
 
+  // Las propuestas nuevas (al final): cualquier otro botón de la galería las cierra.
+  let cerrarPropuestas = () => {};
   const cerrarHojas = () => {
+    cerrarPropuestas();
     if (menuDetalles.abierto) menuDetalles.cerrar();
     if (document.activeElement && tel.contains(document.activeElement)) document.activeElement.blur();
     teclado.ocultar();
@@ -1120,7 +1123,7 @@
     $('#b-salud').disabled = !escena.hayAutoPendiente || quieto;
     $('#b-completar').disabled = escena.completo || quieto;
     $('#b-registrar').textContent = comida.hojaAbierta ? 'Cerrar la hoja' : 'Registrar';
-    $$('#comida [data-comida], [data-seccion], [data-ascent], [data-habitos]').forEach((b) => { b.disabled = enEntrada; });
+    $$('#comida [data-comida], [data-seccion], [data-ascent], [data-habitos], [data-propuesta]').forEach((b) => { b.disabled = enEntrada; });
     const enUniverso = escena.zona() === 'universo';
     $('#b-zona').textContent = enUniverso ? 'Volver a hoy' : 'Subir a tu universo';
     $$('.barra-inmersiva [data-accion="zona"]').forEach((b) => { b.textContent = enUniverso ? 'Hoy' : 'Universo'; });
@@ -1765,4 +1768,104 @@
     refrescarControles();
     return r;
   };
+
+  // ------------------------------------------------------------ las propuestas nuevas, cada una en su archivo
+  // galeria/src/propuestas/*.js (construir.mjs suma cada una en su <script>): se anotan con Galeria.propuesta() y
+  // dibujan su pantalla sobre el teléfono, sin tocar las secciones. Sus botones van arriba de «Lo nuevo, para
+  // aprobar»; para las capturas, window.__propuesta(id, vista, arg) (con vista null, se cierra) y su escenario en
+  // herramientas/escenarios/<nombre>.mjs.
+  const propuestas = new Map();
+  const cajaDePropuestas = $('#propuestas-nuevas');
+  let propuestaQueQueda = null;
+  const marcarPropuestas = () => $$('[data-propuesta]').forEach((b) => {
+    const p = propuestas.get(b.dataset.propuesta);
+    b.setAttribute('aria-pressed', String(!!p && p.vista === b.dataset.vista));
+  });
+  cerrarPropuestas = () => {
+    propuestas.forEach((p, id) => { if (id !== propuestaQueQueda && p.vista != null) { p.vista = null; p.api.cerrar(); } });
+    marcarPropuestas();
+  };
+  function verPropuesta(id, vista, arg) {
+    const p = propuestas.get(id);
+    if (!p) throw new Error('No conozco la propuesta ' + id);
+    if (vista == null) {
+      if (p.vista != null) { p.vista = null; p.api.cerrar(); }
+      marcarPropuestas();
+      return undefined;
+    }
+    // Lo demás se cierra; ella no, si solo cambia de vista.
+    propuestaQueQueda = id;
+    cerrarHojas();
+    propuestaQueQueda = null;
+    if (!p.api) p.api = p.def.crear(window.Galeria);
+    p.vista = vista;
+    const r = p.api.abrir(vista, arg);
+    marcarPropuestas();
+    refrescarControles();
+    return r;
+  }
+  // Tocar una pestaña con una propuesta abierta la cierra y va a esa sección.
+  tel.querySelector('.pestanas').addEventListener('click', () => cerrarPropuestas(), true);
+  window.Galeria = {
+    tel, opciones: opcionesDeSeccion, haptico, movimientoReducido, persona, cerrarHojas,
+    secciones: { inicio, comida, progreso, sueno, perfil: perfilSec, ascent, habitos: habitosSec, suscripcion, mas },
+    irA: (i, deUna) => pestanas.ir(i, deUna),
+    get pestana() { return pestanas.actual; },
+    get idioma() { return escena.idioma; },
+    vincular: (si) => { if (vinculada !== si) vincular(si); },
+    /** El CSS de una propuesta, una sola vez. */
+    estilo(id, css) {
+      if (document.getElementById(id)) return;
+      const e = document.createElement('style');
+      e.id = id;
+      e.textContent = css;
+      document.head.appendChild(e);
+    },
+    /** Una pantalla sobre el teléfono; con `conBarra`, tapa solo las secciones (la barra, la hora y la isla quedan). */
+    pantalla(clase, o = {}) {
+      const n = document.createElement('section');
+      n.className = 'pr-pantalla ' + (o.conBarra ? 'con-barra ' : '') + clase;
+      n.hidden = true;
+      n.addEventListener('pointerdown', (ev) => ev.stopPropagation());
+      tel.appendChild(n);
+      let espera = 0;
+      return {
+        el: n,
+        get abierta() { return !n.hidden && !n.classList.contains('saliendo'); },
+        abrir() { clearTimeout(espera); n.classList.remove('saliendo'); n.hidden = false; },
+        cerrar(deUna) {
+          if (n.hidden) return;
+          clearTimeout(espera);
+          if (deUna || movimientoReducido) { n.hidden = true; n.classList.remove('saliendo'); return; }
+          n.classList.add('saliendo');
+          espera = setTimeout(() => { n.hidden = true; n.classList.remove('saliendo'); }, 260);
+        },
+      };
+    },
+    /** { id, texto (con <b>), vistas: [[clave, rótulo]], principal (índice), crear(Galeria) → { abrir(vista, arg), cerrar() } } */
+    propuesta(def) {
+      propuestas.set(def.id, { def, api: null, vista: null });
+      const grupo = document.createElement('div');
+      grupo.className = 'grupo';
+      const texto = document.createElement('span');
+      texto.innerHTML = def.texto;
+      const controles = document.createElement('div');
+      controles.className = 'controles';
+      def.vistas.forEach(([vista, rotulo], i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'boton' + (i === (def.principal || 0) ? ' principal' : '');
+        b.dataset.propuesta = def.id;
+        b.dataset.vista = vista;
+        b.textContent = rotulo;
+        b.addEventListener('click', () => verPropuesta(def.id, vista));
+        controles.appendChild(b);
+      });
+      grupo.append(texto, controles);
+      cajaDePropuestas.appendChild(grupo);
+      cajaDePropuestas.hidden = false;
+    },
+    ver: verPropuesta,
+  };
+  window.__propuesta = verPropuesta;
 })();

@@ -6,8 +6,8 @@
 // de src/ y de assets/, que es lo mismo que usa la app: la galería nunca tiene una copia propia.
 // Uso: npm run galeria
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
@@ -222,9 +222,19 @@ const js = [
   ...['motor', 'escena', 'entrada', 'util', 'detalles', 'periodo', 'luna', 'kcal', 'datos', 'fotos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'base', 'perfil', 'ascent', 'habitos', 'atajos', 'avisos', 'deporte', 'suscripcion', 'widgets-nuevos', 'widgets-mejores', 'widgets', 'tienda', 'revision', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
 ].join('\n');
 
-const html = leer('galeria/src/pagina.html').replace('/*@SCRIPTS*/', () => js);
-mkdirSync(join(raiz, 'galeria/dist'), { recursive: true });
-writeFileSync(join(raiz, 'galeria/dist/index.html'), html);
+// Las propuestas nuevas (galeria/src/propuestas/*.js, en orden de nombre), cada una en su <script>: si una falla, las
+// demás y la galería siguen andando. Se anotan con Galeria.propuesta() (al final de galeria/src/galeria.js).
+const carpetaDePropuestas = join(raiz, 'galeria/src/propuestas');
+const propuestas = (existsSync(carpetaDePropuestas) ? readdirSync(carpetaDePropuestas) : []).filter((a) => a.endsWith('.js')).sort();
+const scriptsDePropuestas = propuestas
+  .map((a) => `<script>\n(() => { try {\n${leer(`galeria/src/propuestas/${a}`).replace(/<\/script/g, '<\\/script')}\n} catch (e) { console.error('La propuesta ${a} falló:', e); } })();\n</script>`)
+  .join('\n');
+const html = leer('galeria/src/pagina.html').replace('/*@SCRIPTS*/', () => js).replace('<!--@PROPUESTAS-->', () => scriptsDePropuestas);
+// Con GALERIA_SALIDA, a otra carpeta: para armar y mirar una copia sin pisar la de todos (galeria/servir.mjs la sirve
+// con la misma variable).
+const salida = process.env.GALERIA_SALIDA ? resolve(process.env.GALERIA_SALIDA) : join(raiz, 'galeria/dist');
+mkdirSync(salida, { recursive: true });
+writeFileSync(join(salida, 'index.html'), html);
 const kb = (Buffer.byteLength(html) / 1024).toFixed(0);
 const n = catalogo ? catalogo.constelaciones.length : 0;
-console.log(`galeria/dist/index.html · ${kb} KB · ${n} constelaciones en el catálogo · ${alimentos ? alimentos.length : 0} alimentos curados`);
+console.log(`${join(salida, 'index.html')} · ${kb} KB · ${n} constelaciones en el catálogo · ${alimentos ? alimentos.length : 0} alimentos curados · ${propuestas.length} propuestas`);

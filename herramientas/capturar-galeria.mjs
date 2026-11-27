@@ -10,8 +10,9 @@
 // La aurora y el cielo se dibujan por software (SwiftShader): los tiempos de la animación van
 // más lentos que en un teléfono, pero cada cuadro es el mismo.
 
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const salida = process.argv[2] || 'capturas/galeria';
@@ -3950,9 +3951,14 @@ const pasos = {
   },
 };
 
+// Las propuestas nuevas (galeria/src/propuestas) traen su escenario aparte, en herramientas/escenarios/<nombre>.mjs:
+// exporta una función que recibe la página y lo de acá que le sirve.
+const propuesta = (id, vista, arg) => pagina.evaluate(([i, v, a]) => window.__propuesta(i, v, a), [id, vista, arg]);
 for (const e of escenarios.length ? escenarios : ['inicio', 'tocar', 'completo', 'universo']) {
-  if (!pasos[e]) throw new Error('No conozco el escenario ' + e);
-  await pasos[e]();
+  if (pasos[e]) { await pasos[e](); continue; }
+  const aparte = new URL(`./escenarios/${e}.mjs`, import.meta.url);
+  if (!existsSync(fileURLToPath(aparte))) throw new Error('No conozco el escenario ' + e);
+  await (await import(aparte.href)).default({ pagina, foto, pestana, seccion, propuesta, esperarA, hojaAbierta, espera: (ms) => pagina.waitForTimeout(ms) });
 }
 await navegador.close();
 if (errores.length) {
