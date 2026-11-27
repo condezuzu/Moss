@@ -8,11 +8,15 @@
 //   periodo de melatonina, como el aviso) con la cuenta viva. Un dato por widget: el de las calorías no cambia.
 // Con lo que deja dibujar SwiftUI en un widget y los mismos datos de mentira que los widgets de D43
 // (widgets-nuevos.js). Los textos son los de src/textos; acá solo los rótulos de la comparación.
+// - El agua sin meta (26/11/2026, para aprobar; spec/bugs.md, «Para la galería»): con un cuidado que hace que Moss
+//   no pida agua (el riñón con restricción de líquidos: metaDeAgua da null), el widget Agua dejaba «5 de 8 vasos» y la
+//   barra contra 2 L. Como Inicio en ese caso: lo tomado en litros, los vasos que tomaste (sin vasos vacíos por
+//   llenar), «5 vasos» y los «+» y «−». Junto al de ahora, a la mañana sin vasos y con muchos.
 
 const WidgetsMejores = (() => {
   const TEXTOS_NUEVOS = {
-    es: { widgets: { mejores: { antes: 'Antes', despues: 'Después' } } },
-    en: { widgets: { mejores: { antes: 'Before', despues: 'After' } } },
+    es: { widgets: { mejores: { antes: 'Antes', despues: 'Después' }, vasosSinMeta: { uno: '1 vaso', otros: '{n} vasos' } } },
+    en: { widgets: { mejores: { antes: 'Before', despues: 'After' }, vasosSinMeta: { uno: '1 glass', otros: '{n} glasses' } } },
   };
   function completar(destino, origen) {
     Object.entries(origen).forEach(([k, v]) => {
@@ -122,7 +126,18 @@ const WidgetsMejores = (() => {
 /* Con el «Sí» al lado, las horas se achican para caber, como minimumScaleFactor en el iPhone. */
 .wm-bloqueo .wg-noche:not(.sin-pregunta) strong { font-size: 15px; }
 
+/* El agua sin meta (26/11): en lugar de la barra, los vasos que tomaste, como en Inicio; ninguno vacío por llenar. */
+.wn-agua.wa .wn-cifra { margin-top: 7px; }
+.wa-vasos { display: flex; gap: 3px; height: 10px; margin-top: 7px; }
+.wa-vasos i { flex: none; width: 6px; height: 10px; border-radius: 1.5px 1.5px 2.5px 2.5px; background: var(--c); box-shadow: 0 0 5px rgba(169, 196, 245, 0.4); transform-origin: 50% 100%; }
+.wa-vasos i.entra { animation: wa-entra 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.wa-vasos i.sale { animation: wa-sale 0.24s ease forwards; }
+@keyframes wa-entra { from { opacity: 0; transform: scaleY(0); } }
+@keyframes wa-sale { to { opacity: 0; transform: scaleY(0); } }
+.wg.tintado .wa-vasos i, .wg.transparente .wa-vasos i { box-shadow: none; }
+
 @media (prefers-reduced-motion: reduce) {
+  .wa-vasos i.entra, .wa-vasos i.sale { animation-duration: 1ms; }
   .wg-vista.activa .wm-entra, .wg-vista.activa .wm-w .wn-barra i, .wg-vista.activa .wm-dia i { animation: none; }
   .wm-cifra, .wm-comida, .wm-comida b, .wm-standby .wg-acostado, .wm-standby::after { transition: none; }
 }
@@ -394,13 +409,79 @@ const WidgetsMejores = (() => {
       return w;
     }
 
+    // ------------------------------------------------------------ el agua sin meta (26/11, para aprobar)
+    // Como Agua.widget.tsx, con la meta en null: los litros, «5 vasos» y los vasos tomados donde iba la barra. Hasta 12
+    // en la fila (lo que entra en el chico); con más, la fila queda llena y el número dice cuántos. Con `fijo`, un
+    // ejemplo con su propia cuenta (a la mañana, o un día con muchos); sin `fijo`, los vasos de hoy, los mismos del de ahora.
+    const VASOS_EN_LA_FILA = 12;
+    function aguaSinMeta(fijo) {
+      const w = p.conFondo(el('div', 'wg-w chico wn-tenue wn-agua wa'));
+      const dentro = el('div', 'wn-dentro');
+      const cab = el('div', 'wn-agua-cab');
+      cab.innerHTML = `<span class="wn-ic">${p.icono('gota')}</span><span class="wn-etq"></span>`;
+      const cifra = el('b', 'wn-cifra');
+      const de = el('small', 'wn-de');
+      const fila = el('div', 'wa-vasos');
+      fila.setAttribute('aria-hidden', 'true');
+      const botones = el('div', 'wn-agua-botones');
+      const menos = el('button', 'wn-redondo wn-ic');
+      menos.type = 'button';
+      menos.innerHTML = p.icono('menos');
+      const mas = el('button', 'wn-redondo fuerte wn-ic');
+      mas.type = 'button';
+      mas.innerHTML = p.icono('mas');
+      let propios = fijo;
+      const vasos = () => (fijo == null ? p.vasosDeHoy() : propios);
+      const cambiar = (n) => (ev) => {
+        ev.stopPropagation();
+        if (fijo == null) { p.cambiarVasos(n); return; }
+        propios = Math.max(0, propios + n);
+        pintarlo();
+      };
+      menos.addEventListener('click', cambiar(-1));
+      mas.addEventListener('click', cambiar(1));
+      botones.append(menos, mas);
+      dentro.append(cab, cifra, de, fila, botones);
+      w.appendChild(dentro);
+      w.addEventListener('click', () => o.abrirMoss('inicio'));
+      // Solo cambia el vaso que se sumó (se llena desde abajo) o el que se quitó (se vacía y se va).
+      function ponerVasos(n) {
+        const quedan = [...fila.children].filter((i) => !i.classList.contains('sale'));
+        const cuantos = Math.min(VASOS_EN_LA_FILA, n);
+        const primera = !fila.dataset.pintada;
+        fila.dataset.pintada = '1';
+        for (let k = quedan.length; k < cuantos; k++) fila.appendChild(el('i', primera ? null : 'entra'));
+        quedan.slice(cuantos).forEach((i) => {
+          i.classList.add('sale');
+          setTimeout(() => i.remove(), o.movimientoReducido ? 0 : 240);
+        });
+      }
+      function pintarlo() {
+        const n = vasos();
+        cab.lastElementChild.textContent = tx('widgets.agua');
+        p.poner(cifra, `${Porciones.decimal(n * 0.25, u.idioma())} L`);
+        p.poner(de, u.plural('widgets.vasosSinMeta', n));
+        ponerVasos(n);
+        menos.disabled = n <= 0;
+        menos.setAttribute('aria-label', tx('widgets.quitarVaso'));
+        mas.setAttribute('aria-label', tx('mas.sumarVaso'));
+        w.setAttribute('aria-label', `${tx('widgets.agua')}: ${cifra.textContent}, ${de.textContent}`);
+      }
+      p.alPintar(pintarlo);
+      return w;
+    }
+
     // ------------------------------------------------------------ las páginas
     const dock = raiz.querySelector('.wg-dock');
     // El de ahora y el nuevo, cada uno con su rótulo.
-    const par = (nodo, nuevo) => {
+    // `cuantos`: un ejemplo del nuevo con esa cantidad, que la dice en el rótulo («Después · 0 vasos»).
+    const par = (nodo, nuevo, cuantos) => {
       const caja = entra(el('div', 'wm-par'));
       caja.append(el('span', 'wm-rotulo' + (nuevo ? ' nuevo' : '')), nodo);
-      p.alPintar(() => { caja.firstChild.textContent = tx(nuevo ? 'widgets.mejores.despues' : 'widgets.mejores.antes'); });
+      p.alPintar(() => {
+        const rotulo = tx(nuevo ? 'widgets.mejores.despues' : 'widgets.mejores.antes');
+        caja.firstChild.textContent = cuantos == null ? rotulo : `${rotulo} · ${u.plural('widgets.vasosSinMeta', cuantos)}`;
+      });
       return caja;
     };
     function inicio(clase, filas, conDock) {
@@ -447,6 +528,7 @@ const WidgetsMejores = (() => {
     raiz.append(
       inicio('wg-m-hoy', [[par(p.hoyChico()), par(hoyChico(), true)], par(p.hoyMediano()), par(hoyMediano(), true)], true),
       inicio('wg-m-grande', [par(p.hoyGrande()), par(hoyGrande(), true)], false),
+      inicio('wg-m-agua', [[par(p.aguaChico()), par(aguaSinMeta(), true)], [par(aguaSinMeta(0), true, 0), par(aguaSinMeta(14), true, 14)]], true),
       standby,
       bloqueo,
     );

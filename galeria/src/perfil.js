@@ -5,8 +5,38 @@
 // Es una maqueta: lo que hace cada fila ya está en la especificación.
 // Aparatos (spec/aparatos.md) es una hoja: los que escriben tu sueño, de cuál sale la noche y qué
 // llega de cada marca.
+// Volver a entrar si se corta la sesión (26/11/2026, para aprobar; spec/bugs.md, tanda B, 23): una sesión que se corta
+// sola no borra nada, pero Moss deja de sincronizar y hoy Perfil dice «Sin cuenta», sin cerrar sesión ni nada que tocar.
+// La propuesta: la tarjeta sigue con tu correo y debajo, «Tu sesión se cerró», que lo de este iPhone queda guardado y
+// sube al volver, y «Continuar con Apple». Al entrar, sube lo pendiente y el aviso se va. Con otra cuenta de Apple, lo
+// que hace hoy el código (sincronizar.ts): los datos de este iPhone son de la otra cuenta y no se sincroniza nada.
 
 const SeccionPerfil = (() => {
+  // Lo nuevo, con las claves que tendría en src/textos, hasta que se apruebe. La hoja de Apple es un dibujo.
+  const TEXTOS_NUEVOS = {
+    es: { perfil: { sesion: {
+      titulo: 'Tu sesión se cerró',
+      texto: 'Lo de este iPhone queda guardado y sube a tu cuenta cuando vuelvas a entrar.',
+      subiendo: 'Subiendo lo de este iPhone…',
+      alDia: 'Todo al día con tu cuenta',
+      apple: { titulo: 'Iniciar sesión con Apple', texto: 'Usa tu Apple Account para iniciar sesión en Moss.', cuenta: 'Apple Account', continuar: 'Continuar', nota: '(dibujo de la hoja de Apple: en la app la pone iOS)' },
+    } } },
+    en: { perfil: { sesion: {
+      titulo: 'You’re signed out',
+      texto: 'Everything on this iPhone is saved, and it goes up to your account when you sign back in.',
+      subiendo: 'Uploading what’s on this iPhone…',
+      alDia: 'All caught up with your account',
+      apple: { titulo: 'Sign in with Apple', texto: 'Use your Apple Account to sign in to Moss.', cuenta: 'Apple Account', continuar: 'Continue', nota: '(drawing of Apple’s sheet: in the app, iOS shows it)' },
+    } } },
+  };
+  const completar = (destino, origen) => Object.entries(origen).forEach(([k, v]) => {
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      if (!destino[k] || typeof destino[k] !== 'object') destino[k] = {};
+      completar(destino[k], v);
+    } else if (destino[k] == null) destino[k] = v;
+  });
+  if (typeof TEXTOS !== 'undefined' && TEXTOS) ['es', 'en'].forEach((i) => { if (TEXTOS[i]) completar(TEXTOS[i], TEXTOS_NUEVOS[i]); });
+
   // Lo que anda solo con las dos apps vinculadas, con su ícono (antes en la sección de Ascent). Sin «El gimnasio
   // se enciende solo»: lo pediste sacar el 2/11 (el hábito del gimnasio se suma desde Hábitos, no desde Ascent).
   const CON_ASCENT = [['peso', 'balanza'], ['calorias', 'rayo'], ['objetivo', 'objetivo'], ['proteina', 'pesa']];
@@ -26,6 +56,8 @@ const SeccionPerfil = (() => {
     escudo: '<path d="M12 3.5 5 6v6c0 4.2 3 7 7 8.5 4-1.5 7-4.3 7-8.5V6z"/><path d="m9 12 2.2 2.2L15 10.4"/>',
     planeta: '<circle cx="12" cy="12" r="4"/><ellipse cx="12" cy="12" rx="9.5" ry="3.6" transform="rotate(-24 12 12)"/>',
     regalo: '<rect x="4.5" y="9.5" width="15" height="10.5" rx="1.5"/><path d="M3.5 7h17v2.5h-17zM12 7v13"/><path d="M12 7c-1.2-3-5-3.6-5-1.6C7 6.8 9.5 7 12 7zM12 7c1.2-3 5-3.6 5-1.6C17 6.8 14.5 7 12 7z"/>',
+    sinNube: '<path d="m4 4 16 16"/><path d="M6.4 7.4A6.2 6.2 0 0 0 9.2 18.5h8.1c.5 0 .9-.1 1.3-.2"/><path d="M20.6 16.1A4.1 4.1 0 0 0 17.2 10h-1.5a6.2 6.2 0 0 0-5.3-4.4"/>',
+    manzana: '<path d="M16.4 12.6c0-2.4 2-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.2-2.8.8-3.5.8-.7 0-1.8-.8-3-.8-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.1 2.8-2.3.9-1.3 1.3-2.6 1.3-2.6s-2.5-1-2.5-3.6zM14.1 5.5c.6-.8 1.1-1.9 1-3-1 0-2.2.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1.1.1 2.2-.6 2.8-1.4z"/>',
   };
   const CSS = `
 .perfil svg { stroke-width: 1.7; }
@@ -245,6 +277,41 @@ const SeccionPerfil = (() => {
 @media (prefers-reduced-motion: reduce) {
   .pf-entra, .perfil .pf-sub.entra, .pf-lista.pf-filas li.pf-crece { animation: none; }
   .pf-mini, .pf-plan, .pf-fila { transition: none; }
+}
+
+/* Volver a entrar (26/11, para aprobar): debajo de la tarjeta, sin alarma; el botón es el de Apple, como en la entrada.
+   Lo que cambia adentro entra con un fundido y el alto se acomoda; al final se pliega y lo de abajo sube. */
+.pf-sesion { margin-top: 10px; padding: 13px 14px 14px; border-radius: 18px; border: 1px solid rgba(116, 150, 232, 0.28); background: rgba(116, 150, 232, 0.08); overflow: hidden; transition: height 0.32s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.3s, background 0.3s; }
+.pf-sesion-cab { display: grid; grid-template-columns: 30px minmax(0, 1fr); column-gap: 11px; align-items: start; }
+.pf-sesion-cab b { display: block; padding-top: 5px; font: 500 15px/1.25 var(--texto); color: var(--tinta); }
+.pf-sesion-cab span { display: block; margin-top: 3px; font: 400 13px/1.4 var(--texto); color: rgba(239, 230, 207, 0.74); text-wrap: pretty; }
+.pf-sesion .ent-boton { margin-top: 13px; min-height: 46px; transition: transform 0.15s; }
+.pf-sesion .ent-boton:active { transform: scale(0.98); }
+.pf-sesion .ent-apple svg { stroke: none; }
+.pf-sesion-error { margin: 9px 2px 0; font: 400 12.5px/1.35 var(--texto); color: #f0a58a; animation: hj-aparece 0.3s ease both; }
+.pf-sesion-estado { display: flex; align-items: center; gap: 10px; min-height: 22px; font: 400 14px/1.3 var(--texto); color: var(--tinta); animation: hj-aparece 0.3s ease both; }
+.pf-sesion-estado svg { flex: none; width: 18px; height: 18px; fill: none; stroke: var(--salvia); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pf-sesion.al-dia { border-color: rgba(166, 191, 148, 0.32); background: rgba(166, 191, 148, 0.07); }
+.pf-sesion.pf-sale { height: 0 !important; margin-top: 0; padding-top: 0; padding-bottom: 0; border-width: 0; opacity: 0; transition: height 0.26s ease, margin 0.26s ease, padding 0.26s ease, opacity 0.2s ease; }
+/* Con otra cuenta de Apple: la línea que ya tiene la app (Perfil.tsx, perfil.otraCuenta). */
+.pf-otra-cuenta { margin: 10px 4px 0; font: 400 12.5px/17px var(--texto); color: rgba(239, 230, 207, 0.6); }
+/* La hoja de Apple para entrar: un dibujo, como el de la compra; en la app la pone iOS. */
+.pf-apple-fondo { position: absolute; inset: 0; z-index: 25; display: flex; align-items: flex-end; background: rgba(0, 0, 0, 0.5); animation: sb-apple-fondo 0.3s ease both; }
+.pf-apple-fondo.saliendo { animation: sb-sale 0.28s ease both; pointer-events: none; }
+.pf-apple { width: 100%; display: grid; justify-items: center; gap: 10px; padding: 14px 18px calc(var(--abajo) + 12px); border-radius: 18px 18px 0 0; background: #f2f2f7; color: #15171f; text-align: center; font: 400 13.5px/1.35 -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif; animation: sb-apple-sube 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.pf-apple-cab { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; font-size: 15px; font-weight: 600; }
+.pf-apple-cab span { display: inline-flex; align-items: center; gap: 4px; }
+.pf-apple-cab svg { width: 16px; height: 16px; fill: #15171f; }
+.pf-apple-cab button { justify-self: end; appearance: none; cursor: pointer; border: 0; background: none; color: #0a66e4; font: inherit; font-weight: 400; font-size: 14px; }
+.pf-apple-icono { width: 60px; height: 60px; margin-top: 6px; border-radius: 14px; background: linear-gradient(160deg, #24427a, #101a3a) center / cover no-repeat; }
+.pf-apple-cuenta { width: 100%; display: grid; gap: 2px; padding: 11px 13px; border-radius: 11px; background: #fff; text-align: left; }
+.pf-apple-cuenta small { color: #6c6c74; font-size: 12px; }
+.pf-apple-si { appearance: none; cursor: pointer; width: 100%; min-height: 46px; margin-top: 2px; border: 0; border-radius: 12px; background: #0a66e4; color: #fff; font: 600 15px/1 -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif; transition: transform 0.15s; }
+.pf-apple-si:active { transform: scale(0.98); }
+.pf-apple-nota { margin: 0; font-size: 11px; color: #6c6c74; }
+@media (prefers-reduced-motion: reduce) {
+  .pf-sesion, .pf-sesion.pf-sale, .pf-sesion .ent-boton, .pf-apple-si { transition: none; }
+  .pf-sesion-error, .pf-sesion-estado, .pf-apple-fondo, .pf-apple-fondo.saliendo, .pf-apple { animation-duration: 0.01s; }
 }
 `;
   function crear(tel, opciones) {
@@ -748,7 +815,9 @@ const SeccionPerfil = (() => {
         Object.keys(nombres).sort((a, b) => nombres[a].localeCompare(nombres[b])).forEach((p) => opcion(nombres[p], null, s.pais === p, () => { s.pais = p; }));
         cuerpo.append(el('p', 'pf-texto', tx('perfil.pais.texto')), lista);
       } else if (cual === 'base') {
-        pintarBase(cuerpo);
+        // La propuesta del 26/11 (base.js), para compararla con la de ahora.
+        if (s.baseNueva) BaseNueva.pintar(cuerpo, { u, conAscent: conAscent(), abierta: s.baseAbierta });
+        else pintarBase(cuerpo);
       } else {
         tx('perfil.privacidadTexto').forEach((p, i) => cuerpo.appendChild(el('p', 'pf-texto', conAscent() && i === 0 ? `${p} ${tx('perfil.privacidadConAscent')}` : p)));
       }
@@ -1184,6 +1253,8 @@ const SeccionPerfil = (() => {
     // Cerrar sin «Guardar» deja todo como estaba.
     const editar = Util.hoja(tel, 'hh-hoja pf-hoja-editar', () => { ed = null; opciones.alCambiar(); });
     const CORREO = 'agustin@icloud.com';
+    // La otra cuenta de Apple con la que se puede entrar, para ver qué pasa (26/11).
+    const OTRO_CORREO = 'agustin.otra@icloud.com';
     const CAMARA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 8.5a2 2 0 0 1 2-2h1.8l1.4-2h4.6l1.4 2h1.8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.4"/></svg>';
     const FOTOS = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 3.5 3 3-2.5 4.5 4"/></svg>';
     const RANGOS = Metas.RANGOS_DEL_CUESTIONARIO;
@@ -1398,7 +1469,10 @@ const SeccionPerfil = (() => {
       const nombres = el('div', 'pf-nombres');
       const titulo = s.nombre ? el('h2', null, s.nombre) : el('h2', 'pf-sin-nombre', tx('perfil.agregarNombre'));
       if (s.nombre !== pintado.nombre) titulo.classList.add('entra');
-      nombres.append(titulo, el('span', null, CORREO));
+      // La sesión cortada (26/11): hoy la app dice «Sin cuenta»; en la propuesta queda el último correo que se supo.
+      const correo = el('span', null, s.sesion === 'hoy' ? tx('perfil.sinCuenta') : s.sesion === 'otra' ? OTRO_CORREO : CORREO);
+      if (cambio('correo', correo.textContent)) correo.classList.add('pf-entra');
+      nombres.append(titulo, correo);
       const circulo = avatar(s.foto, s.nombre);
       if (s.foto !== pintado.foto || (!s.foto && s.nombre !== pintado.nombre)) circulo.classList.add('entra');
       Object.assign(pintado, { nombre: s.nombre, foto: s.foto });
@@ -1442,7 +1516,8 @@ const SeccionPerfil = (() => {
       b.append(cuadro(acceso === 'regalo' ? 'regalo' : 'estrella', 'oro'), textos);
       if (acceso === 'prueba') {
         const dias = el('span', 'pf-plan-dias');
-        for (let i = 0; i < Premium.DIAS_DE_PRUEBA; i++) dias.appendChild(el('i', i < 2 ? 'lleno' : null));
+        const pasados = opciones.diasDePruebaPasados ? opciones.diasDePruebaPasados() : 2;
+        for (let i = 0; i < Premium.DIAS_DE_PRUEBA; i++) dias.appendChild(el('i', i < pasados ? 'lleno' : null));
         b.appendChild(dias);
       } else b.appendChild(el('span'));
       b.insertAdjacentHTML('beforeend', icono('adelante'));
@@ -1536,6 +1611,122 @@ const SeccionPerfil = (() => {
     function cerrarSesion() {
       return Detalles.alerta(tel, { titulo: tx('perfil.cerrarSesionTitulo'), texto: tx('perfil.cerrarSesionTexto'), cancelar: tx('comun.cancelar'), confirmar: tx('perfil.cerrarSesion'), alConfirmar: () => conVelo(tx('perfil.cerrandoSesion')) });
     }
+    // ------------------------------------------------------------ volver a entrar (26/11, para aprobar)
+    // s.sesion: null, con sesión; 'hoy', cómo se ve hoy en la app una sesión cortada («Sin cuenta», sin cerrar sesión ni
+    // borrar la cuenta); en la propuesta, 'cortada', 'entrando', 'error' (sin conexión), 'subiendo' y 'alDia'; y 'otra',
+    // que entró con otra cuenta de Apple. s.conApple: con qué cuenta entra la hoja de Apple ('misma' u 'otra').
+    const AVISO_DE_SESION = ['cortada', 'entrando', 'error', 'subiendo', 'alDia'];
+    // Sin sesión, como en la app (conCuenta en Perfil.tsx): ni cambiar de cuenta, ni cerrar sesión, ni borrar la cuenta.
+    const conSesion = () => s.sesion !== 'hoy' && !AVISO_DE_SESION.includes(s.sesion);
+    const manzana = () => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONOS.manzana}</svg>`;
+    let avisoSesion = null;
+    let esperaSesion = 0;
+    function avisoDeSesion() {
+      avisoSesion = el('section', 'pf-sesion');
+      avisoSesion.setAttribute('role', 'status');
+      avisoSesion.setAttribute('aria-live', 'polite');
+      llenarAviso(avisoSesion);
+      return avisoSesion;
+    }
+    function llenarAviso(c) {
+      c.innerHTML = '';
+      c.classList.toggle('al-dia', s.sesion === 'alDia');
+      // Ya adentro: la ruedita mientras sube, y el visto bueno.
+      if (s.sesion === 'subiendo' || s.sesion === 'alDia') {
+        const estado = el('div', 'pf-sesion-estado');
+        if (s.sesion === 'subiendo') estado.appendChild(Detalles.ruedita('chica'));
+        else estado.innerHTML = ic('listo');
+        estado.appendChild(el('span', null, tx(s.sesion === 'subiendo' ? 'perfil.sesion.subiendo' : 'perfil.sesion.alDia')));
+        c.appendChild(estado);
+        return;
+      }
+      const cab = el('div', 'pf-sesion-cab');
+      const textos = el('div');
+      textos.append(el('b', null, tx('perfil.sesion.titulo')), el('span', null, tx('perfil.sesion.texto')));
+      cab.append(cuadro('sinNube', 'azul'), textos);
+      // El botón de Apple, como en la entrada: mientras entra, la ruedita y «Entrando…» en el mismo botón.
+      const b = el('button', 'ent-boton ent-apple');
+      b.type = 'button';
+      const contenido = el('span', 'ent-apple-contenido');
+      if (s.sesion === 'entrando') {
+        contenido.append(Detalles.ruedita('oscura'), el('span', null, tx('entrada.cuenta.entrando')));
+        b.setAttribute('aria-busy', 'true');
+      } else {
+        contenido.innerHTML = manzana();
+        contenido.appendChild(el('span', null, tx('entrada.cuenta.apple')));
+      }
+      b.appendChild(contenido);
+      b.addEventListener('click', (ev) => { ev.stopPropagation(); if (s.sesion !== 'entrando') abrirApple(); });
+      c.append(cab, b);
+      if (s.sesion === 'error') c.appendChild(el('p', 'pf-sesion-error', tx('entrada.cuenta.errores.conexion')));
+    }
+    /** Lo de adentro cambia en su lugar: lo nuevo entra con un fundido y el alto se acomoda, sin saltos. */
+    function cambiarAviso(estado) {
+      s.sesion = estado;
+      const c = avisoSesion;
+      if (!c || !c.isConnected) { pintar(); return; }
+      const antes = c.offsetHeight;
+      c.style.height = '';
+      llenarAviso(c);
+      if (quieto()) return;
+      const despues = c.offsetHeight;
+      c.style.height = `${antes}px`;
+      void c.offsetHeight;
+      c.style.height = `${despues}px`;
+      setTimeout(() => { if (c.isConnected) c.style.height = ''; }, 340);
+    }
+    /** El aviso se pliega, lo de abajo sube, y Perfil queda como con sesión (o con la otra cuenta). */
+    function plegarAviso(estado) {
+      const c = avisoSesion;
+      const fin = () => { s.sesion = estado; pintar(); };
+      if (!c || !c.isConnected) fin();
+      else conSalida([c], fin);
+    }
+    /** La hoja de Apple, dibujada: con la cuenta de Apple de este iPhone. */
+    function abrirApple() {
+      if (tel.querySelector('.pf-apple-fondo')) return;
+      const fondo = el('div', 'pf-apple-fondo');
+      fondo.addEventListener('pointerdown', (ev) => ev.stopPropagation());
+      fondo.addEventListener('click', (ev) => { if (ev.target === fondo) cerrarApple(); });
+      const h = el('div', 'pf-apple');
+      const cab = el('div', 'pf-apple-cab');
+      const titulo = el('span');
+      titulo.innerHTML = manzana();
+      titulo.append(tx('perfil.sesion.apple.titulo'));
+      cab.append(el('span'), titulo, boton('', tx('comun.cancelar'), () => cerrarApple()));
+      const logo = el('i', 'pf-apple-icono');
+      if (typeof TIENDA !== 'undefined' && TIENDA && TIENDA.icono) logo.style.backgroundImage = `url(${TIENDA.icono})`;
+      const cuenta = el('div', 'pf-apple-cuenta');
+      cuenta.append(el('small', null, tx('perfil.sesion.apple.cuenta')), el('b', null, s.conApple === 'otra' ? OTRO_CORREO : CORREO));
+      h.append(cab, logo, el('p', null, tx('perfil.sesion.apple.texto')), cuenta, boton('pf-apple-si', tx('perfil.sesion.apple.continuar'), () => cerrarApple(entrar)), el('p', 'pf-apple-nota', tx('perfil.sesion.apple.nota')));
+      fondo.appendChild(h);
+      tel.appendChild(fondo);
+      opciones.alCambiar();
+    }
+    function cerrarApple(despues) {
+      const fondo = tel.querySelector('.pf-apple-fondo');
+      if (!fondo) { if (despues) despues(); return; }
+      fondo.classList.add('saliendo');
+      setTimeout(() => { fondo.remove(); opciones.alCambiar(); if (despues) despues(); }, quieto() ? 0 : 280);
+    }
+    /**
+     * Entra: con la misma cuenta, sube lo pendiente de este iPhone y baja lo nuevo (sincronizar.ts: el dueño de los datos
+     * es el mismo), y el aviso se pliega. Con otra cuenta, lo de hoy: los datos son de otra cuenta y no sincroniza.
+     */
+    function entrar() {
+      clearTimeout(esperaSesion);
+      cambiarAviso('entrando');
+      esperaSesion = setTimeout(() => {
+        if (s.sinConexion) { cambiarAviso('error'); return; }
+        if (s.conApple === 'otra') { plegarAviso('otra'); return; }
+        cambiarAviso('subiendo');
+        esperaSesion = setTimeout(() => {
+          cambiarAviso('alDia');
+          esperaSesion = setTimeout(() => plegarAviso(null), 1500);
+        }, 1700);
+      }, 1400);
+    }
+
     function grupo(clave, filas) {
       cont.appendChild(el('h3', 'pf-grupo', tx(clave)));
       const ul = el('ul', 'pf-lista pf-filas');
@@ -1550,6 +1741,9 @@ const SeccionPerfil = (() => {
       idiomaPintado = u.idioma();
       cont.innerHTML = '';
       cont.appendChild(tarjetaDeLaPersona());
+      if (AVISO_DE_SESION.includes(s.sesion)) cont.appendChild(avisoDeSesion());
+      else if (s.sesion === 'otra') cont.appendChild(el('p', 'pf-otra-cuenta' + (cambio('otra', true) ? ' pf-entra' : ''), tx('perfil.otraCuenta')));
+      if (s.sesion !== 'otra') vistos.set('otra', false);
       if (opciones.suscripcion) cont.appendChild(filaDelPlan());
       const d = datosDe();
       const aparato = opciones.sinReloj() ? tx('perfil.aparatos.soloIphone') : 'Apple Watch';
@@ -1603,7 +1797,8 @@ const SeccionPerfil = (() => {
         { ico: 'sobre', color: 'gris', titulo: tx('perfil.contacto') },
         { ico: 'basura', color: 'rosa', titulo: tx('perfil.borrarDatos'), tipo: 'peligro', flecha: false },
         // Borra la cuenta de Moss; vinculada, el aviso dice que Ascent sigue intacta (spec/ascent.md, «Dos cuentas»).
-        { clave: 'borrarCuenta', ico: 'basura', color: 'rosa', titulo: tx('perfil.borrarCuenta'), tipo: 'peligro', flecha: false, alTocar: () => borrarCuenta() },
+        // Sin sesión, como en la app (conCuenta), no está.
+        conSesion() && { clave: 'borrarCuenta', ico: 'basura', color: 'rosa', titulo: tx('perfil.borrarCuenta'), tipo: 'peligro', flecha: false, alTocar: () => borrarCuenta() },
       ]);
       // De dónde salen los alimentos y las estrellas, con su licencia: se despliega, como una marca en Aparatos.
       cont.appendChild(el('h3', 'pf-grupo', tx('perfil.creditos')));
@@ -1636,8 +1831,10 @@ const SeccionPerfil = (() => {
       }
       // Abajo de todo, en qué se basa Moss (5/11): de dónde sale cada número y cómo se ordena lo que llega.
       grupo('perfil.baseGrupo', [{ ico: 'info', color: 'gris', titulo: tx('perfil.base'), sub: tx('perfil.baseSub'), alTocar: () => abrirOpciones('base') }]);
-      cont.appendChild(boton('pf-salir', tx('perfil.cambiarCuenta'), () => {}));
-      cont.appendChild(boton('pf-salir', tx('perfil.cerrarSesion'), () => cerrarSesion()));
+      if (conSesion()) {
+        cont.appendChild(boton('pf-salir', tx('perfil.cambiarCuenta'), () => {}));
+        cont.appendChild(boton('pf-salir', tx('perfil.cerrarSesion'), () => cerrarSesion()));
+      }
       cont.appendChild(el('p', 'pf-version', 'Moss 1.0 (1)'));
       cont.scrollTop = arriba;
     }
@@ -1696,7 +1893,8 @@ const SeccionPerfil = (() => {
       abrirEntreno,
       abrirEditar,
       // En qué se basa Moss, con un área abierta (o ninguna).
-      abrirBase(area) { s.baseAbierta = area || null; abrirOpciones('base'); },
+      // `nueva`: la propuesta del 26/11 (base.js).
+      abrirBase(area, nueva) { s.baseAbierta = area || null; s.baseNueva = !!nueva; abrirOpciones('base'); },
       // Para las capturas: los avisos encendidos.
       ponerAvisos(cambios) { Object.assign(s.avisos, cambios); if ('descarga' in cambios) Periodo.pendientes.activar(!!cambios.descarga); if (hoja.abierta) pintarAvisos(); pintar(); },
       // Para las capturas: los números ocultos y sin déficit.
@@ -1717,8 +1915,18 @@ const SeccionPerfil = (() => {
       desplegar(m) { s.abierta = m; pintarAparatos(); },
       bajarHoja() { const c = hoja.el.querySelector('.pf-aparatos, .pf-avisos'); if (c) c.scrollTop = c.scrollHeight; },
       subir() { cont.scrollTo(0, 0); },
-      get hojaAbierta() { return hoja.abierta || editar.abierta; },
-      cerrarHoja() { hoja.cerrar(true); editar.cerrar(true); },
+      get hojaAbierta() { return hoja.abierta || editar.abierta || !!tel.querySelector('.pf-apple-fondo'); },
+      cerrarHoja() { hoja.cerrar(true); editar.cerrar(true); cerrarApple(); },
+      // Volver a entrar (26/11): el estado de la sesión, con qué cuenta de Apple entra la hoja y si hay conexión; tocar
+      // «Continuar con Apple» y, en la hoja, «Continuar».
+      sesion(estado, { conApple = 'misma', sinConexion = false } = {}) {
+        clearTimeout(esperaSesion);
+        cerrarApple();
+        Object.assign(s, { sesion: estado || null, conApple, sinConexion });
+        pintar();
+      },
+      volverAEntrar() { const b = cont.querySelector('.pf-sesion .ent-apple'); if (b) b.click(); },
+      continuarConApple() { const b = tel.querySelector('.pf-apple-si'); if (b) b.click(); },
     };
   }
 

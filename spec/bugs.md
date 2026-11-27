@@ -218,8 +218,11 @@ confirmado en otro teléfono. Y a quien ya le había quedado que «pan» es el p
   darles confianza media, como pide el nivel 2 de `spec/aparatos.md`.
 - **En Uruguay, «crema» da primero «Crema volteada» y «queso», «Queso untable».**
 
-**Para la galería:** los widgets mejores (escenario `widgets-mejores`, lo que pediste el 25/11); el widget del agua con el riñón (sin meta, sin barra); elegir un plan durante el regalo; volver a
-entrar si se corta la sesión.
+**Para la galería:** los widgets mejores (aprobados el 25/11 y en la app). El widget del agua sin meta, elegir un plan durante el
+regalo y volver a entrar si se corta la sesión: en la galería 63 para aprobar (escenarios `agua-sin-meta`,
+`plan-en-el-regalo` y `volver-a-entrar`). Al armar el último apareció un bug, **arreglado el 26/11** con su test: con
+los datos de otra cuenta en el teléfono, cerrar sesión borraba lo que no había subido sin avisar (la vuelta no subía y no
+fallaba); ahora lo pendiente después de la vuelta avisa, como sin sesión.
 
 **Para más adelante:**
 - **La zona horaria de cada noche:** de viaje, las noches anteriores se ven en la hora de ahora. Pide guardar la zona
@@ -232,7 +235,8 @@ entrar si se corta la sesión.
   nueva) siguen con lo que valían al anotarlo; corregir algo que espera en la comida que se arma, si la receta cambió.
 - **«Dormir 7 h» con Sleep Cycle o AutoSleep y sin noche de Moss** sigue contando la de Salud: va con la decisión de
   arriba.
-- **Detalles del inglés:** comillas del español en «Disconnect», «%» con y sin espacio, «centimetre» y «grey».
+- ~~**Detalles del inglés**~~: arreglados el 26/11 («%» sin espacio en inglés, también en los cuatro que se armaban en el
+  código, comillas inglesas, «centimeter» y «gray»).
 
 ## Para decidir (no son bugs)
 

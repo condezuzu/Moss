@@ -3,8 +3,9 @@
 // Uso: npm run galeria:capturas            (necesita npm run galeria:ver prendido)
 //      node herramientas/capturar-galeria.mjs <carpeta> inicio deslizar comida registrar tocar…
 // La galería abre en Inicio; los escenarios del cielo pasan primero a Hábitos y los de la comida,
-// a Comida. La lista de escenarios está en CLAUDE.md; el último, widgets-mejores (lo que pediste el 25/11:
-// Hoy más limpio junto al de ahora, tu noche en StandBy y la pantalla bloqueada con la deuda y la cuenta).
+// a Comida. La lista de escenarios está en CLAUDE.md; los últimos, widgets-mejores (lo que pediste el 25/11:
+// Hoy más limpio junto al de ahora, tu noche en StandBy y la pantalla bloqueada con la deuda y la cuenta) y los del
+// 26/11 para aprobar: agua-sin-meta, plan-en-el-regalo, volver-a-entrar, ascent-bajada, ascent-sesion y base-nueva.
 // La aurora y el cielo se dibujan por software (SwiftShader): los tiempos de la animación van
 // más lentos que en un teléfono, pero cada cuadro es el mismo.
 
@@ -3137,6 +3138,323 @@ const pasos = {
     await widgets('olvidar');
     await widgets('cerrar');
     await espera(600);
+    await pestana(0);
+  },
+  // El agua sin meta (26/11, para aprobar): el widget Agua con un cuidado por el que Moss no pide agua, junto al de
+  // ahora y a la mañana y con muchos vasos: entrando, quieto, un vaso más y dos menos, tintado y en inglés. Los toques,
+  // con el mouse como un dedo.
+  async 'agua-sin-meta'() {
+    const widgets = (accion, arg) => pagina.evaluate(([a, x]) => window.__widgets(a, x), [accion, arg]);
+    const espera = (ms = 1100) => pagina.waitForTimeout(ms);
+    const tocar = async (s) => { await pagina.click(s); await pagina.mouse.move(1, 1); };
+    await seccion('aguaSinMeta');
+    await espera(240);
+    await foto('agua-sin-meta-entrando');
+    await espera();
+    await foto('agua-sin-meta');
+    // El primero nuevo es el de hoy: lo tocado se ve también en el de ahora.
+    await tocar('.wg-m-agua .wa .wn-redondo.fuerte');
+    await espera(800);
+    await foto('agua-sin-meta-vaso-mas');
+    await tocar('.wg-m-agua .wa .wn-redondo:not(.fuerte)');
+    await tocar('.wg-m-agua .wa .wn-redondo:not(.fuerte)');
+    await espera(700);
+    await foto('agua-sin-meta-vaso-menos');
+    await widgets('olvidarTodo');
+    await seccion('aguaSinMetaTintado');
+    await espera();
+    await foto('agua-sin-meta-tintado');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await seccion('aguaSinMeta');
+    await espera();
+    await foto('agua-sin-meta-ingles');
+    await seccion('aguaSinMetaTintado');
+    await espera();
+    await foto('agua-sin-meta-tintado-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await widgets('modo', 'color');
+    await widgets('cerrar');
+    await espera(600);
+    await pestana(0);
+  },
+  // Elegir un plan durante el regalo (26/11, para aprobar): desde Tu suscripción («Elegir un plan»), la pantalla de pago
+  // con «Ahora no» y lo del regalo junto a los planes, la hoja de Apple, después de suscribirse (la pantalla, Perfil y
+  // Tu suscripción), «Ahora no», desde el aviso dos días antes del último día (la pantalla bloqueada, tocarlo y suscribirse
+  // ahí), la cuenta de Apple que ya usó la prueba; y la hoja, la pantalla, después y ya suscrita, en inglés.
+  async 'plan-en-el-regalo'() {
+    const sub = (accion, arg) => pagina.evaluate(([a, x]) => { window.__suscripcion(a, x); }, [accion, arg]);
+    const espera = (ms) => pagina.waitForTimeout(ms);
+    const tocar = async (s) => { await pagina.click(s); await pagina.mouse.move(1, 1); };
+    const suscribirse = async (nombre) => {
+      await sub('apple');
+      await espera(500);
+      if (nombre) await foto(nombre + '-apple');
+      await sub('confirmarApple');
+      await esperarA(() => !!document.querySelector('.sb-listo'));
+      await espera(700);
+      await foto(nombre + '-listo');
+    };
+    await seccion('planRegaloHoja');
+    await espera(900);
+    await foto('plan-regalo-hoja');
+    await tocar('.sb-secundario');
+    await espera(220);
+    await foto('plan-regalo-pago-entrando');
+    await espera(800);
+    await foto('plan-regalo-pago');
+    await sub('bajar');
+    await espera(300);
+    await foto('plan-regalo-pago-abajo');
+    await suscribirse('plan-regalo');
+    await tocar('.sb-listo .sb-principal');
+    await espera(800);
+    await foto('plan-regalo-perfil');
+    await tocar('.pf-plan');
+    await espera(900);
+    await foto('plan-regalo-suscrita');
+    await sub('cerrarHoja');
+    await espera(500);
+    await seccion('planRegaloPago');
+    await espera(900);
+    await tocar('.sb-ahora-no');
+    await espera(170);
+    await foto('plan-regalo-ahora-no');
+    await espera(600);
+    await seccion('planRegaloAviso');
+    await espera(800);
+    await foto('plan-regalo-aviso');
+    await tocar('.sb-bloqueo .ab-aviso');
+    await espera(160);
+    await foto('plan-regalo-aviso-tocado');
+    await espera(900);
+    await foto('plan-regalo-desde-el-aviso');
+    await suscribirse('plan-regalo-desde-el-aviso');
+    await seccion('planRegaloSinPrueba');
+    await espera(900);
+    await foto('plan-regalo-sin-prueba');
+    await suscribirse('plan-regalo-sin-prueba');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await seccion('planRegaloHoja');
+    await espera(900);
+    await foto('plan-regalo-hoja-ingles');
+    await seccion('planRegaloPago');
+    await espera(900);
+    await foto('plan-regalo-pago-ingles');
+    await suscribirse('plan-regalo-ingles');
+    await seccion('planRegaloSuscrita');
+    await espera(900);
+    await foto('plan-regalo-suscrita-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await sub('cerrarHoja');
+    await sub('cerrar');
+    await sub('poner', 'prueba');
+    await espera(500);
+    await pestana(0);
+  },
+  // Volver a entrar si se corta la sesión (26/11, para aprobar): cómo se ve hoy («Sin cuenta»), la propuesta arriba y
+  // abajo de Perfil, la hoja de Apple, entrando, subiendo lo de este iPhone, al día y de vuelta con sesión; sin conexión
+  // al entrar; con otra cuenta de Apple (lo que hace hoy el código); y la propuesta, al día y la otra cuenta en inglés.
+  async 'volver-a-entrar'() {
+    const espera = (ms) => pagina.waitForTimeout(ms);
+    const tocar = async (s) => { await pagina.click(s); await pagina.mouse.move(1, 1); };
+    const entrar = async (sufijo, conFotos) => {
+      await tocar('.pf-sesion .ent-apple');
+      await espera(550);
+      if (conFotos) await foto('sesion-apple' + sufijo);
+      await tocar('.pf-apple-si');
+      await espera(500);
+      if (conFotos) await foto('sesion-entrando' + sufijo);
+    };
+    await seccion('sesionHoy');
+    await espera(800);
+    await foto('sesion-hoy');
+    await pagina.evaluate(() => window.__perfil('bajar', '.pf-version'));
+    await espera(500);
+    await foto('sesion-hoy-abajo');
+    await seccion('sesionCortada');
+    await espera(800);
+    await foto('sesion-cortada');
+    await pagina.evaluate(() => window.__perfil('bajar', '.pf-version'));
+    await espera(500);
+    await foto('sesion-cortada-abajo');
+    await pagina.evaluate(() => window.__perfil('subir'));
+    await espera(400);
+    await entrar('', true);
+    await esperarA(() => !!document.querySelector('.pf-sesion-estado'));
+    await espera(450);
+    await foto('sesion-subiendo');
+    await esperarA(() => !!document.querySelector('.pf-sesion.al-dia'));
+    await espera(450);
+    await foto('sesion-al-dia');
+    await esperarA(() => !document.querySelector('.pf-sesion'));
+    await espera(500);
+    await foto('sesion-de-vuelta');
+    await seccion('sesionSinConexion');
+    await espera(700);
+    await entrar('', false);
+    await esperarA(() => !!document.querySelector('.pf-sesion-error'));
+    await espera(450);
+    await foto('sesion-sin-conexion');
+    await seccion('sesionOtra');
+    await espera(700);
+    await tocar('.pf-sesion .ent-apple');
+    await espera(550);
+    await foto('sesion-otra-apple');
+    await tocar('.pf-apple-si');
+    await esperarA(() => !!document.querySelector('.pf-otra-cuenta'));
+    await espera(700);
+    await foto('sesion-otra');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await seccion('sesionCortada');
+    await espera(800);
+    await foto('sesion-cortada-ingles');
+    await entrar('-ingles', true);
+    await esperarA(() => !!document.querySelector('.pf-sesion.al-dia'));
+    await espera(450);
+    await foto('sesion-al-dia-ingles');
+    await seccion('sesionOtra');
+    await espera(700);
+    await entrar('', false);
+    await esperarA(() => !!document.querySelector('.pf-otra-cuenta'));
+    await espera(700);
+    await foto('sesion-otra-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await seccion('sesionConSesion');
+    await espera(500);
+    await pestana(0);
+  },
+  // Por qué bajaste (26/11, para aprobar), en la sección de Ascent vinculada: el press de banca en cada ejemplo (menos
+  // series y bajando rápido, cambió de rango, después de una pausa y sin razón a la vista), arriba y en «Qué cambiar»;
+  // entrando, «Tu fuerza» con «Bajó» y en inglés. Queda sin vincular, como al empezar.
+  async 'ascent-bajada'() {
+    const espera = (ms) => pagina.waitForTimeout(ms);
+    const queCambiar = async (nombre) => {
+      await ascent('bajar', '.as-bajo-ej h4:last-of-type');
+      await espera(400);
+      await foto(nombre);
+    };
+    await seccion('ascentBajadaSeries');
+    await espera(140);
+    await foto('bajada-entrando');
+    await espera(900);
+    await foto('bajada-series');
+    await queCambiar('bajada-series-que-cambiar');
+    await ascent('bajar', '.as-fuerza');
+    await espera(400);
+    await foto('bajada-tu-fuerza');
+    for (const [v, nombre] of [['Rango', 'rango'], ['Pausa', 'pausa'], ['SinRazon', 'sin-razon']]) {
+      await seccion('ascentBajada' + v);
+      await espera(1000);
+      await foto('bajada-' + nombre);
+      await queCambiar(`bajada-${nombre}-que-cambiar`);
+    }
+    await pagina.evaluate(() => window.__idioma('en'));
+    await seccion('ascentBajadaSeries');
+    await espera(1000);
+    await foto('bajada-series-ingles');
+    await queCambiar('bajada-series-que-cambiar-ingles');
+    await seccion('ascentBajadaRango');
+    await espera(1000);
+    await foto('bajada-rango-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await ascent('bajada', null);
+    await ascent('cerrar');
+    await ascent('vincular', false);
+    await pestana(0);
+  },
+  // Cómo fue tu sesión (26/11, para aprobar), debajo de tu último entreno: la de piernas de hoy, ya hecha, como siempre,
+  // buena, dura al fallo, dura con muchas series, floja y floja después de una noche corta; «Cómo se calcula»
+  // desplegado y en inglés. Queda sin vincular y en el día de siempre.
+  async 'ascent-sesion'() {
+    const espera = (ms) => pagina.waitForTimeout(ms);
+    await seccion('ascentSesionComoSiempre');
+    await espera(140);
+    await foto('ascent-sesion-entrando');
+    await espera(900);
+    await foto('ascent-sesion-como-siempre');
+    for (const [v, nombre] of [['Buena', 'buena'], ['Dura', 'dura'], ['DuraSeries', 'dura-series'], ['Floja', 'floja'], ['FlojaCorta', 'floja-corta']]) {
+      await seccion('ascentSesion' + v);
+      await espera(1000);
+      await foto('ascent-sesion-' + nombre);
+    }
+    await seccion('ascentSesionDura');
+    await espera(900);
+    await pagina.evaluate(() => document.querySelector('.as-sesion > .as-enlace').dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    await espera(120);
+    await foto('ascent-sesion-como-se-calcula-abriendo');
+    await ascent('bajar', 'fondo');
+    await espera(500);
+    await foto('ascent-sesion-como-se-calcula');
+    await pagina.evaluate(() => window.__idioma('en'));
+    for (const [v, nombre] of [['Dura', 'dura'], ['FlojaCorta', 'floja-corta'], ['Buena', 'buena']]) {
+      await seccion('ascentSesion' + v);
+      await espera(1000);
+      await foto(`ascent-sesion-${nombre}-ingles`);
+    }
+    await pagina.evaluate(() => window.__idioma('es'));
+    await ascent('sesion', null);
+    await ascent('dia', 'corta');
+    await ascent('cerrar');
+    await ascent('vincular', false);
+    await pestana(0);
+  },
+  // En qué se basa Moss, la propuesta (26/11, para aprobar): la de ahora para comparar, la propuesta entrando y
+  // arriba, las preguntas, cada área abierta, las fuentes desde un número, abajo de todo y en inglés.
+  async 'base-nueva'() {
+    const espera = (ms) => pagina.waitForTimeout(ms);
+    // Arriba de la hoja, moviendo solo su scroll (scrollIntoView corre también la hoja).
+    const alInicio = (s, fin) => pagina.evaluate(([x, alFinal]) => {
+      const n = document.querySelector(x);
+      const sc = n && n.closest('.pf-avisos');
+      if (!sc) return;
+      const a = n.getBoundingClientRect(), b = sc.getBoundingClientRect();
+      sc.scrollTop += alFinal ? a.bottom - b.bottom + 12 : a.top - b.top - 12;
+    }, [s, !!fin]);
+    await seccion('base');
+    await espera(1100);
+    await foto('base-nueva-la-de-ahora');
+    await pagina.evaluate(() => document.querySelector('.hb-cerrar')?.click());
+    await espera(500);
+    await seccion('baseNueva');
+    await espera(260);
+    await foto('base-nueva-entrando');
+    await espera(900);
+    await foto('base-nueva');
+    await alInicio('.bn-sellos');
+    await espera(400);
+    await foto('base-nueva-confianza');
+    await alInicio('.bn-areas');
+    await espera(400);
+    await foto('base-nueva-preguntas');
+    const areas = await pagina.$$eval('.bn-area .bn-cab', (bs) => bs.length);
+    for (let i = 0; i < areas; i++) {
+      await pagina.evaluate((k) => document.querySelectorAll('.bn-area .bn-cab')[k].click(), i);
+      await espera(700);
+      await alInicio('.bn-area.abierta');
+      await espera(400);
+      await foto(`base-nueva-area-${i + 1}`);
+    }
+    // Tocar un número abre las fuentes del área y la marca.
+    await pagina.evaluate(() => document.querySelectorAll('.bn-area .bn-cab')[0].click());
+    await espera(700);
+    await pagina.evaluate(() => document.querySelector('.bn-area.abierta .bn-ref').click());
+    await espera(900);
+    await foto('base-nueva-fuentes');
+    await alInicio('.bn-final', true);
+    await espera(400);
+    await foto('base-nueva-abajo');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await seccion('baseNueva');
+    await espera(1100);
+    await foto('base-nueva-ingles');
+    await pagina.evaluate(() => document.querySelectorAll('.bn-area .bn-cab')[0].click());
+    await espera(700);
+    await alInicio('.bn-area.abierta');
+    await espera(400);
+    await foto('base-nueva-area-1-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await pagina.evaluate(() => document.querySelector('.hb-cerrar')?.click());
+    await espera(500);
     await pestana(0);
   },
   // Los detalles de app profesional (6/11, para aprobar), cada uno donde va: «Listo» y «Siguiente» arriba del

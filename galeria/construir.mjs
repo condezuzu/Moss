@@ -219,7 +219,7 @@ const js = [
   modulo('SenalDeAscent', 'src/dominio/senalDeAscent.ts'),
   modulo('Diagnostico', 'src/dominio/diagnostico.ts'),
   modulo('RangoDeAscent', 'src/dominio/rangoDeAscent.ts'),
-  ...['motor', 'escena', 'entrada', 'util', 'detalles', 'periodo', 'luna', 'kcal', 'datos', 'fotos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'habitos', 'atajos', 'avisos', 'deporte', 'suscripcion', 'widgets-nuevos', 'widgets-mejores', 'widgets', 'tienda', 'revision', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
+  ...['motor', 'escena', 'entrada', 'util', 'detalles', 'periodo', 'luna', 'kcal', 'datos', 'fotos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'base', 'perfil', 'ascent', 'habitos', 'atajos', 'avisos', 'deporte', 'suscripcion', 'widgets-nuevos', 'widgets-mejores', 'widgets', 'tienda', 'revision', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
 ].join('\n');
 
 const html = leer('galeria/src/pagina.html').replace('/*@SCRIPTS*/', () => js);

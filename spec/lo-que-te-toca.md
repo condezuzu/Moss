@@ -3,7 +3,7 @@
 Todo lo que no puedo hacer yo: aprobar, decidir, entrar con tus cuentas, tocar el iPhone y lo de Ascent.
 Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar hecho: no lo puedo ver desde acá.
 
-Galería (versión 62): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
+Galería (versión 63): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 
 ## 0. El lanzamiento y la 1.1 (desde el 14/11/2026): dónde quedé
 
@@ -177,9 +177,45 @@ mañana lo dormido con la deuda en una palabra. Quedaron como en la galería: lo
 sin el snack en la lista. Quien ya tiene un widget lo ve nuevo al abrir Moss después de la actualización. Para ver la
 noche sin abrir Moss hace falta la próxima build (spec/estudio/widgets-y-noche.md).
 
+### Lo del 26/11
+
+**El vínculo con Ascent, revisado** (lo pediste el 26/11; spec/estudio/vinculo-ascent.md y el informe para compartir,
+https://claude.ai/artifact/ACnkHK4EjUC5PqkTarHE1N, privado hasta que lo compartas). Arreglado y por aire en las dos builds
+(commit 510207b; preview aa6fe9e9, production 33b86d70): el titular de hoy usa la misma fatiga en días que Tus músculos
+(antes usaba una cuenta refutada y se contradecían), la energía ya no supone que entrenas todos los días y «una serie
+menos» sale solo con el músculo cargado. **Te toca:**
+- **La migración 0019** (las sesiones copiadas de Ascent, su migración 103): lista y probada en la base local; para la
+  base real hace falta tu sí. Sin ella no se rompe nada: lo copiado cuenta como una sesión más.
+- **Prender «Registrar RIR» en Ascent:** sin eso, la fatiga es un número fijo (2 días para todo músculo entrenado).
+- Decidir si sumar «¿Cómo te sientes para entrenar?» (antes) y cuánto costó la sesión de 1 a 10 (después).
+
+**La 1.1.1, solo de ficha** (la propuesta de la sesión de anuncios, que aprobaste): «Moss: Macros & Sleep Debt» / «Moss:
+macros y deuda de sueño», «Calorie tracker & weight trend» / «Contador de calorías y peso» y las palabras clave nuevas
+(store.config.json), con las novedades corregidas (los 3 meses de regalo). La build 9 era 1.1.0 y Apple no la deja en
+una versión 1.1.1: hice la build 10 (EAS 192478ff), con la misma huella, que trae además **pedir la reseña** de la App
+Store en un buen momento (el día completo o el séptimo día con comida; después, cada 120 días; app-intents/Resena.swift).
+**Te toca:** entrar a Apple (`node C:\Users\agusc\asc3\entrar.cjs`); después yo subo la build 10, cargo la ficha
+(`node C:\Users\agusc\asc3\ficha-111.cjs`) y, con tu sí, la mando a revisión.
+
+**Para la próxima build:** `expo-doctor` marca 13 paquetes de Expo con parches nuevos (salieron después de la build 8);
+actualizarlos cambia la huella.
+
 ### Aprobar en la galería
 
 La app no cambia hasta que digas. Sección 1.1, salvo que diga otra.
+
+**Del 26/11** (galería 63, arriba de todo en «Lo nuevo, para aprobar»)
+- **Por qué bajaste** (`ascent-bajada`): «Bajó un 6 %» cuando las últimas 4 sesiones de un ejercicio quedan más de un 4 %
+  por debajo de las 8 de antes, con «Por qué puede ser» y «Qué cambiar». Preguntas: ¿«Qué cambiar» también en Razones de
+  estancamiento? ¿Mirar todos los ejercicios o solo los de «Tu fuerza»?
+- **Cómo fue tu sesión** (`ascent-sesion`): una palabra (Buena, Como siempre, Dura o Floja) con sus datos, sin puntaje.
+  Preguntas: ¿está bien debajo de «Tu último entreno»? ¿«Como siempre» en una línea? ¿«Floja» y «Flat» sirven?
+- **En qué se basa Moss, rehecho** (`base-nueva`, junto al de ahora): la respuesta arriba, sellos de confianza, cada área
+  como una pregunta y las fuentes plegadas. Preguntas: ¿«Sólido» también para las guías? ¿Sumar lo de Ascent cuando se
+  apruebe?
+- **El widget Agua sin meta** (`agua-sin-meta`), **elegir un plan durante el regalo** (`plan-en-el-regalo`) y **volver a
+  entrar si se corta la sesión** (`volver-a-entrar`). Preguntas: ¿suscribirse en cualquier momento del regalo o solo cerca
+  del final? Con otra cuenta de Apple, ¿qué debería pasar? (hoy no sincroniza). ¿«Ya está todo abierto» se cambia?
 
 **Del 23/11** (galería 59, el primer grupo)
 - **Las estrellas de Hábitos sin nombre:** el primer toque muestra el de esa estrella, arriba o abajo y siempre entero; el segundo marca el hábito. El globito de la primera vez lo explica (escenario `tocar`).

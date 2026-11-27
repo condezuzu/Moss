@@ -2085,6 +2085,54 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
       <h2><span class="n">1.1</span>Lo nuevo, para aprobar</h2>
       <p>Lo que pediste el 2/11 a la noche (lo que dictaste mirando la galería) y el 3/11, para aprobar: probalo acá y, si te cierra, se programa. La app no cambia hasta que lo apruebes. Lo que no es visual ya está en la rama <b>mejoras-1.1</b> y va por OTA cuando Apple apruebe la 1.0: las marcas nuevas (con los productos de código uruguayo), el arreglo de «Si voy muy bajo en algo» (apagarlo no se guardaba) y lo de la tanda anterior.</p>
       <div class="panel">
+        <div class="grupo"><span>Lo que pediste el 26/11, para aprobar: <b>por qué bajaste y qué cambiar</b>, en la sección de Ascent, debajo de las razones de estancamiento. Cuando tus últimas 4 sesiones de un ejercicio quedan más de un 4 % por debajo de las 8 de antes: cuánto y desde cuándo, las 12 en un dibujo, si cambiaste de rango o hubo una pausa, «Por qué puede ser» (como «puede influir») y «Qué cambiar», una acción por razón, solo lo que respaldan las guías. En «Tu fuerza», ese ejercicio dice «Bajó». Sin ninguna razón a la vista, lo dice; nunca «sobreentrenado»</span>
+          <div class="controles">
+            <button class="boton principal" type="button" data-seccion="ascentBajadaSeries">Menos series, bajando rápido</button>
+            <button class="boton" type="button" data-seccion="ascentBajadaRango">Cambió de rango</button>
+            <button class="boton" type="button" data-seccion="ascentBajadaPausa">Después de una pausa</button>
+            <button class="boton" type="button" data-seccion="ascentBajadaSinRazon">Sin razón a la vista</button>
+          </div>
+        </div>
+        <div class="grupo"><span>Lo que pediste el 26/11, para aprobar: <b>cómo fue tu sesión</b>, debajo de tu último entreno. Una palabra (buena, como siempre, dura o floja), por qué con los datos a la vista (cada ejercicio contra lo tuyo, las series de más, las repeticiones que cayeron), lo que implica y «Cómo se calcula», plegado. Sin puntaje ni «te sobrefatigaste»: no hay un umbral validado, así que es «probablemente»</span>
+          <div class="controles">
+            <button class="boton" type="button" data-seccion="ascentSesionComoSiempre">Como siempre</button>
+            <button class="boton" type="button" data-seccion="ascentSesionBuena">Buena</button>
+            <button class="boton principal" type="button" data-seccion="ascentSesionDura">Dura, al fallo</button>
+            <button class="boton" type="button" data-seccion="ascentSesionDuraSeries">Dura, muchas series</button>
+            <button class="boton" type="button" data-seccion="ascentSesionFloja">Floja</button>
+            <button class="boton" type="button" data-seccion="ascentSesionFlojaCorta">Floja, noche corta</button>
+          </div>
+        </div>
+        <div class="grupo"><span>Lo que pediste el 26/11, para aprobar: <b>En qué se basa Moss, que se vea profesional</b>. La respuesta primero y la fecha de revisión; cada área es la pregunta que te harías, con su respuesta y un sello de confianza siempre igual (sólido, razonable, estimación o decisión de Moss); al abrirla, cómo lo usa Moss en puntos, cada uno con su sello y sus fuentes, lo que no hace y las fuentes plegadas y numeradas, con el tipo de estudio, cuántas personas y su enlace. Junto al de ahora</span>
+          <div class="controles">
+            <button class="boton" type="button" data-seccion="base">Cómo se ve hoy</button>
+            <button class="boton principal" type="button" data-seccion="baseNueva">La propuesta</button>
+          </div>
+        </div>
+        <div class="grupo"><span>Lo que quedó de la búsqueda de bugs (26/11), para aprobar: <b>el widget Agua sin meta</b>. Con un cuidado por el que Moss no pide agua (el riñón con restricción de líquidos), el widget decía «5 de 8 vasos» con su barra contra 2 L. Ahora, como Inicio en ese caso: los litros, «5 vasos» y los vasos que tomaste, sin vasos vacíos por llenar, con el «+» y el «−» de siempre. Junto al de ahora, a la mañana sin vasos y con muchos (la fila llega a 12; el número dice cuántos)</span>
+          <div class="controles">
+            <button class="boton principal" type="button" data-seccion="aguaSinMeta">El agua sin meta</button>
+            <button class="boton" type="button" data-seccion="aguaSinMetaTintado">Tintado</button>
+          </div>
+        </div>
+        <div class="grupo"><span>Para aprobar: <b>elegir un plan durante el regalo</b>. En Tu suscripción, «Elegir un plan» debajo de «Mira lo nuevo»; el aviso «Elige tu plan de Moss» abre la pantalla de pago en vez de Perfil. Como todavía tiene acceso, la pantalla lleva «Ahora no» arriba, y junto a los planes dice hasta cuándo sigue el regalo y que el plan empieza hoy, no cuando termina el regalo. Los 7 días gratis son de Apple, una vez por cuenta de Apple, regalo o no: si ya los usó, «Suscribirme» y se cobra al confirmar. Ya suscrita, manda la suscripción, y el regalo no se pierde: si cancela durante la prueba no se cobra nada y vuelve al regalo hasta su último día</span>
+          <div class="controles">
+            <button class="boton principal" type="button" data-seccion="planRegaloHoja">Desde Tu suscripción</button>
+            <button class="boton" type="button" data-seccion="planRegaloAviso">Desde el aviso</button>
+            <button class="boton" type="button" data-seccion="planRegaloPago">La pantalla de pago</button>
+            <button class="boton" type="button" data-seccion="planRegaloSinPrueba">Ya usó la prueba</button>
+            <button class="boton" type="button" data-seccion="planRegaloSuscrita">Ya suscrita, en Perfil</button>
+          </div>
+        </div>
+        <div class="grupo"><span>Para aprobar: <b>volver a entrar si se corta la sesión</b>. Hoy, si la sesión se corta sola, Perfil dice «Sin cuenta» y no hay nada que tocar, aunque no se borró nada. Ahora la tarjeta sigue con tu correo y, debajo, «Tu sesión se cerró»: lo de este iPhone queda guardado y sube al volver, con «Continuar con Apple». Al entrar, sube lo pendiente, «Todo al día» y el aviso se pliega. Con otra cuenta de Apple, lo que hace hoy el código: los datos del iPhone son de la otra cuenta y no se sincroniza nada (la línea de abajo de la tarjeta). Qué tendría que hacer ahí lo decidís vos</span>
+          <div class="controles">
+            <button class="boton" type="button" data-seccion="sesionHoy">Cómo se ve hoy</button>
+            <button class="boton principal" type="button" data-seccion="sesionCortada">La sesión se cortó</button>
+            <button class="boton" type="button" data-seccion="sesionSinConexion">Sin conexión al entrar</button>
+            <button class="boton" type="button" data-seccion="sesionOtra">Con otra cuenta de Apple</button>
+            <button class="boton" type="button" data-seccion="sesionConSesion">Con sesión</button>
+          </div>
+        </div>
         <div class="grupo"><span>Lo que pediste el 25/11: los widgets, para aprobar. Hoy, tan limpio como el de la pantalla bloqueada: la cifra, la luna chica y los tres macros en barras finas; en el mediano, tus comidas a la derecha con «+633» de un toque, y en el grande, tus últimos 7 días contra la meta. Cada uno, junto al de ahora. Tu noche en StandBy, con la cuenta que baja de a un minuto, sin fondo y en rojo con poca luz. Y en la pantalla bloqueada, la deuda debajo de la noche a la mañana y, a la tardecita, la hora de acostarte (la de tu periodo de melatonina) con su cuenta. Un dato por widget: el de las calorías queda como está</span>
           <div class="controles">
             <button class="boton principal" type="button" data-seccion="wmHoy">Hoy, chico y mediano</button>
@@ -2626,6 +2674,14 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
           </div>
           <div class="grupo"><span>Por qué no subes</span>
             <div class="segmento" id="s-estanc"><button type="button" data-valor="con" aria-pressed="true">Con datos</button><button type="button" data-valor="pocas" aria-pressed="false">Juntando información</button></div>
+          </div>
+        </div>
+        <div class="controles">
+          <div class="grupo"><span>Por qué bajaste (26/11, para aprobar): el press de banca, en sus últimas 4 sesiones</span>
+            <div class="segmento envuelve" id="s-bajada"><button type="button" data-valor="ninguna" aria-pressed="true">Nada bajó</button><button type="button" data-valor="series" aria-pressed="false">Menos series, bajando rápido</button><button type="button" data-valor="rango" aria-pressed="false">Cambió de rango</button><button type="button" data-valor="pausa" aria-pressed="false">Después de una pausa</button><button type="button" data-valor="sinRazon" aria-pressed="false">Sin razón a la vista</button></div>
+          </div>
+          <div class="grupo"><span>Cómo fue tu sesión (26/11, para aprobar): la de piernas de hoy, ya hecha</span>
+            <div class="segmento envuelve" id="s-sesion"><button type="button" data-valor="comoSiempre" aria-pressed="true">Como siempre</button><button type="button" data-valor="buena" aria-pressed="false">Buena</button><button type="button" data-valor="dura" aria-pressed="false">Dura, al fallo</button><button type="button" data-valor="duraSeries" aria-pressed="false">Dura, muchas series</button><button type="button" data-valor="floja" aria-pressed="false">Floja</button><button type="button" data-valor="flojaCorta" aria-pressed="false">Floja, noche corta</button></div>
           </div>
         </div>
         <div class="controles">

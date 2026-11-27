@@ -14,8 +14,156 @@
 // fuerza con la tendencia de cada ejercicio y su rango (ProgresoCompartido.tendenciaDeFuerza), las marcas sin
 // probabilidad, el estancamiento con sus razones (Estancados), tu año, lo que comparten las dos y en qué se
 // basa. Sin vincular, cada cosa se ve vacía, con su candado. La invitación de Inicio sale de SenalDeAscent.
+// Para aprobar (26/11/2026, spec/estudio/vinculo-ascent.md), con la cuenta de src/dominio/tuSesion.ts tal cual:
+// - «Por qué bajaste», debajo de las razones de estancamiento: el ejercicio cuyas últimas 4 sesiones quedaron más de
+//   un 4 % por debajo de las 8 de antes, con cuánto y desde cuándo, el dibujo de las 12, si cambió de rango o hubo una
+//   pausa, «Por qué puede ser» (las mismas razones que el estancamiento) y «Qué cambiar», una acción por razón con lo
+//   que respaldan las guías; sin ninguna razón a la vista, lo dice. En «Tu fuerza», el ejercicio dice «Bajó».
+// - «Cómo fue», debajo de tu último entreno: una palabra (buena, como siempre, dura o floja), por qué con los datos a la
+//   vista (cada ejercicio contra lo tuyo, las series de más, las repeticiones que cayeron), lo que implica y «Cómo se
+//   calcula», plegado. Sin puntaje ni «te sobrefatigaste»: es probable, no un diagnóstico.
+// Los ejemplos de cada caso están en datos.js (ASCENT.ejemplos) y se eligen en el panel de Ascent de la galería.
 
 const SeccionAscent = (() => {
+  // Lo nuevo del 26/11, con las claves que tendría en src/textos, hasta que se apruebe.
+  const TEXTOS_NUEVOS = {
+    es: { ascent: {
+      bajo: {
+        titulo: 'Por qué bajaste',
+        derecha: 'Últimas 4 sesiones',
+        texto: 'Ejercicios en que tus últimas 4 sesiones quedaron más de un 4 % por debajo de las 8 de antes. Menos que eso puede ser el ruido de un día: la fuerza cambia ~3 % sin motivo (Grgic 2020).',
+        dato: '−{n} % · desde el {desde}',
+        enFuerza: 'Bajó un {n} %',
+        antes: 'Las 8 de antes · {kg} kg',
+        ahora: 'Las 4 de ahora · {kg} kg',
+        grafico: 'El 1RM estimado de cada sesión: {antes} kg de promedio en las 8 de antes y {ahora} kg en las 4 de ahora.',
+        porQue: 'Por qué puede ser',
+        queCambiar: 'Qué cambiar',
+        rango: 'Tu mejor serie pasó de {a} a {b} repeticiones: el 1RM estimado se mueve aunque tu fuerza no cambie (Reynolds 2006).',
+        pausa: 'Pasaste {n} días sin hacerlo: con una pausa así, la fuerza baja un poco (Bosquet 2013) y suele volver en pocas semanas.',
+        sinRazon: 'No hay una razón clara en tus series, tu comida ni tu sueño. Puede ser estrés, una enfermedad o un mal mes.',
+        hacer: {
+          series: 'Vuelve a unas {n} series duras de {musculo} por semana, como cuando subías.',
+          frecuencia: 'Vuelve a hacerlo {n} veces por semana.',
+          pesadas: 'Suma series pesadas, de 6 repeticiones o menos: un tercio de tus series o más.',
+          bajando: 'Mientras bajes más de un 1 % por semana, mantener la fuerza ya es un buen resultado. Si te importa más la fuerza, baja más despacio.',
+          definicion: 'En déficit, mantener ya es un buen resultado: sostén las series pesadas y la proteína.',
+          proteina: 'Llega a unos {g} g de proteína por día (~1,6 g por kilo).',
+          proteinaSinNumeros: 'Suma proteína: para ganar fuerza, desde ~1,6 g por kilo por día.',
+          sueno: 'Si puedes, duerme más: lo tuyo es de unas {horas}.',
+          pausa: 'Retoma lo de siempre, sin apuro: la fuerza vuelve en pocas semanas.',
+          rango: 'Para comparar, mira el peso que mueves con las mismas repeticiones de antes.',
+          sinRazon: 'Si sigue así unas semanas más, conviene cambiar el estímulo: otro rango de repeticiones u otra variante del ejercicio.',
+        },
+      },
+      sesion: {
+        titulo: 'Cómo fue',
+        palabras: { buena: 'Buena', comoSiempre: 'Como siempre', dura: 'Dura', floja: 'Floja' },
+        porque: {
+          buena: 'Rendiste más que lo tuyo en {ejercicios}, sin señales de haber ido al fallo.',
+          comoSiempre: 'Rendiste como de costumbre en todo lo que se puede comparar.',
+          comoSiempreSinComparar: 'Nada se salió de lo normal.',
+          fallo: 'En {ejercicio}, las repeticiones cayeron de {a} a {b} con el mismo peso: como cuando se va al fallo o muy cerca.',
+          alFallo: 'En {ejercicio} anotaste {n} series sin repeticiones de sobra: al fallo.',
+          volumen: 'Hiciste {n} series de {musculo} en un día: pasadas unas 10, cada serie suma poco.',
+          floja: 'Rendiste menos que lo tuyo en {n} de {de} ejercicios.',
+          flojaTodo: 'Rendiste menos que lo tuyo en todo lo que se puede comparar.',
+        },
+        implica: {
+          buena: 'Puede ser solo un buen día: si se repite, se va a ver en tu fuerza.',
+          comoSiempre: 'Nada que cambiar.',
+          fallo: 'Lo que trabajó ({musculos}) probablemente tarde uno o dos días más en volver. Para ganar fuerza no hace falta llegar al fallo.',
+          volumen: 'Con tantas series, la recuperación probablemente sea más lenta, y quizá rinda más repartirlas en dos días.',
+          floja: 'Un día flojo pasa: la fuerza cambia ~3 % de un día a otro sin motivo. Si se repite varias sesiones, Moss te dice por qué puede ser.',
+          flojaCorta: 'Dormiste {horas} la noche antes: con 6 horas o menos, un día flojo es esperable, sobre todo en las repeticiones.',
+        },
+        contraLoTuyo: 'Contra lo tuyo',
+        franja: 'La franja es tu día normal: ±6 % de lo tuyo.',
+        reps: 'repeticiones con {kg} kg',
+        seriesHoy: '{n} series en el día',
+        raya: 'unas 10',
+        comoSeCalcula: 'Cómo se calcula',
+        calculo: [
+          'Cada ejercicio, contra la mediana de tus últimas 6 sesiones de ese ejercicio: más de un 6 % arriba o abajo es un día distinto; menos es lo que cambia la fuerza de un día a otro sin motivo (Grgic 2020).',
+          'Las series de cada músculo en el día: pasadas unas 10, cada serie suma poco (Remmert 2025, todavía sin revisión de pares).',
+          'Con el mismo peso, si las repeticiones caen casi a la mitad o más en 3 series, probablemente fuiste al fallo o muy cerca (Refalo 2023), y eso pide uno o dos días más (Morán-Navarro 2017).',
+          'No hay un puntaje validado para calificar una sesión, en ninguna app: por eso es una palabra, y es probable, no un diagnóstico. La entrada en calor no cuenta.',
+        ],
+      },
+    } },
+    en: { ascent: {
+      bajo: {
+        titulo: 'Why you dropped',
+        derecha: 'Last 4 sessions',
+        texto: 'Exercises where your last 4 sessions came in more than 4% below the 8 before. Less than that can be day-to-day noise: strength moves ~3% for no reason (Grgic 2020).',
+        dato: '−{n}% · since {desde}',
+        enFuerza: 'Down {n}%',
+        antes: 'The 8 before · {kg} kg',
+        ahora: 'The last 4 · {kg} kg',
+        grafico: 'Estimated 1RM of each session: {antes} kg on average in the 8 before and {ahora} kg in the last 4.',
+        porQue: 'What may be behind it',
+        queCambiar: 'What to change',
+        rango: 'Your best set went from {a} to {b} reps: the estimated 1RM moves even if your strength doesn’t (Reynolds 2006).',
+        pausa: 'You went {n} days without it: after a break like that, strength dips a little (Bosquet 2013) and usually comes back within a few weeks.',
+        sinRazon: 'No clear reason in your sets, your food or your sleep. It could be stress, an illness or a bad month.',
+        hacer: {
+          series: 'Go back to about {n} hard {musculo} sets a week, like when it was going up.',
+          frecuencia: 'Go back to doing it {n} times a week.',
+          pesadas: 'Add heavy sets, 6 reps or fewer: a third of your sets or more.',
+          bajando: 'While you lose more than 1% a week, holding your strength is already a good result. If strength matters more to you, lose weight more slowly.',
+          definicion: 'In a deficit, holding is already a good result: keep the heavy sets and the protein.',
+          proteina: 'Get to about {g} g of protein a day (~1.6 g per kilo).',
+          proteinaSinNumeros: 'Add protein: for strength, ~1.6 g per kilo a day or more.',
+          sueno: 'If you can, sleep more: you need about {horas}.',
+          pausa: 'Pick up your usual training, no rush: strength comes back within a few weeks.',
+          rango: 'To compare, look at the weight you lift for the same reps as before.',
+          sinRazon: 'If it keeps up for a few more weeks, it’s worth changing the stimulus: another rep range or another variation of the exercise.',
+        },
+      },
+      sesion: {
+        titulo: 'How it went',
+        palabras: { buena: 'Good', comoSiempre: 'As usual', dura: 'Hard', floja: 'Flat' },
+        porque: {
+          buena: 'You did better than your usual in {ejercicios}, with no signs of going to failure.',
+          comoSiempre: 'You did as usual in everything that can be compared.',
+          comoSiempreSinComparar: 'Nothing out of the ordinary.',
+          fallo: 'In {ejercicio}, your reps dropped from {a} to {b} at the same weight: like going to failure or close to it.',
+          alFallo: 'In {ejercicio} you logged {n} sets with no reps in reserve: to failure.',
+          volumen: 'You did {n} {musculo} sets in one day: past about 10, each set adds little.',
+          floja: 'You did less than your usual in {n} of {de} exercises.',
+          flojaTodo: 'You did less than your usual in everything that can be compared.',
+        },
+        implica: {
+          buena: 'It may just be a good day: if it repeats, it’ll show in your strength.',
+          comoSiempre: 'Nothing to change.',
+          fallo: 'What you trained ({musculos}) will probably take a day or two longer to come back. You don’t need to reach failure to get stronger.',
+          volumen: 'With that many sets, recovery is probably slower, and splitting them over two days may pay off more.',
+          floja: 'A flat day happens: strength moves ~3% from one day to the next for no reason. If it repeats over several sessions, Moss tells you what may be behind it.',
+          flojaCorta: 'You slept {horas} the night before: with 6 hours or less, a flat day is expected, especially in reps.',
+        },
+        contraLoTuyo: 'Against your usual',
+        franja: 'The band is your normal day: ±6% of your usual.',
+        reps: 'reps at {kg} kg',
+        seriesHoy: '{n} sets that day',
+        raya: 'about 10',
+        comoSeCalcula: 'How it’s worked out',
+        calculo: [
+          'Each exercise, against the median of your last 6 sessions of it: more than 6% above or below is a different day; less is how much strength moves from one day to the next for no reason (Grgic 2020).',
+          'The sets for each muscle that day: past about 10, each set adds little (Remmert 2025, not yet peer-reviewed).',
+          'At the same weight, if reps drop by nearly half or more over 3 sets, you probably went to failure or close to it (Refalo 2023), and that takes a day or two longer (Morán-Navarro 2017).',
+          'There’s no validated score for rating a session, in any app: that’s why it’s a word, and it’s likely, not a diagnosis. Warm-ups don’t count.',
+        ],
+      },
+    } },
+  };
+  const completar = (destino, origen) => Object.entries(origen).forEach(([k, v]) => {
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      if (!destino[k] || typeof destino[k] !== 'object') destino[k] = {};
+      completar(destino[k], v);
+    } else if (destino[k] == null) destino[k] = v;
+  });
+  if (typeof TEXTOS !== 'undefined' && TEXTOS) ['es', 'en'].forEach((i) => { if (TEXTOS[i]) completar(TEXTOS[i], TEXTOS_NUEVOS[i]); });
+
   const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
   // La hora de cada comida, si no se anotó: la típica de la app.
   const HORA_DE_COMIDA = Comidas.HORA_TIPICA;
@@ -371,6 +519,68 @@ const SeccionAscent = (() => {
 .as-razon-sin { margin: 10px 0 0; font: 400 13px/1.35 var(--texto); color: var(--as-sub); }
 .as-contexto { margin: 12px 0 2px; font: 400 12.5px/1.4 var(--texto); color: var(--as-apagado); text-wrap: pretty; }
 
+/* Por qué bajaste (26/11, para aprobar): las 12 sesiones en puntos, las 8 de antes y las 4 de ahora con su promedio
+   (lo de ahora, en terracota), lo que cambió y, debajo, por qué puede ser y qué cambiar. */
+.as-bajo-ej { padding: 14px 0 10px; border-top: 1px solid rgba(48, 55, 72, 0.6); }
+.as-bajo .as-una + .as-bajo-ej { border-top: 0; }
+.as-bajo-dato { color: var(--as-lejos); }
+.as-bajo-svg { display: block; width: 100%; height: auto; margin-top: 12px; overflow: visible; }
+.pagina-app svg.as-bajo-svg { stroke: none !important; fill: none; }
+.as-bajo-punto { fill: var(--as-claro); opacity: 0.85; animation: as-bajo-punto 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.as-bajo-punto.ahora { fill: var(--as-lejos); opacity: 1; }
+.as-bajo-media { stroke: var(--as-claro); stroke-width: 1.4; stroke-dasharray: 3 3; opacity: 0.7; }
+.as-bajo-media.ahora { stroke: var(--as-lejos); stroke-dasharray: none; opacity: 1; }
+.as-bajo-corte { stroke: var(--as-linea-fuerte); stroke-width: 1; }
+@keyframes as-bajo-punto { from { opacity: 0; transform: translateY(4px); } }
+.as-bajo-leyenda { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin-top: 8px; font: 400 11.5px/1.2 var(--texto); color: var(--as-sub); font-variant-numeric: tabular-nums; }
+.as-bajo-leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+.as-bajo-leyenda span::before { content: ''; width: 12px; border-top: 1.4px dashed var(--as-claro); opacity: 0.8; }
+.as-bajo-leyenda span.ahora::before { border-top: 1.6px solid var(--as-lejos); opacity: 1; }
+.as-bajo-sub { margin: 18px 0 0; font: 500 10px/1.2 var(--texto); letter-spacing: 0.17em; text-transform: uppercase; color: var(--as-sub); }
+.as-bajo-ej .as-razones { margin-top: 10px; }
+.as-hacer { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+.as-hacer li { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 10px; font: 400 13.5px/1.42 var(--texto); color: var(--as-tinta); text-wrap: pretty; }
+.as-hacer li::before { content: ''; width: 7px; height: 7px; margin-top: 6px; background: var(--as-claro); clip-path: ${CORTE(2)}; }
+.as-fuerza-ej.baja .as-fuerza-veredicto { color: var(--as-lejos); }
+
+/* Cómo fue tu sesión (26/11, para aprobar): la palabra, por qué con los datos, lo que implica y cómo se calcula. */
+.as-sesion { margin: 16px 0 0; padding: 14px 0 0; border-top: 1px solid rgba(48, 55, 72, 0.6); }
+.as-sesion-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.as-sesion-etq { font: 400 11.5px/1.2 var(--texto); color: var(--as-sub); }
+.as-sesion-palabra { margin: 4px 0 0; font: 300 24px/1.05 var(--numeros); letter-spacing: -0.01em; color: var(--as-tinta); }
+.as-sesion.buena .as-sesion-palabra { color: var(--as-claro); }
+.as-sesion.dura .as-sesion-palabra { color: var(--as-lejos); }
+.as-sesion.floja .as-sesion-palabra { color: var(--as-sub); }
+.as-sesion-porque { margin: 8px 0 0; font: 400 14px/1.42 var(--texto); color: var(--as-tinta); text-wrap: pretty; }
+.as-sesion-implica { margin: 12px 0 0; font: 400 13.5px/1.42 var(--texto); color: var(--as-sub); text-wrap: pretty; }
+.as-sesion-datos { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 7px; }
+.as-sesion-datos-etq { margin: 14px 0 0; font: 400 11px/1.2 var(--texto); color: var(--as-sub); }
+.as-tuyo { display: grid; grid-template-columns: minmax(0, 1fr) 100px 42px; align-items: center; column-gap: 10px; font: 400 13px/1.25 var(--texto); color: var(--as-tinta); }
+.as-tuyo-nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.as-tuyo-escala { position: relative; height: 14px; }
+.as-tuyo-escala::before { content: ''; position: absolute; left: 0; right: 0; top: 6px; height: 2px; background: var(--as-linea); }
+.as-tuyo-franja { position: absolute; top: 3px; height: 8px; left: 30%; right: 30%; border-radius: 999px; background: rgba(170, 178, 196, 0.24); }
+.as-tuyo-centro { position: absolute; left: 50%; top: 1px; width: 1px; height: 12px; background: var(--as-linea-fuerte); }
+.as-tuyo-punto { position: absolute; top: 2px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--as-tinta); box-shadow: 0 0 0 2.5px #090b11; animation: as-tuyo-llega 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.as-tuyo.arriba .as-tuyo-punto { background: var(--as-claro); }
+.as-tuyo.abajo .as-tuyo-punto { background: var(--as-apagado); box-shadow: 0 0 0 2.5px #090b11, inset 0 0 0 1.5px var(--as-sub); }
+@keyframes as-tuyo-llega { from { left: 50%; } }
+.as-tuyo-valor { font: 400 12.5px/1 var(--numeros); color: var(--as-sub); text-align: right; font-variant-numeric: tabular-nums; }
+.as-tuyo.arriba .as-tuyo-valor { color: var(--as-claro); }
+.as-sesion-franja { margin: 6px 0 0; font: 400 11px/1.3 var(--texto); color: var(--as-apagado); }
+/* Las repeticiones de cada serie, en barras: cuánto cayeron con el mismo peso. */
+.as-reps { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: 12px; margin-top: 28px; }
+.as-reps-nombre { font: 400 13px/1.3 var(--texto); color: var(--as-tinta); }
+.as-reps-nombre small { display: block; margin-top: 2px; font: 400 11.5px/1.2 var(--texto); color: var(--as-sub); }
+.as-reps-barras { display: flex; align-items: flex-end; gap: 5px; height: 40px; }
+.as-reps-barras i { position: relative; width: 16px; background: var(--as-lejos); opacity: 0.9; transform-origin: bottom; animation: as-reps-crece 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.as-reps-barras i:first-child { background: var(--as-claro); opacity: 0.8; }
+.as-reps-barras b { position: absolute; left: 0; right: 0; bottom: calc(100% + 3px); font: 400 11px/1 var(--numeros); font-weight: 400; color: var(--as-sub); text-align: center; }
+@keyframes as-reps-crece { from { transform: scaleY(0); } }
+.as-sesion .as-escala { margin-top: 8px; }
+.as-sesion-musculo { margin-top: 12px; display: flex; justify-content: space-between; gap: 10px; font: 400 13px/1.3 var(--texto); color: var(--as-tinta); }
+.as-sesion-musculo span:last-child { color: var(--as-lejos); font-variant-numeric: tabular-nums; }
+
 /* Vinculada, la entrada dice lo de hoy en dos palabras, sin número. */
 .as-entrada.vinculo .as-entrada-cifra { font: 400 13.5px/1.15 var(--texto); color: var(--as-tinta); }
 
@@ -471,6 +681,7 @@ const SeccionAscent = (() => {
 .as-hoja-form.as-entra, .as-parte.as-entra { animation: as-entra 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 @media (prefers-reduced-motion: reduce) {
   .as-entrada-pista svg, .as-volver-abajo svg, .as-cielo i > svg.entra, .as-polvo-late, .as-polvo-gas, .as-polvo-granos, .as-polvo-granos > svg, .as-polvo-estrella { animation: none; }
+  .as-bajo-punto, .as-tuyo-punto, .as-reps-barras i { animation: none; }
   .as-invita.entra, .as-contenido.as-entra, .as-hoja-form.as-entra, .as-parte.as-entra, .as-hoy-titulo.as-cambia, .as-hoy-texto.as-cambia, .as-decide-valor.as-cambia, .as-foco.as-cambia, .as-cuerpo-detalle.as-cambia { animation-duration: 0.01s; }
   .as-chica-orbita, .as-chica-luna, .as-orbita, .as-luna, .as-luna-halo, .as-base > .as-marca, .as-entrada-pista, .as-orbe-arco, .as-orbe-luna, .as-orbe-pista,
   .as-decide-icono, .as-decide-valor, .as-escala-lleno, .as-escala-punto, .as-chip, .as-chip i, .as-m, .as-alcance-ruido, .as-alcance-nivel, .as-barras i,
@@ -833,6 +1044,12 @@ const SeccionAscent = (() => {
     let diaElegido = 'corta';
     let yaSeAbrio = false;
     let diaDelAnio = null;
+    // Los ejemplos del 26/11 (datos.js, ASCENT.ejemplos): una bajada del press de banca y cómo fue la sesión de hoy. Sin
+    // elegir, lo de la persona de la galería (nada bajó y la sesión fue como siempre).
+    let bajadaElegida = null;
+    let sesionElegida = null;
+    // «Cómo se calcula» de la sesión, desplegado.
+    let calculoAbierto = false;
     const elDia = () => A.dias[diaElegido];
     // «¿Cómo te sientes para entrenar?», de 0 a 10, en cada día de ejemplo (en la app, lo de esa mañana).
     const siente = {};
@@ -890,7 +1107,8 @@ const SeccionAscent = (() => {
     const nombreDelEjercicio = (e) => (e.id && !e.id.startsWith('propio_') ? tx('ascent.ejercicios.' + e.id) : e.ejercicio);
     const nombreDelMusculo = (m) => tx('ascent.musculos.nombres.' + m);
     /** Las sesiones del día de ejemplo: las de Ascent y, si el día suma alguna (piernas ayer), esa también. */
-    const sesionesDe = (d) => (d && d.sesionesExtra ? [...A.sesiones, ...d.sesionesExtra].sort((a, b) => a.inicio - b.inicio) : A.sesiones);
+    const sesionesBase = () => (bajadaElegida ? A.ejemplos.bajadas[bajadaElegida].sesiones : A.sesiones);
+    const sesionesDe = (d) => (d && d.sesionesExtra ? [...sesionesBase(), ...d.sesionesExtra].sort((a, b) => a.inicio - b.inicio) : sesionesBase());
     const previas = (d, en) => sesionesDe(d).filter((x) => x.inicio < en);
     // Entrena hace 6 meses o más (la primera sesión o la marca más vieja de Ascent): el ruido y la recuperación de
     // los entrenados (Conascent.entrenadoSegunAscent en la app).
@@ -1084,6 +1302,70 @@ const SeccionAscent = (() => {
       });
     }
 
+    // ------------------------------------------------------------ por qué bajaste y cómo fue (26/11, para aprobar)
+    /** Las sesiones de un ejercicio para la bajada: el 1RM estimado de su mejor serie y sus repeticiones (sin lo copiado). */
+    function puntosDeLaBajada(sesiones, e) {
+      const clave = Musculos.claveDelEjercicio(e);
+      return sesiones.flatMap((s) => {
+        let mejor = null;
+        s.bloques.filter((b) => Musculos.claveDelEjercicio(b) === clave && !b.copiada).forEach((b) => b.series.forEach((x) => {
+          const v = PuntajeMuscular.e1rm(x.peso, x.reps);
+          if (v !== null && (!mejor || v > mejor.e1rm)) mejor = { fecha: s.fecha, e1rm: v, reps: x.reps };
+        }));
+        return mejor ? [mejor] : [];
+      });
+    }
+    const medianaDe = (xs) => {
+      const o = [...xs].sort((a, b) => a - b);
+      return o.length % 2 ? o[(o.length - 1) / 2] : (o[o.length / 2 - 1] + o[o.length / 2]) / 2;
+    };
+    /** Los ejercicios de «Tu fuerza» que bajaron (TuSesion.bajadaDeFuerza), con sus razones, como los estancados. */
+    function calcularBajadas(d, fuerza) {
+      const persona = opciones.persona();
+      const ajustes = bajadaElegida ? A.ejemplos.bajadas[bajadaElegida].ajustes : {};
+      const sesiones = sesionesDe(d).filter((s) => s.fecha < Datos.HOY);
+      const conSesion = (lunes) => sesiones.some((s) => s.fecha >= lunes && s.fecha < Fechas.sumarDias(lunes, 7));
+      const baja = 'bajaSemanal' in ajustes ? ajustes.bajaSemanal : persona.cambio7 !== null && persona.cambio7 !== undefined ? (-persona.cambio7 / pesoDeHoy()) * 100 : null;
+      return fuerza.flatMap(({ e }) => {
+        const puntos = puntosDeLaBajada(sesiones, e);
+        const b = TuSesion.bajadaDeFuerza(puntos);
+        if (!b) return [];
+        const musculo = Musculos.musculosDe(e).principal[0];
+        const s = TuSesion.semanasDeLaBajada(b, Datos.HOY);
+        const semana = (l) => Estancados.semanaDeEntreno(sesiones, l, e, musculo);
+        const antes = s.antes.filter(conSesion).map(semana);
+        const ahora = s.ahora.filter(conSesion).map(semana);
+        // El ejemplo sin razón come la proteína que hace falta.
+        const moss = s.ahora.map(mossDeLaSemana).map((x) => (ajustes.proteinaPorKg ? { ...x, comida: { ...x.comida, proteina: ajustes.proteinaPorKg * pesoDeHoy() } } : x));
+        const nochesAntes = s.antes.flatMap((l) => mossDeLaSemana(l).noches);
+        const r = ProgresoCompartido.razonesDeEstancamiento({
+          antes, ahora, objetivo: ajustes.objetivo || persona.perfil.objetivo, sinDeficit: sinDeficit(), bajaSemanal: baja,
+          comida: opciones.pocasSemanas() ? moss.map((x) => ({ dias: Math.min(2, x.comida.dias), proteina: x.comida.proteina })) : moss.map((x) => x.comida),
+          pesoKg: pesoDeHoy(),
+          sueno: { antes: promedioDe(nochesAntes), ahora: opciones.pocasSemanas() ? null : promedioDe(moss.flatMap((x) => x.noches)) },
+          anios: null,
+        });
+        const ultimos = [...puntos].sort((x, y) => (x.fecha < y.fecha ? -1 : 1)).slice(-(TuSesion.SESIONES_DE_ANTES + TuSesion.SESIONES_RECIENTES));
+        const reps = (xs) => xs.map((p) => p.reps).filter((n) => n !== null);
+        const rango = b.cambioDeRango ? { a: medianaDe(reps(ultimos.slice(0, TuSesion.SESIONES_DE_ANTES))), b: medianaDe(reps(ultimos.slice(TuSesion.SESIONES_DE_ANTES))) } : null;
+        return [{ e, b, musculo, antes, ahora, r, ultimos, rango }];
+      });
+    }
+    /**
+     * Cómo fue tu último entreno (TuSesion.comoFueLaSesion): contra las sesiones de antes y con la noche de antes. En
+     * la galería, la de hoy puede ser uno de los ejemplos.
+     */
+    function calcularComoFue(d, k) {
+      if (!k.ultima) return null;
+      const ejemplo = sesionElegida && k.ultima.fecha === Datos.HOY ? A.ejemplos.piernas[sesionElegida] : null;
+      const sesion = ejemplo ? Object.assign({}, k.ultima, { bloques: ejemplo }) : k.ultima;
+      const antes = sesionesDe(d).filter((s) => s.inicio < sesion.inicio);
+      const deAnoche = Datos.NOCHES.find((n) => n.clave === sesion.fecha);
+      const noche = sesion.fecha === Datos.HOY ? (d.noche ? d.noche.dormido : null) : deAnoche ? deAnoche.dormido : null;
+      const r = TuSesion.comoFueLaSesion({ sesion, antes, nocheCorta: noche !== null && noche <= Rendimiento.NOCHE_CORTA });
+      return r ? Object.assign(r, { sesion, noche }) : null;
+    }
+
     /** Lo de hoy para «Hoy, concéntrate en»: la meta del día, con o sin la sesión anotada. */
     function entradasDelDia(d, marcaDeHoy) {
       const c = opciones.conAscent(d.sesion !== 'hecha');
@@ -1126,6 +1408,8 @@ const SeccionAscent = (() => {
           hoy: Fechas.diaDeLaSemana(Datos.HOY), sesiones: sesionesDe(d), en: ahora,
         }, opcionesAhora)),
         estancados: calcularEstancados(d, fuerza),
+        bajadas: calcularBajadas(d, fuerza),
+        comoFue: calcularComoFue(d, k),
       });
     }
 
@@ -1333,6 +1617,8 @@ const SeccionAscent = (() => {
     elegir('s-iphone', (v) => { ponerIphone(v); abrirVincular(v); });
     elegir('s-servidor', (v) => { resultado = v; });
     elegir('s-dia-ascent', (v) => ponerDia(v));
+    elegir('s-bajada', (v) => ponerBajada(v === 'ninguna' ? null : v));
+    elegir('s-sesion', (v) => ponerSesion(v === 'comoSiempre' ? null : v));
 
     // Cómo está Ascent en este iPhone cambia la entrada y la invitación de Inicio.
     function ponerIphone(v) {
@@ -1348,6 +1634,20 @@ const SeccionAscent = (() => {
       como = false;
       pintar();
       entraElContenido();
+    }
+    // Los ejemplos del 26/11: una bajada (null, la de la persona: ninguna) y cómo fue la sesión de hoy, ya hecha (null,
+    // la de la persona: como siempre; 'flojaCorta', después de una noche corta).
+    function ponerBajada(v) {
+      bajadaElegida = v || null;
+      document.querySelectorAll('#s-bajada button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.valor === (v || 'ninguna'))));
+      pintar();
+      entraElContenido();
+    }
+    function ponerSesion(v) {
+      sesionElegida = v || null;
+      calculoAbierto = false;
+      document.querySelectorAll('#s-sesion button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.valor === (v || 'comoSiempre'))));
+      ponerDia(v === 'flojaCorta' ? 'entrenoCorta' : 'entreno');
     }
     function entraElContenido() {
       contenido.classList.remove('as-entra');
@@ -1805,6 +2105,7 @@ const SeccionAscent = (() => {
         textos.append(el('span', 'as-ultimo-etq', tx('ascent.ultimo.titulo')), el('span', 'as-ultimo-texto', tx('ascent.ultimo.texto', { dia: cuando, musculos: nombres.join(', ') })));
         u2.appendChild(textos);
         c.appendChild(u2);
+        if (k.comoFue) c.appendChild(notaDeLaSesion(k.comoFue));
       }
       if (d.sesion === 'prevista') c.appendChild(sienteHoy(d));
       // «¿Por qué no hay un porcentaje?»: dos líneas llanas, y de ahí a «En qué se basa».
@@ -2060,9 +2361,12 @@ const SeccionAscent = (() => {
       c.appendChild(linea('as-una', tx('ascent.fuerza.texto')));
       const ul = el('ul', 'as-fuerza-lista');
       k.fuerza.forEach(({ e, t, puntos }) => {
-        const li = el('li', 'as-fuerza-ej ' + t.estado);
+        // Si bajó (26/11, para aprobar), lo dice en vez de la tendencia: el porqué está en «Por qué bajaste».
+        const bajo = k.bajadas.find((x) => x.e.id === e.id);
+        const li = el('li', 'as-fuerza-ej ' + t.estado + (bajo ? ' baja' : ''));
         const textos = el('div');
-        const [v, dato] = veredicto(t);
+        const [v0, dato] = veredicto(t);
+        const v = bajo ? tx('ascent.bajo.enFuerza', { n: numero(Math.round(bajo.b.caida)) }) : v0;
         textos.append(el('span', 'as-fuerza-nombre', nombreDelEjercicio(e)), el('span', 'as-fuerza-veredicto', v), el('span', 'as-fuerza-dato', dato));
         li.appendChild(textos);
         li.insertAdjacentHTML('beforeend', chispa(t, puntos));
@@ -2245,6 +2549,187 @@ const SeccionAscent = (() => {
       });
       if (k.estancados.some((e) => e.r.anios !== null)) c.appendChild(linea('as-contexto', tx('ascent.estancados.anios')));
       c.appendChild(linea('as-nota', tx('ascent.estancamiento.nota')));
+      return c;
+    }
+
+    // ------------------------------------------------------------ por qué bajaste (26/11, para aprobar)
+    /** Las 12 sesiones en puntos: las 8 de antes y las 4 de ahora, cada grupo con su promedio, separadas por una raya. */
+    function graficoDeLaBajada(x) {
+      const W = 300, H = 66, M = 6;
+      const n = TuSesion.SESIONES_DE_ANTES;
+      const vals = x.ultimos.map((p) => p.e1rm);
+      const lo = Math.min(...vals, x.b.ahora), hi = Math.max(...vals, x.b.antes);
+      const pad = (hi - lo) * 0.22 || 2;
+      const corte = W * 0.665;
+      const X = (i) => (i < n ? M + (i * (corte - 14 - M)) / (n - 1) : corte + 14 + ((i - n) * (W - M - corte - 14)) / (x.ultimos.length - n - 1));
+      const Y = (v) => H - M - ((v - (lo - pad)) / (hi - lo + 2 * pad)) * (H - 2 * M);
+      const linea2 = (x1, x2, y, clase) => `<line class="as-bajo-media ${clase}" x1="${x1.toFixed(1)}" x2="${x2.toFixed(1)}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"/>`;
+      let svg = `<line class="as-bajo-corte" x1="${corte}" x2="${corte}" y1="2" y2="${H - 2}"/>`;
+      svg += linea2(X(0) - 4, X(n - 1) + 4, Y(x.b.antes), '') + linea2(X(n) - 4, X(x.ultimos.length - 1) + 4, Y(x.b.ahora), 'ahora');
+      svg += x.ultimos.map((p, i) => `<circle class="as-bajo-punto${i >= n ? ' ahora' : ''}" cx="${X(i).toFixed(1)}" cy="${Y(p.e1rm).toFixed(1)}" r="${i >= n ? 3.2 : 2.6}" style="animation-delay:${i * 35}ms"/>`).join('');
+      const kg = (v) => numero(Math.round(v * 10) / 10, 1);
+      return `<svg class="as-bajo-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${tx('ascent.bajo.grafico', { antes: kg(x.b.antes), ahora: kg(x.b.ahora) })}">${svg}</svg>`;
+    }
+    /** Lo que conviene cambiar por cada razón, con lo que respaldan las guías; la pausa y el rango, aparte. */
+    function queCambiar(x) {
+      const acciones = [];
+      const v1 = (n) => numero(Math.round(n * 2) / 2, Math.round(n * 2) % 2 ? 1 : 0);
+      if (x.b.pausa) acciones.push(tx('ascent.bajo.hacer.pausa'));
+      if (x.rango) acciones.push(tx('ascent.bajo.hacer.rango'));
+      x.r.razones.forEach((r) => {
+        if (r.que === 'series') acciones.push(tx('ascent.bajo.hacer.series', { n: numero(Math.round(r.antes)), musculo: nombreDelMusculo(x.musculo).toLowerCase() }));
+        else if (r.que === 'frecuencia') acciones.push(tx('ascent.bajo.hacer.frecuencia', { n: v1(r.antes) }));
+        else if (r.que === 'proteina') acciones.push(conNumeros() ? tx('ascent.bajo.hacer.proteina', { g: numero(Math.round((ProgresoCompartido.PROTEINA_POR_KG * pesoDeHoy()) / 5) * 5) }) : tx('ascent.bajo.hacer.proteinaSinNumeros'));
+        else if (r.que === 'sueno') acciones.push(tx('ascent.bajo.hacer.sueno', { horas: u.duracion(necesidad) }));
+        else acciones.push(tx('ascent.bajo.hacer.' + r.que));
+      });
+      if (!acciones.length) acciones.push(tx('ascent.bajo.hacer.sinRazon'));
+      return acciones;
+    }
+    function parteBajo(d, k) {
+      if (!k.bajadas.length) return null;
+      const c = parte('as-bajo', tx('ascent.bajo.titulo'), el('span', 'as-derecha', tx('ascent.bajo.derecha')));
+      c.appendChild(linea('as-una', tx('ascent.bajo.texto')));
+      k.bajadas.forEach((x) => {
+        const g = el('article', 'as-bajo-ej');
+        const cab = el('header', 'as-estanc-ej-cab');
+        cab.append(el('span', 'as-estanc-ej-nombre', nombreDelEjercicio(x.e)), el('span', 'as-estanc-ej-dato as-bajo-dato', tx('ascent.bajo.dato', { n: numero(Math.round(x.b.caida)), desde: u.fechaCorta(x.b.desde) })));
+        g.appendChild(cab);
+        g.insertAdjacentHTML('beforeend', graficoDeLaBajada(x));
+        const kg = (v) => numero(Math.round(v * 10) / 10, 1);
+        const leyenda = el('div', 'as-bajo-leyenda');
+        leyenda.append(el('span', null, tx('ascent.bajo.antes', { kg: kg(x.b.antes) })), el('span', 'ahora', tx('ascent.bajo.ahora', { kg: kg(x.b.ahora) })));
+        g.appendChild(leyenda);
+        // Lo que cambia la lectura del número: la pausa y el rango de repeticiones.
+        if (x.b.pausa) g.appendChild(linea('as-contexto', tx('ascent.bajo.pausa', { n: x.b.pausa })));
+        if (x.rango) g.appendChild(linea('as-contexto', tx('ascent.bajo.rango', { a: numero(x.rango.a), b: numero(x.rango.b) })));
+        g.appendChild(el('h4', 'as-bajo-sub', tx('ascent.bajo.porQue')));
+        if (x.r.razones.length) {
+          const ul = el('ul', 'as-razones');
+          x.r.razones.forEach((r) => ul.appendChild(razon(r, x)));
+          g.appendChild(ul);
+        } else g.appendChild(linea('as-razon-sin', x.b.pausa || x.rango ? tx('ascent.estancados.sinCausa') : tx('ascent.bajo.sinRazon')));
+        if (x.r.faltan.includes('comida') || x.r.faltan.includes('sueno')) g.appendChild(linea('as-nota', tx('ascent.estancados.faltan')));
+        g.appendChild(el('h4', 'as-bajo-sub', tx('ascent.bajo.queCambiar')));
+        const hacer = el('ul', 'as-hacer');
+        queCambiar(x).forEach((t) => hacer.appendChild(el('li', null, t)));
+        g.appendChild(hacer);
+        c.appendChild(g);
+      });
+      if (k.bajadas.some((x) => x.r.razones.length)) c.appendChild(linea('as-nota', tx('ascent.estancamiento.nota')));
+      return c;
+    }
+
+    // ------------------------------------------------------------ cómo fue tu sesión (26/11, para aprobar)
+    /** El bloque de un ejercicio en la sesión, por su nombre (el que devuelve TuSesion). */
+    const bloqueDe = (cf, nombre) => cf.sesion.bloques.find((b) => b.ejercicio === nombre);
+    const nombreEnLaSesion = (cf, nombre) => { const b = bloqueDe(cf, nombre); return b ? nombreDelEjercicio(b) : nombre; };
+    /** Las series de trabajo con el mismo peso que la primera, como las mira TuSesion para la caída. */
+    function seriesConElMismoPeso(b) {
+      const series = b.series.filter((x) => x.peso > 0 && x.reps !== null && x.reps >= 1);
+      if (!series.length) return [];
+      return series.filter((x) => Math.abs(x.peso - series[0].peso) <= TuSesion.MISMO_PESO * series[0].peso);
+    }
+    function porqueDeLaSesion(cf) {
+      if (cf.nota === 'dura') {
+        const f = cf.fallo[0];
+        if (f) {
+          const b = bloqueDe(cf, f.ejercicio);
+          const nombre = enFrase(nombreEnLaSesion(cf, f.ejercicio));
+          if (f.caida === null || f.caida < TuSesion.CAIDA_CERCA_DEL_FALLO) return tx('ascent.sesion.porque.alFallo', { ejercicio: nombre, n: f.alFallo });
+          const s = seriesConElMismoPeso(b);
+          return tx('ascent.sesion.porque.fallo', { ejercicio: nombre, a: s[0].reps, b: s[s.length - 1].reps });
+        }
+        const v = cf.volumen[0];
+        return tx('ascent.sesion.porque.volumen', { n: numero(Math.round(v.series * 2) / 2, v.series % 1 ? 1 : 0), musculo: nombreDelMusculo(v.musculo).toLowerCase() });
+      }
+      if (cf.nota === 'floja') {
+        const n = cf.rendimiento.filter((r) => r.como === 'abajo').length;
+        return n === cf.rendimiento.length ? tx('ascent.sesion.porque.flojaTodo') : tx('ascent.sesion.porque.floja', { n, de: cf.rendimiento.length });
+      }
+      if (cf.nota === 'buena') return tx('ascent.sesion.porque.buena', { ejercicios: lista(cf.rendimiento.filter((r) => r.como === 'arriba').map((r) => enFrase(nombreEnLaSesion(cf, r.ejercicio)))) });
+      return tx(cf.rendimiento.length ? 'ascent.sesion.porque.comoSiempre' : 'ascent.sesion.porque.comoSiempreSinComparar');
+    }
+    function implicaDeLaSesion(cf) {
+      if (cf.nota === 'dura') {
+        if (!cf.fallo.length) return tx('ascent.sesion.implica.volumen');
+        const musculos = [...new Set(cf.fallo.flatMap((f) => { const b = bloqueDe(cf, f.ejercicio); const m = b && Musculos.musculosDe(b); return m ? m.principal : []; }))];
+        return tx('ascent.sesion.implica.fallo', { musculos: listaDeMusculos(musculos) });
+      }
+      if (cf.nota === 'floja') return cf.nocheCorta ? tx('ascent.sesion.implica.flojaCorta', { horas: horasDe(cf.noche) }) : tx('ascent.sesion.implica.floja');
+      return tx('ascent.sesion.implica.' + cf.nota);
+    }
+    /** Cada ejercicio contra lo tuyo, en una escala de −15 a +15 %, con la franja del día normal (±6 %). */
+    function contraLoTuyo(cf) {
+      const caja = el('div');
+      caja.appendChild(el('p', 'as-sesion-datos-etq', tx('ascent.sesion.contraLoTuyo')));
+      const ul = el('ul', 'as-sesion-datos');
+      cf.rendimiento.forEach((r) => {
+        const li = el('li', 'as-tuyo ' + r.como);
+        const escala2 = el('span', 'as-tuyo-escala');
+        escala2.append(el('i', 'as-tuyo-franja'), el('i', 'as-tuyo-centro'));
+        const punto = el('i', 'as-tuyo-punto');
+        punto.style.left = `${(50 + (clamp(r.diferencia, -15, 15) / 15) * 50).toFixed(1)}%`;
+        escala2.appendChild(punto);
+        const valor = `${u.conSigno(Math.round(r.diferencia), 0)} %`;
+        li.append(el('span', 'as-tuyo-nombre', nombreEnLaSesion(cf, r.ejercicio)), escala2, el('span', 'as-tuyo-valor', valor));
+        li.setAttribute('aria-label', `${nombreEnLaSesion(cf, r.ejercicio)}: ${valor}`);
+        ul.appendChild(li);
+      });
+      caja.append(ul, linea('as-sesion-franja', tx('ascent.sesion.franja')));
+      return caja;
+    }
+    /** Las repeticiones de cada serie con el mismo peso, en barras: la primera clara y las que cayeron, en terracota. */
+    function repsQueCayeron(cf, f) {
+      const b = bloqueDe(cf, f.ejercicio);
+      const s = b ? seriesConElMismoPeso(b) : [];
+      if (s.length < 2) return null;
+      const c = el('div', 'as-reps');
+      const nombre = el('span', 'as-reps-nombre', nombreEnLaSesion(cf, f.ejercicio));
+      nombre.appendChild(el('small', null, tx('ascent.sesion.reps', { kg: u.peso(s[0].peso) })));
+      const barras = el('span', 'as-reps-barras');
+      const tope = Math.max(...s.map((x) => x.reps));
+      s.forEach((x, i) => {
+        const i2 = el('i');
+        i2.style.height = `${Math.max(10, (x.reps / tope) * 100).toFixed(0)}%`;
+        i2.style.animationDelay = `${i * 60}ms`;
+        i2.appendChild(el('b', null, String(x.reps)));
+        barras.appendChild(i2);
+      });
+      barras.setAttribute('role', 'img');
+      barras.setAttribute('aria-label', s.map((x) => x.reps).join(', '));
+      c.append(nombre, barras);
+      return c;
+    }
+    function notaDeLaSesion(cf) {
+      const c = el('div', 'as-sesion ' + cf.nota);
+      const cab = el('div');
+      cab.append(el('span', 'as-sesion-etq', tx('ascent.sesion.titulo')), el('p', 'as-sesion-palabra', tx('ascent.sesion.palabras.' + cf.nota)));
+      c.append(cab, linea('as-sesion-porque', porqueDeLaSesion(cf)));
+      // Los datos a la vista: lo que se cayó, las series de más y cada ejercicio contra lo tuyo.
+      cf.fallo.forEach((f) => { const r = repsQueCayeron(cf, f); if (r) c.appendChild(r); });
+      cf.volumen.forEach((v) => {
+        const fila2 = el('div', 'as-sesion-musculo');
+        const n = numero(Math.round(v.series * 2) / 2, v.series % 1 ? 1 : 0);
+        fila2.append(el('span', null, nombreDelMusculo(v.musculo)), el('span', null, tx('ascent.sesion.seriesHoy', { n })));
+        c.append(fila2, escala(v.series, 16, [[TuSesion.SERIES_QUE_SUMAN_POCO, tx('ascent.sesion.raya')]], { limita: true, etiqueta: tx('ascent.sesion.seriesHoy', { n }) }));
+      });
+      // Como siempre, la línea alcanza: lo de todos los días no ocupa lugar.
+      if (cf.nota !== 'comoSiempre') {
+        if (cf.rendimiento.length) c.appendChild(contraLoTuyo(cf));
+        c.appendChild(linea('as-sesion-implica', implicaDeLaSesion(cf)));
+      }
+      // Cómo se calcula, plegado: sus límites, sin puntaje.
+      const caja = el('div', 'as-explicacion');
+      tx('ascent.sesion.calculo').forEach((p) => caja.appendChild(el('p', null, p)));
+      caja.hidden = !calculoAbierto;
+      const b = boton('as-enlace', tx('ascent.sesion.comoSeCalcula'), () => {
+        calculoAbierto = !calculoAbierto;
+        b.setAttribute('aria-expanded', String(calculoAbierto));
+        desplegar(caja, calculoAbierto);
+      });
+      b.setAttribute('aria-expanded', String(calculoAbierto));
+      c.append(b, caja);
       return c;
     }
 
@@ -2462,7 +2947,7 @@ const SeccionAscent = (() => {
         const k = calcularDia(d);
         principal.append(el('p', 'as-etq as-nombre', tx('ascent.titulo')), cabezaDelDia(d, k));
         const resto = [
-          parteFoco(d, k), parteFilas(d, k), parteCuerpo(d, k), parteFuerza(d, k), parteMarcas(d, k), parteEstancamiento(d, k),
+          parteFoco(d, k), parteFilas(d, k), parteCuerpo(d, k), parteFuerza(d, k), parteMarcas(d, k), parteBajo(d, k), parteEstancamiento(d, k),
           parteAnio(), parteComparten(d), parteComo(),
         ].filter(Boolean);
         principal.before(...resto.reverse());
@@ -2637,6 +3122,9 @@ const SeccionAscent = (() => {
       invitacion,
       ponerIphone,
       ponerDia,
+      // Los ejemplos del 26/11, para aprobar: por qué bajaste y cómo fue tu sesión.
+      ponerBajada,
+      ponerSesion,
       // Tu rango en Ascent (1 a 7; en el 4, el planeta del día).
       ponerRango,
       get rango() { return rangoActual; },

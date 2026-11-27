@@ -372,13 +372,48 @@ const Datos = (() => {
       sinSueno: { ahora: 15 * 60 + 30, sesion: 'prevista', noche: null, ultimas3: [], deuda: null, anotado: MANANA },
       // Sin reloj y sin contestar a la mañana: la noche sin calidad. Es un dato que falta, no un dato malo.
       sinCalidad: { ahora: 9 * 60 + 10, sesion: 'prevista', noche: noche(470, null), ultimas3: [470, 455, 470], deuda: 40, anotado: { desayuno: MANANA.desayuno } },
+      // Ya entrenó, después de una noche de 5 h 40: para «Cómo fue tu sesión» con la noche corta.
+      entrenoCorta: { ahora: 20 * 60 + 10, sesion: 'hecha', noche: noche(340, 52, { despertoAntes: 75 }), ultimas3: [340, 455, 470], deuda: 150, anotado: { ...MANANA, merienda: { hora: 17 * 60 + 30, p: 15, c: 55, g: 15, kcal: 395 } } },
     };
+
+    // Para aprobar (26/11, spec/estudio/vinculo-ascent.md): los ejemplos de «Por qué bajaste» y de «Cómo fue tu sesión».
+    // Las bajadas son del press de banca, en sus últimas 4 sesiones (desde el lunes 28 de septiembre), y cada una trae
+    // sus sesiones y lo que cambia de la persona:
+    // - series: 3 series de 75 kg y sin el press inclinado (menos series de pecho), bajando más de un 1 % por semana;
+    // - rango: pasó a series de 10 con 65 kg (el 1RM estimado baja aunque la fuerza no; casi nada pesado);
+    // - pausa: tres semanas sin entrenar (del 22 de septiembre al 11 de octubre) y de vuelta con menos peso;
+    // - sinRazon: 75 kg con las mismas series, manteniendo su peso y con 1,8 g de proteína por kilo (la persona de la
+    //   galería come 1,5): ninguna razón a la vista.
+    // Las sesiones son la de hoy (piernas, ya hecha), cambiada: buena (más peso), dura (las repeticiones caen a la
+    // mitad, o muchas series de cuádriceps), floja (menos que lo suyo) y floja después de una noche corta.
+    const DESDE_LA_BAJADA = '2026-09-28';
+    const enLaBajada = (s) => s.fecha >= DESDE_LA_BAJADA && s.fecha < HOY && Fechas.diaDeLaSemana(s.fecha) === 1;
+    const conBanca = (s, banca, sacar = []) => Object.assign({}, s, { bloques: [banca, ...s.bloques.filter((x) => x.id !== 'press_banca' && !sacar.includes(x.id))] });
+    const PAUSA = ['2026-09-22', '2026-10-11'];
+    const bajadas = {
+      series: { sesiones: sesiones.map((s) => (enLaBajada(s) ? conBanca(s, b('press_banca', 3, 75, 5), ['press_inclinado_mancuernas']) : s)), ajustes: { bajaSemanal: 1.2 } },
+      rango: { sesiones: sesiones.map((s) => (enLaBajada(s) ? conBanca(s, b('press_banca', 4, 65, 10)) : s)), ajustes: {} },
+      pausa: {
+        sesiones: sesiones.filter((s) => s.fecha < PAUSA[0] || s.fecha > PAUSA[1]).map((s) => (s.fecha === '2026-10-12' ? conBanca(s, b('press_banca', 4, 70, 5)) : s.fecha === '2026-10-19' ? conBanca(s, b('press_banca', 4, 72.5, 5)) : s)),
+        ajustes: {},
+      },
+      sinRazon: { sesiones: sesiones.map((s) => (enLaBajada(s) ? conBanca(s, b('press_banca', 4, 75, 5)) : s)), ajustes: { objetivo: 'mantener', proteinaPorKg: 1.8 } },
+    };
+    const resto = BLOQUES[3](HOY).slice(2);
+    const piernas = {
+      buena: [b('sentadilla', 5, 112.5, 5), b('prensa', 3, 190, 10), ...resto],
+      dura: [Object.assign(b('sentadilla', 4, 105, 5), { series: [8, 6, 5, 4].map((reps) => ({ peso: 105, reps })) }), b('prensa', 3, 180, 10), ...resto],
+      duraSeries: [b('sentadilla', 5, 100, 5), b('prensa', 4, 180, 10), b('zancadas', 3, 20, 10), ...resto],
+      floja: [b('sentadilla', 5, 95, 5), b('prensa', 3, 160, 10), ...resto],
+    };
+    piernas.flojaCorta = piernas.floja;
     return {
       vinculadaDesde: '2026-10-03',
       // Las sesiones con detalle empiezan acá (en la app, Ascent manda las de 12 semanas o desde el 1 de enero).
       desde: DESDE,
       dias,
       sesiones,
+      ejemplos: { bajadas, piernas },
       rutina,
       umbral,
       anioDias,

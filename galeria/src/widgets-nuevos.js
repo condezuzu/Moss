@@ -521,10 +521,7 @@ const WidgetsNuevos = (() => {
       mas.innerHTML = icono('mas');
       const cambiar = (n) => (ev) => {
         ev.stopPropagation();
-        const base = aguaBase();
-        s.vasos = Math.max(-base, Math.min(MAX_VASOS - base, s.vasos + n));
-        pintar();
-        o.alCambiar();
+        cambiarVasos(n);
       };
       menos.addEventListener('click', cambiar(-1));
       mas.addEventListener('click', cambiar(1));
@@ -546,6 +543,13 @@ const WidgetsNuevos = (() => {
       return w;
     }
     const aguaBase = () => (s.momento === 'noche' ? comidaSec().agua().vasos : 0);
+    // Un vaso más o uno menos, tocado en un widget del agua: lo ven todos los que lo muestran.
+    function cambiarVasos(n) {
+      const base = aguaBase();
+      s.vasos = Math.max(-base, Math.min(MAX_VASOS - base, s.vasos + n));
+      pintar();
+      o.alCambiar();
+    }
 
     // ------------------------------------------------------------ La noche, en la pantalla de inicio
     function nocheChico() {
@@ -913,6 +917,8 @@ const WidgetsNuevos = (() => {
       // y el mismo día, los mismos toques y el mismo «Sí».
       piezas: {
         hoyChico, hoyMediano, hoyGrande, hoyRectangular, nuevaLuna, conFondo, elDia, macrosDe, cifraDe, estadoDe, alTocarFila, comidaDeAhora, poner, icono,
+        // El agua sin meta (26/11): el de ahora, para ponerlo al lado, y los mismos vasos.
+        aguaChico, cambiarVasos, vasosDeHoy: () => aguaBase() + s.vasos,
         alPintar: (f) => pintores.push(f),
         get momento() { return s.momento; },
         get confirmada() { return s.confirmada; },

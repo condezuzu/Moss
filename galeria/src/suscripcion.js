@@ -5,8 +5,45 @@
 // en chico), cuánto dura la prueba y lo que se cobra después, junto al botón, restaurar, los términos y la
 // privacidad. No se salta, y no borra nada: exportar, cerrar sesión y borrar la cuenta siempre están.
 // Las cuentas del precio son las de la app (src/dominio/premium.ts). La hoja de Apple es un dibujo.
+// Elegir un plan durante el regalo (26/11/2026, para aprobar; spec/bugs.md, tanda A, «Lo que quedó»): quien tiene el
+// regalo de 3 meses puede suscribirse antes, desde Tu suscripción («Elegir un plan») o desde el aviso «Elige tu plan
+// de Moss», que abre la pantalla de pago y no Perfil. Como todavía tiene acceso, la pantalla lleva «Ahora no», y junto
+// a los planes dice que el plan empieza el día que se elige, no cuando termina el regalo. La prueba de 7 días es de
+// Apple (una por persona y por grupo de suscripciones, sin importar el regalo de Moss): la app la muestra si Apple dice
+// que le corresponde. Ya suscrita, manda la suscripción (acceso() la mira antes que el regalo), y el regalo no se pierde:
+// si cancela, al vencer vuelve a él hasta su último día.
 
 const Suscripcion = (() => {
+  // Lo nuevo, con las claves que tendría en src/textos, hasta que se apruebe.
+  const TEXTOS_NUEVOS = {
+    es: { suscripcion: {
+      regalo: {
+        sigue: 'Tu regalo sigue hasta el {fecha}.',
+        empiezaHoy: 'Si eliges un plan ahora, empieza hoy, no cuando termina el regalo.',
+        empiezaHoySinPrueba: 'Si eliges un plan ahora, empieza y se cobra hoy, no cuando termina el regalo.',
+        siCancelas: 'Si cancelas durante la prueba, no se cobra nada y sigues con tu regalo hasta el {fecha}.',
+      },
+      hoja: { elegirPlan: 'Elegir un plan', conRegalo: 'Tu regalo sigue hasta el {fecha}: si cancelas, no lo pierdes.' },
+    } },
+    en: { suscripcion: {
+      regalo: {
+        sigue: 'Your gift lasts until {fecha}.',
+        empiezaHoy: 'If you pick a plan now, it starts today, not when the gift ends.',
+        empiezaHoySinPrueba: 'If you pick a plan now, it starts and is charged today, not when the gift ends.',
+        siCancelas: 'If you cancel during the trial, you won’t be charged and your gift continues until {fecha}.',
+      },
+      hoja: { elegirPlan: 'Pick a plan', conRegalo: 'Your gift lasts until {fecha}: if you cancel, you keep it.' },
+    } },
+  };
+  const completar = (destino, origen) => Object.entries(origen).forEach(([k, v]) => {
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      if (!destino[k] || typeof destino[k] !== 'object') destino[k] = {};
+      completar(destino[k], v);
+    } else if (destino[k] == null) destino[k] = v;
+  });
+  if (typeof TEXTOS !== 'undefined' && TEXTOS) ['es', 'en'].forEach((i) => { if (TEXTOS[i]) completar(TEXTOS[i], TEXTOS_NUEVOS[i]); });
+  const REGALO = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="9.5" width="15" height="10.5" rx="1.5"/><path d="M3.5 7h17v2.5h-17zM12 7v13"/><path d="M12 7c-1.2-3-5-3.6-5-1.6C7 6.8 9.5 7 12 7zM12 7c1.2-3 5-3.6 5-1.6C17 6.8 14.5 7 12 7z"/></svg>';
+
   const CSS = `
 .tel .sb { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; color: var(--tinta); background: radial-gradient(120% 60% at 50% 0%, rgba(30, 42, 84, 0.95), rgba(9, 12, 26, 1) 70%), #090c1a; animation: sb-entra 0.42s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 .sb[hidden] { display: none; }
@@ -171,6 +208,23 @@ const Suscripcion = (() => {
 .sb-pase-puntos { display: flex; justify-content: center; gap: 7px; }
 .sb-pase-puntos button { appearance: none; cursor: pointer; width: 7px; height: 7px; padding: 0; border: 0; border-radius: 50%; background: rgba(239, 230, 207, 0.25); transition: background 0.3s ease, transform 0.3s ease; }
 .sb-pase-puntos button[aria-current='true'] { background: var(--oro-claro); transform: scale(1.25); }
+
+/* Elegir un plan durante el regalo (26/11, para aprobar): «Ahora no» arriba, siempre a la mano, y lo del regalo
+   junto a los planes. */
+.sb-ahora-no { position: absolute; top: calc(var(--arriba) - 4px); right: 14px; z-index: 2; appearance: none; cursor: pointer; padding: 9px 14px; border-radius: 999px; border: 1px solid rgba(239, 230, 207, 0.18); background: rgba(9, 12, 26, 0.88); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: rgba(239, 230, 207, 0.86); font: 400 13.5px/1 var(--texto); animation: sb-aparece 0.36s 0.12s ease both; transition: transform 0.15s; }
+.sb-ahora-no:active { transform: scale(0.96); }
+.sb-pago.con-regalo .sb-scroll { padding-top: calc(var(--arriba) + 44px); }
+.sb-regalo-nota { display: flex; align-items: flex-start; gap: 9px; margin: 0 0 3px; font: 400 12.5px/1.38 var(--texto); color: rgba(239, 230, 207, 0.78); text-wrap: pretty; }
+.sb-regalo-nota svg { flex: none; width: 16px; height: 16px; margin-top: 1px; fill: none; stroke: var(--oro-claro); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.sb-regalo-nota b { font-weight: 500; color: var(--oro-claro); }
+.sb-secundario { appearance: none; cursor: pointer; width: 100%; min-height: 48px; margin-top: 10px; border-radius: 15px; border: 1px solid rgba(232, 196, 106, 0.45); background: rgba(232, 196, 106, 0.06); color: var(--oro-claro); font: 500 15.5px/1 var(--texto); transition: transform 0.15s, background 0.2s; }
+.sb-secundario:active { transform: scale(0.98); background: rgba(232, 196, 106, 0.12); }
+/* El aviso en la pantalla bloqueada: las piezas de avisos.js (.ab). */
+.sb-bloqueo .ab-reloj { margin-top: calc(var(--arriba) - 6px); }
+@media (prefers-reduced-motion: reduce) {
+  .sb-ahora-no { animation-duration: 0.01s; animation-delay: 0s; transition: none; }
+  .sb-secundario { transition: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   .sb-bv-estrella { animation: none; transform: rotate(45deg); }
   .sb-bv-cielo i { animation: none; opacity: 0.45; }
@@ -262,15 +316,19 @@ const Suscripcion = (() => {
     const hoja = Util.hoja(tel, 'sb-hoja', () => opciones.alCambiar && opciones.alCambiar());
 
     // acceso: el de la app (Premium.acceso). `conAlgo`: si en esta cuenta de Apple hay algo para restaurar.
-    const s = { plan: 'anual', vista: 'pago', acceso: 'prueba', sinConexion: false, enCurso: false, nota: null, conAlgo: false, deLaPrueba: true, cancelada: false, sinAvisos: false, tengo: 'anual', despues: null, cierre: 0, hoja: 0 };
+    // Del regalo (26/11): `hoy`, el día en que se mira (desde el aviso, dos días antes de que termine; si no, el de la
+    // galería); `conRegalo`, que se suscribió con el regalo vigente; `sinPrueba`, que esta cuenta de Apple ya usó la
+    // prueba; `diasPasados`, los días de prueba que ya pasaron (recién suscrita, ninguno).
+    const s = { plan: 'anual', vista: 'pago', acceso: 'prueba', sinConexion: false, enCurso: false, nota: null, conAlgo: false, deLaPrueba: true, cancelada: false, sinAvisos: false, tengo: 'anual', despues: null, cierre: 0, hoja: 0, hoy: null, conRegalo: false, sinPrueba: false, diasPasados: 2 };
 
     const usd = (v) => `USD ${numero(v, 2)}`;
     const precioDe = (plan) => usd(Premium.PRECIOS[plan]);
     const conPrecio = (plan) => tx(`suscripcion.${plan}.precioDe`, { precio: precioDe(plan) });
-    const conPrueba = () => s.acceso !== 'vencida';
+    const conPrueba = () => s.acceso !== 'vencida' && !s.sinPrueba;
     const dias = Premium.DIAS_DE_PRUEBA;
+    const hoy = () => s.hoy || Datos.HOY;
     /** El día en que termina la prueba: de hoy en una semana. */
-    const finDeLaPrueba = () => Fechas.sumarDias(Datos.HOY, dias);
+    const finDeLaPrueba = () => Fechas.sumarDias(hoy(), dias);
 
     function linea() {
       const c = el('section', 'sb-linea');
@@ -348,8 +406,19 @@ const Suscripcion = (() => {
     };
     const textoLegal = () => (conPrueba() ? tx('suscripcion.legal', { n: dias, precio: conPrecio(s.plan) }) : tx('suscripcion.legalSinPrueba', { precio: conPrecio(s.plan) }));
 
+    /** Junto a los planes, con el regalo vigente: hasta cuándo sigue y que el plan empieza el día que se elige. */
+    function notaDelRegalo() {
+      const p = el('p', 'sb-regalo-nota');
+      p.innerHTML = REGALO;
+      const texto = el('span');
+      texto.append(el('b', null, tx('suscripcion.regalo.sigue', { fecha: diaDe(finDelRegalo()) })), ' ', tx(conPrueba() ? 'suscripcion.regalo.empiezaHoy' : 'suscripcion.regalo.empiezaHoySinPrueba'));
+      p.appendChild(texto);
+      return p;
+    }
+
     function pie() {
       const c = el('div', 'sb-pie' + (s.sinConexion ? ' sb-sin-conexion' : ''));
+      if (s.acceso === 'regalo') c.appendChild(notaDelRegalo());
       const planes = el('div', 'sb-planes');
       planes.setAttribute('role', 'radiogroup');
       planes.append(plan('anual'), plan('mensual'));
@@ -364,7 +433,10 @@ const Suscripcion = (() => {
 
     function pago() {
       const vencida = s.acceso === 'vencida';
-      const c = el('div', 'sb-pago');
+      const regalo = s.acceso === 'regalo';
+      const c = el('div', 'sb-pago' + (regalo ? ' con-regalo' : ''));
+      // Con el regalo todavía tiene acceso: se puede dejar para después.
+      if (regalo) c.appendChild(boton('sb-ahora-no', tx('suscripcion.bienvenida.ahoraNo'), terminar));
       const cont = el('div', 'sb-scroll');
       const cab = el('div', 'sb-cab');
       cab.append(
@@ -377,7 +449,7 @@ const Suscripcion = (() => {
       tx('suscripcion.pago.todo').forEach((t) => ul.appendChild(el('li', null, t)));
       todo.append(el('h3', 'sb-rotulo', tx('suscripcion.pago.todoTitulo')), ul);
       cont.appendChild(todo);
-      if (!vencida) cont.appendChild(linea());
+      if (conPrueba()) cont.appendChild(linea());
       c.append(cont, pie());
       return c;
     }
@@ -426,6 +498,9 @@ const Suscripcion = (() => {
         setTimeout(() => {
           s.enCurso = false;
           s.tengo = s.plan;
+          // Suscrita con el regalo vigente: manda la suscripción, y el regalo queda detrás.
+          if (s.acceso === 'regalo') s.conRegalo = true;
+          s.diasPasados = 0;
           ponerAcceso(conPrueba() ? 'prueba' : 'activa');
           s.vista = 'listo';
           pintar();
@@ -470,6 +545,7 @@ const Suscripcion = (() => {
     // hoy; en la app, finDelRegalo de src/dominio/premium.ts).
     const MESES_DE_REGALO = 3;
     const finDelRegalo = () => { const p = u.partes(Datos.HOY); return new Date(p.anio, p.mes + MESES_DE_REGALO, p.num); };
+    const claveDe = (f) => `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}-${String(f.getDate()).padStart(2, '0')}`;
     const diaDe = (f, corto) => tx(corto ? 'fecha.corta' : 'suscripcion.bienvenida.fecha', { num: f.getDate(), mes: tx((corto ? 'fecha.mesesCortos.' : 'fecha.meses.') + f.getMonth()) });
     /** Las capturas del pase, en el orden en que se cuentan (assets/novedades, de la app de verdad). */
     const NOVEDADES_ORDEN = ['widgets', 'comida', 'buscar', 'sueno', 'energia', 'musculos'];
@@ -566,8 +642,11 @@ const Suscripcion = (() => {
         if (nota) c.appendChild(el('p', 'sb-listo-nota', nota));
         c.appendChild(seguir);
       };
+      // Con el regalo detrás, si dura más que la prueba: cancelar a tiempo no cobra nada y vuelve al regalo.
+      const regaloDespues = s.conRegalo && claveDe(finDelRegalo()) > finDeLaPrueba();
+      const nota = s.sinAvisos ? tx('suscripcion.listo.sinAvisos') : regaloDespues ? tx('suscripcion.regalo.siCancelas', { fecha: diaDe(finDelRegalo()) }) : null;
       if (s.vista === 'restaurada') con(tx('suscripcion.restaurada.titulo'), tx('suscripcion.restaurada.texto'));
-      else if (s.acceso === 'prueba') con(tx('suscripcion.listo.titulo', { n: dias }), tx('suscripcion.listo.texto', { fecha: fechaLarga(finDeLaPrueba()), precio: conPrecio(s.tengo) }), s.sinAvisos ? tx('suscripcion.listo.sinAvisos') : null);
+      else if (s.acceso === 'prueba') con(tx('suscripcion.listo.titulo', { n: dias }), tx('suscripcion.listo.texto', { fecha: fechaLarga(finDeLaPrueba()), precio: conPrecio(s.tengo) }), nota);
       else con(tx('suscripcion.listo.tituloSinPrueba'), tx('suscripcion.listo.textoSinPrueba', { precio: conPrecio(s.tengo) }));
       return c;
     }
@@ -588,24 +667,68 @@ const Suscripcion = (() => {
       s.despues = null;
       if (despues) despues();
     }
-    function abrir({ despues, acceso, vista } = {}) {
+    // `hoy`: el día en que se abre, si no es el de la galería (desde el aviso del regalo).
+    function abrir({ despues, acceso, vista, hoy: dia } = {}) {
       clearTimeout(s.cierre);
-      Object.assign(s, { plan: 'anual', vista: vista || 'pago', enCurso: false, nota: null, sinConexion: false, conAlgo: false, despues: despues || null, hoja: 0 });
+      Object.assign(s, { plan: 'anual', vista: vista || 'pago', enCurso: false, nota: null, sinConexion: false, conAlgo: false, despues: despues || null, hoja: 0, hoy: dia || null });
       if (acceso) ponerAcceso(acceso);
       raiz.hidden = false;
       raiz.classList.remove('saliendo');
       pintar();
     }
     function cerrar() {
+      quitarElAviso();
       raiz.classList.add('saliendo');
       s.cierre = setTimeout(() => { raiz.hidden = true; raiz.classList.remove('saliendo'); }, quieto() ? 0 : 340);
+    }
+
+    // ---------------------------------------------------------------- el aviso del regalo (26/11, para aprobar)
+    // «Elige tu plan de Moss», dos días antes del último día del regalo, a las 10 (avisoDelRegalo en premium.ts). Hoy
+    // lleva a Perfil, donde no hay ningún plan; en la propuesta, tocarlo abre la pantalla de pago con «Ahora no». La
+    // pantalla bloqueada se arma con las piezas de avisos.js (.ab).
+    let bloqueo = null;
+    const diaDelAviso = () => Fechas.sumarDias(claveDe(finDelRegalo()), -2);
+    function avisoDelRegalo() {
+      quitarElAviso(true);
+      const fin = claveDe(finDelRegalo());
+      bloqueo = el('section', 'ab sb-bloqueo');
+      bloqueo.setAttribute('role', 'dialog');
+      bloqueo.addEventListener('pointerdown', (ev) => ev.stopPropagation());
+      if (typeof FONDOS_WIDGETS !== 'undefined' && FONDOS_WIDGETS.noche) bloqueo.style.backgroundImage = `url(${FONDOS_WIDGETS.noche})`;
+      const fecha = fechaLarga(diaDelAviso());
+      const reloj = el('div', 'ab-reloj');
+      reloj.append(el('span', null, fecha.charAt(0).toUpperCase() + fecha.slice(1)), el('b', null, '10:00'));
+      const lista = el('div', 'ab-lista');
+      const aviso = el('article', 'ab-aviso entra toca');
+      const ic = el('i');
+      if (typeof TIENDA !== 'undefined' && TIENDA && TIENDA.icono) ic.style.backgroundImage = `url(${TIENDA.icono})`;
+      const cab = el('div', 'ab-titulo');
+      cab.append(el('b', null, tx('recordatorios.regaloTermina.titulo')), el('em', null, '10:00'));
+      aviso.append(ic, cab, el('p', null, tx('recordatorios.regaloTermina.texto', { fecha: fechaLarga(fin) })));
+      aviso.addEventListener('click', abrirDesdeElAviso);
+      lista.appendChild(aviso);
+      bloqueo.append(reloj, lista);
+      tel.appendChild(bloqueo);
+      if (opciones.alCambiar) opciones.alCambiar();
+    }
+    /** Al tocar el aviso: la pantalla bloqueada se va mientras sube la pantalla de pago, la de ese día. */
+    function abrirDesdeElAviso() {
+      quitarElAviso();
+      abrir({ vista: 'pago', hoy: diaDelAviso() });
+    }
+    function quitarElAviso(deUna) {
+      if (!bloqueo) return;
+      const b = bloqueo;
+      bloqueo = null;
+      b.classList.add('saliendo');
+      setTimeout(() => b.remove(), deUna || quieto() ? 0 : 240);
     }
 
     // ---------------------------------------------------------------- Perfil
     /** Lo que dice la fila de Perfil. */
     function valorDeFila() {
       if (s.acceso === 'regalo') return tx('suscripcion.perfil.regaloHasta', { fecha: diaDe(finDelRegalo(), true) });
-      if (s.acceso === 'prueba') return plural('suscripcion.perfil.prueba', dias - 2);
+      if (s.acceso === 'prueba') return plural('suscripcion.perfil.prueba', dias - s.diasPasados);
       if (s.acceso === 'activa') return tx('suscripcion.perfil.' + s.tengo);
       return tx('suscripcion.perfil.vencida');
     }
@@ -625,14 +748,18 @@ const Suscripcion = (() => {
         cuerpo.appendChild(el('p', 'sb-hoja-texto', tx('suscripcion.hoja.regaloHasta', { fecha: diaDe(finDelRegalo()) })));
         // Lo nuevo se puede volver a mirar desde acá.
         cuerpo.appendChild(boton('sb-principal', tx('suscripcion.bienvenida.verLoNuevo'), () => { hoja.cerrar(); abrir({ vista: 'novedades' }); }));
+        // Y suscribirse antes de que termine (26/11, para aprobar): la hoja se va y sube la pantalla de pago.
+        cuerpo.appendChild(boton('sb-secundario', tx('suscripcion.hoja.elegirPlan'), () => { hoja.cerrar(); abrir({ vista: 'pago' }); }));
       }
       else {
-        const fecha = s.acceso === 'prueba' ? Fechas.sumarDias(Datos.HOY, dias - 2) : Fechas.sumarDias(Datos.HOY, s.tengo === 'anual' ? 280 : 20);
+        const fecha = s.acceso === 'prueba' ? Fechas.sumarDias(hoy(), dias - s.diasPasados) : Fechas.sumarDias(Datos.HOY, s.tengo === 'anual' ? 280 : 20);
         fila(tx('suscripcion.hoja.estado'), s.acceso === 'prueba' ? valorDeFila() : tx(s.acceso === 'activa' ? 'suscripcion.hoja.activa' : 'suscripcion.perfil.vencida'));
         fila(tx('suscripcion.hoja.plan'), tx(`suscripcion.${s.tengo}.nombre`));
         fila(tx('suscripcion.hoja.precio'), conPrecio(s.tengo));
         fila(tx(s.cancelada ? 'suscripcion.hoja.termina' : s.acceso === 'prueba' ? 'suscripcion.hoja.primerCobro' : 'suscripcion.hoja.renueva'), fechaLarga(fecha));
         if (s.cancelada) cuerpo.appendChild(el('p', 'sb-hoja-texto chico', tx('suscripcion.hoja.cancelada')));
+        // Suscrita con el regalo vigente: el regalo sigue detrás de la suscripción.
+        if (s.conRegalo && s.acceso !== 'vencida') cuerpo.appendChild(el('p', 'sb-hoja-texto chico', tx('suscripcion.hoja.conRegalo', { fecha: diaDe(finDelRegalo()) })));
         cuerpo.append(boton('sb-principal', tx('suscripcion.hoja.administrar'), () => {}), el('p', 'sb-hoja-texto chico', tx('suscripcion.hoja.administrarTexto')));
       }
       const c = el('div', 'sb-enlaces');
@@ -651,15 +778,24 @@ const Suscripcion = (() => {
       abrir, cerrar, abrirHoja, valorDeFila,
       cerrarHoja: () => hoja.cerrar(),
       get hojaAbierta() { return hoja.abierta; },
-      get abierta() { return !raiz.hidden; },
+      get abierta() { return !raiz.hidden || !!bloqueo; },
       get acceso() { return s.acceso; },
+      /** Los días de prueba que ya pasaron, para los puntos de la fila de Perfil. */
+      get diasPasados() { return s.diasPasados; },
       /** Para ver cada estado desde la galería. */
-      poner(acceso, { tengo, cancelada, deLaPrueba } = {}) {
+      // `conRegalo`: recién suscrita con el regalo vigente (26/11).
+      poner(acceso, { tengo, cancelada, deLaPrueba, conRegalo } = {}) {
+        Object.assign(s, { conRegalo: !!conRegalo, sinPrueba: false, diasPasados: conRegalo ? 0 : 2 });
         ponerAcceso(acceso);
         if (tengo) s.tengo = tengo;
         s.cancelada = !!cancelada;
         if (deLaPrueba !== undefined) s.deLaPrueba = deLaPrueba;
       },
+      // Elegir un plan durante el regalo (26/11): el aviso en la pantalla bloqueada, tocarlo, y la cuenta de Apple que
+      // ya usó la prueba (sin los 7 días: se cobra al suscribirse).
+      avisoDelRegalo,
+      abrirDesdeElAviso,
+      sinPrueba(si) { s.sinPrueba = !!si; if (!raiz.hidden && s.vista === 'pago') pintar(); },
       plan: elegirPlan,
       apple: abrirApple,
       cuenta: abrirCuenta,

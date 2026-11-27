@@ -588,6 +588,7 @@
     },
     suscripcion: () => suscripcion.valorDeFila(), abrirSuscripcion: () => suscripcion.abrirHoja(),
     accesoDeSuscripcion: () => suscripcion.acceso,
+    diasDePruebaPasados: () => suscripcion.diasPasados,
     ascentPrendida: () => ascentPrendida,
     irAMetas: () => accionesSeccion.estrategia(),
     // «Necesito dormir» cambia la deuda, la calidad y esta noche en Sueño.
@@ -1131,7 +1132,45 @@
   }
 
   // Los botones de la galería para las secciones nuevas.
+  // Por qué bajaste y cómo fue tu sesión (26/11, para aprobar): en la sección de Ascent, vinculada, con un ejemplo.
+  const conAscentEn = (poner, selector) => {
+    cerrarHojas();
+    if (!vinculada) vincular(true);
+    poner();
+    abrirAscent(true);
+    ascent.bajarA(selector);
+  };
+  const verBajada = (v) => conAscentEn(() => ascent.ponerBajada(v), '.as-bajo');
+  const verSesion = (v) => conAscentEn(() => { ascent.ponerBajada(null); ascent.ponerSesion(v); }, '.as-ultimo');
   const accionesSeccion = {
+    ascentBajadaSeries: () => verBajada('series'),
+    ascentBajadaRango: () => verBajada('rango'),
+    ascentBajadaPausa: () => verBajada('pausa'),
+    ascentBajadaSinRazon: () => verBajada('sinRazon'),
+    ascentSesionComoSiempre: () => verSesion(null),
+    ascentSesionBuena: () => verSesion('buena'),
+    ascentSesionDura: () => verSesion('dura'),
+    ascentSesionDuraSeries: () => verSesion('duraSeries'),
+    ascentSesionFloja: () => verSesion('floja'),
+    ascentSesionFlojaCorta: () => verSesion('flojaCorta'),
+    // En qué se basa Moss (26/11, para aprobar): la propuesta, junto a la de ahora (`base`).
+    baseNueva: () => { cerrarHojas(); pestanas.ir(5); perfilSec.abrirBase(null, true); },
+    // Lo que quedó de la búsqueda de bugs (26/11), para aprobar. El agua sin meta, junto al de ahora y en tintado.
+    aguaSinMeta: () => { cerrarHojas(); widgets.momento('noche'); widgets.ponerModo('color'); widgets.ir('m-agua'); },
+    aguaSinMetaTintado: () => { cerrarHojas(); widgets.momento('noche'); widgets.ponerModo('tintado'); widgets.ir('m-agua'); },
+    // Elegir un plan durante el regalo: desde Tu suscripción, desde el aviso, la pantalla de pago, sin la prueba (esta
+    // cuenta de Apple ya la usó) y ya suscrita, en Perfil.
+    planRegaloHoja: () => { cerrarHojas(); suscripcion.poner('regalo'); pestanas.ir(5); perfilSec.pintar(); suscripcion.abrirHoja(); },
+    planRegaloAviso: () => { cerrarHojas(); suscripcion.poner('regalo'); pestanas.ir(0); suscripcion.avisoDelRegalo(); },
+    planRegaloPago: () => { cerrarHojas(); suscripcion.poner('regalo'); pestanas.ir(5); perfilSec.pintar(); suscripcion.abrir(); },
+    planRegaloSinPrueba: () => { accionesSeccion.planRegaloPago(); suscripcion.sinPrueba(true); },
+    planRegaloSuscrita: () => { cerrarHojas(); suscripcion.poner('prueba', { tengo: 'anual', conRegalo: true }); pestanas.ir(5); perfilSec.pintar(); suscripcion.abrirHoja(); },
+    // Volver a entrar si se corta la sesión: cómo se ve hoy, la propuesta, sin conexión y con otra cuenta de Apple.
+    sesionHoy: () => { cerrarHojas(); pestanas.ir(5); perfilSec.subir(); perfilSec.sesion('hoy'); },
+    sesionCortada: () => { cerrarHojas(); pestanas.ir(5); perfilSec.subir(); perfilSec.sesion('cortada'); },
+    sesionSinConexion: () => { cerrarHojas(); pestanas.ir(5); perfilSec.subir(); perfilSec.sesion('cortada', { sinConexion: true }); },
+    sesionOtra: () => { cerrarHojas(); pestanas.ir(5); perfilSec.subir(); perfilSec.sesion('cortada', { conApple: 'otra' }); },
+    sesionConSesion: () => { cerrarHojas(); pestanas.ir(5); perfilSec.subir(); perfilSec.sesion(null); },
     // Lo que pediste el 25/11, para aprobar: Hoy tan limpio como el de la pantalla bloqueada (junto al de ahora), tu
     // noche en StandBy y la pantalla bloqueada a la mañana y a la tardecita. La tardecita empieza a las 21:47.
     wmHoy: () => { cerrarHojas(); widgets.momento('noche'); widgets.ir('m-hoy'); },
@@ -1641,6 +1680,10 @@
       asomar: () => ascent.asomar(true),
       como: () => ascent.abrirComo(),
       volverAInvitar: () => ascent.volverAInvitar(),
+      // Los ejemplos del 26/11: una bajada (series, rango, pausa, sinRazon o null) y la sesión de hoy (buena, dura,
+      // duraSeries, floja, flojaCorta o null).
+      bajada: () => ascent.ponerBajada(arg),
+      sesion: () => ascent.ponerSesion(arg),
     };
     pasos[accion]();
     refrescarControles();
