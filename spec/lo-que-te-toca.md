@@ -181,7 +181,7 @@ noche sin abrir Moss hace falta la próxima build (spec/estudio/widgets-y-noche.
 
 **El vínculo con Ascent, revisado** (lo pediste el 26/11; spec/estudio/vinculo-ascent.md y el informe para compartir,
 https://claude.ai/artifact/ACnkHK4EjUC5PqkTarHE1N, privado hasta que lo compartas). Arreglado y por aire en las dos builds
-(commit 510207b; preview aa6fe9e9, production 33b86d70): el titular de hoy usa la misma fatiga en días que Tus músculos
+(commit 510207b; preview aa6fe9e9, production 33b86d70), y el arreglo de cerrar sesión con los datos de otra cuenta (commit 6d23daa; preview 207effc1, production 4bf5c3ce): el titular de hoy usa la misma fatiga en días que Tus músculos
 (antes usaba una cuenta refutada y se contradecían), la energía ya no supone que entrenas todos los días y «una serie
 menos» sale solo con el músculo cargado. **Te toca:**
 - **La migración 0019** (las sesiones copiadas de Ascent, su migración 103): lista y probada en la base local; para la
