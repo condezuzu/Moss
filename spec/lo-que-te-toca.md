@@ -3,7 +3,7 @@
 Todo lo que no puedo hacer yo: aprobar, decidir, entrar con tus cuentas, tocar el iPhone y lo de Ascent.
 Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar hecho: no lo puedo ver desde acá.
 
-Galería (versión 63): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
+Galería (versión 64): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 
 ## 0. El lanzamiento y la 1.1 (desde el 14/11/2026): dónde quedé
 
@@ -204,7 +204,13 @@ actualizarlos cambia la huella.
 
 La app no cambia hasta que digas. Sección 1.1, salvo que diga otra.
 
-**Del 26/11** (galería 63, arriba de todo en «Lo nuevo, para aprobar»)
+**Del 26/11** (galería 64, arriba de todo en «Lo nuevo, para aprobar»)
+- **Las metas de fuerza, como la A que elegiste en la galería de Ascent** (`ascent-metas`): «Hoy levantarías 82,5 kg · Llegas
+  entre febrero y abril», «Cómo llegar» (ritmo, series, veces, sueño y proteína, cada una ✓, ↑ o todavía no se sabe) y
+  «Próxima vez». La cuenta es `comoLlegar`, compartida con Ascent (su 18d6a0a, copiada tal cual). Preguntas: tres textos
+  difieren de Ascent («8 series de pecho», «Apunta a 1,6» contra «Llegar a 1,6 puede ayudar», «Dormir más» contra «Dormir
+  8 h»): ¿igualamos? ¿El ritmo para abajo o al más cercano? ¿«Todavía no se sabe» con aro punteado o sin nada? Ya por
+  aire: «Hoy levantarías» redondea para abajo (production 076b8719, preview 377b106b).
 - **Por qué bajaste** (`ascent-bajada`): «Bajó un 6 %» cuando las últimas 4 sesiones de un ejercicio quedan más de un 4 %
   por debajo de las 8 de antes, con «Por qué puede ser» y «Qué cambiar». Preguntas: ¿«Qué cambiar» también en Razones de
   estancamiento? ¿Mirar todos los ejercicios o solo los de «Tu fuerza»?

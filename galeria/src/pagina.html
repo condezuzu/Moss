@@ -2085,6 +2085,15 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
       <h2><span class="n">1.1</span>Lo nuevo, para aprobar</h2>
       <p>Lo que pediste el 2/11 a la noche (lo que dictaste mirando la galería) y el 3/11, para aprobar: probalo acá y, si te cierra, se programa. La app no cambia hasta que lo apruebes. Lo que no es visual ya está en la rama <b>mejoras-1.1</b> y va por OTA cuando Apple apruebe la 1.0: las marcas nuevas (con los productos de código uruguayo), el arreglo de «Si voy muy bajo en algo» (apagarlo no se guardaba) y lo de la tanda anterior.</p>
       <div class="panel">
+        <div class="grupo"><span>Lo que elegiste el 26/11 en la galería de Ascent (la A, «Todo a la vista»), ahora en Moss para aprobar: <b>las metas de fuerza</b>, en la sección de Ascent, arriba de las razones de estancamiento. Cada meta con su barra, «Hoy levantarías 82,5 kg · Llegas entre marzo y abril» (lo de hoy de a 2,5 kg para abajo; cuándo, en meses, del ritmo rápido al lento, con el año una sola vez si no es este) y «Cómo llegar»: el ritmo, las series del músculo, las veces por semana, el sueño y la proteína, cada uno con ✓, ↑ o sin marca si todavía no se sabe (con lo que falta). Abajo, la próxima vez con ese ejercicio. Las cuentas son las de Ascent tal cual (progresoCompartido.ts)</span>
+          <div class="controles">
+            <button class="boton" type="button" data-seccion="ascentMetasBien">Va bien</button>
+            <button class="boton principal" type="button" data-seccion="ascentMetasMejorar">Para mejorar</button>
+            <button class="boton" type="button" data-seccion="ascentMetasNoSeSabe">Todavía no se sabe</button>
+            <button class="boton" type="button" data-seccion="ascentMetasNoLlega">Así no llega</button>
+            <button class="boton" type="button" data-seccion="ascentMetasPersona">Las de la persona</button>
+          </div>
+        </div>
         <div class="grupo"><span>Lo que pediste el 26/11, para aprobar: <b>por qué bajaste y qué cambiar</b>, en la sección de Ascent, debajo de las razones de estancamiento. Cuando tus últimas 4 sesiones de un ejercicio quedan más de un 4 % por debajo de las 8 de antes: cuánto y desde cuándo, las 12 en un dibujo, si cambiaste de rango o hubo una pausa, «Por qué puede ser» (como «puede influir») y «Qué cambiar», una acción por razón, solo lo que respaldan las guías. En «Tu fuerza», ese ejercicio dice «Bajó». Sin ninguna razón a la vista, lo dice; nunca «sobreentrenado»</span>
           <div class="controles">
             <button class="boton principal" type="button" data-seccion="ascentBajadaSeries">Menos series, bajando rápido</button>
@@ -2682,6 +2691,9 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
           </div>
           <div class="grupo"><span>Cómo fue tu sesión (26/11, para aprobar): la de piernas de hoy, ya hecha</span>
             <div class="segmento envuelve" id="s-sesion"><button type="button" data-valor="comoSiempre" aria-pressed="true">Como siempre</button><button type="button" data-valor="buena" aria-pressed="false">Buena</button><button type="button" data-valor="dura" aria-pressed="false">Dura, al fallo</button><button type="button" data-valor="duraSeries" aria-pressed="false">Dura, muchas series</button><button type="button" data-valor="floja" aria-pressed="false">Floja</button><button type="button" data-valor="flojaCorta" aria-pressed="false">Floja, noche corta</button></div>
+          </div>
+          <div class="grupo"><span>Las metas de fuerza (26/11, para aprobar): las de la persona (sentadilla, press de banca y peso muerto) o un ejemplo de cada caso</span>
+            <div class="segmento envuelve" id="s-metas"><button type="button" data-valor="persona" aria-pressed="true">Las de la persona</button><button type="button" data-valor="bien" aria-pressed="false">Va bien</button><button type="button" data-valor="mejorar" aria-pressed="false">Para mejorar</button><button type="button" data-valor="noSeSabe" aria-pressed="false">Todavía no se sabe</button><button type="button" data-valor="noLlega" aria-pressed="false">Así no llega</button></div>
           </div>
         </div>
         <div class="controles">

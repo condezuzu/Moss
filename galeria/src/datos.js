@@ -407,13 +407,49 @@ const Datos = (() => {
       floja: [b('sentadilla', 5, 95, 5), b('prensa', 3, 160, 10), ...resto],
     };
     piernas.flojaCorta = piernas.floja;
+
+    // Las metas de fuerza (26/11, para aprobar: la A de la galería 27 de Ascent, «Todo a la vista»). Las de la persona,
+    // con su historia tal cual: la sentadilla sube, el press de banca no y el peso muerto tiene 4 sesiones. Y un ejemplo
+    // de cada caso, cada uno con una meta y lo que cambia de la persona:
+    // - bien: la sentadilla también los sábados desde agosto, 1,8 g de proteína por kilo;
+    // - mejorar (la maqueta): el press de banca dos veces por semana, de 72,5 a 82,5 kg desde agosto, con 8 series de
+    //   pecho por semana, 6 h 20 min de sueño y 1,2 g de proteína; el lunes no llegó a las 5 en la última serie;
+    // - noSeSabe: el peso muerto, juntando información: sin noches en Moss y con la comida anotada pocos días;
+    // - noLlega: el press de banca de la persona, que no sube desde agosto.
+    // Las repeticiones del objetivo de cada ejercicio en la rutina de Ascent (el tope de la doble progresión).
+    const objetivos = { sentadilla: 5, press_banca: 5, peso_muerto: 5 };
+    const sabados = sesiones.filter((s) => Fechas.diaDeLaSemana(s.fecha) === 3 && s.fecha >= '2026-08-12' && s.fecha < HOY).map((s) => {
+      const f = Fechas.sumarDias(s.fecha, 3);
+      const kg = s.bloques.find((x) => x.id === 'sentadilla').series[0].peso;
+      return Object.assign(sesion(f, 3, [b('sentadilla', 3, kg, 5), b('prensa', 3, 170, 10)]), { hora: 10 * 60 + 30, inicio: inicio(f, 10 * 60 + 30) });
+    });
+    const DESDE_LA_BANCA = '2026-08-10';
+    const banca = (f) => (f === '2026-10-19'
+      ? Object.assign(b('press_banca', 3, 82.5, 5), { series: [5, 5, 4].map((reps) => ({ peso: 82.5, reps })) })
+      : b('press_banca', 3, rampa(f, DESDE_LA_BANCA, 72.5, '2026-10-16', 82.5), 5));
+    // El viernes 9 de octubre, que la persona salteó, acá entrenó: si no, esa semana tendría una sola vez.
+    const dosVecesBanca = [...sesiones, sesion('2026-10-09', 5, BLOQUES[5]('2026-10-09'))].sort((x, y) => x.inicio - y.inicio).map((s) => {
+      const dia = Fechas.diaDeLaSemana(s.fecha);
+      if (s.fecha < DESDE_LA_BANCA || s.fecha >= HOY || (dia !== 1 && dia !== 5)) return s;
+      const resto2 = s.bloques.filter((x) => !['press_banca', 'press_inclinado_mancuernas', 'press_inclinado', 'fondos'].includes(x.id));
+      return Object.assign({}, s, { bloques: dia === 1 ? [banca(s.fecha), b('press_inclinado_mancuernas', 2, 26, 8), ...resto2] : [resto2[0], banca(s.fecha), ...resto2.slice(1)] });
+    });
+    const metas = [{ id: 'sentadilla', kilos: 140, reps: 1 }, { id: 'press_banca', kilos: 100, reps: 1 }, { id: 'peso_muerto', kilos: 160, reps: 1 }];
+    const ejemplosDeMetas = {
+      bien: { metas: [metas[0]], sesiones: [...sesiones, ...sabados].sort((x, y) => x.inicio - y.inicio), ajustes: { proteinaPorKg: 1.8 } },
+      mejorar: { metas: [{ id: 'press_banca', kilos: 105, reps: 5 }], sesiones: dosVecesBanca, ajustes: { sueno: 6 * 60 + 20, proteinaPorKg: 1.2 } },
+      noSeSabe: { metas: [metas[2]], ajustes: { pocas: true } },
+      noLlega: { metas: [metas[1]] },
+    };
     return {
       vinculadaDesde: '2026-10-03',
       // Las sesiones con detalle empiezan acá (en la app, Ascent manda las de 12 semanas o desde el 1 de enero).
       desde: DESDE,
       dias,
       sesiones,
-      ejemplos: { bajadas, piernas },
+      ejemplos: { bajadas, piernas, metas: ejemplosDeMetas },
+      metas,
+      objetivos,
       rutina,
       umbral,
       anioDias,

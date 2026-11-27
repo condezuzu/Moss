@@ -5,7 +5,8 @@
 // La galería abre en Inicio; los escenarios del cielo pasan primero a Hábitos y los de la comida,
 // a Comida. La lista de escenarios está en CLAUDE.md; los últimos, widgets-mejores (lo que pediste el 25/11:
 // Hoy más limpio junto al de ahora, tu noche en StandBy y la pantalla bloqueada con la deuda y la cuenta) y los del
-// 26/11 para aprobar: agua-sin-meta, plan-en-el-regalo, volver-a-entrar, ascent-bajada, ascent-sesion y base-nueva.
+// 26/11 para aprobar: agua-sin-meta, plan-en-el-regalo, volver-a-entrar, ascent-bajada, ascent-sesion, base-nueva y
+// ascent-metas (las metas de fuerza como la A de la galería de Ascent).
 // La aurora y el cielo se dibujan por software (SwiftShader): los tiempos de la animación van
 // más lentos que en un teléfono, pero cada cuadro es el mismo.
 
@@ -3358,6 +3359,48 @@ const pasos = {
     await foto('bajada-rango-ingles');
     await pagina.evaluate(() => window.__idioma('es'));
     await ascent('bajada', null);
+    await ascent('cerrar');
+    await ascent('vincular', false);
+    await pestana(0);
+  },
+  // Las metas de fuerza (26/11, para aprobar: la A de la galería 27 de Ascent, «Todo a la vista»), en la sección de Ascent
+  // vinculada, el día en que durmió bien: la maqueta (para mejorar) entrando y quieta, va bien, todavía no se sabe y así no
+  // llega; las tres de la persona, una por una; «En qué se basa» con las metas; y en inglés. Queda sin vincular, con las
+  // metas de la persona y en el día de siempre.
+  async 'ascent-metas'() {
+    const espera = (ms) => pagina.waitForTimeout(ms);
+    await seccion('ascentMetasMejorar');
+    await espera(160);
+    await foto('ascent-metas-entrando');
+    await espera(1100);
+    await foto('ascent-metas-mejorar');
+    for (const [v, nombre] of [['Bien', 'bien'], ['NoSeSabe', 'no-se-sabe'], ['NoLlega', 'no-llega']]) {
+      await seccion('ascentMetas' + v);
+      await espera(1100);
+      await foto('ascent-metas-' + nombre);
+    }
+    await seccion('ascentMetasPersona');
+    await espera(1100);
+    await foto('ascent-metas-persona');
+    for (const n of [2, 3]) {
+      await ascent('bajar', `.as-metas .as-meta:nth-of-type(${n})`);
+      await espera(400);
+      await foto(`ascent-metas-persona-${n}`);
+    }
+    await ascent('como');
+    await espera(500);
+    await ascent('bajar', '.as-como-cuerpo p:nth-of-type(8)');
+    await espera(400);
+    await foto('ascent-metas-en-que-se-basa');
+    await pagina.evaluate(() => window.__idioma('en'));
+    for (const [v, nombre] of [['Mejorar', 'mejorar'], ['NoSeSabe', 'no-se-sabe'], ['NoLlega', 'no-llega']]) {
+      await seccion('ascentMetas' + v);
+      await espera(1100);
+      await foto(`ascent-metas-${nombre}-ingles`);
+    }
+    await pagina.evaluate(() => window.__idioma('es'));
+    await ascent('metas', null);
+    await ascent('dia', 'corta');
     await ascent('cerrar');
     await ascent('vincular', false);
     await pestana(0);

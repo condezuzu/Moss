@@ -22,6 +22,10 @@
 // - «Cómo fue», debajo de tu último entreno: una palabra (buena, como siempre, dura o floja), por qué con los datos a la
 //   vista (cada ejercicio contra lo tuyo, las series de más, las repeticiones que cayeron), lo que implica y «Cómo se
 //   calcula», plegado. Sin puntaje ni «te sobrefatigaste»: es probable, no un diagnóstico.
+// - Las metas de fuerza, como la A de la galería 27 de Ascent («Todo a la vista», elegida el 26/11), arriba de las
+//   razones de estancamiento: la barra, «Hoy levantarías 82,5 kg · Llegas entre marzo y abril»
+//   (ProgresoCompartido.proyeccionDeMeta, en meses), «Cómo llegar» con el ritmo, las series, las veces, el sueño y la
+//   proteína (ProgresoCompartido.comoLlegar), cada uno ✓, ↑ o sin marca, y la próxima vez (PuntajeMuscular.proximaSesion).
 // Los ejemplos de cada caso están en datos.js (ASCENT.ejemplos) y se eligen en el panel de Ascent de la galería.
 
 const SeccionAscent = (() => {
@@ -90,6 +94,46 @@ const SeccionAscent = (() => {
           'No hay un puntaje validado para calificar una sesión, en ninguna app: por eso es una palabra, y es probable, no un diagnóstico. La entrada en calor no cuenta.',
         ],
       },
+      // Las metas como la A de la galería 27 de Ascent (26/11, para aprobar): lo de hoy, cuándo llegas en meses y cómo llegar.
+      metas: {
+        levantarias: 'Hoy levantarías {kg} kg',
+        llegas: { entre: 'Llegas entre {de} y {a}', en: 'Llegas en {mes}', desde: 'Llegas de {mes} en adelante', delAnio: '{mes} de {anio}' },
+        llegar: {
+          titulo: 'Cómo llegar',
+          marcas: { bien: 'Bien', mejorar: 'Para mejorar', noSeSabe: 'Todavía no se sabe' },
+          ritmo: {
+            bien: 'Subes {kg} kg por semana: vas bien.',
+            mejorar: 'Sin subida clara en 12 semanas.',
+            faltanSesiones: { uno: 'Todavía no se sabe tu ritmo: falta 1 sesión.', otros: 'Todavía no se sabe tu ritmo: faltan {n} sesiones.' },
+            faltanSemanas: 'Todavía no se sabe tu ritmo: van {n} semanas y hacen falta 6.',
+            noSeSabe: 'Todavía no se sabe tu ritmo: en 12 semanas no se ve claro.',
+          },
+          series: {
+            bien: '{n} series de {musculo} por semana: bien.',
+            mejorar: '{n} series de {musculo} por semana. Con {a}, puede subir más rápido.',
+            noSeSabe: 'Todavía no se saben tus series de {musculo}: falta una semana entera de entreno.',
+          },
+          veces: {
+            bien: { uno: '{ejercicio} 1 vez por semana: bien.', otros: '{ejercicio} {n} veces por semana: bien.' },
+            mejorar: { uno: '{ejercicio} 1 vez por semana. Con {a}, puede subir más rápido.', otros: '{ejercicio} {n} veces por semana. Con {a}, puede subir más rápido.' },
+            noSeSabe: 'Todavía no se sabe cuántas veces por semana: falta una semana entera de entreno.',
+          },
+          sueno: {
+            bien: '{h} de promedio: bien.',
+            mejorar: '{h} de promedio. Dormir más puede ayudar.',
+            noSeSabe: 'Todavía no se sabe cuánto duermes: hacen falta 3 noches en Moss.',
+          },
+          proteina: {
+            bien: '{g} g por kilo: bien.',
+            mejorar: '{g} g por kilo. Apunta a {a}.',
+            noSeSabe: 'Todavía no se sabe tu proteína: hacen falta 2 semanas con la comida anotada 4 días.',
+          },
+        },
+        proxima: 'Próxima vez: {kg} kg × {reps}, hasta sentir que podrías 2 más.',
+      },
+      base: {
+        metas: 'Las metas: cuándo llegas sale de tu tendencia de 12 semanas, del ritmo más rápido al más lento de su rango, y se dice en meses: cada uno sube distinto (Latella 2020; Swinton 2024). En «Cómo llegar», el ritmo va bien solo si la tendencia sube con claridad; las series del músculo se marcan con menos de 10 por semana (una convención: Pelland 2026); las veces, con menos de 2 (ACSM 2026); el sueño, con menos de 6 h o 45 minutos menos de lo que necesitas; y la proteína, con menos de 1,6 g por kilo (Morton 2018). Lo marcado puede ayudar: no es una obligación.',
+      },
     } },
     en: { ascent: {
       bajo: {
@@ -153,6 +197,45 @@ const SeccionAscent = (() => {
           'At the same weight, if reps drop by nearly half or more over 3 sets, you probably went to failure or close to it (Refalo 2023), and that takes a day or two longer (Morán-Navarro 2017).',
           'There’s no validated score for rating a session, in any app: that’s why it’s a word, and it’s likely, not a diagnosis. Warm-ups don’t count.',
         ],
+      },
+      metas: {
+        levantarias: 'Today you’d lift {kg} kg',
+        llegas: { entre: 'You’ll get there between {de} and {a}', en: 'You’ll get there in {mes}', desde: 'You’ll get there from {mes} on', delAnio: '{mes} {anio}' },
+        llegar: {
+          titulo: 'How to get there',
+          marcas: { bien: 'Good', mejorar: 'To improve', noSeSabe: 'Too early to tell' },
+          ritmo: {
+            bien: 'You’re gaining {kg} kg a week: on track.',
+            mejorar: 'No clear increase in 12 weeks.',
+            faltanSesiones: { uno: 'Too early to tell your pace: 1 more session needed.', otros: 'Too early to tell your pace: {n} more sessions needed.' },
+            faltanSemanas: 'Too early to tell your pace: {n} weeks so far, 6 are needed.',
+            noSeSabe: 'Too early to tell your pace: 12 weeks don’t show it clearly.',
+          },
+          series: {
+            bien: '{n} {musculo} sets a week: good.',
+            mejorar: '{n} {musculo} sets a week. With {a}, it may go up faster.',
+            noSeSabe: 'Too early to tell your {musculo} sets: a full week of training is needed.',
+          },
+          veces: {
+            bien: { uno: '{ejercicio} once a week: good.', otros: '{ejercicio} {n} times a week: good.' },
+            mejorar: { uno: '{ejercicio} once a week. With {a}, it may go up faster.', otros: '{ejercicio} {n} times a week. With {a}, it may go up faster.' },
+            noSeSabe: 'Too early to tell how often: a full week of training is needed.',
+          },
+          sueno: {
+            bien: '{h} on average: good.',
+            mejorar: '{h} on average. More sleep may help.',
+            noSeSabe: 'Too early to tell how much you sleep: 3 nights in Moss are needed.',
+          },
+          proteina: {
+            bien: '{g} g per kilo: good.',
+            mejorar: '{g} g per kilo. Aim for {a}.',
+            noSeSabe: 'Too early to tell your protein: 2 weeks with food logged 4 days are needed.',
+          },
+        },
+        proxima: 'Next time: {kg} kg × {reps}, until you feel you could do 2 more.',
+      },
+      base: {
+        metas: 'Goals: when you get there comes from your 12-week trend, from the fastest to the slowest pace in its range, and it’s said in months: everyone progresses differently (Latella 2020; Swinton 2024). In “How to get there”, the pace is on track only if the trend clearly goes up; muscle sets are flagged under 10 a week (a convention: Pelland 2026); times a week, under 2 (ACSM 2026); sleep, under 6 h or 45 minutes below what you need; and protein, under 1.6 g per kilo (Morton 2018). What’s flagged may help: it’s not a must.',
       },
     } },
   };
@@ -581,6 +664,32 @@ const SeccionAscent = (() => {
 .as-sesion-musculo { margin-top: 12px; display: flex; justify-content: space-between; gap: 10px; font: 400 13px/1.3 var(--texto); color: var(--as-tinta); }
 .as-sesion-musculo span:last-child { color: var(--as-lejos); font-variant-numeric: tabular-nums; }
 
+/* Las metas (26/11, para aprobar): la barra, lo de hoy y cuándo llegas en una línea, «Cómo llegar» en cinco filas (✓
+   bien; ↑ para mejorar, lleno, lo único que pide atención; sin marca, el aro punteado, si todavía no se sabe) y la
+   próxima vez. La barra se llena y las filas entran de a una. */
+.as-meta { padding: 14px 0 12px; border-top: 1px solid rgba(48, 55, 72, 0.6); }
+.as-metas .as-parte-cab + .as-meta { border-top: 0; padding-top: 8px; }
+.as-meta-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.as-meta-nombre { font: 400 15.5px/1.2 var(--texto); color: var(--as-tinta); }
+.as-meta-objetivo { font: 400 12.5px/1.2 var(--texto); color: var(--as-sub); text-align: right; font-variant-numeric: tabular-nums; }
+.as-meta-pista { height: 6px; margin-top: 10px; border-radius: 3px; background: rgba(170, 178, 196, 0.12); overflow: hidden; }
+.as-meta-pista i { display: block; height: 100%; border-radius: 3px; background: var(--as-claro); transform-origin: left; animation: as-meta-llena 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes as-meta-llena { from { transform: scaleX(0); } }
+.as-meta-linea { margin: 8px 0 0; font: 400 14px/1.38 var(--texto); color: var(--as-tinta); text-wrap: pretty; font-variant-numeric: tabular-nums; }
+.as-meta-linea span { display: inline-block; }
+.as-meta-estado { margin: 5px 0 0; font: 400 13px/1.38 var(--texto); color: var(--as-sub); text-wrap: pretty; }
+.as-meta .as-bajo-sub { margin-top: 16px; }
+.as-llegar { margin: 6px 0 0; padding: 0; list-style: none; }
+.as-paso { display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 10px; align-items: start; padding: 8px 0; border-top: 1px solid rgba(48, 55, 72, 0.45); font: 400 13.5px/1.4 var(--texto); color: var(--as-tinta); text-wrap: pretty; font-variant-numeric: tabular-nums; animation: as-entra 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.as-paso:first-child { border-top: 0; }
+.as-paso-marca { width: 20px; height: 20px; margin-top: -1px; display: grid; place-items: center; box-sizing: border-box; border-radius: 50%; }
+.as-paso-marca svg { width: 12px; height: 12px; stroke-width: 2.2; }
+.as-paso.bien .as-paso-marca { box-shadow: inset 0 0 0 1px var(--as-claro); color: var(--as-claro); }
+.as-paso.mejorar .as-paso-marca { background: var(--as-claro); color: var(--as-fondo); }
+.as-paso.noSeSabe { color: var(--as-sub); }
+.as-paso.noSeSabe .as-paso-marca { border: 1px dashed var(--as-linea-fuerte); }
+.as-meta-proxima { margin: 10px 0 0; font: 400 13.5px/1.4 var(--texto); color: var(--as-claro); text-wrap: pretty; }
+
 /* Vinculada, la entrada dice lo de hoy en dos palabras, sin número. */
 .as-entrada.vinculo .as-entrada-cifra { font: 400 13.5px/1.15 var(--texto); color: var(--as-tinta); }
 
@@ -681,7 +790,7 @@ const SeccionAscent = (() => {
 .as-hoja-form.as-entra, .as-parte.as-entra { animation: as-entra 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 @media (prefers-reduced-motion: reduce) {
   .as-entrada-pista svg, .as-volver-abajo svg, .as-cielo i > svg.entra, .as-polvo-late, .as-polvo-gas, .as-polvo-granos, .as-polvo-granos > svg, .as-polvo-estrella { animation: none; }
-  .as-bajo-punto, .as-tuyo-punto, .as-reps-barras i { animation: none; }
+  .as-bajo-punto, .as-tuyo-punto, .as-reps-barras i, .as-meta-pista i, .as-paso { animation: none; }
   .as-invita.entra, .as-contenido.as-entra, .as-hoja-form.as-entra, .as-parte.as-entra, .as-hoy-titulo.as-cambia, .as-hoy-texto.as-cambia, .as-decide-valor.as-cambia, .as-foco.as-cambia, .as-cuerpo-detalle.as-cambia { animation-duration: 0.01s; }
   .as-chica-orbita, .as-chica-luna, .as-orbita, .as-luna, .as-luna-halo, .as-base > .as-marca, .as-entrada-pista, .as-orbe-arco, .as-orbe-luna, .as-orbe-pista,
   .as-decide-icono, .as-decide-valor, .as-escala-lleno, .as-escala-punto, .as-chip, .as-chip i, .as-m, .as-alcance-ruido, .as-alcance-nivel, .as-barras i,
@@ -1048,6 +1157,8 @@ const SeccionAscent = (() => {
     // elegir, lo de la persona de la galería (nada bajó y la sesión fue como siempre).
     let bajadaElegida = null;
     let sesionElegida = null;
+    // Las metas (26/11, ASCENT.ejemplos.metas): sin elegir, las de la persona.
+    let metasElegidas = null;
     // «Cómo se calcula» de la sesión, desplegado.
     let calculoAbierto = false;
     const elDia = () => A.dias[diaElegido];
@@ -1107,7 +1218,8 @@ const SeccionAscent = (() => {
     const nombreDelEjercicio = (e) => (e.id && !e.id.startsWith('propio_') ? tx('ascent.ejercicios.' + e.id) : e.ejercicio);
     const nombreDelMusculo = (m) => tx('ascent.musculos.nombres.' + m);
     /** Las sesiones del día de ejemplo: las de Ascent y, si el día suma alguna (piernas ayer), esa también. */
-    const sesionesBase = () => (bajadaElegida ? A.ejemplos.bajadas[bajadaElegida].sesiones : A.sesiones);
+    const sesionesBase = () => (bajadaElegida ? A.ejemplos.bajadas[bajadaElegida].sesiones
+      : metasElegidas && A.ejemplos.metas[metasElegidas].sesiones ? A.ejemplos.metas[metasElegidas].sesiones : A.sesiones);
     const sesionesDe = (d) => (d && d.sesionesExtra ? [...sesionesBase(), ...d.sesionesExtra].sort((a, b) => a.inicio - b.inicio) : sesionesBase());
     const previas = (d, en) => sesionesDe(d).filter((x) => x.inicio < en);
     // Entrena hace 6 meses o más (la primera sesión o la marca más vieja de Ascent): el ruido y la recuperación de
@@ -1262,12 +1374,18 @@ const SeccionAscent = (() => {
       return Diagnostico.ordenarMarcas(lista);
     }
 
+    // Lo que cambia de la persona el ejemplo de metas elegido (26/11): la proteína, el sueño o que anotó poco («Juntando
+    // información»). Vale para las metas y las razones, así las dos dicen lo mismo.
+    const ajustesDeMetas = () => (metasElegidas && A.ejemplos.metas[metasElegidas].ajustes) || {};
+    const pocasSemanas = () => opciones.pocasSemanas() || !!ajustesDeMetas().pocas;
     /** Lo comido y dormido de la semana que empieza un lunes, para las razones (solo los días que ya pasaron). */
     function mossDeLaSemana(lunes) {
       const fechas = Array.from({ length: 7 }, (_, i) => Fechas.sumarDias(lunes, i)).filter((f) => f < Datos.HOY);
       const comidos = fechas.map(comidoEl).filter((t) => t.kcal > 0);
       const noches = Datos.NOCHES.filter((x) => fechas.includes(x.clave)).map((x) => x.dormido);
-      return { comida: { dias: comidos.length, proteina: comidos.length ? comidos.reduce((s, t) => s + t.p, 0) / comidos.length : 0 }, noches };
+      const aj = ajustesDeMetas();
+      const proteina = !comidos.length ? 0 : aj.proteinaPorKg ? aj.proteinaPorKg * pesoDeHoy() : comidos.reduce((s, t) => s + t.p, 0) / comidos.length;
+      return { comida: { dias: comidos.length, proteina }, noches: 'sueno' in aj ? (aj.sueno === null ? [] : noches.map(() => aj.sueno)) : noches };
     }
     const promedioDe = (xs) => (xs.length >= 3 ? xs.reduce((s, x) => s + x, 0) / xs.length : null);
     const ANIOS = { principiante: 0, intermedio: 2, avanzado: 4 };
@@ -1293,9 +1411,9 @@ const SeccionAscent = (() => {
         const r = ProgresoCompartido.razonesDeEstancamiento({
           antes, ahora, objetivo: persona.perfil.objetivo, sinDeficit: sinDeficit(), bajaSemanal: baja,
           // «Juntando información» (el panel de la galería): todavía sin semanas de comida completas.
-          comida: opciones.pocasSemanas() ? moss.map((x) => ({ dias: Math.min(2, x.comida.dias), proteina: x.comida.proteina })) : moss.map((x) => x.comida),
+          comida: pocasSemanas() ? moss.map((x) => ({ dias: Math.min(2, x.comida.dias), proteina: x.comida.proteina })) : moss.map((x) => x.comida),
           pesoKg: pesoDeHoy(),
-          sueno: { antes: promedioDe(nochesAntes), ahora: opciones.pocasSemanas() ? null : promedioDe(moss.flatMap((x) => x.noches)) },
+          sueno: { antes: promedioDe(nochesAntes), ahora: pocasSemanas() ? null : promedioDe(moss.flatMap((x) => x.noches)) },
           anios: ANIOS[Datos.PERFIL.experiencia] ?? null,
         });
         return [{ e, t, ultima, sinMarca, musculo, antes, ahora, r }];
@@ -1340,9 +1458,9 @@ const SeccionAscent = (() => {
         const nochesAntes = s.antes.flatMap((l) => mossDeLaSemana(l).noches);
         const r = ProgresoCompartido.razonesDeEstancamiento({
           antes, ahora, objetivo: ajustes.objetivo || persona.perfil.objetivo, sinDeficit: sinDeficit(), bajaSemanal: baja,
-          comida: opciones.pocasSemanas() ? moss.map((x) => ({ dias: Math.min(2, x.comida.dias), proteina: x.comida.proteina })) : moss.map((x) => x.comida),
+          comida: pocasSemanas() ? moss.map((x) => ({ dias: Math.min(2, x.comida.dias), proteina: x.comida.proteina })) : moss.map((x) => x.comida),
           pesoKg: pesoDeHoy(),
-          sueno: { antes: promedioDe(nochesAntes), ahora: opciones.pocasSemanas() ? null : promedioDe(moss.flatMap((x) => x.noches)) },
+          sueno: { antes: promedioDe(nochesAntes), ahora: pocasSemanas() ? null : promedioDe(moss.flatMap((x) => x.noches)) },
           anios: null,
         });
         const ultimos = [...puntos].sort((x, y) => (x.fecha < y.fecha ? -1 : 1)).slice(-(TuSesion.SESIONES_DE_ANTES + TuSesion.SESIONES_RECIENTES));
@@ -1364,6 +1482,55 @@ const SeccionAscent = (() => {
       const noche = sesion.fecha === Datos.HOY ? (d.noche ? d.noche.dormido : null) : deAnoche ? deAnoche.dormido : null;
       const r = TuSesion.comoFueLaSesion({ sesion, antes, nocheCorta: noche !== null && noche <= Rendimiento.NOCHE_CORTA });
       return r ? Object.assign(r, { sesion, noche }) : null;
+    }
+
+    // ------------------------------------------------------------ las metas (26/11, para aprobar)
+    /**
+     * Cada meta con la tendencia de su ejercicio: cuándo llegas (ProgresoCompartido.proyeccionDeMeta), cómo llegar
+     * (comoLlegar) y la próxima vez (PuntajeMuscular.proximaSesion), con lo que Ascent le pasa (useSeccionMoss.ts): las
+     * semanas son las 4 enteras antes de esta con alguna sesión; la comida, esas 4; el sueño, la semana pasada y esta
+     * (con 3 noches o más). En los ejemplos, lo que cambia de la persona (ASCENT.ejemplos.metas).
+     */
+    function calcularMetas(d, k) {
+      const metas = metasElegidas ? A.ejemplos.metas[metasElegidas].metas : A.metas;
+      const ajustes = ajustesDeMetas();
+      const hasta = d.sesion === 'hecha' ? Fechas.sumarDias(Datos.HOY, 1) : Datos.HOY;
+      const sesiones = sesionesDe(d).filter((s) => s.fecha < hasta);
+      const lunesHoy = Fechas.lunesDe(Datos.HOY);
+      const ultimas = [4, 3, 2, 1].map((i) => Fechas.sumarDias(lunesHoy, -7 * i));
+      const conSesion = (l) => sesiones.some((s) => s.fecha >= l && s.fecha < Fechas.sumarDias(l, 7));
+      // «Juntando información»: menos de 4 días anotados por semana y sin noches.
+      const comida = ultimas.map((l) => mossDeLaSemana(l).comida).map((c) => (pocasSemanas() ? { dias: Math.min(2, c.dias), proteina: c.proteina } : c));
+      const noches = Datos.NOCHES.filter((n) => n.clave >= Fechas.sumarDias(lunesHoy, -7) && n.clave <= Datos.HOY).map((n) => n.dormido);
+      const sueno = 'sueno' in ajustes ? ajustes.sueno : pocasSemanas() ? null : promedioDe(noches);
+      const deHoy = d.sesion === 'prevista' ? new Set(sesionDeHoy.bloques.map(Musculos.claveDelEjercicio)) : new Set();
+      const nocheCorta = !!d.noche && (d.noche.dormido <= Rendimiento.NOCHE_CORTA || (d.noche.despertoAntes || 0) >= Rendimiento.DESPERTO_ANTES);
+      return metas.map((m) => {
+        const e = { id: m.id, ejercicio: m.id };
+        const { t } = tendenciaDe(e, d);
+        const objetivo = PuntajeMuscular.e1rm(m.kilos, m.reps) ?? m.kilos;
+        const principal = (Musculos.musculosDe(e) || { principal: [] }).principal;
+        const musculo = principal[0] || null;
+        const pasos = ProgresoCompartido.comoLlegar({
+          tendencia: t,
+          semanas: musculo ? ultimas.filter(conSesion).map((l) => Estancados.semanaDeEntreno(sesiones, l, e, musculo)) : [],
+          comida, pesoKg: pesoDeHoy(), sueno, necesidad,
+        }).filter((x) => x.que !== 'series' || musculo);
+        // La próxima vez, con las sesiones de verdad del ejercicio (sin lo copiado), como «Tus músculos» en la app.
+        const clave = Musculos.claveDelEjercicio(e);
+        const deVerdad = (b) => Musculos.claveDelEjercicio(b) === clave && !b.copiada;
+        const conEl = sesiones.filter((s) => s.inicio < k.en && s.bloques.some(deVerdad));
+        const ultima = conEl[conEl.length - 1];
+        const peso = ultima ? Math.max(0, ...ultima.bloques.filter(deVerdad).flatMap((b) => b.series.map((x) => x.peso))) : 0;
+        const tocaHoy = deHoy.has(clave);
+        const proxima = PuntajeMuscular.proximaSesion({
+          sesiones: conEl.map((s) => ({ series: s.bloques.filter(deVerdad).flatMap((b) => b.series) })),
+          tope: A.objetivos[m.id] ?? null,
+          nocheCortaHoy: nocheCorta && tocaHoy,
+          fatigadoHoy: tocaHoy && principal.some((x) => (k.todos.find((y) => y.musculo === x) || {}).estado !== 'recuperado'),
+        });
+        return { m, e, t, objetivo, musculo, pasos, peso, proxima, proyeccion: ProgresoCompartido.proyeccionDeMeta(t, objetivo) };
+      });
     }
 
     /** Lo de hoy para «Hoy, concéntrate en»: la meta del día, con o sin la sesión anotada. */
@@ -1400,7 +1567,7 @@ const SeccionAscent = (() => {
       const ahora = ahoraDe(d);
       const unoRM = memoUnoRM(d, ahora);
       const opcionesAhora = { unoRM, novato: !entrenado, minuto: minutoDe(ahora) };
-      return Object.assign(k, {
+      Object.assign(k, {
         fuerza, marcas, diag, foco, comida: calcularComida(),
         todos: Fatiga.todosLosMusculos(Object.assign({ sesiones: sesionesDe(d), en: ahora }, opcionesAhora)),
         rutina: Fatiga.fatigaPorDia(Object.assign({
@@ -1411,6 +1578,9 @@ const SeccionAscent = (() => {
         bajadas: calcularBajadas(d, fuerza),
         comoFue: calcularComoFue(d, k),
       });
+      // Después de los músculos de ahora (k.todos): la próxima vez no sube si alguno todavía se recupera.
+      k.metas = calcularMetas(d, k);
+      return k;
     }
 
     // ------------------------------------------------------------ lo de antes, para Sueño (hasta que se decida)
@@ -1619,6 +1789,7 @@ const SeccionAscent = (() => {
     elegir('s-dia-ascent', (v) => ponerDia(v));
     elegir('s-bajada', (v) => ponerBajada(v === 'ninguna' ? null : v));
     elegir('s-sesion', (v) => ponerSesion(v === 'comoSiempre' ? null : v));
+    elegir('s-metas', (v) => ponerMetas(v === 'persona' ? null : v));
 
     // Cómo está Ascent en este iPhone cambia la entrada y la invitación de Inicio.
     function ponerIphone(v) {
@@ -1640,6 +1811,13 @@ const SeccionAscent = (() => {
     function ponerBajada(v) {
       bajadaElegida = v || null;
       document.querySelectorAll('#s-bajada button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.valor === (v || 'ninguna'))));
+      pintar();
+      entraElContenido();
+    }
+    // Las metas (26/11): null, las de la persona; si no, un ejemplo (bien, mejorar, noSeSabe o noLlega).
+    function ponerMetas(v) {
+      metasElegidas = v || null;
+      document.querySelectorAll('#s-metas button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.valor === (v || 'persona'))));
       pintar();
       entraElContenido();
     }
@@ -2620,6 +2798,123 @@ const SeccionAscent = (() => {
       return c;
     }
 
+    // ------------------------------------------------------------ las metas (26/11, para aprobar)
+    const FLECHA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 18.5V6M6.5 11.5 12 6l5.5 5.5"/></svg>';
+    // Para abajo, de a 2,5 kg, como en Ascent: con 98,6 no dice «100» de una meta de 100 sin llegar. El 1e-9 es por la
+    // coma flotante (100 / 2,5 tiene que dar 40).
+    const deADosYMedioAbajo = (kg) => Math.floor(kg / 2.5 + 1e-9) * 2.5;
+    // Los números de las filas, para abajo a un decimal: 9,96 series no dicen «10 por semana. Con 10…».
+    const unDecimalAbajo = (n) => {
+      const v = Math.floor(n * 10 + 1e-9) / 10;
+      return numero(v, Math.round(v * 10) % 10 ? 1 : 0);
+    };
+    /** El mes en que se cumplen esas semanas desde hoy. */
+    const mesEn = (semanas) => {
+      const p = u.partes(Fechas.sumarDias(Datos.HOY, semanas * 7));
+      return { mes: tx('fecha.meses.' + p.mes), anio: p.anio };
+    };
+    /** «Llegas entre marzo y abril»: el año solo si no es este, y una vez («entre marzo y abril de 2027»). */
+    function cuandoLlegas(p) {
+      const anio = Number(Datos.HOY.slice(0, 4));
+      const con = (x) => (x.anio === anio ? x.mes : tx('ascent.metas.llegas.delAnio', { mes: x.mes, anio: x.anio }));
+      const de = mesEn(p.semanas[0]);
+      if (p.semanas[1] === null) return tx('ascent.metas.llegas.desde', { mes: con(de) });
+      const a = mesEn(p.semanas[1]);
+      if (de.mes === a.mes && de.anio === a.anio) return tx('ascent.metas.llegas.en', { mes: con(de) });
+      return tx('ascent.metas.llegas.entre', { de: de.anio === a.anio || de.anio === anio ? de.mes : con(de), a: con(a) });
+    }
+    /** Una forma de { uno, otros } con sus variables ya escritas (`n` puede tener decimales: «1,5 veces»). */
+    const forma = (clave, uno, vars) => {
+      const f = tx(clave);
+      return (uno ? f.uno : f.otros).replace(/\{(\w+)\}/g, (_, k2) => (vars[k2] == null ? '' : vars[k2]));
+    };
+    /** La línea de cada fila de «Cómo llegar»; sin el dato, «Todavía no se sabe» con lo que falta. */
+    function textoDelPaso(x, meta) {
+      const L = 'ascent.metas.llegar.';
+      if (x.que === 'ritmo') {
+        if (x.estado === 'bien') return tx(L + 'ritmo.bien', { kg: unDecimalAbajo(Math.max(0.1, x.kgPorSemana)) });
+        if (x.estado === 'mejorar') return tx(L + 'ritmo.mejorar');
+        const t = meta.t;
+        if (t.sesiones < ProgresoCompartido.SESIONES_MINIMAS) return u.plural(L + 'ritmo.faltanSesiones', ProgresoCompartido.SESIONES_MINIMAS - t.sesiones);
+        if (t.semanas < ProgresoCompartido.SEMANAS_MINIMAS_DE_HISTORIA) return tx(L + 'ritmo.faltanSemanas', { n: Math.floor(t.semanas) });
+        return tx(L + 'ritmo.noSeSabe');
+      }
+      if (x.que === 'series' || x.que === 'veces') {
+        const vars = { musculo: meta.musculo ? nombreDelMusculo(meta.musculo).toLowerCase() : '', ejercicio: nombreDelEjercicio(meta.e), a: numero(x.apunta) };
+        if (x.porSemana === null) return tx(L + x.que + '.noSeSabe', vars);
+        const n = unDecimalAbajo(x.porSemana);
+        if (x.que === 'series') return tx(L + 'series.' + x.estado, Object.assign(vars, { n }));
+        return forma(L + 'veces.' + x.estado, Math.floor(x.porSemana * 10 + 1e-9) === 10, Object.assign(vars, { n }));
+      }
+      if (x.que === 'sueno') return x.promedio === null ? tx(L + 'sueno.noSeSabe') : tx(L + 'sueno.' + x.estado, { h: horasDe(x.promedio) });
+      return x.gPorKg === null ? tx(L + 'proteina.noSeSabe') : tx(L + 'proteina.' + x.estado, { g: unDecimalAbajo(x.gPorKg), a: numero(x.apunta, 1) });
+    }
+    /** La próxima vez con el ejercicio, como en «Tus músculos»; con el tope sin alcanzar, el peso por las repeticiones. */
+    function proximaVez(x) {
+      const p = x.proxima;
+      if (p.decision === 'noSeSabe') return null;
+      const tope = A.objetivos[x.m.id];
+      if (p.decision === 'subir') {
+        const siguiente = PuntajeMuscular.pesoSiguiente(x.peso);
+        return siguiente === null ? tx('ascent.tus.proxima.subirSinPeso') : tx('ascent.tus.proxima.subirA', { kg: u.peso(siguiente) });
+      }
+      if (p.razon === 'faltaElTope' && x.peso > 0) return tx('ascent.metas.proxima', { kg: u.peso(x.peso), reps: tope });
+      return tx('ascent.tus.proxima.' + p.razon, { peso: x.peso > 0 ? `${u.peso(x.peso)} kg` : tx('ascent.tus.mismoPeso'), tope: tope ?? '' });
+    }
+    function filaDeMeta(x) {
+      const f = el('article', 'as-meta');
+      const kg = u.peso(x.m.kilos);
+      const cab = el('header', 'as-meta-cab');
+      cab.append(el('span', 'as-meta-nombre', nombreDelEjercicio(x.e)), el('span', 'as-meta-objetivo', x.m.reps === 1 ? tx('ascent.metas.objetivoUna', { kg }) : tx('ascent.metas.objetivoVarias', { kg, reps: x.m.reps })));
+      f.appendChild(cab);
+      const p = x.proyeccion;
+      // Lo de hoy con las repeticiones de la meta (Epley al revés), como se carga en la barra.
+      const hoy = x.t.nivel === null ? null : tx('ascent.metas.levantarias', { kg: u.peso(deADosYMedioAbajo(x.m.reps === 1 ? x.t.nivel : x.t.nivel / (1 + x.m.reps / 30))) });
+      if (hoy) {
+        const pista = el('div', 'as-meta-pista');
+        const lleno = el('i');
+        lleno.style.width = `${(Math.min(1, x.t.nivel / x.objetivo) * 100).toFixed(1)}%`;
+        pista.appendChild(lleno);
+        pista.setAttribute('role', 'img');
+        pista.setAttribute('aria-label', hoy);
+        f.appendChild(pista);
+      }
+      if (p.estado === 'enCamino') {
+        // Cada mitad entera: si no entra en una línea, corta en el punto y no en el medio de la fecha.
+        const l = el('p', 'as-meta-linea');
+        if (hoy) l.append(el('span', null, hoy), document.createTextNode(' · '));
+        l.appendChild(el('span', null, cuandoLlegas(p)));
+        f.appendChild(l);
+      } else {
+        if (hoy) f.appendChild(linea('as-meta-linea', hoy));
+        f.appendChild(linea('as-meta-estado', tx('ascent.metas.' + p.estado)));
+      }
+      if (p.estado === 'enCamino' && !p.realista) f.appendChild(linea('as-meta-estado', tx('ascent.metas.lejana')));
+      if (p.estado === 'lograda') return f;
+      f.appendChild(el('h4', 'as-bajo-sub', tx('ascent.metas.llegar.titulo')));
+      const ul = el('ul', 'as-llegar');
+      x.pasos.forEach((paso, j) => {
+        const li = el('li', 'as-paso ' + paso.estado);
+        const marca = el('span', 'as-paso-marca');
+        marca.innerHTML = paso.estado === 'bien' ? icono('listo') : paso.estado === 'mejorar' ? FLECHA : '';
+        marca.setAttribute('role', 'img');
+        marca.setAttribute('aria-label', tx('ascent.metas.llegar.marcas.' + paso.estado));
+        li.style.animationDelay = `${120 + j * 60}ms`;
+        li.append(marca, el('span', null, textoDelPaso(paso, x)));
+        ul.appendChild(li);
+      });
+      f.appendChild(ul);
+      const proxima = proximaVez(x);
+      if (proxima) f.appendChild(linea('as-meta-proxima', proxima));
+      return f;
+    }
+    function parteMetas(d, k) {
+      const c = parte('as-metas', tx('ascent.metas.titulo'));
+      if (!k.metas.length) c.appendChild(linea('as-una', tx('ascent.metas.ninguna')));
+      k.metas.forEach((x) => c.appendChild(filaDeMeta(x)));
+      return c;
+    }
+
     // ------------------------------------------------------------ cómo fue tu sesión (26/11, para aprobar)
     /** El bloque de un ejercicio en la sesión, por su nombre (el que devuelve TuSesion). */
     const bloqueDe = (cf, nombre) => cf.sesion.bloques.find((b) => b.ejercicio === nombre);
@@ -2860,7 +3155,7 @@ const SeccionAscent = (() => {
         else pp.textContent = t;
         return pp;
       };
-      ['porcentaje', 'titular', 'noche', 'musculos', 'fuerza', 'marca', 'estancamiento', 'comer', 'orientativo'].forEach((k2) => cuerpoDeComo.appendChild(parrafo('ascent.base.' + k2, { necesidad: u.duracion(necesidad) })));
+      ['porcentaje', 'titular', 'noche', 'musculos', 'fuerza', 'marca', 'estancamiento', 'metas', 'comer', 'orientativo'].forEach((k2) => cuerpoDeComo.appendChild(parrafo('ascent.base.' + k2, { necesidad: u.duracion(necesidad) })));
       c.append(cab, cuerpoDeComo);
       return c;
     }
@@ -2948,7 +3243,7 @@ const SeccionAscent = (() => {
         principal.append(el('p', 'as-etq as-nombre', tx('ascent.titulo')), cabezaDelDia(d, k));
         const resto = [
           parteFoco(d, k), parteFilas(d, k), parteCuerpo(d, k), parteFuerza(d, k), parteMarcas(d, k), parteBajo(d, k), parteEstancamiento(d, k),
-          parteAnio(), parteComparten(d), parteComo(),
+          parteMetas(d, k), parteAnio(), parteComparten(d), parteComo(),
         ].filter(Boolean);
         principal.before(...resto.reverse());
         principal.after(pie());
@@ -3125,6 +3420,8 @@ const SeccionAscent = (() => {
       // Los ejemplos del 26/11, para aprobar: por qué bajaste y cómo fue tu sesión.
       ponerBajada,
       ponerSesion,
+      // Las metas (26/11, para aprobar): null, las de la persona; bien, mejorar, noSeSabe o noLlega.
+      ponerMetas,
       // Tu rango en Ascent (1 a 7; en el 4, el planeta del día).
       ponerRango,
       get rango() { return rangoActual; },

@@ -1142,7 +1142,14 @@
   };
   const verBajada = (v) => conAscentEn(() => ascent.ponerBajada(v), '.as-bajo');
   const verSesion = (v) => conAscentEn(() => { ascent.ponerBajada(null); ascent.ponerSesion(v); }, '.as-ultimo');
+  // Las metas de fuerza (26/11, para aprobar): un ejemplo, el día en que durmió bien y entrena.
+  const verMetas = (v) => conAscentEn(() => { ascent.ponerBajada(null); ascent.ponerDia('bien'); ascent.ponerMetas(v); }, '.as-metas');
   const accionesSeccion = {
+    ascentMetasBien: () => verMetas('bien'),
+    ascentMetasMejorar: () => verMetas('mejorar'),
+    ascentMetasNoSeSabe: () => verMetas('noSeSabe'),
+    ascentMetasNoLlega: () => verMetas('noLlega'),
+    ascentMetasPersona: () => verMetas(null),
     ascentBajadaSeries: () => verBajada('series'),
     ascentBajadaRango: () => verBajada('rango'),
     ascentBajadaPausa: () => verBajada('pausa'),
@@ -1684,6 +1691,8 @@
       // duraSeries, floja, flojaCorta o null).
       bajada: () => ascent.ponerBajada(arg),
       sesion: () => ascent.ponerSesion(arg),
+      // Las metas (26/11): bien, mejorar, noSeSabe, noLlega o null (las de la persona).
+      metas: () => ascent.ponerMetas(arg),
     };
     pasos[accion]();
     refrescarControles();
