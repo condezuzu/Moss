@@ -164,6 +164,8 @@ export type Estado = MapasDeComida & {
    * (rehacerLasNoches, en src/salud/nocheSinReloj.ts): se hace una sola vez en cada teléfono.
    */
   suenoRehecho: boolean;
+  /** Lo mismo con los despertares del 28/11/2026 (agarrar el teléfono de noche ya no la corta): una sola vez en cada teléfono. */
+  suenoConDespertares: boolean;
   /**
    * Lo que necesitás dormir, en minutos, si lo elegiste («Necesito dormir»); sin elegir, null: vale lo de tu
    * edad (necesidad, en sueno.ts, que además lo deja dentro de lo de tu edad). Queda en el teléfono.
@@ -244,6 +246,7 @@ const latenciaDe = (x: string | undefined): number | null => {
   return Number.isFinite(minutos) ? [...MARGENES].sort((a, b) => Math.abs(a - minutos) - Math.abs(b - minutos))[0] : null;
 };
 const SUENO_REHECHO = 'suenoRehecho';
+const SUENO_CON_DESPERTARES = 'suenoConDespertares';
 const NECESIDAD = 'necesidad';
 /** Lo que necesitás dormir, elegido; sin elegir (o lo que no es una de las que se eligen), null. */
 const necesidadDe = (x: string | undefined): number | null => NECESIDADES.find((m) => String(m) === x) ?? null;
@@ -507,7 +510,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: diaLogico(ahora(), CORTE_DE_FABRICA, zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, nombre: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), sistema: null, inicio: null,
-    recordatorios: null, avisos: {}, horasDeComer: {}, calidad: null, uso: [], despertares: {}, desayunos: {}, objetivos: {}, fuenteDelSueno: null, numeros: true, kcal: 'luna', entreno: null, respuestas: null, cuidados: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, nochesDeSalud: null, corte: CORTE_DE_FABRICA, latencia: null, suenoRehecho: false, necesidad: null, pendientes: [], plazo: null, inicioDelObjetivo: null, llegada: null, paisDeAlimentos: null, semilla: '',
+    recordatorios: null, avisos: {}, horasDeComer: {}, calidad: null, uso: [], despertares: {}, desayunos: {}, objetivos: {}, fuenteDelSueno: null, numeros: true, kcal: 'luna', entreno: null, respuestas: null, cuidados: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, nochesDeSalud: null, corte: CORTE_DE_FABRICA, latencia: null, suenoRehecho: false, suenoConDespertares: false, necesidad: null, pendientes: [], plazo: null, inicioDelObjetivo: null, llegada: null, paisDeAlimentos: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -683,7 +686,7 @@ export function crearAlmacen(op: Opciones) {
     cambiarLaCanasta(leerCanasta(g.ajustes[CANASTA]));
     // Lo de la memoria es otra vez lo guardado.
     nubeSinGuardar = false;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos, horasDeComer: horas.horas, calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), despertares: porDia(g.ajustes[DESPERTARES], esDespertar), desayunos: porDia(g.ajustes[DESAYUNOS], esRespuesta), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', kcal: ESTILOS_DE_KCAL.find((k) => k === g.ajustes[KCAL]) ?? 'luna', entreno: leerEntreno(g.ajustes[ENTRENO]), respuestas, cuidados: cuidadosDe(leerAvance(g.ajustes[CUIDADOS])), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', nochesDeSalud: g.nochesDeSalud, avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), suenoRehecho: g.ajustes[SUENO_REHECHO] === 'si', necesidad: necesidadDe(g.ajustes[NECESIDAD]), pendientes: pendientesVigentes(pendientesDe(leerAvance(g.ajustes[PENDIENTES])), hoy), plazo: plazoElegidoDe(leerAvance(g.ajustes[PLAZO])), inicioDelObjetivo: /^\d{4}-\d{2}-\d{2}$/.test(g.ajustes[INICIO_DEL_OBJETIVO] ?? '') ? g.ajustes[INICIO_DEL_OBJETIVO] : null, llegada: llegadaDe(leerAvance(g.ajustes[LLEGADA])), paisDeAlimentos: /^[A-Z]{2}$/.test(g.ajustes[PAIS] ?? '') ? g.ajustes[PAIS] : null, listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos, horasDeComer: horas.horas, calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), despertares: porDia(g.ajustes[DESPERTARES], esDespertar), desayunos: porDia(g.ajustes[DESAYUNOS], esRespuesta), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', kcal: ESTILOS_DE_KCAL.find((k) => k === g.ajustes[KCAL]) ?? 'luna', entreno: leerEntreno(g.ajustes[ENTRENO]), respuestas, cuidados: cuidadosDe(leerAvance(g.ajustes[CUIDADOS])), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', nochesDeSalud: g.nochesDeSalud, avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), suenoRehecho: g.ajustes[SUENO_REHECHO] === 'si', suenoConDespertares: g.ajustes[SUENO_CON_DESPERTARES] === 'si', necesidad: necesidadDe(g.ajustes[NECESIDAD]), pendientes: pendientesVigentes(pendientesDe(leerAvance(g.ajustes[PENDIENTES])), hoy), plazo: plazoElegidoDe(leerAvance(g.ajustes[PLAZO])), inicioDelObjetivo: /^\d{4}-\d{2}-\d{2}$/.test(g.ajustes[INICIO_DEL_OBJETIVO] ?? '') ? g.ajustes[INICIO_DEL_OBJETIVO] : null, llegada: llegadaDe(leerAvance(g.ajustes[LLEGADA])), paisDeAlimentos: /^[A-Z]{2}$/.test(g.ajustes[PAIS] ?? '') ? g.ajustes[PAIS] : null, listo: true }, true);
     revisarControl();
     revisarEtapa();
   }
@@ -1714,6 +1717,11 @@ export function crearAlmacen(op: Opciones) {
     marcarSuenoRehecho() {
       guardar((r) => r.guardarAjuste(SUENO_REHECHO, 'si'));
       cambiar({ suenoRehecho: true }, false);
+    },
+    /** Las noches de los últimos días ya se estimaron de nuevo con los despertares: no se vuelve a hacer. */
+    marcarSuenoConDespertares() {
+      guardar((r) => r.guardarAjuste(SUENO_CON_DESPERTARES, 'si'));
+      cambiar({ suenoConDespertares: true }, false);
     },
     /** «Necesito dormir»: los minutos elegidos (NECESIDADES, en sueno.ts), o null para lo de tu edad. */
     ponerNecesidad(minutos: number | null) {

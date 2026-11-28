@@ -7,6 +7,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { lineaDelRendimiento } from '@/dominio/rendimiento';
 import { sumarDias } from '@/dominio/fechas';
+import { cuentaParaLaDeuda } from '@/dominio/sueno';
 import { t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Icono } from '../comida/comunes';
@@ -22,8 +23,8 @@ export function RecuperacionEnSueno() {
   const hoy = useEstado().hoy;
   const s = useSueno();
   if (!titular) return null;
-  // Las de confianza baja no cuentan, como en la deuda.
-  const noches = s.deEjemplo ? [] : s.noches.filter((n) => n.confianza.duracion !== 'baja');
+  // Las que no cuentan para la deuda tampoco cuentan acá.
+  const noches = s.deEjemplo ? [] : s.noches.filter(cuentaParaLaDeuda);
   const anoche = noches.find((n) => n.clave === hoy) ?? null;
   const ultimas3 = [0, 1, 2].flatMap((k) => noches.find((n) => n.clave === sumarDias(hoy, -k))?.dormido ?? []);
   const linea = titular.que !== 'suenoCorto' && anoche && lineaDelRendimiento({ dormido: anoche.dormido, necesidad: s.necesidad, despertoAntes: null }, ultimas3)

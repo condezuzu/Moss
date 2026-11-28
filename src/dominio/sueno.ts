@@ -47,10 +47,15 @@ export type NochePropia = {
    * actividad y la primera): con eso una noche se puede volver a armar si cambia la regla o tu margen
    * (sinLasRestas, en src/dominio/sinReloj.ts). Y `margen`, la mitad del rango de cada borde, en minutos,
    * para calibrarlo: queda en el teléfono (la cuenta no lo guarda), y sin él el rango sale de la confianza.
+   * `despertares`, cada vez que agarraste el teléfono en medio de la noche y lo volviste a dejar: de agarrarlo a
+   * volver a dormirte (DESPERTAR, en sinReloj.ts). Se restan de lo dormido y suben a la cuenta (0023_noches_despertares.sql).
    */
   hora?: {
     dormirse: string; despertar: string; origen: OrigenDeNoche; confianza: Confianza;
-    estimada?: { dormirse: string; despertar: string; quieto?: { desde: string; hasta: string }; margen?: { dormirse: number; despertar: number } };
+    estimada?: {
+      dormirse: string; despertar: string; quieto?: { desde: string; hasta: string }; margen?: { dormirse: number; despertar: number };
+      despertares?: { desde: string; hasta: string }[];
+    };
   };
   actualizado: string;
   borrado?: true;
@@ -88,9 +93,10 @@ export type Noche = {
   aMano?: true;
   /**
    * Las noches de Moss, sin reloj: de dónde sale la hora, qué tan segura estaba la estimación y, si
-   * es una estimación, el rango (en minutos desde las 18, como `dormirse` y `despertar`).
+   * es una estimación, el rango (en minutos desde las 18, como `dormirse` y `despertar`). `despertares`, los que vio
+   * el teléfono adentro de la noche, en minutos: ya están en `despierto`.
    */
-  moss?: { origen: OrigenDeNoche; confianza: Confianza; rango: { dormirse: [number, number]; despertar: [number, number] } | null };
+  moss?: { origen: OrigenDeNoche; confianza: Confianza; rango: { dormirse: [number, number]; despertar: [number, number] } | null; despertares?: { desde: number; hasta: number }[] };
 };
 
 const MIN = 60_000;
@@ -519,13 +525,12 @@ export type Deuda = {
   de: number;
 };
 /**
- * Lo que una noche puede sumar o pagar, en minutos (spec/estudio/deuda-y-melatonina.md, 1.5). Lo que sobra paga
- * hasta una hora: con cama de sobra casi no se duerme más que eso por encima de lo que se necesita (Harrison y
- * Horne 1996; Klerman y Dijk 2008). Lo que falta suma hasta 3 horas, y hasta 2 si la noche la estimó el teléfono
- * y no la confirmaste: una de cada siete de esas tiene un borde errado en más de 2 horas (Sahha 2026). Los dos
- * topes de lo que falta son una convención.
+ * Lo que una noche puede pagar, en minutos (spec/estudio/deuda-y-melatonina.md, 1.5): lo que sobra paga hasta una hora,
+ * porque con cama de sobra casi no se duerme más que eso por encima de lo que se necesita (Harrison y Horne 1996;
+ * Klerman y Dijk 2008). Lo que falta suma entero: el tope de 3 horas (2 si la estimó el teléfono) se sacó el
+ * 28/11/2026, cuando pediste que cuente todo.
  */
-export const TOPES_DE_UNA_NOCHE = { sobra: 60, falta: 180, faltaEstimada: 120 } as const;
+export const TOPES_DE_UNA_NOCHE = { sobra: 60 } as const;
 /**
  * En cuántas noches una noche pierde casi dos tercios de su peso: 7, la constante con que sube y baja la deuda
  * en el modelo validado que la publica (7,0 ± 1,7 días, Ramakrishnan 2016).
@@ -534,13 +539,15 @@ const NOCHES_DEL_PESO = 7;
 /** Cuánto pesa la noche `i` de `n`, de la más vieja a anoche: anoche 1, y cada noche de antes, e^(−1/7) de la siguiente. */
 const pesoDeLaNoche = (i: number, n: number) => Math.exp(-(n - 1 - i) / NOCHES_DEL_PESO);
 
-/** Si la noche entra en la deuda: medida, confirmada o estimada con el teléfono con confianza media o alta. */
-const cuentaParaLaDeuda = (n: Noche | null): n is Noche => !!n && n.confianza.duracion !== 'baja';
+/**
+ * Si la noche entra en la deuda: la de Moss siempre, también la poco segura (lo pediste el 28/11/2026: si no, justo las
+ * noches cortas quedaban afuera), y la de un aparato con confianza media o alta.
+ */
+export const cuentaParaLaDeuda = (n: Noche | null): n is Noche => !!n && (!!n.moss || n.confianza.duracion !== 'baja');
 
-/** Lo que le faltó a una noche para tu necesidad (negativo si sobró), con sus topes: lo que entra en la deuda. */
+/** Lo que le faltó a una noche para tu necesidad (negativo si sobró, con su tope): lo que entra en la deuda. */
 export function faltaDeLaNoche(noche: Noche, necesidadMin: number): number {
-  const tope = noche.moss?.origen === 'estimada' ? TOPES_DE_UNA_NOCHE.faltaEstimada : TOPES_DE_UNA_NOCHE.falta;
-  return Math.min(tope, Math.max(-TOPES_DE_UNA_NOCHE.sobra, necesidadMin - noche.dormido - noche.siestas));
+  return Math.max(-TOPES_DE_UNA_NOCHE.sobra, necesidadMin - noche.dormido - noche.siestas);
 }
 
 /**

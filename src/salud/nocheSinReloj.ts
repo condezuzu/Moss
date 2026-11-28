@@ -80,12 +80,22 @@ async function estimar(e: Estado, clave: ClaveDia, ahora: Date, pasos: Pasos): P
   if (!estimacion) return null;
   const iso = (minutos: number) => new Date(instanteDe(clave, zona, Math.round(minutos))).toISOString();
   const horas = { dormirse: iso(estimacion.dormirse), despertar: iso(estimacion.despertar) };
+  // Al minuto, uno de menos de un minuto (agarrar el teléfono justo antes de «Me desperté») queda sin largo, y la cuenta
+  // rechaza la noche entera (0023_noches_despertares.sql).
+  const despertares = estimacion.despertares.map((x) => ({ desde: iso(x.desde), hasta: iso(x.hasta) })).filter((x) => x.desde < x.hasta);
   return {
     estimacion,
-    // Con la ventana tranquila, para volver a armarla si cambia tu margen, y el margen del rango, para calibrarlo.
-    hora: { ...horas, origen: 'estimada', confianza: estimacion.confianza, estimada: { ...horas, quieto: { desde: iso(estimacion.quieto.desde), hasta: iso(estimacion.quieto.hasta) }, margen: estimacion.margen } },
+    // Con la ventana tranquila, para volver a armarla si cambia tu margen, el margen del rango, para calibrarlo, y los despertares.
+    hora: {
+      ...horas, origen: 'estimada', confianza: estimacion.confianza,
+      estimada: { ...horas, quieto: { desde: iso(estimacion.quieto.desde), hasta: iso(estimacion.quieto.hasta) }, margen: estimacion.margen, ...(despertares.length ? { despertares } : {}) },
+    },
   };
 }
+
+/** Si una noche estimada cambió: cada cambio sube a la cuenta. */
+const cambio = (antes: NochePropia['hora'], ahora: NonNullable<NochePropia['hora']>) => !antes || antes.dormirse !== ahora.dormirse || antes.despertar !== ahora.despertar
+  || antes.confianza !== ahora.confianza || JSON.stringify(antes.estimada?.despertares ?? []) !== JSON.stringify(ahora.estimada?.despertares ?? []);
 
 export async function estimarAnoche(a: Almacen, ahora = new Date()): Promise<void> {
   const e = a.estado();
@@ -99,9 +109,7 @@ export async function estimarAnoche(a: Almacen, ahora = new Date()): Promise<voi
   if (!est) return;
   comoLlego = { clave, estimacion: est.estimacion, margen: margenParaDormirte(e.latencia) };
   oyentes.forEach((o) => o());
-  // Solo si cambió: cada cambio sube a la cuenta.
-  if (antes?.hora && antes.hora.dormirse === est.hora.dormirse && antes.hora.despertar === est.hora.despertar && antes.hora.confianza === est.hora.confianza) return;
-  a.ponerHoraDeLaNoche(clave, est.hora, true);
+  if (cambio(antes?.hora, est.hora)) a.ponerHoraDeLaNoche(clave, est.hora, true);
 }
 
 /**
@@ -112,24 +120,46 @@ export async function estimarAnoche(a: Almacen, ahora = new Date()): Promise<voi
  * ventana guardada y sin las restas de antes (sinLasRestas). También las que aceptaste con «Sí» tal como Moss
  * las propuso: la propuesta ya traía esas restas, así que no es una medición tuya, y vuelven a ser estimadas.
  * Lo que corregiste o escribiste no se toca. `leerPasos`, los pasos de Salud entre dos momentos.
+ *
+ * Y una sola vez, al llegar los despertares (28/11/2026: agarrar el teléfono en medio de la noche ya no la corta), las
+ * noches estimadas de los últimos días se estiman de nuevo con sus señales, así la deuda de hoy ya sale bien. Solo las
+ * estimadas: las que confirmaste, corregiste o escribiste quedan. Y solo las que todavía tienen todas sus señales: el
+ * movimiento (siete días) y cuándo abriste Moss (el almacén guarda tres); sin eso, la noche quedaría peor que antes.
  */
 export async function rehacerLasNoches(a: Almacen, ahora = new Date(), leerPasos: (desde: Date, hasta: Date) => Promise<Pasos> = async () => []): Promise<void> {
-  if (!a.estado().listo || a.estado().suenoRehecho) return;
+  if (!a.estado().listo || (a.estado().suenoRehecho && a.estado().suenoConDespertares)) return;
   const hoy = nocheDeAhora(ahora);
   const pasos = await leerPasos(new Date(ahora.getTime() - (DIAS_CON_SENALES + 2) * 86_400_000), ahora).catch((): Pasos => []);
   const sirve = (e: Estimacion) => !e.motivos.includes('pocosDatos') && !e.motivos.includes('sinVentana');
   // De la más vieja a la más nueva: cada una se compara con lo de siempre de las anteriores, ya rehechas.
-  for (let i = NOCHES_QUE_SE_REARMAN - 1; i >= 0; i--) {
-    const clave = sumarDias(hoy, -i);
-    const e = a.estado();
-    const antes = e.noches.get(clave);
-    if (!antes?.hora || antes.borrado || laTieneSalud(e, clave)) continue;
-    const sinRestas = sinLasRestas(antes.hora, margenParaDormirte(e.latencia), true);
-    // Una aceptada con «Sí» se rehace solo si su propuesta era de la regla de antes: si ya son las horas de su ventana, ese «Sí» vale.
-    if (antes.hora.origen !== 'estimada' && !(aceptadaSinCambios(antes.hora) && sinRestas)) continue;
-    const conSenales = i < DIAS_CON_SENALES ? await estimar(e, clave, ahora, pasos) : null;
-    const hora = conSenales && sirve(conSenales.estimacion) ? conSenales.hora : sinRestas;
-    if (hora && (hora.dormirse !== antes.hora.dormirse || hora.despertar !== antes.hora.despertar)) a.ponerHoraDeLaNoche(clave, hora, true);
+  if (!a.estado().suenoRehecho) {
+    for (let i = NOCHES_QUE_SE_REARMAN - 1; i >= 0; i--) {
+      const clave = sumarDias(hoy, -i);
+      const e = a.estado();
+      const antes = e.noches.get(clave);
+      if (!antes?.hora || antes.borrado || laTieneSalud(e, clave)) continue;
+      const sinRestas = sinLasRestas(antes.hora, margenParaDormirte(e.latencia), true);
+      // Una aceptada con «Sí» se rehace solo si su propuesta era de la regla de antes: si ya son las horas de su ventana, ese «Sí» vale.
+      if (antes.hora.origen !== 'estimada' && !(aceptadaSinCambios(antes.hora) && sinRestas)) continue;
+      const conSenales = i < DIAS_CON_SENALES ? await estimar(e, clave, ahora, pasos) : null;
+      const hora = conSenales && sirve(conSenales.estimacion) ? conSenales.hora : sinRestas;
+      if (hora && (hora.dormirse !== antes.hora.dormirse || hora.despertar !== antes.hora.despertar)) a.ponerHoraDeLaNoche(clave, hora, true);
+    }
+    a.marcarSuenoRehecho();
   }
-  a.marcarSuenoRehecho();
+  if (!a.estado().suenoConDespertares) {
+    for (let i = DIAS_CON_SENALES - 1; i >= 0; i--) {
+      const clave = sumarDias(hoy, -i);
+      const e = a.estado();
+      const antes = e.noches.get(clave);
+      const desde = instanteDe(clave, zonaEn(Date.parse(`${clave}T12:00:00.000Z`)), -360);
+      if (antes?.hora?.origen !== 'estimada' || antes.borrado || laTieneSalud(e, clave) || !e.uso.some(([abriste]) => abriste <= desde)) continue;
+      const nueva = await estimar(e, clave, ahora, pasos);
+      // Sin ventana también, si la de antes era poco segura: es la noche cortada que la regla de antes tampoco encontraba,
+      // y ahora la deuda la cuenta igual.
+      const mejor = nueva && (sirve(nueva.estimacion) || (antes.hora.confianza === 'baja' && !nueva.estimacion.motivos.includes('pocosDatos')));
+      if (nueva && mejor && cambio(antes.hora, nueva.hora)) a.ponerHoraDeLaNoche(clave, nueva.hora, true);
+    }
+    a.marcarSuenoConDespertares();
+  }
 }

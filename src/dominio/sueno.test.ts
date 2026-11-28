@@ -2,7 +2,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 
 import { sumarDias } from './fechas';
 import {
-  armarNoches, calidadDeNoche, despiertoDeLaNoche, deudaDeSueno, faltaDeLaNoche, horario, marcaDe, necesidad, necesidadesPara, necesidadPropuesta, nivelDeLaNoche, nochesDeLaDeuda, juicioDeLaDeuda, pareceIncompleta, pocoSuenoSostenido, redondearDeuda,
+  armarNoches, calidadDeNoche, cuentaParaLaDeuda, despiertoDeLaNoche, deudaDeSueno, faltaDeLaNoche, horario, marcaDe, necesidad, necesidadesPara, necesidadPropuesta, nivelDeLaNoche, nochesDeLaDeuda, juicioDeLaDeuda, pareceIncompleta, pocoSuenoSostenido, redondearDeuda,
   soloEnCama, TOPES_DE_UNA_NOCHE, ultimasNoches, vitalDeNoche,
   type Etapa, type Fuente, type Muestra, type Noche,
 } from './sueno';
@@ -295,13 +295,13 @@ describe('las dos semanas', () => {
     expect(deudaDeSueno([null, null, null, ...semanas(4, [], 420)], 480)).toBeNull();
   });
 
-  it('una noche mala pesa menos cada día: 4 h anoche suman 3 h; hace una semana, 1 h 06; hace 13 noches, media hora', () => {
+  it('una noche mala pesa menos cada día: 4 h anoche suman 4 h; hace una semana, 1 h 28; hace 13 noches, 37 min', () => {
     const con = (hace: number) => deudaDeSueno(durmiendo(Array.from({ length: 14 }, (_, i) => (i === 13 - hace ? 240 : 480))), 480)!.minutos;
-    // Lo que falta en una noche suma hasta 3 horas: de 4 h a 8 faltan 4.
-    expect(con(0)).toBeCloseTo(180, 5);
-    expect(con(7)).toBeCloseTo(180 * Math.exp(-1), 5);
-    expect(Math.round(con(7))).toBe(66);
-    expect(Math.round(con(13))).toBe(28);
+    // Lo que falta en una noche suma entero (sin tope desde el 28/11): de 4 h a 8 faltan 4.
+    expect(con(0)).toBeCloseTo(240, 5);
+    expect(con(7)).toBeCloseTo(240 * Math.exp(-1), 5);
+    expect(Math.round(con(7))).toBe(88);
+    expect(Math.round(con(13))).toBe(37);
   });
 
   it('lo que sobra paga hasta una hora por noche: con una falta de 1 h, cuatro noches con una hora de más la borran', () => {
@@ -315,17 +315,23 @@ describe('las dos semanas', () => {
     expect(faltaDeLaNoche({ ...semanas(1)[0]!, dormido: 700 }, 480)).toBe(-TOPES_DE_UNA_NOCHE.sobra);
   });
 
-  it('una noche estimada con el teléfono y sin confirmar suma hasta 2 horas; confirmada, hasta 3, como las medidas', () => {
-    const deMoss = (origen: 'estimada' | 'confirmada'): Noche => ({
-      ...semanas(1)[0]!, dormido: 200, fuente: { id: 'moss', nombre: 'Moss', tipo: 'moss' }, confianza: { duracion: 'media', horario: 'media', despertares: 'baja', etapas: null, enCama: null },
-      moss: { origen, confianza: 'media', rango: null },
+  it('lo que falta suma entero, estimada, confirmada o medida, y la del teléfono cuenta aunque sea poco segura (28/11)', () => {
+    const deMoss = (origen: 'estimada' | 'confirmada', duracion: 'media' | 'baja' = 'media'): Noche => ({
+      ...semanas(1)[0]!, dormido: 200, fuente: { id: 'moss', nombre: 'Moss', tipo: 'moss' }, confianza: { duracion, horario: 'media', despertares: 'baja', etapas: null, enCama: null },
+      moss: { origen, confianza: duracion, rango: null },
     });
-    expect([faltaDeLaNoche(deMoss('estimada'), 480), faltaDeLaNoche(deMoss('confirmada'), 480), faltaDeLaNoche({ ...semanas(1)[0]!, dormido: 200 }, 480)]).toEqual([120, 180, 180]);
+    expect([faltaDeLaNoche(deMoss('estimada'), 480), faltaDeLaNoche(deMoss('confirmada'), 480), faltaDeLaNoche({ ...semanas(1)[0]!, dormido: 200 }, 480)]).toEqual([280, 280, 280]);
+    // La del sábado 28: 4 h 30 estimada y poco segura, necesitando 8. Entra entera.
+    const sabado = { ...deMoss('estimada', 'baja'), dormido: 270 };
+    expect([cuentaParaLaDeuda(sabado), nochesDeLaDeuda([sabado], 480)[0].entra]).toEqual([true, 210]);
+    // La poco segura de un aparato sigue sin contar.
+    expect(cuentaParaLaDeuda({ ...semanas(1)[0]!, confianza: { ...semanas(1)[0]!.confianza, duracion: 'baja' } })).toBe(false);
     // Las siestas cuentan.
     expect(faltaDeLaNoche({ ...semanas(1)[0]!, dormido: 400, siestas: 50 }, 480)).toBe(30);
-    // Dos semanas así: 2 h por noche, 13 h; con todas confirmadas, 3 h por noche.
-    expect(redondearDeuda(deudaDeSueno(Array.from({ length: 14 }, () => deMoss('estimada')), 480)!.minutos)).toBe(13 * 60);
-    expect(redondearDeuda(deudaDeSueno(Array.from({ length: 14 }, () => deMoss('confirmada')), 480)!.minutos)).toBe(19 * 60 + 30);
+    // Dos semanas así: 4 h 40 por noche, estimadas o confirmadas.
+    const dosSemanas = (origen: 'estimada' | 'confirmada') => deudaDeSueno(Array.from({ length: 14 }, () => deMoss(origen)), 480)!.minutos;
+    expect(dosSemanas('estimada')).toBeCloseTo(280 * PESOS.reduce((s, p) => s + p, 0), 5);
+    expect(dosSemanas('confirmada')).toBeCloseTo(dosSemanas('estimada'), 5);
   });
 
   it('las noches sin datos no cuentan como si hubieras dormido lo que necesitas: usar menos el reloj no baja la deuda', () => {
@@ -356,8 +362,8 @@ describe('las dos semanas', () => {
     // Sin datos, nada; la poco segura se muestra, pero no entra.
     expect(filas[2]).toMatchObject({ noche: null, dormido: null, falta: null, entra: null });
     expect(filas[5]).toMatchObject({ dormido: 100, falta: 380, entra: null });
-    // La estimada: faltaron 4 h 40 y entran 2 h; la larga: sobraron 2 h (con la siesta) y descuenta 1 h.
-    expect(filas[9]).toMatchObject({ dormido: 200, falta: 280, entra: 120 });
+    // La estimada: faltaron 4 h 40 y entran enteras; la larga: sobraron 2 h (con la siesta) y descuenta 1 h.
+    expect(filas[9]).toMatchObject({ dormido: 200, falta: 280, entra: 280 });
     expect(filas[12]).toMatchObject({ dormido: 600, falta: -120, entra: -60 });
     expect(filas[13]).toMatchObject({ dormido: 420, falta: 60, entra: 60 });
     // El promedio con pesos de lo que entra, por la suma de todos los pesos, es la deuda.
@@ -518,5 +524,12 @@ describe('las noches que no cuentan', () => {
     }, new Date(2026, 9, 21, 10));
     expect(con(cortas)).toEqual(con([]));
     expect(con(cortas)?.dormido).toBeNull();
+    // Las de Moss poco seguras sí, como en la deuda (28/11): la misma energía y la misma deuda que si fueran más o menos seguras.
+    const deMoss = (duracion: 'media' | 'baja') => cortas.map((n): Noche => ({
+      ...n, fuente: { id: 'moss', nombre: 'Moss', tipo: 'moss' }, confianza: { ...n.confianza, duracion, horario: duracion },
+      moss: { origen: 'estimada', confianza: duracion, rango: null },
+    }));
+    expect(con(deMoss('baja'))).toEqual(con(deMoss('media')));
+    expect(con(deMoss('baja'))).toMatchObject({ dormido: 300, deuda: redondearDeuda(deudaDeSueno(ultimasNoches(deMoss('baja'), hoy, 14), 480)!.minutos) });
   });
 });

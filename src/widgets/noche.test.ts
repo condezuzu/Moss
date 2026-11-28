@@ -57,6 +57,17 @@ describe('la línea de tiempo del widget de la noche', () => {
     expect(armar(estado('2026-10-21'), new Date(2026, 9, 21, 7, 0), { deuda: 'deuda baja' })[0].props.deuda).toBe('');
   });
 
+  it('lo dormido de una noche de Moss es el de Sueño: sin los despertares que vio el teléfono', () => {
+    // De 23:52 a 7:12, con un despertar de 25 minutos a las 4:00 (600): 6 h 55, no 7 h 20. Las horas no cambian.
+    const conDespertar = propia('2026-10-21', 'estimada', 352, 792);
+    conDespertar.hora!.estimada!.despertares = [{ desde: iso('2026-10-21', 600), hasta: iso('2026-10-21', 625) }];
+    const l = armar(estado('2026-10-21', conDespertar), new Date(2026, 9, 21, 9, 0), { deuda: 'deuda baja' });
+    expect(l[0].props).toMatchObject({ horas: '23:52 → 07:12', cifra: '6 h 55', notaConfirmada: '6 h 55 · deuda baja' });
+    // Confirmada, igual.
+    const confirmada = { ...conDespertar, hora: { ...conDespertar.hora!, origen: 'confirmada' as const } };
+    expect(armar(estado('2026-10-21', confirmada), new Date(2026, 9, 21, 9, 0))[0].props).toMatchObject({ hecha: true, cifra: '6 h 55' });
+  });
+
   it('hasta las 4 sigue siendo «anoche» la de ayer, sea cual sea el corte (D32)', () => {
     expect(nocheDeAhora(new Date(2026, 9, 22, 2, 30))).toBe('2026-10-21');
     expect(nocheDeAhora(new Date(2026, 9, 22, 4, 0))).toBe('2026-10-22');

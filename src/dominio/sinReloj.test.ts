@@ -99,15 +99,18 @@ describe('la noche sin reloj', () => {
   });
 
   it('sin un hueco de 5 horas, de la última actividad antes de las 2 a la primera después de las 4, con confianza baja', () => {
+    // Con 30 minutos de teléfono a las 3:30 ya hay hueco: es un despertar (DESPERTAR). Con una hora y cuarto, no.
     const cortada = [
       uso('2026-10-21 22:00', '2026-10-21 22:30'), uso('2026-10-22 01:00', '2026-10-22 01:30'),
-      uso('2026-10-22 03:30', '2026-10-22 04:00'), uso('2026-10-22 06:30', '2026-10-22 07:00'),
+      uso('2026-10-22 03:30', '2026-10-22 04:45'), uso('2026-10-22 06:30', '2026-10-22 07:00'),
     ];
     const e = estimar(cortada)!;
     expect(e.dormirse).toBe(min('2026-10-22 01:30') + 15);
     expect(e.despertar).toBe(min('2026-10-22 06:30'));
     expect(e).toMatchObject({ confianza: 'baja', interrupciones: 1 });
     expect(e.motivos).toContain('sinVentana');
+    // Mientras usabas el teléfono no dormías: ese rato y tu margen se restan igual.
+    expect(e.despertares).toEqual([{ desde: min('2026-10-22 03:30'), hasta: min('2026-10-22 05:00') }]);
   });
 
   it('un Atajo: la alarma dice cuándo te despertaste, y la confianza sube', () => {
@@ -287,10 +290,12 @@ describe('la noche sin reloj', () => {
       ...medio,
       uso(primera, primera.replace(/\d\d:\d\d$/, '10:30')),
     ];
-    /** Lo dormido como lo cuenta la deuda, y la deuda de 14 noches iguales. */
+    /** Lo dormido como lo cuenta la deuda (sin los despertares), y la deuda de 14 noches iguales. */
     const resultado = (e: Estimacion) => {
       const iso = (m: number) => new Date(instanteDe('2026-10-22', UY, m)).toISOString();
-      const n = nocheDeMoss({ fecha: '2026-10-22', actualizado: iso(900), hora: { dormirse: iso(e.dormirse), despertar: iso(e.despertar), origen: 'estimada', confianza: e.confianza } }, UY)!;
+      const despertares = e.despertares.map((x) => ({ desde: iso(x.desde), hasta: iso(x.hasta) }));
+      const horas = { dormirse: iso(e.dormirse), despertar: iso(e.despertar) };
+      const n = nocheDeMoss({ fecha: '2026-10-22', actualizado: iso(900), hora: { ...horas, origen: 'estimada', confianza: e.confianza, estimada: { ...horas, despertares } } }, UY)!;
       const deuda = deudaDeSueno(Array.from({ length: 14 }, () => n), 480)!;
       return { de: e.dormirse, a: e.despertar, dormido: n.dormido, deuda: redondearDeuda(deuda.minutos), juicio: juicioDeLaDeuda(deuda), confianza: e.confianza, interrupciones: e.interrupciones };
     };
@@ -303,8 +308,8 @@ describe('la noche sin reloj', () => {
       });
     });
 
-    it('(b) igual, y mira la hora a las 5:10: lo mismo, con una interrupción', () => {
-      expect(de('2026-10-22 00:30', '2026-10-22 08:30', [movio('2026-10-22 05:10')])).toMatchObject({ dormido: 465, deuda: 90, juicio: 'baja', confianza: 'alta', interrupciones: 1 });
+    it('(b) igual, y mira la hora a las 5:10: la noche sigue, menos el despertar (desde el 28/11: los 2 minutos y 5 de margen, por ser un toque corto)', () => {
+      expect(de('2026-10-22 00:30', '2026-10-22 08:30', [movio('2026-10-22 05:10')])).toMatchObject({ dormido: 458, deuda: 150, juicio: 'baja', confianza: 'alta', interrupciones: 1 });
     });
 
     it('(c) usa el teléfono en la cama hasta las 00:43: 7 h 32 (antes 6 h 28), y 3 h de deuda, baja (antes 11 h 30)', () => {
@@ -313,15 +318,15 @@ describe('la noche sin reloj', () => {
 
     it('(d) apaga la alarma a las 7:30 y duerme hasta las 8:30: la noche termina a las 8:30 (antes, a las 7:12, y 17 h 23 de deuda)', () => {
       // (d1) Sin atajo: el teléfono se movió cinco minutos.
-      expect(de('2026-10-22 00:30', '2026-10-22 08:30', [movio('2026-10-22 07:30', 5)])).toMatchObject({ a: min('2026-10-22 08:30'), dormido: 465, deuda: 90, juicio: 'baja', interrupciones: 1 });
-      // (d2) Con el despertador de Moss o el atajo de la alarma: lo mismo.
+      expect(de('2026-10-22 00:30', '2026-10-22 08:30', [movio('2026-10-22 07:30', 5)])).toMatchObject({ a: min('2026-10-22 08:30'), dormido: 455, deuda: 150, juicio: 'baja', interrupciones: 1 });
+      // (d2) Con el despertador de Moss o el atajo de la alarma: lo mismo, y el despertar es de un minuto más 5, por ser un toque corto.
       const parada = { anclas: deLasSenales([senal('despertadorParado', '2026-10-22 07:30')], UY).anclas };
-      expect(de('2026-10-22 00:30', '2026-10-22 08:30', [], parada)).toMatchObject({ a: min('2026-10-22 08:30'), dormido: 465, deuda: 90, interrupciones: 1 });
+      expect(de('2026-10-22 00:30', '2026-10-22 08:30', [], parada)).toMatchObject({ a: min('2026-10-22 08:30'), dormido: 459, interrupciones: 1 });
       // (d3) Pospone a las 7:30, 7:39 y 7:48 y se levanta a las 8:00: ahí el teléfono no vuelve a quedar quieto un rato largo, y termina a las 7:30.
       const pospone = [movio('2026-10-22 07:30', 1), movio('2026-10-22 07:39', 1), movio('2026-10-22 07:48', 1)];
       expect(de('2026-10-22 00:30', '2026-10-22 08:00', pospone)).toMatchObject({ a: min('2026-10-22 07:30'), dormido: 405, deuda: 480, juicio: 'media' });
       // (f) Lo mira a las 7:20 y sigue durmiendo.
-      expect(de('2026-10-22 00:30', '2026-10-22 08:30', [movio('2026-10-22 07:20')])).toMatchObject({ dormido: 465, interrupciones: 1 });
+      expect(de('2026-10-22 00:30', '2026-10-22 08:30', [movio('2026-10-22 07:20')])).toMatchObject({ dormido: 458, interrupciones: 1 });
     });
 
     it('(e) lo deja cargando en otro cuarto a las 23:15 y lo agarra a las 9:00: 9 h 30, y sin deuda (lo que sobra paga hasta una hora)', () => {
@@ -333,13 +338,99 @@ describe('la noche sin reloj', () => {
     });
 
     it('sin ventana tranquila: dos toques seguidos ya no la rompen, y 25 minutos de teléfono a las 4:00 no terminan la noche ahí', () => {
-      // (g) Dos toques, a las 3:00 y a las 3:50: antes, sin ventana; ahora, dos interrupciones.
-      expect(de('2026-10-22 00:30', '2026-10-22 08:30', [movio('2026-10-22 03:00'), movio('2026-10-22 03:50')])).toMatchObject({ dormido: 465, interrupciones: 2, confianza: 'media' });
-      // (j) 25 minutos de teléfono a las 4:00: no hay un hueco de 5 horas. Antes la noche iba de 01:01 a 03:42; ahora,
-      // hasta la actividad que sigue, a las 8:30, con confianza baja: no cuenta hasta que la confirmes.
+      // (g) Dos toques, a las 3:00 y a las 3:50: antes, sin ventana; ahora, dos despertares de 17 minutos.
+      expect(de('2026-10-22 00:30', '2026-10-22 08:30', [movio('2026-10-22 03:00'), movio('2026-10-22 03:50')])).toMatchObject({ dormido: 451, interrupciones: 2, confianza: 'media' });
+      // (j) 25 minutos de teléfono a las 4:00. Hasta el 17/11 la noche iba de 01:01 a 03:42; hasta el 28/11, sin ventana y
+      // con confianza baja. Ahora es un despertar, de las 4:00 a las 4:40, y la noche va de 00:45 a 8:30 (7 h 05 dormido).
       const e = estimar(noche('2026-10-22 00:30', '2026-10-22 08:30', [movio('2026-10-22 04:00', 25)]), DE_SIEMPRE)!;
-      expect(e).toMatchObject({ dormirse: min('2026-10-22 00:45'), despertar: min('2026-10-22 08:30'), confianza: 'baja', interrupciones: 1 });
-      expect(e.motivos).toContain('sinVentana');
+      expect(e).toMatchObject({ dormirse: min('2026-10-22 00:45'), despertar: min('2026-10-22 08:30'), confianza: 'alta', interrupciones: 1, despertares: [{ desde: min('2026-10-22 04:00'), hasta: min('2026-10-22 04:40') }] });
+      expect(e.motivos).not.toContain('sinVentana');
+      expect(resultado(e).dormido).toBe(425);
+    });
+  });
+
+  // Lo que pediste el 28/11/2026: agarrar el teléfono en medio de la noche y volver a dejarlo es un despertar, no un corte.
+  describe('los despertares', () => {
+    const iso = (m: number) => new Date(instanteDe('2026-10-22', UY, m)).toISOString();
+    /** Lo dormido de la noche como se guarda, con sus despertares. */
+    const dormido = (e: Estimacion) => {
+      const horas = { dormirse: iso(e.dormirse), despertar: iso(e.despertar) };
+      const despertares = e.despertares.map((x) => ({ desde: iso(x.desde), hasta: iso(x.hasta) }));
+      return nocheDeMoss({ fecha: '2026-10-22', actualizado: iso(900), hora: { ...horas, origen: 'estimada', confianza: e.confianza, estimada: { ...horas, despertares } } }, UY)!.dormido;
+    };
+    const de = (desde: string, hasta: string) => ({ desde: min(desde), hasta: min(hasta) });
+    const mov = (desde: string, hasta: string) => uso(desde, hasta, 'movimiento');
+
+    it('uno de 10 minutos a las 4: la noche sigue, y se restan los 10 minutos y tu margen para volver a dormirte', () => {
+      const e = estimar(dia('23:30', '07:30', [mov('2026-10-22 04:00', '2026-10-22 04:10')]))!;
+      expect(e).toMatchObject({ dormirse: min('2026-10-21 23:45'), despertar: min('2026-10-22 07:30'), interrupciones: 1, despertares: [de('2026-10-22 04:00', '2026-10-22 04:25')] });
+      expect(dormido(e)).toBe(7 * 60 + 45 - 25);
+      // Con otro margen, otro rato para volver a dormirte.
+      expect(estimar(dia('23:30', '07:30', [mov('2026-10-22 04:00', '2026-10-22 04:10')]), SIEMPRE, { margen: 30 })!.despertares).toEqual([de('2026-10-22 04:00', '2026-10-22 04:40')]);
+      // Sin tocar el teléfono, ninguno.
+      expect(estimar(dia('23:30', '07:30'))!.despertares).toEqual([]);
+    });
+
+    it('uno de 35 minutos, también; más de una hora con el teléfono ya no es la misma noche, y empieza después', () => {
+      const e = estimar(dia('23:30', '07:30', [mov('2026-10-22 03:00', '2026-10-22 03:35')]))!;
+      expect(e).toMatchObject({ dormirse: min('2026-10-21 23:45'), despertar: min('2026-10-22 07:30'), despertares: [de('2026-10-22 03:00', '2026-10-22 03:50')] });
+      expect(dormido(e)).toBe(7 * 60 + 45 - 50);
+      expect(estimar(dia('23:30', '08:30', [mov('2026-10-22 01:30', '2026-10-22 02:35')]))!).toMatchObject({ dormirse: min('2026-10-22 02:50'), despertares: [] });
+    });
+
+    it('ir al baño con pasos y volver a dejar el teléfono es un despertar, aunque al rato lo mires otra vez', () => {
+      const bano = uso('2026-10-22 03:30', '2026-10-22 03:34');
+      expect(estimar(dia('23:30', '07:30', [bano]))!).toMatchObject({ despertar: min('2026-10-22 07:30'), despertares: [de('2026-10-22 03:30', '2026-10-22 03:39')] });
+      // Mirar la hora 56 minutos después es otro: hasta el 28/11, con pasos hacía falta hora y media quieta, y la noche se cortaba a las 3:30.
+      expect(estimar(dia('23:30', '07:30', [bano, mov('2026-10-22 04:30', '2026-10-22 04:32')]))!).toMatchObject({
+        dormirse: min('2026-10-21 23:45'), despertar: min('2026-10-22 07:30'), despertares: [de('2026-10-22 03:30', '2026-10-22 03:39'), de('2026-10-22 04:30', '2026-10-22 04:37')],
+      });
+    });
+
+    it('dos despertares: se restan los dos, y cada toque baja la confianza', () => {
+      const e = estimar(dia('23:30', '07:30', [mov('2026-10-22 02:10', '2026-10-22 02:15'), uso('2026-10-22 04:40', '2026-10-22 05:00', 'moss')]))!;
+      expect(e).toMatchObject({
+        dormirse: min('2026-10-21 23:45'), despertar: min('2026-10-22 07:30'), interrupciones: 2, confianza: 'media',
+        despertares: [de('2026-10-22 02:10', '2026-10-22 02:20'), de('2026-10-22 04:40', '2026-10-22 05:15')],
+      });
+      expect(dormido(e)).toBe(7 * 60 + 45 - 10 - 35);
+    });
+
+    it('el caso del 28/11 (dio 2 h 04): se durmió cerca de la 1, agarró el teléfono a las 3 un rato, lo dejó y se despertó a las 9 y algo', () => {
+      const suyo: Habitual = { dormirse: min('2026-10-22 01:00'), despertar: min('2026-10-22 09:00'), noches: 10 };
+      const antes = [uso('2026-10-21 12:30', '2026-10-21 13:10'), uso('2026-10-21 18:40', '2026-10-21 19:20'), uso('2026-10-21 21:00', '2026-10-21 21:20', 'moss'), mov('2026-10-22 00:40', '2026-10-22 00:58')];
+      const despues = [uso('2026-10-22 09:12', '2026-10-22 09:20'), uso('2026-10-22 09:40', '2026-10-22 10:30')];
+      // Lo agarró dos veces seguidas, de 3:00 a 3:31: con la regla de antes la noche empezaba después, a las 03:46 (5 h 26).
+      const e = estimar([...antes, mov('2026-10-22 03:00', '2026-10-22 03:12'), mov('2026-10-22 03:20', '2026-10-22 03:31'), ...despues], suyo)!;
+      expect(e).toMatchObject({ dormirse: min('2026-10-22 01:13'), despertar: min('2026-10-22 09:12'), interrupciones: 2, despertares: [de('2026-10-22 03:00', '2026-10-22 03:46')] });
+      expect(dormido(e)).toBe(7 * 60 + 59 - 46);
+      // Con el Focus Sueño apagado a mano a las 3:17 y dos toques más, a las 4:00 y a las 4:50, la regla de antes terminaba
+      // la noche en el Focus: de 01:13 a 03:17, 2 h 04. Ahora sigue hasta las 9:12: sin ventana (más de una hora con el
+      // teléfono, contando el toque de las 4:00), y sin los despertares.
+      const focus = { anclas: [{ en: hora('2026-10-22 03:17'), que: 'despertar' as const, de: 'enfoqueTermino' as const }] };
+      const conFocus = estimar([...antes, mov('2026-10-22 03:00', '2026-10-22 03:30'), mov('2026-10-22 04:00', '2026-10-22 04:03'), mov('2026-10-22 04:50', '2026-10-22 04:52'), ...despues], suyo, focus)!;
+      expect(conFocus).toMatchObject({ dormirse: min('2026-10-22 01:13'), despertar: min('2026-10-22 09:12'), anclada: { despertar: false }, despertares: [de('2026-10-22 03:00', '2026-10-22 04:18'), de('2026-10-22 04:50', '2026-10-22 04:57')] });
+      expect(conFocus.motivos).toContain('sinVentana');
+      expect(dormido(conFocus)).toBe(7 * 60 + 59 - 78 - 7);
+    });
+
+    it('quien se levanta y deja el teléfono en la mesa: no es un despertar, es el final de la noche', () => {
+      // Pasos a las 7:00 y el teléfono quieto hasta las 8:30, el desayuno: cerca de la mañana, con pasos hace falta hora y media.
+      expect(estimar(dia('23:30', '07:00'))!).toMatchObject({ despertar: min('2026-10-22 07:00'), despertares: [] });
+      // Usarlo media hora en la cama al despertarte y dejarlo para bañarte, tampoco: cerca de la mañana, solo un toque corto.
+      const enLaCama = [uso('2026-10-21 18:40', '2026-10-21 19:20'), uso('2026-10-21 23:20', '2026-10-21 23:30'), mov('2026-10-22 07:00', '2026-10-22 07:30'), uso('2026-10-22 08:20', '2026-10-22 09:00')];
+      expect(estimar(enLaCama)!).toMatchObject({ despertar: min('2026-10-22 07:00'), despertares: [] });
+      // Apagar la alarma y dormir una hora más, sí.
+      const alarma = [uso('2026-10-21 18:40', '2026-10-21 19:20'), uso('2026-10-21 23:20', '2026-10-21 23:30'), mov('2026-10-22 07:00', '2026-10-22 07:02'), uso('2026-10-22 08:00', '2026-10-22 09:00')];
+      expect(estimar(alarma)!).toMatchObject({ despertar: min('2026-10-22 08:00'), despertares: [de('2026-10-22 07:00', '2026-10-22 07:07')] });
+    });
+
+    it('quien usa el teléfono a las 23 y lo vuelve a mirar antes de dormirse, a la 1: lo último del día, no un despertar', () => {
+      const e = estimar([uso('2026-10-21 18:40', '2026-10-21 19:20'), mov('2026-10-21 22:40', '2026-10-21 23:00'), mov('2026-10-22 00:30', '2026-10-22 00:50'), uso('2026-10-22 07:30', '2026-10-22 07:35'), uso('2026-10-22 08:30', '2026-10-22 09:10')])!;
+      expect(e).toMatchObject({ dormirse: min('2026-10-22 01:05'), despertar: min('2026-10-22 07:30'), interrupciones: 0, despertares: [] });
+      // Lo mismo con un rato largo después de una tarde sin tocarlo: 35 minutos a la 1:05 son en la cama, antes de dormirte.
+      const tarde = estimar([uso('2026-10-21 18:40', '2026-10-21 19:20'), uso('2026-10-21 20:55', '2026-10-21 21:00'), mov('2026-10-22 01:05', '2026-10-22 01:40'), uso('2026-10-22 07:30', '2026-10-22 07:35'), uso('2026-10-22 08:30', '2026-10-22 09:10')])!;
+      expect(tarde).toMatchObject({ dormirse: min('2026-10-22 01:55'), despertares: [] });
     });
   });
 
@@ -471,6 +562,58 @@ describe('las noches estimadas antes del 17/11/2026, con la regla nueva y sin su
     expect(sinLasRestas(h)).toBeNull();
   });
 
+  it('con otro margen, cada despertar se corre lo mismo que la hora de dormirte, sin pasar del final de la noche', () => {
+    const despertares = [{ desde: iso('2026-10-22 03:00'), hasta: iso('2026-10-22 03:25') }, { desde: iso('2026-10-22 07:00'), hasta: iso('2026-10-22 07:20') }];
+    const conDespertares: NonNullable<NochePropia['hora']> = {
+      dormirse: iso('2026-10-21 23:45'), despertar: iso('2026-10-22 07:30'), origen: 'estimada', confianza: 'alta',
+      estimada: { dormirse: iso('2026-10-21 23:45'), despertar: iso('2026-10-22 07:30'), quieto: { desde: iso('2026-10-21 23:30'), hasta: iso('2026-10-22 07:30') }, despertares },
+    };
+    expect(sinLasRestas(conDespertares, 45)!.estimada!.despertares).toEqual([{ desde: iso('2026-10-22 03:00'), hasta: iso('2026-10-22 03:55') }, { desde: iso('2026-10-22 07:00'), hasta: iso('2026-10-22 07:30') }]);
+    expect(sinLasRestas(conDespertares, 0)!.estimada!.despertares).toEqual([{ desde: iso('2026-10-22 03:00'), hasta: iso('2026-10-22 03:10') }, { desde: iso('2026-10-22 07:00'), hasta: iso('2026-10-22 07:05') }]);
+    expect(sinLasRestas(conDespertares)).toBeNull();
+  });
+
+  it('con un margen más grande, dos despertares que se pisan quedan en uno: ese rato no se resta dos veces', () => {
+    // Dos usos de seis minutos, a las 2:00 y a las 2:52 (no son toques cortos): con 15 minutos, dos despertares; con 60, el primero llega a las 3:06.
+    const e = estimarNoche({ clave: '2026-10-22', zona: UY, habitual: SIEMPRE, actividad: dia('23:30', '07:30', [uso('2026-10-22 02:00', '2026-10-22 02:06', 'movimiento'), uso('2026-10-22 02:52', '2026-10-22 02:58', 'movimiento')]) })!;
+    expect(e.despertares).toHaveLength(2);
+    const horas = { dormirse: new Date(instanteDe('2026-10-22', UY, e.dormirse)).toISOString(), despertar: new Date(instanteDe('2026-10-22', UY, e.despertar)).toISOString() };
+    const quince: NonNullable<NochePropia['hora']> = {
+      ...horas, origen: 'estimada', confianza: e.confianza,
+      estimada: { ...horas, quieto: { desde: iso('2026-10-21 23:30'), hasta: iso('2026-10-22 07:30') }, despertares: e.despertares.map((x) => ({ desde: new Date(instanteDe('2026-10-22', UY, x.desde)).toISOString(), hasta: new Date(instanteDe('2026-10-22', UY, x.hasta)).toISOString() })) },
+    };
+    const sesenta = sinLasRestas(quince, 60)!;
+    expect(sesenta.estimada!.despertares).toEqual([{ desde: iso('2026-10-22 02:00'), hasta: iso('2026-10-22 03:58') }]);
+    // Lo mismo que estimarla de nuevo con 60 minutos: de 00:30 a 7:30, menos 1 h 58.
+    expect(nocheDeMoss({ fecha: '2026-10-22', actualizado: horas.despertar, hora: sesenta }, UY)!.dormido).toBe(7 * 60 - 118);
+    const nueva = estimarNoche({ clave: '2026-10-22', zona: UY, habitual: SIEMPRE, margen: 60, actividad: dia('23:30', '07:30', [uso('2026-10-22 02:00', '2026-10-22 02:06', 'movimiento'), uso('2026-10-22 02:52', '2026-10-22 02:58', 'movimiento')]) })!;
+    expect(nueva.despertares.map((x) => [x.desde, x.hasta])).toEqual([[min('2026-10-22 02:00'), min('2026-10-22 03:58')]]);
+  });
+
+  it('un toque corto (hasta 5 minutos) resta lo usado más 5, y al cambiar el margen sigue siendo corto (28/11)', () => {
+    const e = estimarNoche({ clave: '2026-10-22', zona: UY, habitual: SIEMPRE, actividad: dia('23:30', '07:30', [uso('2026-10-22 03:00', '2026-10-22 03:02', 'movimiento')]) })!;
+    expect(e.despertares.map((x) => [x.desde, x.hasta])).toEqual([[min('2026-10-22 03:00'), min('2026-10-22 03:07')]]);
+    const horas = { dormirse: new Date(instanteDe('2026-10-22', UY, e.dormirse)).toISOString(), despertar: new Date(instanteDe('2026-10-22', UY, e.despertar)).toISOString() };
+    const quince: NonNullable<NochePropia['hora']> = {
+      ...horas, origen: 'estimada', confianza: e.confianza,
+      estimada: { ...horas, quieto: { desde: iso('2026-10-21 23:30'), hasta: iso('2026-10-22 07:30') }, despertares: [{ desde: iso('2026-10-22 03:00'), hasta: iso('2026-10-22 03:07') }] },
+    };
+    // Con 60 sigue restando 7 minutos; con 0, solo los 2 que lo usaste.
+    expect(sinLasRestas(quince, 60)!.estimada!.despertares).toEqual([{ desde: iso('2026-10-22 03:00'), hasta: iso('2026-10-22 03:07') }]);
+    expect(sinLasRestas(quince, 0)!.estimada!.despertares).toEqual([{ desde: iso('2026-10-22 03:00'), hasta: iso('2026-10-22 03:02') }]);
+  });
+
+  it('agarrar el teléfono cuenta 5 minutos justos: es un toque corto a cualquier hora, también cerca de las 2:32 (512 minutos desde las 18)', () => {
+    // Pasados a minutos desde las 18, los 5 minutos de un movimiento a veces daban 5,0000000000001: restaban 20, no 10.
+    const quieto = { quieto: true, caminando: false, corriendo: false, auto: false, bici: false, confianza: 2 as const };
+    const largos = Array.from({ length: 300 }, (_, k) => hora('2026-10-22 02:27') + k * 997).filter((en) => {
+      const agarrar = actividadDelMovimiento([{ ...quieto, en, quieto: false }, { ...quieto, en: en + 30 * 60_000 }], hora('2026-10-22 12:00'));
+      const [d] = estimarNoche({ clave: '2026-10-22', zona: UY, habitual: SIEMPRE, actividad: dia('23:30', '07:30', agarrar) })!.despertares;
+      return Math.abs(d.hasta - d.desde - 10) > 1e-6;
+    });
+    expect(largos).toEqual([]);
+  });
+
   it('lo que confirmaste, corregiste o escribiste no se toca; ni lo que quedaría en menos de dos horas', () => {
     expect((['confirmada', 'corregida', 'manual'] as const).map((o) => sinLasRestas(deAntes(o)))).toEqual([null, null, null]);
     expect(sinLasRestas(undefined)).toBeNull();
@@ -531,6 +674,29 @@ describe('las noches de Moss junto a las de Salud', () => {
     const conReloj = conNochesDeMoss(armarNoches(delReloj, [reloj]), [noche('2026-10-22 07:00')], UY).find((n) => n.clave === '2026-10-22')!;
     // Despierto de 10 a 16 minutos esas noches: la mediana, 13, más 15.
     expect(conReloj).toMatchObject({ dormido: 480 - 28, despierto: 28 });
+  });
+
+  it('los despertares se restan de lo dormido, solo lo que cae adentro de la noche, aunque la hayas confirmado o corregido', () => {
+    const iso = (texto: string) => new Date(hora(texto)).toISOString();
+    const noche = (origen: 'estimada' | 'confirmada' | 'corregida', despertar: string): NochePropia => ({
+      fecha: '2026-10-22', actualizado: '2026-10-22T09:00:00.000Z',
+      hora: {
+        dormirse: iso('2026-10-21 23:45'), despertar: iso(despertar), origen, confianza: 'media',
+        estimada: {
+          dormirse: iso('2026-10-21 23:45'), despertar: iso('2026-10-22 07:30'),
+          despertares: [{ desde: iso('2026-10-22 03:00'), hasta: iso('2026-10-22 03:40') }, { desde: iso('2026-10-22 06:50'), hasta: iso('2026-10-22 07:10') }],
+        },
+      },
+    });
+    // De 23:45 a 7:30 son 465 minutos: menos los 40 y los 20 de los despertares.
+    const n = nocheDeMoss(noche('estimada', '2026-10-22 07:30'), UY)!;
+    expect(n).toMatchObject({ dormido: 405, despierto: 60, despertares: 2 });
+    expect(n.moss!.despertares).toEqual([{ desde: min('2026-10-22 03:00'), hasta: min('2026-10-22 03:40') }, { desde: min('2026-10-22 06:50'), hasta: min('2026-10-22 07:10') }]);
+    expect(nocheDeMoss(noche('confirmada', '2026-10-22 07:30'), UY)!.dormido).toBe(405);
+    // Corregida hasta las 7:00: del segundo, solo los 10 minutos de adentro.
+    expect(nocheDeMoss(noche('corregida', '2026-10-22 07:00'), UY)!).toMatchObject({ dormido: 435 - 50, despierto: 50, despertares: 2 });
+    // Con noches de un reloj, lo que sueles estar despierto según él se suma: esa mediana casi nunca trae un rato así.
+    expect(nocheDeMoss(noche('estimada', '2026-10-22 07:30'), UY, 28)!).toMatchObject({ dormido: 465 - 88, despierto: 88 });
   });
 
   it('el rango guardado con la noche, sin antes de la última actividad ni después de la primera', () => {

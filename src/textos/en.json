@@ -1902,7 +1902,7 @@
         "justo": "on target",
         "menos": "{t} less than you need",
         "mas": "{t} more than you need",
-        "tope": "* Capped: a night adds up to {falta} ({estimada} if your phone estimated it) and takes off up to {sobra}.",
+        "tope": "* Capped: extra sleep takes off up to {sobra} a night.",
         "leyenda": "“Estimated” is from your phone; “Measured”, from a watch or a ring. The bar is how much each night weighs in the debt: last night, in full."
       }
     },
@@ -2080,14 +2080,14 @@
       "corregida": "Corrected",
       "manual": "Written"
     },
-    "estimadaTexto": "Without a watch, Moss counts as sleep all the time your phone was still: from the last time you used or moved it, plus your margin to fall asleep ({margen} min), to the first time in the morning. You can change the margin in Fine-tune, further down.",
+    "estimadaTexto": "Without a watch, Moss counts as sleep the time your phone was still, minus your margin to fall asleep ({margen} min) when you go to bed and each time you put it down at night (less if you just glanced at it). You can change the margin in Fine-tune, further down.",
     "rango": "Between {a} and {b} falling asleep, and between {c} and {d} waking up.",
     "seguridad": {
       "alta": "Fairly sure",
       "media": "Somewhat sure",
       "baja": "Not very sure"
     },
-    "sinRelojEtapas": "Without a watch there are no stages or awakenings: with a watch or a ring, Moss measures them.",
+    "sinRelojEtapas": "Without a watch there are no stages: with a watch or a ring, Moss measures them.",
     "cambiarHora": "Change the time",
     "sinRelojParte": "no watch",
     "movimiento": {
@@ -4598,10 +4598,10 @@
         "texto": "If you have dinner before {hora}, you go to bed at {cama} with it digested."
       },
       "tarde": {
-        "titulo": "Hard training: until {hora}",
-        "texto": "Bedtime is {cama}: training hard any later could cost you sleep.",
-        "tituloSuave": "Keep it easy today",
-        "suave": "Bedtime is {cama}: a hard workout at {entreno} could cost you sleep."
+        "titulo": "Avoid hard workouts at night",
+        "texto": "Hard training until {hora}, so your body temperature and cortisol drop before bed at {cama}.",
+        "tituloSuave": "Keep your workout easy today",
+        "suave": "At {entreno}, go easy, so your body temperature and cortisol drop before bed at {cama}."
       },
       "luces": {
         "titulo": "A good time to dim the lights",
@@ -4670,18 +4670,22 @@
         "tituloALaUna": "Your melatonin window starts at {hora}",
         "texto": "Avoid screens and heavy meals. Start your sleep routine."
       },
-      "revoluciones": {
+      "acostarte": {
         "titulo": "Your bedtime is at {hora}",
         "tituloALaUna": "Your bedtime is at {hora}",
         "texto": "Avoid screens and heavy meals. Start your sleep routine."
       },
+      "revoluciones": {
+        "titulo": "Time to wind down",
+        "texto": "{desde} – {cama}\nIf you use screens, do it early and with little blue light. Listen to your body: when your energy drops, switch to the calmest things."
+      },
       "gafas": {
-        "titulo": "Blue-light glasses, if you have them",
-        "texto": "From now until bedtime at {cama}, they may help your melatonin rise on time."
+        "titulo": "Time to put on your glasses",
+        "texto": "Start blocking blue light so your body can get ready for sleep."
       },
       "descarga": {
         "titulo": "Tasks for tomorrow",
-        "texto": "Writing down your to-dos before bed helps you fall asleep sooner. Moss reminds you tomorrow."
+        "texto": "Write down your to-dos and whatever’s on your mind as part of your bedtime routine. Moss reminds you tomorrow."
       },
       "pendientes": {
         "titulo": "To do today",

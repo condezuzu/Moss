@@ -779,7 +779,7 @@ function textoDeLoQueConviene(c: Conviene, h: ParaElTexto): { titulo: string; te
     case 'entrenarTarde':
       return c.suave
         ? { titulo: de('tarde.tituloSuave'), texto: de('tarde.suave', { entreno: horaDeReloj(c.entreno), cama: horaDeReloj(c.cama) }) }
-        : { titulo: de('tarde.titulo', { hora: horaDeReloj(c.a) }), texto: de('tarde.texto', { cama: horaDeReloj(c.cama) }) };
+        : { titulo: de('tarde.titulo', { hora: horaDeReloj(c.a) }), texto: de('tarde.texto', { cama: horaDeReloj(c.cama), hora: horaDeReloj(c.a) }) };
     case 'luces':
       return { titulo: de('luces.titulo'), texto: de('luces.texto', { cama: horaDeReloj(c.cama) }) };
     case 'recuperacion':
@@ -828,8 +828,10 @@ function textoDelDespertar(d: DelDespertar, h: ParaElTexto): { titulo: string; t
     // acostarte) y una sugerencia corta en el cuerpo.
     case 'melatonina':
       return { titulo: de(`melatonina.${esALaUna(d.desde) ? 'tituloALaUna' : 'titulo'}`, { hora: horaDeReloj(d.desde) }), texto: de('melatonina.texto') };
+    case 'acostarte':
+      return { titulo: de(`acostarte.${esALaUna(d.cama) ? 'tituloALaUna' : 'titulo'}`, { hora: horaDeReloj(d.cama) }), texto: de('acostarte.texto') };
     case 'revoluciones':
-      return { titulo: de(`revoluciones.${esALaUna(d.cama) ? 'tituloALaUna' : 'titulo'}`, { hora: horaDeReloj(d.cama) }), texto: de('revoluciones.texto') };
+      return { titulo: de('revoluciones.titulo'), texto: de('revoluciones.texto', { desde: horaDeReloj(d.desde), cama: horaDeReloj(d.cama) }) };
     case 'descarga':
       return { titulo: de('descarga.titulo'), texto: de('descarga.texto') };
     case 'pendientes': {

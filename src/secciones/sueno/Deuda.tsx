@@ -11,7 +11,7 @@ import Animated, { useAnimatedStyle, useReducedMotion, withTiming } from 'react-
 import { elAlmacen } from '@/almacen';
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { cercaDeLaCama } from '@/dominio/loQueFalta';
-import { deudaDeSueno, faltaDeLaNoche, juicioDeLaDeuda, MINIMOS, necesidadesPara, necesidadPropuesta, nochesDeLaDeuda, redondearDeuda, TOPES_DE_UNA_NOCHE, type Noche } from '@/dominio/sueno';
+import { cuentaParaLaDeuda, deudaDeSueno, faltaDeLaNoche, juicioDeLaDeuda, MINIMOS, necesidadesPara, necesidadPropuesta, nochesDeLaDeuda, redondearDeuda, TOPES_DE_UNA_NOCHE, type Noche } from '@/dominio/sueno';
 import { plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Icono } from '../comida/comunes';
@@ -34,7 +34,7 @@ function enHoras(minutos: number): string {
 /** Lo que sumó o pagó cada noche: lo que faltó baja de la línea de lo que necesitas y lo que sobró sube. Pesan más las recientes. */
 function Barras({ lista, necesidad, fin, primera, animar }: { lista: (Noche | null)[]; necesidad: number; fin: ClaveDia; primera: ClaveDia | null; animar: boolean }) {
   const [elegida, setElegida] = useState(DIAS - 1);
-  const cuenta = (n: Noche | null) => !!n && n.confianza.duracion !== 'baja';
+  const cuenta = cuentaParaLaDeuda;
   // Lo que entra en la deuda, con sus topes (faltaDeLaNoche): lo que sobra paga hasta una hora, y la barra se corta ahí.
   const difs = lista.map((n) => (n && cuenta(n) ? -faltaDeLaNoche(n, necesidad) : null));
   const arriba = Math.max(30, ...difs.filter((d): d is number => d != null && d > 0));
@@ -131,7 +131,7 @@ function NochePorNoche({ lista, necesidad, fin }: { lista: (Noche | null)[]; nec
       })}
       {conTope && (
         <Text style={st.chica}>
-          {t('sueno.deuda.porNoche.tope', { falta: enHoras(TOPES_DE_UNA_NOCHE.falta), estimada: enHoras(TOPES_DE_UNA_NOCHE.faltaEstimada), sobra: enHoras(TOPES_DE_UNA_NOCHE.sobra) })}
+          {t('sueno.deuda.porNoche.tope', { sobra: enHoras(TOPES_DE_UNA_NOCHE.sobra) })}
         </Text>
       )}
       <Text style={st.chica}>{t('sueno.deuda.porNoche.leyenda')}</Text>
@@ -219,7 +219,7 @@ export function LaDeuda({ noches, hoy, clave, necesidad, edad, conNoches, muestr
   const lista = conNoches ? ultimasDe(noches, clave) : muestra;
   const fin = conNoches ? clave : hoy;
   const d = deudaDeSueno(lista, necesidad);
-  const seguras = lista.filter((n) => n && n.confianza.duracion !== 'baja').length;
+  const seguras = lista.filter(cuentaParaLaDeuda).length;
   const hay = lista.filter(Boolean).length;
   // A la media hora: media hora de diferencia en lo que necesitas la cambia en más de 3 horas.
   const redondeada = d ? redondearDeuda(d.minutos) : 0;

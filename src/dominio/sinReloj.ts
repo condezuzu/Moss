@@ -7,8 +7,9 @@
 //   rato que el teléfono estuvo quieto, menos UN margen para dormirte, de 15 minutos de fábrica, que se
 //   elige en Sueño › Afinar. Ya no se restan los 18 minutos antes de agarrarlo ni la media hora despierto,
 //   y tu hora de siempre no recorta la noche: una noche larga cuenta entera.
-// - La noche termina con la actividad que sigue. Apagar la alarma o mirar la hora, si el teléfono vuelve a
-//   quedar quieto 45 minutos o más, no la termina: es una interrupción. Levantarte (pasos, Moss abierta) sí,
+// - La noche termina con la actividad que sigue. Agarrar el teléfono en medio de la noche y volver a dejarlo no la
+//   termina (lo pediste el 28/11/2026): es un despertar, de que lo agarraste a tu margen después de dejarlo, y ese
+//   rato se resta de lo dormido (DESPERTAR). Levantarte cerca de la mañana (pasos, Moss abierta) sí la termina,
 //   salvo que después quede quieto hora y media.
 // - Si conectaste el cargador y seguiste usando el teléfono, el cargador no cuenta: manda lo último que
 //   hiciste.
@@ -59,8 +60,13 @@ export type Estimacion = {
   confianza: Confianza;
   /** La probabilidad de que los dos bordes estén dentro de una hora (una propuesta, para calibrar). */
   probabilidad: number;
-  /** Las veces que se usó el teléfono en medio de la noche: se marcan, no se cuentan como despierto. */
+  /** Las veces que se tocó el teléfono en medio de la noche: bajan la confianza. El rato despierto va en `despertares`. */
   interrupciones: number;
+  /**
+   * Cada despertar (DESPERTAR), en minutos desde las 18: de que agarraste el teléfono a tu margen después de dejarlo,
+   * cuando volviste a dormirte. Se guardan con la noche y se restan de lo dormido (nocheDeMoss).
+   */
+  despertares: { desde: number; hasta: number }[];
   motivos: Motivo[];
   /** Qué borde sale de un ancla: con el de despertar, a la mañana se pregunta solo la hora de dormirte. */
   anclada: { dormirse: boolean; despertar: boolean };
@@ -71,15 +77,41 @@ export type Estimacion = {
 /** La ventana tranquila: de 5 a 12 horas, empezando entre las 18 y las 4 (en minutos desde las 18). */
 const VENTANA = { minimo: 300, maximo: 720, empiezaHasta: 600 };
 /**
- * Lo suelto de la noche: tocar el teléfono hasta 20 minutos (apagar la alarma, mirar la hora) con 45 minutos
- * quietos antes y después. No corta la noche: es una interrupción. Si en ese rato te levantaste (diste pasos,
- * abriste Moss), hace falta hora y media quieta después, como antes: quien se levanta y deja el teléfono en la
- * mesa mientras desayuna no sigue durmiendo. Vale desde una hora después de tu hora de siempre de dormirte (o
- * desde la 1:30, sin historia) y a hora y media o más de haber dejado el teléfono: antes, mirarlo es lo último
- * del día. Si no, quien deja el teléfono lejos toda la tarde y lo mira antes de acostarse quedaba dormido
- * desde la tarde, ahora que tu hora de siempre ya no corre la hora. Los minutos son una convención.
+ * Un despertar (lo pediste el 28/11/2026): agarrar el teléfono en medio de la noche y volver a dejarlo no corta la
+ * noche. Dura desde que lo agarraste hasta tu margen para dormirte después de dejarlo (el mismo de la noche), y ese
+ * rato se resta de lo dormido. Los toques con menos de `volver` quietos entre ellos (abajo) son el mismo despertar.
+ * Es un despertar, y no lo último del día ni el final de la noche, si:
+ * - empieza una hora después de tu hora de siempre de dormirte (sin historia, de las 0:30) y hora y media después de
+ *   dejar el teléfono: antes, mirarlo es lo último del día. Si no, quien deja el teléfono lejos toda la tarde y lo
+ *   mira antes de acostarse quedaría dormido desde la tarde;
+ * - dura hasta una hora, de agarrar el teléfono a dejarlo por última vez: lo que en las noches de Salud sigue siendo
+ *   la misma noche (HUECO_DE_LA_MISMA_NOCHE, en sueno.ts). Más de 20 minutos (`corto`, lo único que se toleraba hasta
+ *   el 28/11), solo si no lo habías dejado mucho antes de lo de siempre (TEMPRANO): un rato largo con el teléfono
+ *   después de una tarde sin tocarlo es más probable que sea en la cama, antes de dormirte;
+ * - después queda quieto tu margen y media hora más (`sueno`; con el margen de fábrica, los 45 minutos de antes): para
+ *   decir que volviste a dormirte tiene que quedar sueño después del margen. Y la noche sigue: lo último antes de la
+ *   mañana no es un despertar, es cuando te despertaste.
+ * Cerca de la mañana (desde hora y media antes de tu hora de siempre de despertarte; sin historia, desde las 6) vale lo
+ * de antes del 28/11: un toque corto, como apagar la alarma, es un despertar, y si dormiste otra hora la noche sigue
+ * aunque pase de tu hora (las noches largas cuentan enteras). Un rato largo en la cama ya es la mañana: si no, usar el
+ * teléfono media hora al despertarte y dejarlo para bañarte sumaba ese rato como sueño. Y si diste pasos, ibas
+ * caminando o abriste Moss, hace falta hora y media quieta después: quien se levanta y deja el teléfono en la mesa
+ * mientras desayuna no sigue durmiendo. Más temprano, ir al baño con el teléfono y volver a la cama es un despertar como
+ * cualquiera. Los minutos son una convención, a calibrar con la prueba contra un reloj (spec/sueno.md).
  */
-const SUELTO = { largo: 20, quieto: 45, quietoSiTeLevantaste: 90, desdeQueLoDejaste: 90, despuesDeLoDeSiempre: 60, sinHistoria: 450 };
+const DESPERTAR = { largo: 60, corto: 20, sueno: 30, quietoSiTeLevantaste: 90, antesDeLaManana: 90, mananaSinHistoria: 720, desdeQueLoDejaste: 90, despuesDeLoDeSiempre: 60, dormirseSinHistoria: 390 };
+/**
+ * Un toque corto (mirar la hora, hasta 5 minutos) resta lo usado más 5 minutos, no tu margen entero: de noche uno se
+ * vuelve a dormir enseguida, y con el margen de 15 mirar la hora cada noche sumaba unas 2 horas de deuda en dos semanas
+ * (lo elegiste el 28/11/2026). Los minutos son una convención.
+ */
+const TOQUE = { largo: 5, margen: 5 };
+/**
+ * Lo que resta un despertar después de dejar el teléfono: tu margen, o el de un toque corto si no es más largo que eso.
+ * Con una milésima de minuto de tolerancia: agarrar el teléfono cuenta 5 minutos justos (actividadDelMovimiento), y
+ * pasados a minutos desde las 18 a veces dan 5,0000000000001.
+ */
+export const margenDelDespertar = (usado: number, margen: number) => (usado <= TOQUE.largo + 1e-3 ? Math.min(TOQUE.margen, margen) : margen);
 /** Lo que se mira: de las 12 del día anterior a las 14 (en minutos desde las 18). */
 const MIRA = { desde: -360, hasta: 1200 };
 /** Dos actividades separadas por menos de 5 minutos son una sola. */
@@ -120,10 +152,10 @@ const DIJISTE_QUE_TE_DESPERTASTE = 90;
 /** Entre dos huecos posibles, lo que suma haberse acostado o levantado con una señal: como 2 horas sobre lo de siempre. */
 const PUNTOS_POR_SENAL = 120;
 /**
- * Sin ventana: de la última actividad antes de las 2 a la primera después de las 4 tras la que el teléfono ya
- * no vuelve a quedar quieto hora y media.
+ * Sin ventana: de la última actividad antes de las 2 a la primera que llega pasadas las 4 tras la que no volviste a
+ * dormirte (DESPERTAR; antes de la mañana, sin tope de largo).
  */
-const SIN_VENTANA = { antesDe: 480, despuesDe: 600, quieto: 90 };
+const SIN_VENTANA = { antesDe: 480, despuesDe: 600 };
 /**
  * Que la noche sea más larga o distinta de lo de siempre baja la confianza hasta media, nunca a baja: se
  * pregunta, pero la noche cuenta (antes, las largas eran las que más quedaban fuera de la deuda).
@@ -157,42 +189,44 @@ const mediana = (xs: number[]) => {
 /** `levantado`: en ese rato diste pasos, ibas en marcha o abriste Moss: no fue solo tocar el teléfono. */
 type Bloque = { desde: number; hasta: number; tipos: Actividad['tipo'][]; fin: boolean; levantado: boolean };
 
-/** La actividad en minutos desde las 18, dentro de lo que se mira, juntando lo que está pegado. */
-function bloques(actividad: Actividad[], cero: number): Bloque[] {
-  const lista = actividad
-    .map((a) => ({ desde: (a.desde - cero) / MIN, hasta: (Math.max(a.hasta, a.desde + MIN) - cero) / MIN, tipo: a.tipo, fin: !!a.fin, levantado: a.tipo === 'pasos' || a.tipo === 'moss' || !!a.enMarcha }))
-    .filter((a) => a.hasta > MIRA.desde && a.desde < MIRA.hasta)
-    .sort((a, b) => a.desde - b.desde);
+/** Lo que está a menos de `distancia` minutos, en un solo bloque (la lista, en orden). */
+function juntar(lista: Bloque[], distancia: number): Bloque[] {
   const r: Bloque[] = [];
   for (const a of lista) {
     const ultimo = r[r.length - 1];
-    if (ultimo && a.desde - ultimo.hasta < JUNTAS) {
+    if (ultimo && a.desde - ultimo.hasta < distancia) {
       ultimo.hasta = Math.max(ultimo.hasta, a.hasta);
       ultimo.fin ||= a.fin;
       ultimo.levantado ||= a.levantado;
-      if (!ultimo.tipos.includes(a.tipo)) ultimo.tipos.push(a.tipo);
+      for (const t of a.tipos) if (!ultimo.tipos.includes(t)) ultimo.tipos.push(t);
     } else {
-      r.push({ desde: a.desde, hasta: a.hasta, tipos: [a.tipo], fin: a.fin, levantado: a.levantado });
+      r.push({ ...a, tipos: [...a.tipos] });
     }
   }
   return r;
 }
 
+/** La actividad en minutos desde las 18, dentro de lo que se mira, juntando lo que está pegado. */
+function bloques(actividad: Actividad[], cero: number): Bloque[] {
+  const lista = actividad
+    .map((a) => ({ desde: (a.desde - cero) / MIN, hasta: (Math.max(a.hasta, a.desde + MIN) - cero) / MIN, tipos: [a.tipo], fin: !!a.fin, levantado: a.tipo === 'pasos' || a.tipo === 'moss' || !!a.enMarcha }))
+    .filter((a) => a.hasta > MIRA.desde && a.desde < MIRA.hasta)
+    .sort((a, b) => a.desde - b.desde);
+  return juntar(lista, JUNTAS);
+}
+
 type Ventana = { desde: number; hasta: number };
 
 /**
- * Los huecos entre actividades, saltando lo suelto de la noche (SUELTO; `desde`, en minutos desde las 18): el
- * hueco termina en la primera actividad que sigue, no en un toque tras el que el teléfono vuelve a quedar quieto.
+ * Los huecos entre los toques de `g`, saltando los despertares (`esDespertar(i, k)`: si el k es un despertar de la noche
+ * que empieza al terminar el i): el hueco termina en la primera actividad que sigue que no lo es.
  */
-function ventanas(b: Bloque[], desde: number): Ventana[] {
+function ventanas(g: Bloque[], esDespertar: (i: number, k: number) => boolean): Ventana[] {
   const r: Ventana[] = [];
-  for (let i = 0; i + 1 < b.length; i++) {
+  for (let i = 0; i + 1 < g.length; i++) {
     let j = i + 1;
-    const suelto = (k: number) => k + 1 < b.length && !b[k].fin && b[k].desde >= desde && b[k].hasta - b[k].desde <= SUELTO.largo
-      && b[k].desde - b[i].hasta >= SUELTO.desdeQueLoDejaste
-      && b[k].desde - b[k - 1].hasta >= SUELTO.quieto && b[k + 1].desde - b[k].hasta >= (b[k].levantado ? SUELTO.quietoSiTeLevantaste : SUELTO.quieto);
-    while (suelto(j)) j++;
-    r.push({ desde: b[i].hasta, hasta: b[j].desde });
+    while (esDespertar(i, j)) j++;
+    r.push({ desde: g[i].hasta, hasta: g[j].desde });
   }
   return r;
 }
@@ -219,30 +253,47 @@ export function estimarNoche(d: {
   const conAnclas = [...d.actividad, ...(d.anclas ?? []).map((a): Actividad => ({ desde: a.en, hasta: a.en + MIN, tipo: 'atajo', ...(a.que === 'dormir' ? { fin: true as const } : {}) }))];
   const b = bloques(conAnclas, cero);
   const h = d.habitual;
-  const validas = ventanas(b, h ? h.dormirse + SUELTO.despuesDeLoDeSiempre : SUELTO.sinHistoria).filter((v) => v.hasta - v.desde >= VENTANA.minimo && v.hasta - v.desde <= VENTANA.maximo && v.desde >= 0 && v.desde <= VENTANA.empiezaHasta);
+  const margenDeDormirte = Math.max(0, d.margen ?? MARGEN);
+  // Volviste a dormirte si después de tu margen quedó sueño (DESPERTAR); los toques más cerca son el mismo despertar.
+  const volver = margenDeDormirte + DESPERTAR.sueno;
+  const g = juntar(b, volver);
+  const deSiempre = h ? h.dormirse : DESPERTAR.dormirseSinHistoria;
+  const manana = h ? h.despertar - DESPERTAR.antesDeLaManana : DESPERTAR.mananaSinHistoria;
+  // Si después del rato `x` con el teléfono volviste a dormirte: hasta `largo` minutos (cerca de la mañana, un toque
+  // corto) y quieto después, hasta `siguiente`.
+  const volviste = (x: Bloque, siguiente: Bloque | undefined, largo: number) => !!siguiente
+    && x.hasta - x.desde <= (x.desde >= manana ? DESPERTAR.corto : largo)
+    && siguiente.desde - x.hasta >= (x.levantado && x.desde >= manana ? Math.max(DESPERTAR.quietoSiTeLevantaste, volver) : volver);
+  const esDespertar = (i: number, k: number) => {
+    const x = g[k], dejaste = g[i].hasta;
+    return !x.fin && x.desde >= deSiempre + DESPERTAR.despuesDeLoDeSiempre && x.desde - dejaste >= DESPERTAR.desdeQueLoDejaste
+      && volviste(x, g[k + 1], dejaste >= deSiempre - margenDeDormirte - TEMPRANO.mas ? DESPERTAR.largo : DESPERTAR.corto);
+  };
+  const validas = ventanas(g, esDespertar).filter((v) => v.hasta - v.desde >= VENTANA.minimo && v.hasta - v.desde <= VENTANA.maximo && v.desde >= 0 && v.desde <= VENTANA.empiezaHasta);
   // Con dos huecos posibles (el teléfono quedó en la mesa toda la tarde), el que más se parece a lo
   // de siempre; sin historia, el más largo.
   // Un hueco que empieza con el cargador o un aviso, o termina con ellos, se parece más a una noche.
+  // El que tiene despertares adentro cuenta entero: frente al que empieza después del despertar, lo de antes también
+  // fue noche. Que lo de antes no sea la tarde lo cuidan las reglas de DESPERTAR.
   const encima = (v: Ventana) => (h ? Math.max(0, Math.min(v.hasta, h.despertar) - Math.max(v.desde, h.dormirse)) : 0);
   const seAcosto = (v: Ventana) => cargadores.some((c) => c.que === 'conectado' && c.deNoche && c.en <= v.desde && v.desde - c.en <= USO_TOLERADO)
     || anclas.some((a) => a.que === 'dormir' && a.en <= v.desde && v.desde - a.en <= USO_TOLERADO);
   const seLevanto = (v: Ventana) => cargadores.some((c) => c.que === 'desconectado' && Math.abs(c.en - v.hasta) <= JUNTAS)
-    || anclas.some((a) => a.que === 'despertar' && a.en > v.desde + 60 && a.en <= v.hasta && v.hasta - a.en < SUELTO.quieto);
+    || anclas.some((a) => a.que === 'despertar' && a.en > v.desde + 60 && a.en <= v.hasta && v.hasta - a.en < volver);
   const puntaje = (v: Ventana) => encima(v) + (seAcosto(v) ? PUNTOS_POR_SENAL : 0) + (seLevanto(v) ? PUNTOS_POR_SENAL : 0);
   let v: Ventana | undefined = [...validas].sort((x, y) => puntaje(y) - puntaje(x) || y.hasta - y.desde - (x.hasta - x.desde))[0];
   let sinVentana = false;
   if (!v) {
     const antes = b.filter((x) => x.hasta <= SIN_VENTANA.antesDe && x.hasta >= -60);
-    const despues = b.filter((x) => x.desde >= SIN_VENTANA.despuesDe);
-    // La noche termina con la actividad que sigue: una tras la que el teléfono quedó quieto otro rato largo no es el final.
-    const final = despues.find((x, i) => i === despues.length - 1 || despues[i + 1].desde - x.hasta < SIN_VENTANA.quieto);
+    const despues = g.filter((x) => x.hasta > SIN_VENTANA.despuesDe);
+    // La noche termina con la actividad que sigue: una tras la que volviste a dormirte no es el final, aunque sea larga.
+    const final = despues.find((x, i) => !volviste(x, despues[i + 1], Infinity));
     if (!antes.length || !final) return null;
     const desde = antes[antes.length - 1].hasta, hasta = final.desde;
     if (hasta - desde < 180 || hasta - desde > VENTANA.maximo) return null;
     v = { desde, hasta };
     sinVentana = true;
   }
-  const margenDeDormirte = Math.max(0, d.margen ?? MARGEN);
   const principio = v.hasta;
 
   // Lo que parecía una interrupción pero cae antes de dormirte, o casi, es que seguías despierto.
@@ -263,16 +314,20 @@ export function estimarNoche(d: {
   const dormirse = Math.min(Math.round(fin + margenDeDormirte), principio);
 
   // Cuándo te despertaste: la primera actividad que sigue. La alarma, el despertador o el Focus apagado lo dicen
-  // si son esa actividad; si después el teléfono quedó quieto 45 minutos o más, te volviste a dormir y no cuentan.
+  // si son esa actividad; si después el teléfono quedó quieto (con el margen de fábrica, 45 minutos o más), te
+  // volviste a dormir y no cuentan.
   const alDespertar = anclas
-    .filter((a) => a.que === 'despertar' && a.en > fin + 60 && a.en <= principio && principio - a.en < (a.de === 'meDesperte' ? DIJISTE_QUE_TE_DESPERTASTE : SUELTO.quieto))
+    .filter((a) => a.que === 'despertar' && a.en > fin + 60 && a.en <= principio && principio - a.en < (a.de === 'meDesperte' ? DIJISTE_QUE_TE_DESPERTASTE : volver))
     .sort((x, y) => x.en - y.en)[0];
   // Lo primero del día fue desconectar el cargador.
   const desconectaste = cargadores.find((c) => c.que === 'desconectado' && Math.abs(c.en - principio) <= JUNTAS);
   const despertar = alDespertar ? alDespertar.en : principio;
   if (despertar - dormirse < 120) return null;
-  // Las veces que tocaste el teléfono adentro de la noche.
-  const interrupciones = b.filter((x) => x.desde > fin && x.desde < despertar).length;
+  // Las veces que tocaste el teléfono adentro de la noche, y los despertares que hacen: de agarrarlo a tu margen
+  // después de dejarlo. Sin ventana también cuenta cada uso, aunque dure más: mientras lo usabas no dormías.
+  const adentro = b.filter((x) => x.desde > fin && x.desde < despertar);
+  const interrupciones = adentro.length;
+  const despertares = juntar(adentro, volver).map((x) => ({ desde: x.desde, hasta: Math.min(x.hasta + margenDelDespertar(x.hasta - x.desde, margenDeDormirte), despertar) }));
 
   // Qué tan segura está: una propuesta que se calibra con la prueba contra un reloj (spec/sueno.md).
   const motivos: Motivo[] = [];
@@ -340,6 +395,7 @@ export function estimarNoche(d: {
     confianza,
     probabilidad: p,
     interrupciones,
+    despertares,
     motivos,
     anclada: { dormirse: !!alDormir, despertar: !!alDespertar },
     pistas: {
@@ -418,7 +474,27 @@ export function sinLasRestas(hora: NochePropia['hora'], margen = MARGEN, aceptad
   if (!(hasta - dormirse >= 120 * MIN)) return null;
   const nueva = { dormirse: new Date(dormirse).toISOString(), despertar: new Date(hasta).toISOString() };
   if (nueva.dormirse === hora.dormirse && nueva.despertar === hora.despertar) return null;
-  return { ...hora, ...nueva, origen: 'estimada', estimada: { ...e, ...nueva, quieto: { desde: new Date(desde).toISOString(), hasta: new Date(hasta).toISOString() } } };
+  // Cada despertar termina un margen después de dejar el teléfono: se corre lo mismo que la hora de dormirte, o el de
+  // un toque corto (margenDelDespertar), que se reconoce por lo que mide. Con un margen más grande, dos pueden pisarse:
+  // quedan en uno, si no ese rato se restaría dos veces.
+  const { despertares: antes, ...sinDespertares } = e;
+  const corre = dormirse - Date.parse(e.dormirse);
+  const margenDeAntes = Math.max(0, (Date.parse(e.dormirse) - desde) / MIN);
+  const despertares = (antes ?? []).flatMap((x) => {
+    const mide = (Date.parse(x.hasta) - Date.parse(x.desde)) / MIN;
+    const corto = mide <= TOQUE.largo + Math.min(TOQUE.margen, margenDeAntes);
+    const fin = Math.min(Date.parse(x.hasta) + (corto ? (Math.min(TOQUE.margen, Math.max(0, margen)) - Math.min(TOQUE.margen, margenDeAntes)) * MIN : corre), hasta);
+    return fin > Date.parse(x.desde) ? [{ desde: x.desde, hasta: new Date(fin).toISOString() }] : [];
+  }).reduce<{ desde: string; hasta: string }[]>((r, x) => {
+    const ultimo = r[r.length - 1];
+    if (ultimo && Date.parse(x.desde) <= Date.parse(ultimo.hasta)) ultimo.hasta = new Date(Math.max(Date.parse(ultimo.hasta), Date.parse(x.hasta))).toISOString();
+    else r.push(x);
+    return r;
+  }, []);
+  return {
+    ...hora, ...nueva, origen: 'estimada',
+    estimada: { ...sinDespertares, ...nueva, quieto: { desde: new Date(desde).toISOString(), hasta: new Date(hasta).toISOString() }, ...(despertares.length ? { despertares } : {}) },
+  };
 }
 
 /** Las dos primeras semanas con Moss se pregunta cada mañana (lo pediste el 22/10/2026): así aprende rápido cómo se corre en tu caso. */
@@ -463,12 +539,14 @@ export const MOSS: Fuente = { id: 'moss', nombre: 'Moss', tipo: 'moss' };
 export type Zona = number | ((ms: number) => number);
 
 /**
- * Una noche de Moss como las de Salud: sin etapas ni despertares, que el teléfono no sabe. De dormirte a
- * despertarte cuenta todo como sueño (desde el 17/11/2026, como Rise: si te despiertas y no tocas el teléfono,
- * no se ve), salvo que tengas noches de un reloj o un anillo: entonces se descuenta lo que sueles estar
- * despierto (`despierto`, despiertoDeLaNoche en sueno.ts), para que se parezcan a las medidas. Las
- * estimaciones con confianza baja no cuentan para la deuda ni el horario hasta que las confirmes.
- * Las horas, en la zona de cada momento (spec/sueno.md), como las de Salud.
+ * Una noche de Moss como las de Salud, sin etapas. De dormirte a despertarte cuenta todo como sueño (desde el
+ * 17/11/2026, como Rise: si te despiertas y no tocas el teléfono, no se ve), menos los despertares que vio el teléfono
+ * (desde el 28/11/2026: agarrarlo y volver a dejarlo, DESPERTAR), aunque hayas confirmado o corregido la hora: lo que
+ * cae adentro de ella. Si tienes noches de un reloj o un anillo, se descuenta además lo que sueles estar despierto
+ * (`despierto`, despiertoDeLaNoche en sueno.ts), para que se parezcan a las medidas: se suman, porque esa mediana casi
+ * nunca trae un rato largo con el teléfono como el de esa noche. Las estimaciones con confianza baja no cuentan para el
+ * horario hasta que las confirmes; para la deuda, sí (cuentaParaLaDeuda). Las horas, en la zona de cada momento
+ * (spec/sueno.md), como las de Salud.
  */
 export function nocheDeMoss(np: NochePropia, zona: Zona, despierto = 0): Noche | null {
   const h = np.hora;
@@ -482,7 +560,11 @@ export function nocheDeMoss(np: NochePropia, zona: Zona, despierto = 0): Noche |
   const aReloj = (ms: number) => aMin(ms) + zonaDe(ms) - zonaDe(desde);
   const despertar = aReloj(hasta);
   const periodo = (hasta - desde) / MIN;
-  const adentro = Math.min(periodo, Math.max(0, despierto));
+  const despertares = (h.estimada?.despertares ?? []).flatMap((x) => {
+    const a = Math.max(Date.parse(x.desde), desde), b = Math.min(Date.parse(x.hasta), hasta);
+    return b > a ? [{ desde: aMin(a), hasta: aMin(b) }] : [];
+  });
+  const adentro = Math.min(periodo, Math.max(0, despierto) + despertares.reduce((s, x) => s + x.hasta - x.desde, 0));
   const dormido = periodo - adentro;
   const estimada = h.origen === 'estimada';
   const cuenta: Confianza = estimada && h.confianza === 'baja' ? 'baja' : 'media';
@@ -491,7 +573,7 @@ export function nocheDeMoss(np: NochePropia, zona: Zona, despierto = 0): Noche |
   return {
     clave: np.fecha, fuente: MOSS, conEtapas: false,
     dormirse: aMin(desde), despertar, enCama: null,
-    dormido, despierto: adentro, despertares: 0,
+    dormido, despierto: adentro, despertares: despertares.length,
     etapas: { nucleo: 0, profundo: 0, rem: 0, sinEtapa: dormido },
     siestas: 0,
     tramos: [{ etapa: 'dormido', desde: aMin(desde), hasta: aMin(hasta) }],
@@ -500,6 +582,7 @@ export function nocheDeMoss(np: NochePropia, zona: Zona, despierto = 0): Noche |
     moss: {
       origen: h.origen, confianza: h.confianza,
       rango: estimada ? rangoDe(aMin(desde), despertar, h.estimada?.margen ?? MARGEN_POR_CONFIANZA[h.confianza], quieto) : null,
+      ...(despertares.length ? { despertares } : {}),
     },
   };
 }

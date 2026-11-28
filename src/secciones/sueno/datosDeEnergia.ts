@@ -14,7 +14,7 @@ import { diaDeLaSemana, minutosEnElDia, sumarDias, type ClaveDia } from '@/domin
 import { comidasDelPlan, REPARTO } from '@/dominio/plan';
 import { vigentes } from '@/dominio/registros';
 import { estadoDeLaNoche, nochesCortasSeguidas } from '@/dominio/rendimiento';
-import { deudaDeSueno, juicioDeLaDeuda, redondearDeuda, ultimasNoches } from '@/dominio/sueno';
+import { cuentaParaLaDeuda, deudaDeSueno, juicioDeLaDeuda, redondearDeuda, ultimasNoches } from '@/dominio/sueno';
 import { horasDeComida, suenoDelDia } from '@/recordatorios/programar';
 import { cuentaComoEntrenar, entrenosDelDia } from '@/salud/convertir';
 import type { TitularParaAfuera } from '../ascent/titularDeHoy';
@@ -75,8 +75,8 @@ export function energiaDeHoy(e: Estado, s: Sueno, ahora: Date, ascent: TitularPa
   // Con Ascent, entrenas hoy solo si queda una sesión por hacer: no el día de descanso ni después de entrenar.
   const entrenaHoy = !!ascent && ascent.que !== 'hecha' && ascent.que !== 'descanso' && ascent.que !== 'sinHorario';
   const pesoKg = e.pesos[e.pesos.length - 1]?.kg ?? null;
-  // Las noches de ejemplo no son tuyas: no cuentan. Las de confianza baja tampoco, como en la deuda.
-  const noches = s.deEjemplo ? [] : s.noches.filter((n) => n.confianza.duracion !== 'baja');
+  // Las noches de ejemplo no son tuyas: no cuentan. Las que no cuentan para la deuda tampoco (la de un aparato poco segura).
+  const noches = s.deEjemplo ? [] : s.noches.filter(cuentaParaLaDeuda);
   const anoche = noches.find((n) => n.clave === hoy) ?? null;
   const dos = ultimasNoches(noches, hoy, 14);
   const d = deudaDeSueno(dos, s.necesidad);

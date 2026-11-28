@@ -249,7 +249,7 @@ export async function actualizarSalud(): Promise<void> {
   if (s) elAlmacen().ponerSalud(s);
   // Sin Salud pedida no hay noches de Salud que esperar: los avisos se arman con las de Moss (D45).
   else if (!(await saludPedida())) elAlmacen().sinSalud();
-  // La primera vez con la regla del 17/11/2026, las noches estimadas de antes se arman de nuevo.
+  // La primera vez con la regla del 17/11/2026, y con los despertares del 28/11, las noches estimadas de antes se arman de nuevo.
   await rehacerLasNoches(elAlmacen(), new Date(), leerPasos).catch(() => {});
   await estimarAnoche(elAlmacen()).catch(() => {});
   // Ya con la noche de Salud y la apertura anotada: a qué hora te despertaste hoy (el día que sigue tu despertar).

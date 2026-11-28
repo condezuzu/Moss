@@ -488,7 +488,7 @@ describe('lo que dice cada uno', () => {
     expect(dicho({ que: 'despuesDeEntrenar', comida: 'merienda', a: h('17:30'), proteina: 40 })).toEqual(['Proteína después de entrenar', 'Unos 40 g, en la merienda de las 17:30.']);
     expect(dicho({ que: 'despuesDeEntrenar', a: h('19:00') })[1]).toBe('Algo con proteína, antes de las 19:00.');
     expect(dicho({ que: 'ultimaComida', a: h('20:00'), cama: h('23:00') })).toEqual(['Última comida grande', 'Si cenas antes de las 20:00, te acuestas a las 23:00 con la digestión hecha.']);
-    expect(dicho({ que: 'entrenarTarde', a: h('21:00'), entreno: h('20:30'), cama: h('23:00') })).toEqual(['Lo fuerte, hasta las 21:00', 'Te acuestas a las 23:00: entrenar fuerte más tarde podría costarte sueño.']);
+    expect(dicho({ que: 'entrenarTarde', a: h('21:00'), entreno: h('20:30'), cama: h('23:00') })).toEqual(['Evita entrenar fuerte de noche', 'Lo fuerte, hasta las 21:00: así tu temperatura y tu cortisol bajan antes de acostarte, a las 23:00.']);
     expect(dicho({ que: 'luces', cama: h('23:00') })).toEqual(['Buen momento para bajar la luz', 'Te acuestas a las 23:00. Con luz baja y cálida, tu melatonina sube a tiempo.']);
     expect(dicho({ que: 'recuperacion', porcentaje: 52, fuerte: false, dormido: 340 })).toEqual(['Recuperación: 52 %', 'Hoy, mejor suave: dormiste 5 h 40 min.']);
     expect(dicho({ que: 'partido' })).toEqual(['Mañana juegas', 'Hoy y mañana, carbohidratos en cada comida.']);

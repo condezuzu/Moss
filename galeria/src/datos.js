@@ -162,8 +162,10 @@ const Datos = (() => {
       const e = SinReloj.estimarNoche({ clave, zona: ZONA, actividad, habitual: SinReloj.habitualDe(noches, clave) });
       if (!e) continue;
       ESTIMACIONES[clave] = e;
-      // Como en la app (src/salud/nocheSinReloj.ts): lo estimado con la ventana tranquila, de donde se aprende lo suyo.
-      const estimada = { dormirse: iso(clave, e.dormirse), despertar: iso(clave, e.despertar), quieto: { desde: iso(clave, e.quieto.desde), hasta: iso(clave, e.quieto.hasta) } };
+      // Como en la app (src/salud/nocheSinReloj.ts): lo estimado con la ventana tranquila, de donde se aprende lo suyo, y
+      // los despertares, que se restan de lo dormido.
+      const despertares = e.despertares.map((x) => ({ desde: iso(clave, x.desde), hasta: iso(clave, x.hasta) })).filter((x) => x.desde < x.hasta);
+      const estimada = { dormirse: iso(clave, e.dormirse), despertar: iso(clave, e.despertar), quieto: { desde: iso(clave, e.quieto.desde), hasta: iso(clave, e.quieto.hasta) }, ...(despertares.length ? { despertares } : {}) };
       let hora = { dormirse: iso(clave, e.dormirse), despertar: iso(clave, e.despertar), origen: 'estimada', confianza: e.confianza, estimada };
       // Dos mañanas corrigió la hora (a la de verdad, de a 5 minutos) y varias la confirmó.
       if (i === 20 || i === 9) hora = Object.assign({}, hora, { dormirse: iso(clave, Math.round(dormirse / 5) * 5), despertar: iso(clave, Math.round(despertar / 5) * 5), origen: 'corregida' });

@@ -775,7 +775,7 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
     await programarAvisos(conNoches({ noches: pocas, avisos: {}, recordatorios: [] } as unknown as Partial<Estado>));
     // Te acuestas a las 22:45: a las 21:45, con el texto de bajar el ritmo.
     expect(dice('melatonina').map((p) => [hora(p), p.identifier, p.content.title, p.content.body])).toEqual([
-      [21 * 60 + 45, `${HOY}:melatonina`, t('recordatorios.despertar.revoluciones.titulo', { hora: '22:45' }), t('recordatorios.despertar.revoluciones.texto')],
+      [21 * 60 + 45, `${HOY}:melatonina`, t('recordatorios.despertar.acostarte.titulo', { hora: '22:45' }), t('recordatorios.despertar.acostarte.texto')],
     ]);
     // Y los días que siguen, también.
     expect(programadas.filter((p) => p.content.data.tipo === 'melatonina')).toHaveLength(7);

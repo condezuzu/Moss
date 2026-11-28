@@ -1902,7 +1902,7 @@
         "justo": "justo",
         "menos": "{t} menos de lo que necesitas",
         "mas": "{t} más de lo que necesitas",
-        "tope": "* Con tope: una noche suma hasta {falta} ({estimada} si la estimó el teléfono) y descuenta hasta {sobra}.",
+        "tope": "* Con tope: dormir de más descuenta hasta {sobra} por noche.",
         "leyenda": "«Estimada» es con tu teléfono; «Medida», con un reloj o un anillo. La barra es cuánto pesa cada noche en la deuda: anoche, entera."
       }
     },
@@ -2080,14 +2080,14 @@
       "corregida": "Corregida",
       "manual": "Escrita"
     },
-    "estimadaTexto": "Sin reloj, Moss cuenta como sueño todo el rato que tu teléfono estuvo quieto: desde la última vez que lo usaste o lo moviste, más tu margen para dormirte ({margen} min), hasta la primera vez de la mañana. El margen se cambia en Afinar, más abajo.",
+    "estimadaTexto": "Sin reloj, Moss cuenta como sueño el rato que tu teléfono estuvo quieto, menos tu margen para dormirte ({margen} min) al acostarte y cada vez que lo dejas en la noche (menos si solo lo miraste). El margen se cambia en Afinar, más abajo.",
     "rango": "Entre {a} y {b} al dormirte, y entre {c} y {d} al despertarte.",
     "seguridad": {
       "alta": "Bastante segura",
       "media": "Más o menos segura",
       "baja": "Poco segura"
     },
-    "sinRelojEtapas": "Sin reloj no hay etapas ni despertares: con un reloj o un anillo, Moss los mide.",
+    "sinRelojEtapas": "Sin reloj no hay etapas: con un reloj o un anillo, Moss las mide.",
     "cambiarHora": "Cambiar la hora",
     "sinRelojParte": "sin reloj",
     "movimiento": {
@@ -4598,10 +4598,10 @@
         "texto": "Si cenas antes de las {hora}, te acuestas a las {cama} con la digestión hecha."
       },
       "tarde": {
-        "titulo": "Lo fuerte, hasta las {hora}",
-        "texto": "Te acuestas a las {cama}: entrenar fuerte más tarde podría costarte sueño.",
-        "tituloSuave": "Hoy, mejor suave",
-        "suave": "Te acuestas a las {cama}: entrenar fuerte a las {entreno} podría costarte sueño."
+        "titulo": "Evita entrenar fuerte de noche",
+        "texto": "Lo fuerte, hasta las {hora}: así tu temperatura y tu cortisol bajan antes de acostarte, a las {cama}.",
+        "tituloSuave": "Hoy, mejor entrena suave",
+        "suave": "A las {entreno}, mejor suave: así tu temperatura y tu cortisol bajan antes de acostarte, a las {cama}."
       },
       "luces": {
         "titulo": "Buen momento para bajar la luz",
@@ -4670,18 +4670,22 @@
         "tituloALaUna": "Tu periodo de melatonina empieza a la {hora}",
         "texto": "Evita las pantallas y las comidas pesadas. Empieza tu rutina de sueño."
       },
-      "revoluciones": {
+      "acostarte": {
         "titulo": "Tu hora de acostarte es a las {hora}",
         "tituloALaUna": "Tu hora de acostarte es a la {hora}",
         "texto": "Evita las pantallas y las comidas pesadas. Empieza tu rutina de sueño."
       },
+      "revoluciones": {
+        "titulo": "Llegó el momento de relajarte",
+        "texto": "{desde} – {cama}\nSi usas pantallas, que sea al principio y con poca luz azul. Escucha a tu cuerpo: cuando te baje la energía, pasa a lo más tranquilo."
+      },
       "gafas": {
-        "titulo": "Las gafas para la luz azul, si las tienes",
-        "texto": "Desde ahora hasta acostarte, a las {cama}, pueden ayudar a que tu melatonina suba a tiempo."
+        "titulo": "Es hora de ponerte las gafas",
+        "texto": "Empieza a bloquear la luz azul para que tu cuerpo se prepare para dormir."
       },
       "descarga": {
         "titulo": "Tareas para mañana",
-        "texto": "Anotar tus pendientes antes de acostarte ayuda a dormirte antes. Mañana Moss te los recuerda."
+        "texto": "Anota tus pendientes y lo que tengas en mente, como parte de tu rutina antes de acostarte. Mañana Moss te los recuerda."
       },
       "pendientes": {
         "titulo": "Lo que hay que hacer hoy",

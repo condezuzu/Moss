@@ -1,15 +1,19 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import { afterEach, describe, expect, it, jest } from '@jest/globals';
 
 import { crearAlmacen } from '../almacen/almacen';
 import { repositorioEnMemoria, sinComida } from '../almacen/repositorio';
 import type { Constelacion } from '../datos/catalogo';
 import datos from '../datos/constelaciones.json';
-import type { Movimiento } from '../dominio/sinReloj';
+import type { Movimiento, Senal } from '../dominio/sinReloj';
 import { armarNoches, type Fuente, type NochePropia } from '../dominio/sueno';
 import { estimarAnoche, nocheDeAhora, nocheDeLaManana, rehacerLasNoches } from './nocheSinReloj';
 
-// Sin los Atajos (no hay módulo en los tests): la noche sale de cuándo se usó Moss y del movimiento de mentira.
-jest.mock('./anclas', () => ({ leerSenales: async () => [] }));
+// Sin el módulo de los Atajos: la noche sale de cuándo se usó Moss, del movimiento de mentira y de los Atajos de mentira.
+let mockSenales: Senal[] = [];
+jest.mock('./anclas', () => ({ leerSenales: async () => mockSenales }));
+afterEach(() => {
+  mockSenales = [];
+});
 let mockMovimiento: Movimiento[] = [];
 jest.mock('../../modules/movimiento', () => ({ leerMovimiento: async (desde: number, hasta: number) => mockMovimiento.filter((m) => m.en >= desde && m.en <= hasta) }));
 
@@ -146,6 +150,24 @@ describe('la noche de anoche, sin reloj', () => {
     await estimarAnoche(a, instante);
     expect(a.estado().noches.get('2026-10-22')).toMatchObject({ cara: 3, hora: { origen: 'estimada' }, actualizado: new Date(instante.getTime() + 1).toISOString() });
   });
+
+  it('agarrar el teléfono segundos antes de «Me desperté» no deja un despertar sin largo, que la cuenta rechaza con la noche entera', async () => {
+    const quieto = { quieto: true, caminando: false, corriendo: false, auto: false, bici: false, confianza: 2 as const };
+    // Lo agarró a las 6:59:36, dijo «Me desperté» a las 7:00:20 y lo dejó hasta las 7:50: la noche termina en el atajo.
+    mockMovimiento = [{ ...quieto, en: new Date(2026, 9, 22, 6, 59, 36).getTime(), quieto: false }, { ...quieto, en: new Date(2026, 9, 22, 7, 0, 50).getTime() }];
+    mockSenales = [{ id: '1', que: 'meDesperte', en: new Date(2026, 9, 22, 7, 0, 20).getTime() }];
+    const instante = el(22, 9);
+    const a = almacenCon(() => instante);
+    await a.iniciar();
+    a.anotarUso('abrir', el(21, 23, 0).getTime());
+    a.anotarUso('cerrar', el(21, 23, 10).getTime());
+    a.anotarUso('abrir', el(22, 7, 50).getTime());
+    await estimarAnoche(a, instante);
+    const h = a.estado().noches.get('2026-10-22')!.hora!;
+    expect(h.despertar).toBe(iso(22, 7, 0));
+    expect(h.estimada!.despertares ?? []).toEqual([]);
+    mockMovimiento = [];
+  });
 });
 
 describe('rehacer las noches estimadas con la regla del 17/11/2026, una sola vez', () => {
@@ -252,5 +274,81 @@ describe('rehacer las noches estimadas con la regla del 17/11/2026, una sola vez
       a.ponerLatencia(minutos);
       return a.estado().latencia;
     })).toEqual([0, 15, 15, 60, 30, 0]);
+  });
+});
+
+describe('rehacer las noches estimadas con los despertares del 28/11/2026, una sola vez', () => {
+  const quieto = { quieto: true, caminando: false, corriendo: false, auto: false, bici: false, confianza: 2 as const };
+  const en = (dia: number, hora: number, minuto: number, que: Partial<Movimiento>): Movimiento => ({ ...quieto, en: el(dia, hora, minuto).getTime(), ...que });
+  /** Como la estimaba la regla de antes: la noche cortada en el teléfono de las 3:00, de 03:50 a 8:30. */
+  const cortada = (origen: NonNullable<NochePropia['hora']>['origen']): NonNullable<NochePropia['hora']> => ({
+    dormirse: iso(22, 3, 50), despertar: iso(22, 8, 30), origen, confianza: 'alta',
+    estimada: { dormirse: iso(22, 3, 50), despertar: iso(22, 8, 30), quieto: { desde: iso(22, 3, 35), hasta: iso(22, 8, 30) } },
+  });
+  /** Un teléfono que ya rehizo las noches del 17/11: caminó hasta las 00:40, usó Moss de 3:00 a 3:35 y se levantó a las 8:30. */
+  const telefono = async (origen: NonNullable<NochePropia['hora']>['origen']) => {
+    mockMovimiento = [en(21, 23, 50, { quieto: false, caminando: true }), en(22, 0, 40, {}), en(22, 8, 30, { quieto: false, caminando: true }), en(22, 9, 30, {})];
+    const ahora = el(22, 12);
+    const a = almacenCon(() => ahora);
+    await a.iniciar();
+    a.marcarSuenoRehecho();
+    // Moss guarda tres días de cuándo la abriste: con eso, esta noche todavía tiene todas sus señales.
+    a.anotarUso('abrir', el(21, 9, 0).getTime());
+    a.anotarUso('cerrar', el(21, 9, 5).getTime());
+    a.anotarUso('abrir', el(22, 3, 0).getTime());
+    a.anotarUso('cerrar', el(22, 3, 35).getTime());
+    a.ponerHoraDeLaNoche('2026-10-22', cortada(origen));
+    await rehacerLasNoches(a, ahora);
+    return a;
+  };
+
+  it('la estimada se estima de nuevo con sus señales: la noche sigue, y los 35 minutos con el teléfono son un despertar', async () => {
+    const a = await telefono('estimada');
+    const h = a.estado().noches.get('2026-10-22')!.hora!;
+    expect([h.dormirse, h.despertar, h.origen]).toEqual([iso(22, 0, 55), iso(22, 8, 30), 'estimada']);
+    expect(h.estimada!.despertares).toEqual([{ desde: iso(22, 3, 0), hasta: iso(22, 3, 50) }]);
+    expect(a.estado().suenoConDespertares).toBe(true);
+    // Una sola vez: otra noche cortada que llegue después (de otro teléfono) ya no se rehace.
+    a.ponerHoraDeLaNoche('2026-10-22', cortada('estimada'));
+    await rehacerLasNoches(a, el(22, 12));
+    expect(a.estado().noches.get('2026-10-22')!.hora!.dormirse).toBe(iso(22, 3, 50));
+    mockMovimiento = [];
+  });
+
+  it('la que confirmaste o corregiste no se toca', async () => {
+    for (const origen of ['confirmada', 'corregida'] as const) {
+      const a = await telefono(origen);
+      expect(a.estado().noches.get('2026-10-22')!.hora).toEqual(cortada(origen));
+    }
+    mockMovimiento = [];
+  });
+
+  it('la de antier, que la regla de antes cortaba sin ventana (poco segura), se estima de nuevo aunque siga sin ventana: la deuda ya la cuenta', async () => {
+    // Caminó hasta las 00:40, usó Moss de 3:00 a 3:30, de 4:00 a 4:03 y de 4:50 a 4:52, y se levantó a las 9:12: sin un
+    // hueco de 5 horas. La regla de antes daba de 00:55 a 4:00 (3 h 05), poco segura; la de ahora, de 00:55 a 9:12 sin los usos.
+    const ahora = el(22, 12);
+    const deAntier = (confianza: 'baja' | 'media'): NonNullable<NochePropia['hora']> => ({
+      dormirse: iso(21, 0, 55), despertar: iso(21, 4, 0), origen: 'estimada', confianza,
+      estimada: { dormirse: iso(21, 0, 55), despertar: iso(21, 4, 0), quieto: { desde: iso(21, 0, 40), hasta: iso(21, 4, 0) } },
+    });
+    const rehecha = async (confianza: 'baja' | 'media') => {
+      mockMovimiento = [en(20, 23, 50, { quieto: false, caminando: true }), en(21, 0, 40, {}), en(21, 9, 12, { quieto: false, caminando: true }), en(21, 9, 40, {})];
+      const a = almacenCon(() => ahora);
+      await a.iniciar();
+      a.marcarSuenoRehecho();
+      for (const [desde, hasta] of [[el(20, 9, 0), el(20, 9, 5)], [el(21, 3, 0), el(21, 3, 30)], [el(21, 4, 0), el(21, 4, 3)], [el(21, 4, 50), el(21, 4, 52)]]) {
+        a.anotarUso('abrir', desde.getTime());
+        a.anotarUso('cerrar', hasta.getTime());
+      }
+      a.ponerHoraDeLaNoche('2026-10-21', deAntier(confianza));
+      await rehacerLasNoches(a, ahora);
+      mockMovimiento = [];
+      return a.estado().noches.get('2026-10-21')!.hora!;
+    };
+    const h = await rehecha('baja');
+    expect([h.dormirse, h.despertar, h.origen, h.confianza]).toEqual([iso(21, 0, 55), iso(21, 9, 12), 'estimada', 'baja']);
+    expect(h.estimada!.despertares).toEqual([{ desde: iso(21, 3, 0), hasta: iso(21, 4, 18) }, { desde: iso(21, 4, 50), hasta: iso(21, 4, 57) }]);
+    // Una de antes con ventana (segura) no se cambia por una sin ventana.
+    expect(await rehecha('media')).toEqual(deAntier('media'));
   });
 });

@@ -30,6 +30,25 @@ aplicadas con tu sí:
 - En espera, como dijiste: la build 10 (1.1.1) y su ficha, y el código de oferta con el póster (piden tu sesión de
   Apple).
 
+### Después, el mismo 28/11: el pago, la deuda y los despertares
+
+Por aire en `production` y `preview`, con la migración 0023 aplicada con tu sí:
+- La pantalla de pago ya no aparece un segundo al abrir Moss, y «Tareas para mañana» (commit 293d34f, salió antes).
+- La deuda cuenta todas las noches que estima Moss, también las poco seguras, y lo que falta suma entero (dormir de
+  más descuenta hasta una hora por noche).
+- Agarrar el teléfono a la noche es un despertar y ya no corta la noche: resta lo que lo usaste más tu margen (15 min);
+  un toque de hasta 5 minutos, lo usado más 5. Las noches estimadas de los últimos días se rehicieron con la regla
+  nueva (unos 3 días: lo más viejo queda como estaba).
+- Los avisos como los de Rise: «Es hora de ponerte las gafas», «Llegó el momento de relajarte» (con el tramo hasta
+  acostarte), «Evita entrenar fuerte de noche» y «Tareas para mañana».
+
+**Te toca:**
+- Aprobar en la galería 66 «Anoche, con tus despertares». Hasta que la apruebes, la app resta los despertares pero no
+  los muestra. Dos preguntas: ¿queda la línea chica «Dejaste el teléfono a las 04:12»?, y en vez de «agarraste el
+  teléfono», ¿«tomaste»?
+- Para decidir (lo encontró el revisor): cambiar el margen de ida y vuelta (de 15 a 60 y de nuevo a 15) puede perder
+  un despertar cerca de la mañana; el hábito «Dormir» y lo que va a Ascent siguen sin contar las noches poco seguras.
+
 ## 0. El lanzamiento y la 1.1 (desde el 14/11/2026): dónde quedé
 
 Apple aprobó la 1.0 (build 6). Pediste subir todo lo que va por aire y armar la 1.1 para revisión.

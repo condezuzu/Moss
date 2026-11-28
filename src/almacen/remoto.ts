@@ -88,9 +88,18 @@ const filaDe = {
     fecha: n.fecha, cara: n.cara ?? null, dormirse: n.hora?.dormirse ?? null, despertar: n.hora?.despertar ?? null,
     origen: (n.hora?.origen ?? null) as OrigenDeNoche | null, confianza: (n.hora?.confianza ?? null) as Confianza | null,
     estimada_dormirse: n.hora?.estimada?.dormirse ?? null, estimada_despertar: n.hora?.estimada?.despertar ?? null,
-    quieto_desde: n.hora?.estimada?.quieto?.desde ?? null, quieto_hasta: n.hora?.estimada?.quieto?.hasta ?? null, borrado: !!n.borrado, actualizado: n.actualizado,
+    quieto_desde: n.hora?.estimada?.quieto?.desde ?? null, quieto_hasta: n.hora?.estimada?.quieto?.hasta ?? null,
+    despertares: n.hora?.estimada?.despertares ?? null, borrado: !!n.borrado, actualizado: n.actualizado,
   }),
 };
+
+/** Los despertares de una noche (0023_noches_despertares.sql), si llegan con forma. */
+function despertaresDe(x: unknown): { despertares?: { desde: string; hasta: string }[] } {
+  const lista = Array.isArray(x) ? x.flatMap((d: { desde?: unknown; hasta?: unknown } | null) => (
+    typeof d?.desde === 'string' && typeof d.hasta === 'string' && Date.parse(d.desde) < Date.parse(d.hasta) ? [{ desde: hora(d.desde), hasta: hora(d.hasta) }] : []
+  )) : [];
+  return lista.length ? { despertares: lista } : {};
+}
 
 /** Lo borrado lleva la marca; lo que no, ni la menciona (como en el teléfono). */
 const conBorrado = <T extends object>(x: T, borrado: boolean): T => (borrado ? { ...x, borrado: true } : x);
@@ -173,6 +182,7 @@ const deFila = {
           estimada: {
             dormirse: hora(f.estimada_dormirse), despertar: hora(f.estimada_despertar),
             ...(f.quieto_desde && f.quieto_hasta ? { quieto: { desde: hora(f.quieto_desde), hasta: hora(f.quieto_hasta) } } : {}),
+            ...despertaresDe(f.despertares),
           },
         } : {}),
       },

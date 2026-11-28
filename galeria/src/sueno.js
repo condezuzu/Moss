@@ -1146,7 +1146,9 @@ const SeccionSueno = (() => {
       if (aparato) c.appendChild(el('p', 'pg-aviso', tx('sueno.esperaAparato.estimada', { aparato: aparato.nombre })));
       if (r) c.appendChild(el('p', 'pg-texto sn-rango-texto', `${tx('sueno.rango', { a: reloj(r.dormirse[0]), b: reloj(r.dormirse[1]), c: reloj(r.despertar[0]), d: reloj(r.despertar[1]) })} ${tx('sueno.seguridad.' + m.confianza)}.`));
       if (m.origen === 'estimada' && !aparato) c.appendChild(el('p', 'sn-nota', tx('sueno.estimadaTexto', { margen: margenDeHoy() })));
-      if (n.despierto > 0) c.appendChild(el('p', 'sn-nota', tx('sueno.sinRelojDespierto', { n: Math.round(n.despierto) })));
+      // Lo que descuenta tu reloj o tu anillo: lo despierto, sin los despertares que vio el teléfono (LaNoche.tsx).
+      const delReloj = Math.round(n.despierto - (m.despertares || []).reduce((suma, x) => suma + x.hasta - x.desde, 0));
+      if (delReloj > 0) c.appendChild(el('p', 'sn-nota', tx('sueno.sinRelojDespierto', { n: delReloj })));
       if (!aparato) c.appendChild(el('p', 'sn-nota', tx('sueno.sinRelojEtapas')));
       // Cambiar la hora de cualquier noche de Moss, ahí mismo.
       if (s.editando === n.clave) {
@@ -1379,7 +1381,7 @@ const SeccionSueno = (() => {
       const leyenda = el('div', 'sn-leyenda');
       const clave = (clase, texto) => { const x = el('span'); x.append(el('i', clase), texto); return x; };
       leyenda.append(clave('falta', tx('sueno.graficos.deMenos')), clave('sobra', tx('sueno.graficos.deMas')), clave('linea', tx('sueno.graficos.necesitas', { t: u.duracion(nec) })));
-      const cuenta = (n) => n && n.confianza.duracion !== 'baja';
+      const cuenta = Sueno.cuentaParaLaDeuda;
       // Lo que entra en la deuda, con sus topes (Sueno.faltaDeLaNoche): lo que sobra paga hasta una hora, y la barra se corta ahí.
       const difs = lista.map((n) => (cuenta(n) ? -Sueno.faltaDeLaNoche(n, nec) : null));
       const arriba = Math.max(30, ...difs.filter((d) => d != null && d > 0));
@@ -1464,7 +1466,7 @@ const SeccionSueno = (() => {
       });
       if (filas.some((f) => f.entra !== null && f.entra !== f.falta)) {
         const T = Sueno.TOPES_DE_UNA_NOCHE;
-        caja.appendChild(el('p', 'sn-nota', tx('sueno.deuda.porNoche.tope', { falta: Periodo.corta(u, T.falta), estimada: Periodo.corta(u, T.faltaEstimada), sobra: Periodo.corta(u, T.sobra) })));
+        caja.appendChild(el('p', 'sn-nota', tx('sueno.deuda.porNoche.tope', { sobra: Periodo.corta(u, T.sobra) })));
       }
       caja.appendChild(el('p', 'sn-nota', tx('sueno.deuda.porNoche.leyenda')));
       return caja;
@@ -1481,7 +1483,7 @@ const SeccionSueno = (() => {
       const fin = conNoches ? s.clave : Datos.HOY;
       const d = Sueno.deudaDeSueno(lista, nec);
       const c = carta('sn-deuda' + (s.deudaAbierta ? ' abierta' : ''), tx('sueno.deuda.titulo'), conNoches ? null : chipDeEjemplo());
-      const seguras = lista.filter((n) => n && n.confianza.duracion !== 'baja').length;
+      const seguras = lista.filter(Sueno.cuentaParaLaDeuda).length;
       const hay = lista.filter(Boolean).length;
       // A la media hora: media hora de diferencia en lo que necesitas la cambia en más de 3 horas.
       const redondeada = d ? Sueno.redondearDeuda(d.minutos) : 0;

@@ -119,17 +119,18 @@ export function lineaDeLaNoche(e: ParaLaNoche, d: {
   });
   const enHoras = (min: number) => (min % 60 ? conVariables(tx.duracion, { h: Math.floor(min / 60), m: min % 60 }) : conVariables(tx.soloHoras, { h: min / 60 }));
   // Lo dormido («7 h 16»; en horas justas, «8 h») y, con la noche ya medida o estimada, la deuda: «7 h 16 · deuda baja».
-  const conHoras = (p: PropsNoche, dormirse: number, despertar: number, deuda = ''): PropsNoche => {
-    const min = Math.max(0, Math.round(despertar - dormirse));
+  // En las de Moss, `dormido` es el de Sueño: sin los despertares que vio el teléfono.
+  const conHoras = (p: PropsNoche, dormirse: number, despertar: number, deuda = '', dormido = despertar - dormirse): PropsNoche => {
+    const min = Math.max(0, Math.round(dormido));
     const cifra = min % 60 ? conVariables(tx.horasCorto, { h: Math.floor(min / 60), m: String(min % 60).padStart(2, '0') }) : conVariables(tx.soloHoras, { h: min / 60 });
     const resumen = deuda ? `${cifra} · ${deuda}` : cifra;
     return { ...p, horas: conVariables(tx.horas, { desde: reloj(dormirse), hasta: reloj(despertar) }), dormirse: Math.round(dormirse), despertar: Math.round(despertar), cifra, deuda, nota: resumen, notaConfirmada: resumen };
   };
   // Lo de la mañana: si Moss propone, con «Sí»; la mañana de cada semana en que pregunta sin proponer, nada.
-  const propuesta = (clave: ClaveDia, dormirse: number, despertar: number, confianza: 'alta' | 'media' | 'baja', deuda = ''): PropsNoche => {
+  const propuesta = (clave: ClaveDia, dormirse: number, despertar: number, confianza: 'alta' | 'media' | 'baja', deuda = '', dormido?: number): PropsNoche => {
     const modo = quePreguntar(clave, confianza, desde);
     if (modo === 'sinProponer') return { ...base(clave), nota: tx.seAnotaEnMoss, notaConfirmada: tx.seAnotaEnMoss };
-    const p = conHoras(base(clave), dormirse, despertar, deuda);
+    const p = conHoras(base(clave), dormirse, despertar, deuda, dormido);
     return modo === 'proponer' ? { ...p, pregunta: true, nota: tx.fueAsi } : p;
   };
 
@@ -139,7 +140,7 @@ export function lineaDeLaNoche(e: ParaLaNoche, d: {
   const deSalud = !!n && !n.moss;
   const deuda = d.deuda ?? '';
   if (deSalud) ahora = conHoras(base(actual), n.dormirse, n.despertar, deuda);
-  else if (n?.moss) ahora = n.moss.origen === 'estimada' ? propuesta(actual, n.dormirse, n.despertar, n.moss.confianza, deuda) : { ...conHoras(base(actual), n.dormirse, n.despertar, deuda), hecha: true };
+  else if (n?.moss) ahora = n.moss.origen === 'estimada' ? propuesta(actual, n.dormirse, n.despertar, n.moss.confianza, deuda, n.dormido) : { ...conHoras(base(actual), n.dormirse, n.despertar, deuda, n.dormido), hecha: true };
   else {
     const esperada = aparato ? null : nocheEsperada(noches, actual);
     ahora = esperada ? propuesta(actual, esperada.dormirse, esperada.despertar, 'media') : base(actual);

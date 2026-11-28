@@ -238,12 +238,14 @@ cual con cuatro semanas de mentira.
     los pesos que publica Rise en su calculadora, y la constante de 7 noches es la
     del único modelo validado que la publica (7,0 ± 1,7 días, Ramakrishnan 2016).
     Antes era una rampa (1 a 1/14, 7,5 en total);
-  - **lo que falta o sobra en una noche tiene topes** (`faltaDeLaNoche`,
-    `TOPES_DE_UNA_NOCHE`): lo que sobra paga hasta 1 hora (antes, 2: con cama de
-    sobra casi no se duerme más que eso por encima de lo que se necesita, Harrison
-    y Horne 1996); lo que falta suma hasta 3 horas, y hasta 2 si la noche la estimó
-    el teléfono y no la confirmaste (una de cada siete de esas tiene un borde errado
-    en más de 2 horas, Sahha 2026). Los dos topes de lo que falta son una convención;
+  - **lo que sobra en una noche tiene tope** (`faltaDeLaNoche`, `TOPES_DE_UNA_NOCHE`):
+    paga hasta 1 hora (antes, 2: con cama de sobra casi no se duerme más que eso por
+    encima de lo que se necesita, Harrison y Horne 1996). **Lo que falta suma entero**
+    (28/11/2026, lo pediste: «tiene que contar todo»); antes sumaba hasta 3 horas, y
+    hasta 2 si la estimó el teléfono;
+  - **las noches de Moss cuentan siempre** (`cuentaParaLaDeuda`, 28/11/2026), también
+    las poco seguras: si no, justo las noches cortas quedaban afuera. «Poco segura, no
+    cuenta» queda solo para la noche de un aparato poco preciso;
   - nunca baja de cero;
   - las siestas cuentan;
   - **las noches sin datos no cuentan como si hubieras dormido lo que necesitas**
@@ -486,35 +488,66 @@ Rise, en [`estudio/rise.md`](estudio/rise.md); y la evidencia, en
     último del día, y nunca una interrupción.
 - **Cuándo te despertaste: con la actividad que sigue.** Ya no se restan los 18
   minutos.
-  - **Tocar el teléfono y que vuelva a quedar quieto no termina la noche** (apagar
-    la alarma, mirar la hora): es una interrupción si dura hasta 20 minutos y el
-    teléfono quedó quieto 45 minutos antes y 45 después (`SUELTO`). Antes hacían
-    falta 90 de cada lado: apagar la alarma a las 7:30 y dormir hasta las 8:30
-    cortaba la noche a las 7:12, con confianza alta.
-  - **Si en ese rato te levantaste** (diste pasos, ibas caminando, abriste Moss),
-    hace falta hora y media quieta después, como antes: quien se levanta y deja el
-    teléfono en la mesa mientras desayuna no sigue durmiendo.
-  - **Vale desde una hora después de tu hora de siempre de dormirte** (sin
-    historia, desde la 1:30) y a hora y media o más de haber dejado el teléfono.
-    Antes de eso, mirarlo es lo último del día: si no, quien deja el teléfono lejos
-    toda la tarde y lo mira antes de acostarse quedaba dormido desde la tarde.
+  - **Agarrar el teléfono en medio de la noche y volver a dejarlo es un despertar,
+    no un corte** (28/11/2026, lo pediste: «técnicamente el sueño sigue»;
+    `DESPERTAR`). La noche va de que te dormiste a que te despertaste del todo, y
+    cada despertar dura de que agarraste el teléfono a tu margen para dormirte
+    después de dejarlo (el mismo de la noche): **ese rato se resta de lo dormido**.
+    **Un toque corto** (mirar la hora: hasta 5 minutos con el teléfono) resta lo
+    usado más 5 minutos, no tu margen entero (`TOQUE`, `margenDelDespertar`, lo
+    elegiste el 28/11): de noche uno se vuelve a dormir enseguida.
+    Los toques con menos de tu margen más media hora quietos entre ellos son el
+    mismo despertar. Hasta el 28/11 solo se toleraba un toque de 20 minutos con 45
+    quietos antes y después, y no se restaba nada; el resto cortaba la noche y, sin
+    un hueco de 5 horas, quedaba otro pedazo (una noche dio 2 h 04).
+  - **Cuándo es un despertar y no lo último del día:** desde una hora después de tu
+    hora de siempre de dormirte (sin historia, desde la 1:30) y a hora y media o
+    más de haber dejado el teléfono. Antes de eso, mirarlo es lo último del día: si
+    no, quien deja el teléfono lejos toda la tarde y lo mira antes de acostarse
+    quedaba dormido desde la tarde.
+  - **Cuánto puede durar:** hasta una hora de agarrarlo por primera vez a dejarlo
+    por última, lo mismo que en las noches de Salud sigue siendo la misma noche
+    (`HUECO_DE_LA_MISMA_NOCHE`); más, la noche empieza después. Más de 20 minutos
+    vale solo si no habías dejado el teléfono más de una hora antes de lo de
+    siempre: un rato largo después de una tarde sin tocarlo es en la cama, antes de
+    dormirte.
+  - **Cuándo no es el final de la noche:** si después el teléfono queda quieto tu
+    margen y media hora más (45 minutos con el de fábrica), volviste a dormirte y
+    la noche sigue. Lo último antes de la mañana es cuando te despertaste.
+  - **Cerca de la mañana** (desde hora y media antes de tu hora de siempre de
+    despertarte; sin historia, desde las 6) vale lo de antes: un toque corto, como
+    apagar la alarma, y si dormiste otra hora la noche sigue, aunque pase de tu
+    hora. Un rato largo en la cama ya es la mañana: si no, usar el teléfono media
+    hora al despertarte y dejarlo para bañarte sumaba ese rato como sueño. Y **si
+    te levantaste** (diste pasos, ibas caminando, abriste Moss), hace falta hora y
+    media quieta después: quien se levanta y deja el teléfono en la mesa mientras
+    desayuna no sigue durmiendo. Más temprano, ir al baño con el teléfono y volver
+    a la cama es un despertar como cualquiera (hasta el 28/11 pedía hora y media
+    toda la noche).
+  - **Entre dos noches posibles**, la que tiene despertares adentro cuenta entera
+    para parecerse a lo de siempre: frente a la que empieza después del despertar,
+    lo de antes también fue noche.
   - **La alarma, el despertador de Moss o el Focus apagado a mano** son la hora si
-    son esa actividad que sigue; si después el teléfono quedó quieto 45 minutos o
-    más, te volviste a dormir y son una interrupción. «Me desperté» lo dijiste tú:
-    vale aunque después dejes el teléfono, hasta hora y media.
+    son esa actividad que sigue; si después volviste a dormirte, son un despertar.
+    «Me desperté» lo dijiste tú: vale aunque después dejes el teléfono, hasta hora
+    y media.
   - **Sin ventana** (ningún hueco de 5 horas): de la última actividad antes de las
-    2 a la primera después de las 4 **tras la que el teléfono ya no vuelve a quedar
-    quieto hora y media**, con confianza baja: no cuenta hasta que la confirmes.
-    Antes tomaba la primera después de las 4, aunque quedaran cuatro horas quietas.
-  - Los minutos de estas reglas (45, 90, la hora después de lo de siempre) son una
-    convención, a calibrar con la prueba de abajo.
+    2 a la primera que llega pasadas las 4 **tras la que no volviste a dormirte**
+    (antes de la mañana, sin tope de largo), con confianza baja. Cada uso de
+    adentro se resta igual: mientras lo usabas no dormías.
+  - Los minutos de estas reglas (la hora, los 20, la media hora después del margen,
+    los 90) son una convención, a calibrar con la prueba de abajo.
 - **Dice por qué:** `pistas` lleva la señal de cada borde con su hora (ya no hay
   pesos: es una por borde, y el cargador la afirma), y «Cómo llegó Moss a esta
   hora» dice tu margen.
 - **Sin armar nada**, las anclas exactas son el despertador de Moss y «Me voy a
   dormir» en el aviso de la noche; los Atajos quedan como opcionales.
-- **Los despertares de la noche** quedan marcados como interrupciones, sin decir
-  cuánto: el teléfono lo mide mal (48,8 minutos de error) [72].
+- **Los despertares de la noche** se guardan con ella (`hora.estimada.despertares`,
+  y en la cuenta, `moss.noches.despertares`: `0023_noches_despertares.sql`), y
+  `nocheDeMoss` resta de lo dormido lo que cae adentro de la hora, también si la
+  confirmaste o la corregiste. Solo se ven los que tocan el teléfono: el que se
+  despierta sin tocarlo sigue contando como dormido (48,8 minutos de error [72]).
+  Cada toque baja la confianza (`interrupciones`).
 - **Lo despierto que el teléfono no ve ya no se resta** (17/11): del 5/11 al
   17/11 se restaban 30 minutos fijos a cada noche de Moss (`DESPIERTO_SIN_RELOJ`),
   también a la hora que la persona escribía: 3 h 45 de deuda para todos. Rise no
@@ -562,6 +595,13 @@ con 8 h de necesidad y 14 noches iguales):
 | (g) Dos toques, a las 3:00 y a las 3:50 | sin ventana: no contaba | 7 h 45, con dos interrupciones y confianza media |
 | (j) 25 minutos de teléfono a las 4:00 | de 01:01 a 03:42, 2 h 11 | de 00:45 a 8:30, con confianza baja: no cuenta hasta confirmarla |
 
+Desde el 28/11, con los despertares: a (b), (d1), (d2) y (f) se les resta el toque
+más 5 minutos, por ser toques cortos (7 h 38, 7 h 35, 7 h 39 y 7 h 38), a (g) los dos
+(7 h 31), y (j) ya tiene hueco: de 00:45 a 8:30, con confianza alta, menos el
+despertar de 4:00 a 4:40, sus 25 minutos más el margen (7 h 05). Con 14 noches
+iguales, un toque de dos minutos cada noche suma unos 45 minutos de deuda (con el
+margen entero, casi 2 h).
+
 Lo que sigue pendiente de la auditoría (su sección 7): los dos toques a menos de
 hora y media de dejar el teléfono (h), los pasos que escriben otras fuentes (o, p),
 el movimiento sin clasificar (q), que con confianza baja no haya «Sí» de un toque,
@@ -582,14 +622,23 @@ cuatro semanas, para que la deuda cambie ese mismo día:
   (`aceptadaSinCambios`: confirmadas con las mismas horas que lo estimado). El «Sí»
   aceptaba una propuesta que ya traía los 31 y los 18 minutos de antes, así que no
   es una medición tuya: se rehacen igual y **vuelven a ser estimadas** (en la
-  deuda suman hasta 2 h, y si eran poco seguras no cuentan hasta confirmarlas). Un
+  deuda, desde el 28/11, cuentan enteras, aunque sean poco seguras). Un
   «Sí» a una propuesta que ya es de la regla nueva (las horas de su ventana) queda
   confirmado;
 - **lo que corregiste o escribiste no se toca**: son tus horas. A esas solo se les
   va la media hora despierto, que se restaba al leerlas.
 
 Cambiar el margen después (`ponerLatencia`) vuelve a armar solo las estimadas: lo
-que confirmes con la regla nueva ya no se mueve.
+que confirmes con la regla nueva ya no se mueve. Sus despertares se corren lo mismo
+que la hora de dormirte, salvo los toques cortos, que siguen restando lo usado más 5
+minutos (o menos, si el margen nuevo es menor).
+
+**Con los despertares (28/11/2026)**, otra vez una sola vez en cada teléfono (la
+marca `suenoConDespertares`), las noches **estimadas** de los últimos seis días se
+estiman de nuevo con sus señales, así la deuda de hoy ya sale bien. Solo las que
+todavía tienen todas: el movimiento (siete días) y cuándo abriste Moss (el almacén
+guarda tres); sin eso la noche quedaría peor, y queda como está. Las confirmadas,
+corregidas o escritas no se tocan.
 
 **Qué tan bien anda, esperable:** entre el 46 % (solo los pasos) y el 66 % de
 las noches con los dos bordes dentro de una hora [73]. Con la confirmación de la

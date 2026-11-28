@@ -45,7 +45,9 @@ export type DelDespertar =
   | { que: 'desayuno' }
   | { que: 'comida'; comida: SinDesayuno; van: SinDesayuno[]; kcal?: number }
   | { que: 'melatonina'; desde: number; hasta: number }
-  | { que: 'revoluciones' | 'gafas'; cama: number }
+  | { que: 'gafas' | 'acostarte'; cama: number }
+  // Bajar el ritmo dice el tramo, de cuándo suena a tu hora de acostarte, como Rise (28/11/2026).
+  | { que: 'revoluciones'; cama: number; desde: number }
   | { que: 'descarga' }
   | { que: 'pendientes'; lista: string[] };
 
@@ -257,9 +259,9 @@ export function avisosDelDespertar(op: DeSigueElDespertar): Aviso[] {
     // la misma hora.
     const p = horas.periodo;
     if (prendido('melatonina') && p) lista.push({ id: 'melatonina', tipo: 'melatonina', minutos: p.desde - ANTES_DEL_PERIODO, despertar: { que: 'melatonina', desde: p.desde, hasta: p.hasta } });
-    else if (prendido('melatonina') && !prendido('revoluciones') && !ajustes.dormir?.encendido) lista.push({ id: 'melatonina', tipo: 'melatonina', minutos: cama - ANTES_DEL_PERIODO, despertar: { que: 'revoluciones', cama } });
+    else if (prendido('melatonina') && !prendido('revoluciones') && !ajustes.dormir?.encendido) lista.push({ id: 'melatonina', tipo: 'melatonina', minutos: cama - ANTES_DEL_PERIODO, despertar: { que: 'acostarte', cama } });
     if (prendido('gafas')) lista.push({ id: 'gafas', tipo: 'gafas', minutos: cama - GAFAS, despertar: { que: 'gafas', cama } });
-    if (prendido('revoluciones')) lista.push({ id: 'revoluciones', tipo: 'revoluciones', minutos: cama - REVOLUCIONES, despertar: { que: 'revoluciones', cama } });
+    if (prendido('revoluciones')) lista.push({ id: 'revoluciones', tipo: 'revoluciones', minutos: cama - REVOLUCIONES, despertar: { que: 'revoluciones', cama, desde: cama - REVOLUCIONES } });
     if (prendido('descarga')) lista.push({ id: 'descarga', tipo: 'descarga', minutos: cama - DESCARGA, despertar: { que: 'descarga' } });
   }
   return lista;

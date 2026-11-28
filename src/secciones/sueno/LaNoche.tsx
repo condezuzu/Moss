@@ -157,6 +157,8 @@ export function LaNocheDeMoss({ n, hoy, propia, ancho, lista: noches, animar, ap
   const margen = margenParaDormirte(useEstado().latencia);
   const m = n.moss!;
   const r = m.rango;
+  // Lo que descuenta tu reloj o tu anillo: lo despierto, sin los despertares que vio el teléfono.
+  const delReloj = Math.round(n.despierto - (m.despertares ?? []).reduce((s, x) => s + x.hasta - x.desde, 0));
   return (
     <CartaDeSueno tipo="heroe" titulo={tituloDe(n.clave, hoy)} derecha={<DeOrigen origen={m.origen} />}>
       <ArcoDeLaNoche n={n} lista={noches} rango={r} centro={[duracion(Math.round(n.dormido)), t('sueno.dormidoAprox')]} ancho={ancho} animar={animar} />
@@ -164,7 +166,7 @@ export function LaNocheDeMoss({ n, hoy, propia, ancho, lista: noches, animar, ap
       {aparato && <Text style={tarjeta.recuadro}>{t('sueno.esperaAparato.estimada', { aparato: aparato.nombre })}</Text>}
       {r && <Texto>{`${t('sueno.rango', { a: reloj(r.dormirse[0]), b: reloj(r.dormirse[1]), c: reloj(r.despertar[0]), d: reloj(r.despertar[1]) })} ${t(`sueno.seguridad.${m.confianza}`)}.`}</Texto>}
       {m.origen === 'estimada' && !aparato && <Nota>{t('sueno.estimadaTexto', { margen })}</Nota>}
-      {n.despierto > 0 && <Nota>{t('sueno.sinRelojDespierto', { n: Math.round(n.despierto) })}</Nota>}
+      {delReloj > 0 && <Nota>{t('sueno.sinRelojDespierto', { n: delReloj })}</Nota>}
       {!aparato && <Nota>{t('sueno.sinRelojEtapas')}</Nota>}
       {editando ? (
         <Aparece style={st.editorNoche}>
