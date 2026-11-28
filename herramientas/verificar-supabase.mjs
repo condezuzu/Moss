@@ -626,7 +626,8 @@ function clienteDe(usuario) {
     },
     rpc(funcion, argumentos = {}) {
       const nombres = Object.keys(argumentos);
-      const valores = nombres.map((n) => (typeof argumentos[n] === 'string' ? argumentos[n] : JSON.stringify(argumentos[n])));
+      // null es NULL, como en PostgREST (crear una meta va con p_id null).
+      const valores = nombres.map((n) => (argumentos[n] === null || typeof argumentos[n] === 'string' ? argumentos[n] : JSON.stringify(argumentos[n])));
       return respuesta(como(usuario, `select moss.${funcion}(${nombres.map((n, i) => `${n} => $${i + 1}`).join(', ')}) as r`, valores).then((r) => r.rows[0].r));
     },
   };
@@ -1270,6 +1271,38 @@ comprobar(
     && (await metasDeFuerzaDe(ASCENT)).length === 1,
   'metas de fuerza: cambiar y borrar solo las de la cuenta',
 );
+// Una por ejercicio (0022_una_meta_por_ejercicio.sql): crear otra del mismo ejercicio, desde cualquiera de las dos
+// cuentas, cambia la que había; y las repetidas de antes quedan en una, la última que se cambió aunque se haya creado
+// antes (el peso muerto), sin tocar las de otra cuenta con el mismo ejercicio (la del tercero, más vieja). Para eso se
+// arman sin el índice y se corre la migración otra vez.
+const otraDelMismo = await guardarMetaDeFuerza(ASCENT, null, 'press_banca', 110, 2);
+const unaSola = await metasDeFuerzaDe(MOSS);
+await db.exec('drop index moss.metas_de_fuerza_un_ejercicio');
+await db.query(`insert into moss.metas_de_fuerza (usuario, ejercicio, kilos, reps, creada, actualizada) values
+  ($1, 'press_banca', 90, 1, now() - interval '2 days', now() - interval '1 day'), ($1, 'sentadilla', 120, 5, now(), now()),
+  ($1, 'sentadilla', 130, 5, now() - interval '1 day', now() - interval '1 day'),
+  ($1, 'peso_muerto', 180, 1, now() - interval '3 days', now() - interval '1 hour'), ($1, 'peso_muerto', 170, 1, now() - interval '1 day', now() - interval '1 day'),
+  ($2, 'press_banca', 80, 1, now() - interval '3 days', now() - interval '3 days')`, [MOSS, TERCERO]);
+await db.exec(readFileSync(join(carpeta, '0022_una_meta_por_ejercicio.sql'), 'utf8'));
+const sinRepetidas = await metasDeFuerzaDe(MOSS);
+const delTercero = (await db.query('select ejercicio, kilos::float as kilos from moss.metas_de_fuerza where usuario = $1', [TERCERO])).rows;
+comprobar(
+  otraDelMismo === metaDeMoss && unaSola.length === 1 && Number(unaSola[0].kilos) === 110 && unaSola[0].reps === 2
+    && sinRepetidas.map((m) => `${m.ejercicio}:${Number(m.kilos)}x${m.reps}`).sort().join() === 'peso_muerto:180x1,press_banca:110x2,sentadilla:120x5'
+    && JSON.stringify(delTercero) === '[{"ejercicio":"press_banca","kilos":80}]'
+    && await db.query(`insert into moss.metas_de_fuerza (usuario, ejercicio, kilos, reps) values ($1, 'press_banca', 50, 1)`, [MOSS]).then(() => false, () => true),
+  `metas de fuerza: una por ejercicio, también si se crea otra vez desde Ascent; de las repetidas queda la última que se cambió, aunque se haya creado antes, y las de otra cuenta no se tocan (${JSON.stringify(sinRepetidas?.map((m) => [m.ejercicio, Number(m.kilos), m.reps]))}, del tercero ${JSON.stringify(delTercero)})`,
+);
+await db.query('delete from moss.metas_de_fuerza where usuario = $1', [TERCERO]);
+// El tope de 20: con 20, una nueva no entra; crear otra vez la de un ejercicio que ya tiene no cuenta (la cambia).
+await db.query(`insert into moss.metas_de_fuerza (usuario, ejercicio, kilos, reps) select $1, 'propio_' || n, 50, 5 from generate_series(1, 17) n`, [MOSS]);
+const laVeintiuno = await como(MOSS, `select moss.guardar_meta_de_fuerza(null, 'remo_barra', 100, 5)`).then(() => 'entró', (e) => e.message);
+const conVeinte = await guardarMetaDeFuerza(ASCENT, null, 'press_banca', 115, 2).catch((e) => e.message);
+const lasVeinte = await metasDeFuerzaDe(MOSS);
+comprobar(
+  laVeintiuno === 'demasiadas' && conVeinte === metaDeMoss && lasVeinte.length === 20 && Number(lasVeinte.find((m) => m.ejercicio === 'press_banca')?.kilos) === 115,
+  `metas de fuerza: con 20, una nueva no entra y la de un ejercicio que ya tiene se cambia (${laVeintiuno}, ${conVeinte === metaDeMoss ? 'la cambió' : conVeinte}, ${lasVeinte.length})`,
+);
 comprobar(
   JSON.stringify(delVeintiseis?.ejercicios[0]?.series.map((x) => x.rir)) === '[2,1,null]'
     && (await sesionesDe(MOSS)).filter((s) => s.fecha === '2026-10-20').flatMap((s) => s.ejercicios.flatMap((e) => e.series.map((x) => x.rir))).every((r) => r === null),
@@ -1399,6 +1432,22 @@ comprobar(
     && JSON.stringify(ajustesEnLaApp) === JSON.stringify({ umbral: 3, racha: 37 }),
   'app: la rutina de Ascent y sus ajustes llegan con la forma de src/lib/ascentRemoto.ts',
 );
+// Las metas desde la app: con 20, crear otra rechaza con «demasiadas» (lo que dice el aviso), crear la de un ejercicio que
+// ya tiene la cambia, cambiar una que ya no está da null (src/almacen/ascent.ts la guarda entonces como nueva) y borrar
+// una que no está, false.
+await db.query(`insert into moss.metas_de_fuerza (usuario, ejercicio, kilos, reps) select $1, 'propio_' || n, 50, 5 from generate_series(1, 20) n`, [MOSS]);
+const laVeintiunoEnLaApp = await ascentRemoto.guardarMetaDeFuerza({ ejercicio: 'remo_barra', kilos: 100, reps: 5 }).then(() => 'entró', (e) => e.message);
+const otraVezEnLaApp = await ascentRemoto.guardarMetaDeFuerza({ ejercicio: 'propio_3', kilos: 55, reps: 5 }).catch((e) => e.message);
+const yaNoEsta = '00000000-0000-4000-8000-0000000000aa';
+const cambiarLaQueNoEsta = await ascentRemoto.guardarMetaDeFuerza({ id: yaNoEsta, ejercicio: 'propio_4', kilos: 55, reps: 5 });
+const borrarLaQueNoEsta = await ascentRemoto.borrarMetaDeFuerza(yaNoEsta);
+const metasEnLaApp = await ascentRemoto.metasDeFuerza();
+comprobar(
+  laVeintiunoEnLaApp === 'demasiadas' && cambiarLaQueNoEsta === null && borrarLaQueNoEsta === false
+    && metasEnLaApp?.length === 20 && metasEnLaApp.find((m) => m.id === otraVezEnLaApp)?.kilos === 55,
+  `app: las metas con 20 dicen «demasiadas»; cambiar una que ya no está da null y borrarla, false (${laVeintiunoEnLaApp})`,
+);
+await db.query('delete from moss.metas_de_fuerza where usuario = $1', [MOSS]);
 const desdeAscent = await funcionVincular.fetch(new Request('https://proyecto.supabase.co/functions/v1/moss-vincular', {
   method: 'POST', headers: { Authorization: `Bearer ${tokenDe(ASCENT)}` }, body: JSON.stringify({ otra: tokenDe(MOSS), desde: 'ascent' }),
 }));
