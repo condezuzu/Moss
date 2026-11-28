@@ -135,6 +135,8 @@ const Util = (() => {
         if (deUna) {
           h.hidden = true;
           fondo.hidden = true;
+          // Si nadie abre otra en su lugar, el teléfono no queda achicado detrás de una hoja que ya no está.
+          tel.classList.remove('con-hoja');
         } else {
           tel.classList.add('hoja-anim');
           tel.classList.remove('con-hoja');

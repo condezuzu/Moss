@@ -1136,6 +1136,8 @@ const SeccionInicio = (() => {
     return {
       zona,
       pintar,
+      // Para «Al abrir» (galeria/src/propuestas/60-al-abrir.js): lo próximo que se pinte se llena desde cero.
+      desdeCero() { estiloDeLaFigura = null; quedaAntes = 0; anchosAntes.clear(); },
       // Con una hoja arriba (personalizar o «Todo lo de hoy»), el gesto de las pestañas no anda y la galería la cierra.
       get editando() { return hoja.abierta || hojaTodo.abierta; },
       cerrar() { hoja.cerrar(); hojaTodo.cerrar(); },

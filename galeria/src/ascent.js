@@ -3435,6 +3435,9 @@ const SeccionAscent = (() => {
         cabeza: cabezaDelDia, foco: parteFoco, filas: parteFilas, cuerpo: parteCuerpo, fuerza: parteFuerza, marcas: parteMarcas, bajo: parteBajo,
         estancamiento: parteEstancamiento, metas: parteMetas, anio: parteAnio, comparten: parteComparten, como: parteComo,
         cuerpoDelRango: () => cuerpoDelHorizonte(RangoDeAscent.cuerpoDeAscent(RangoDeAscent.rachaDe(rangoActual.rango, rangoActual.planeta))),
+        // El cuerpo dibujado, entero (la función cuerpo: `cuerpo` ya es la parte de la sección) y en sus trazos, para
+        // galeria/src/propuestas/05-ascent-datos.js, que arma cada lado suelto.
+        cuerpoDibujado: cuerpo, trazosDelCuerpo: { FORMAS, LINEAS, BASE, ESPEJO, curvaCerrada },
         marca: MARCA, marcaChica: MARCA_CHICA,
         alPintar(fn) { alPintarPiezas = fn; },
         // Lo que junta un ejercicio con la comida y el sueño de cada semana (para «¿Por qué no mejoro?»).

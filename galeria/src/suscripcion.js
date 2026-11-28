@@ -166,6 +166,8 @@ const Suscripcion = (() => {
 .sb-bv-cielo i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #f6e3a6; opacity: 0; animation: sb-bv-titila 3.2s ease-in-out infinite; }
 @keyframes sb-bv-titila { 0%, 100% { opacity: 0; transform: scale(0.6); } 50% { opacity: 0.8; transform: scale(1); } }
 .sb-bienvenida > :not(.sb-bv-cielo) { position: relative; }
+.sb-bienvenida.sb-bv-se-va { pointer-events: none; animation: sb-bv-se-va 0.22s ease both; }
+@keyframes sb-bv-se-va { to { opacity: 0; transform: translateY(-8px); } }
 .sb-bv-estrella { display: block; width: 22px; height: 22px; background: var(--oro-claro); box-shadow: 0 0 18px rgba(246, 227, 166, 0.85), 0 0 56px rgba(246, 227, 166, 0.35); animation: sb-bv-nace 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.25) 0.15s both; }
 @keyframes sb-bv-nace { from { transform: rotate(-135deg) scale(0); opacity: 0; } to { transform: rotate(45deg) scale(1); opacity: 1; } }
 .sb-bv-sube { animation: sb-bv-sube 0.6s ease both; }
@@ -230,7 +232,7 @@ const Suscripcion = (() => {
   .sb-bv-cielo i { animation: none; opacity: 0.45; }
   .sb-bv-sube { animation-duration: 0.01s; animation-delay: 0s !important; }
   .sb-bv-linea i::after { animation: none; transform: none; }
-  .sb-pase, .sb-pase-tira { animation-duration: 0.01s; transition: none; }
+  .sb-pase, .sb-pase-tira, .sb-bienvenida.sb-bv-se-va { animation-duration: 0.01s; transition: none; }
   .tel .sb, .sb.saliendo, .sb-pago, .sb-nota, .sb-apple-fondo, .sb-apple-fondo.saliendo, .sb-apple, .sb-acciones-fondo, .sb-acciones-fondo.saliendo, .sb-acciones, .sb-listo, .sb-cambia { animation-duration: 0.01s; }
   .sb-giro { animation-duration: 2.4s; }
 }
@@ -574,7 +576,12 @@ const Suscripcion = (() => {
         con(texto, 0.75),
         con(meses, 0.95),
         con(el('p', 'sb-bv-chico', tx('suscripcion.bienvenida.despues')), 1.5),
-        con(boton('sb-principal', tx('suscripcion.bienvenida.verLoNuevo'), () => { s.vista = 'novedades'; s.hoja = 0; pintar(); }), 1.7),
+        con(boton('sb-principal', tx('suscripcion.bienvenida.verLoNuevo'), () => {
+          if (c.classList.contains('sb-bv-se-va')) return;
+          // La bienvenida se apaga antes de que entre el pase, en vez de desaparecer de golpe.
+          c.classList.add('sb-bv-se-va');
+          setTimeout(() => { if (c.isConnected) { s.vista = 'novedades'; s.hoja = 0; pintar(); } }, quieto() ? 0 : 220);
+        }), 1.7),
         con(boton('sb-bv-no', tx('suscripcion.bienvenida.ahoraNo'), terminar), 1.8),
       );
       return c;
@@ -677,6 +684,7 @@ const Suscripcion = (() => {
       pintar();
     }
     function cerrar() {
+      clearTimeout(s.cierre);
       quitarElAviso();
       raiz.classList.add('saliendo');
       s.cierre = setTimeout(() => { raiz.hidden = true; raiz.classList.remove('saliendo'); }, quieto() ? 0 : 340);
@@ -780,6 +788,7 @@ const Suscripcion = (() => {
       get hojaAbierta() { return hoja.abierta; },
       get abierta() { return !raiz.hidden || !!bloqueo; },
       get acceso() { return s.acceso; },
+      get tengo() { return s.tengo; },
       /** Los días de prueba que ya pasaron, para los puntos de la fila de Perfil. */
       get diasPasados() { return s.diasPasados; },
       /** Para ver cada estado desde la galería. */

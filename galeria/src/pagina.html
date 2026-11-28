@@ -93,7 +93,25 @@ section.item p { margin: 0; max-width: 64ch; }
    entra y sale deslizándose. Con la barra a la vista, tapa solo las secciones. */
 #propuestas-nuevas { margin-bottom: 16px; border-color: rgba(232, 196, 106, 0.42); }
 #propuestas-nuevas[hidden] { display: none; }
+#propuestas-nuevas .pr-grupo + .pr-grupo { border-top: 1px solid var(--linea); padding-top: 16px; }
+.pr-titulo { margin: 0; font: 500 17px/1.25 var(--texto); color: var(--tinta); }
+.pr-texto { margin: 0; max-width: 62ch; font: 400 14px/1.45 var(--texto); color: var(--tenue); }
+.pr-texto b { color: var(--tinta); font-weight: 500; }
+.pr-mas summary { cursor: pointer; width: max-content; padding: 6px 0; font: 400 13px/1 var(--texto); color: var(--tenue); list-style: none; }
+.pr-mas summary::-webkit-details-marker { display: none; }
+/* El «⌄» no está en Jost: sale de otra letra, chico y abajo. Abierto, la misma flecha, girada. */
+.pr-mas summary::after { content: '›'; display: inline-block; margin-left: 5px; }
+.pr-mas[open] summary::after { rotate: 90deg; }
+.pr-mas[open] .controles { margin-top: 6px; animation: pr-entra 0.25s ease both; }
 .boton[data-propuesta][aria-pressed="true"] { box-shadow: 0 0 0 2px rgba(246, 227, 166, 0.55); }
+/* Lo de antes en «Lo nuevo», plegado debajo de las propuestas nuevas. */
+.anteriores > summary { cursor: pointer; width: max-content; padding: 6px 0; font: 400 14px/1.2 var(--texto); color: var(--tenue); list-style: none; }
+.anteriores > summary::-webkit-details-marker { display: none; }
+.anteriores > summary::after { content: '›'; display: inline-block; margin-left: 5px; }
+.anteriores[open] > summary::after { rotate: 90deg; }
+.anteriores-dentro { display: grid; gap: 14px; margin-top: 10px; }
+.anteriores[open] .anteriores-dentro { animation: pr-entra 0.25s ease both; }
+@media (prefers-reduced-motion: reduce) { .anteriores[open] .anteriores-dentro, .pr-mas[open] .controles { animation: none; } }
 .tel .pr-pantalla { position: absolute; inset: 0; z-index: 30; overflow: hidden; color: var(--tinta); background: #05060a; animation: pr-entra 0.38s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .tel .pr-pantalla.con-barra { z-index: 2; }
 .tel .pr-pantalla.con-barra::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--pestanas) + 40px); background: linear-gradient(180deg, rgba(3, 5, 12, 0), rgba(3, 5, 12, 0.85) 75%); pointer-events: none; }
@@ -2048,7 +2066,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
 
 @media (prefers-reduced-motion: reduce) {
   .aviso, .cab, .frase, .cm-aviso, .hj-aviso, .mas-aviso, .hj-panel, .hj-teclado, .cm-barra-macro i, .in-macro-barra i, .in-camino-pista i, .in-camino-marca, .velo-pestanas, .pestanas, .in-fila-orden { transition: none; }
-  .ent-pantalla, .ent-pantalla.saliendo, .ent-frase-texto span, .ent-frase-autor, .ent-marca span, .ent-lema, .ent-pie-cuenta, .hoja, .hoja.saliendo, .hb, .hb.saliendo, .hj-fondo, .hb-fondo, .cm-ahora .cm-nodo::after, .cm-item.nuevo, .cm-tarjeta.entra, .hj-pegar-resultado, .as-contenido.as-entra { animation-duration: 0.01s; animation-delay: 0s; }
+  .ent-pantalla, .ent-pantalla.saliendo, .ent-frase-texto span, .ent-frase-autor, .ent-marca span, .ent-lema, .ent-pie-cuenta, .hoja, .hoja.saliendo, .hb, .hb.saliendo, .tel .hb, .tel .hb.saliendo, .hj-fondo, .hb-fondo, .cm-ahora .cm-nodo::after, .cm-item.nuevo, .cm-tarjeta.entra, .hj-pegar-resultado, .as-contenido.as-entra { animation-duration: 0.01s; animation-delay: 0s; }
   .sn-manana, .sn-manana-hecha, .sn-cara { animation: none; transition: none; }
   .sn-pasos { animation: none; }
   .vt-plegable, .vt-pista i, .vt-reporte, .vt-reporte-caja, .vt-gracias { transition: none; }
@@ -2088,7 +2106,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
 
   <div class="columna-texto">
     <header>
-      <div class="etiqueta">Moss · galería privada · versión 50 · <span id="fecha-galeria">21 de octubre de 2026</span></div>
+      <div class="etiqueta">Moss · galería privada · versión 65 ·<span id="fecha-galeria">21 de octubre de 2026</span></div>
       <h1>Las seis secciones, <em>para aprobar</em></h1>
       <p class="bajada">Prototipo interactivo con datos de mentira. Es la referencia visual que después se pasa a la app: los shaders del cielo, los textos, los alimentos y el buscador son los mismos archivos, y los tiempos y proporciones también.</p>
       <p class="lema">“Do so much volume that it will be unreasonable to fail.”<span>El lema de Moss</span></p>
@@ -2096,7 +2114,11 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
 
     <section class="item" id="nuevo">
       <h2><span class="n">1.1</span>Lo nuevo, para aprobar</h2>
+      <p class="tenue">Tocá un botón y mirá el teléfono. Cada propuesta tiene sus vistas principales; el resto, en “Más estados”.</p>
       <div class="panel" id="propuestas-nuevas" hidden></div>
+      <details class="anteriores">
+      <summary>Propuestas anteriores (hasta el 26/11)</summary>
+      <div class="anteriores-dentro">
       <p>Lo que pediste el 2/11 a la noche (lo que dictaste mirando la galería) y el 3/11, para aprobar: probalo acá y, si te cierra, se programa. La app no cambia hasta que lo apruebes. Lo que no es visual ya está en la rama <b>mejoras-1.1</b> y va por OTA cuando Apple apruebe la 1.0: las marcas nuevas (con los productos de código uruguayo), el arreglo de «Si voy muy bajo en algo» (apagarlo no se guardaba) y lo de la tanda anterior.</p>
       <div class="panel">
         <div class="grupo"><span>Lo que elegiste el 26/11 en la galería de Ascent (la A, «Todo a la vista»), ahora en Moss para aprobar: <b>las metas de fuerza</b>, en la sección de Ascent, arriba de las razones de estancamiento. Cada meta con su barra, «Hoy levantarías 82,5 kg · Llegas entre marzo y abril» (lo de hoy de a 2,5 kg para abajo; cuándo, en meses, del ritmo rápido al lento, con el año una sola vez si no es este) y «Cómo llegar»: el ritmo, las series del músculo, las veces por semana, el sueño y la proteína, cada uno con ✓, ↑ o sin marca si todavía no se sabe (con lo que falta). Abajo, la próxima vez con ese ejercicio. Las cuentas son las de Ascent tal cual (progresoCompartido.ts)</span>
@@ -2377,6 +2399,8 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         <li><b>Los avisos de la hora de dormir</b> (31/10, ya en la rama; se ven en el teléfono, no acá): cada noche otro, y no se repite hasta dentro de nueve. «Deberías irte a dormir en una hora.», «Baja las luces: a la cama en media hora.», «Para despertarte a las 7:30, a la cama a las 23:20.», «A la cama a las 23:20 y duermes 8 h.» La lista entera está en <code>spec/avisos.md</code>.</li>
         <li><b>El plan sugerido</b>, que ya está en la app: «Te sugerimos», pulgar arriba y abajo (cambian lo que se sugiere después, también lo que lleva lo mismo), y «Otra», que no repite lo que ya viste y no se acaba.</li>
       </ul>
+      </div>
+      </details>
     </section>
 
     <section class="item" id="deporte">

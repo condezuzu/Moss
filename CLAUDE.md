@@ -195,6 +195,14 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `ascent-metas` (las metas de fuerza como la A de la galería 27 de Ascent: «Hoy levantarías» para abajo, «Llegas entre febrero y abril», «Cómo llegar» con el ritmo, las series, las veces, el sueño y la proteína, y «Próxima vez»; va bien, para mejorar, todavía no se sabe y así no llega, también en inglés; del 26/11, para aprobar), `ascent-bajada` (por qué bajaste en un ejercicio y qué cambiar, con el cambio de rango, la pausa y sin razón a la vista), `ascent-sesion` (cómo fue tu sesión en una palabra: buena, como siempre, dura y floja, con la noche corta y «Cómo se calcula») y `base-nueva` («En qué se basa Moss» rehecho: la respuesta arriba, los sellos de confianza, cada área como una pregunta y las fuentes plegadas, junto al de ahora), los tres del 26/11, para aprobar (spec/estudio/vinculo-ascent.md);
 - `detalles` (los detalles de app profesional, para aprobar: «Listo» y «Siguiente» arriba del teclado de números en la ventana del alimento, el peso, las medidas y crear un alimento; mantener apretado y deslizar para borrar en Comida; cambiar y borrar lo guardado; la hoja para ayer y mañana; restar un vaso en Inicio y en el «+»; «Atrás» en el cuestionario; la franja bajo la hora; las esperas; «Cancelar» en la hora y volver a leer Salud; Perfil sin flechas de más; el 1, el 2, el 5 y el 7 también en inglés).
 
+Desde el 27/11, cada propuesta nueva va en su archivo, `galeria/src/propuestas/NN-nombre.js` (con
+`Galeria.propuesta`, al final de `galeria.js`: título, una frase, sus vistas y «Más estados» plegado), y su escenario
+en `herramientas/escenarios/nombre.mjs`, que se corre por su nombre como los de arriba: `donde-vive-ascent`,
+`ascent-portada`, `ascent-cuerpo`, `ascent-en-progreso`, `por-que-no-mejoro`, `base-con-dibujos`, `por-que-en-ascent`,
+`avisos-y-plan`, `codigo-en-el-pago`, `al-abrir`, `decir-mejor` y `pago-sin-precios`. Para armar y capturar en
+paralelo sin pisarse, `GALERIA_SALIDA=<carpeta>` en `construir.mjs` y `servir.mjs`, `PORT=<puerto>` en `servir.mjs` y
+`GALERIA_URL` en `capturar-galeria.mjs`.
+
 La galería abre en Inicio. Las secciones son 0 Inicio, 1 Comida, 2 Progreso,
 3 Sueño, 4 Hábitos y 5 Perfil: los escenarios del cielo pasan antes a Hábitos
 (`window.__pagina(4, true)`) y los de la comida, a Comida. `deslizar` arrastra
@@ -324,4 +332,6 @@ mirar una animación cuadro a cuadro está la cámara lenta
 - `base.js`: «En qué se basa Moss» rehecho (26/11, para aprobar), con sus textos en es y en hasta que pasen a `src/textos`.
 - `periodo.js`: el sueño rehecho, tanda 2 (aprobada el 17/11 y ya en la app): la tarjeta de tu periodo de melatonina y la hoja «¿Qué es?», los avisos de la noche y la mañana reescritos (el título dice qué hacer), lo pendiente (la nota de Sueño, el aviso «Lo que hay que hacer hoy» y la lista de Inicio) y la guía para conectar cada reloj o anillo con Salud; y sus textos, hasta que pasen a `src/textos`.
 - `galeria.js`: la página y las seis secciones, con el gesto de Ascent y el
-  «+» en la barra.
+  «+» en la barra; al final, `window.Galeria`, lo que usan las propuestas.
+- `propuestas/`: las propuestas desde el 27/11, cada una en su archivo (`05-ascent-datos.js` es la persona de
+  ejemplo de Ascent que comparten).

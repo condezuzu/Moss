@@ -1842,26 +1842,49 @@
         },
       };
     },
-    /** { id, texto (con <b>), vistas: [[clave, rótulo]], principal (índice), crear(Galeria) → { abrir(vista, arg), cerrar() } } */
+    /**
+     * { id, titulo (corto, sin jerga), texto (una o dos frases; puede llevar <b>), vistas: [[clave, rótulo]] (las
+     * principales, a la vista), mas: [[clave, rótulo]] (los demás estados, plegados), principal (índice en vistas),
+     * crear(Galeria) → { abrir(vista, arg), cerrar() } }. Sin título, el texto va solo, como antes.
+     */
     propuesta(def) {
       propuestas.set(def.id, { def, api: null, vista: null });
       const grupo = document.createElement('div');
-      grupo.className = 'grupo';
-      const texto = document.createElement('span');
+      grupo.className = 'grupo pr-grupo';
+      if (def.titulo) {
+        const titulo = document.createElement('h3');
+        titulo.className = 'pr-titulo';
+        titulo.textContent = def.titulo;
+        grupo.appendChild(titulo);
+      }
+      const texto = document.createElement(def.titulo ? 'p' : 'span');
+      if (def.titulo) texto.className = 'pr-texto';
       texto.innerHTML = def.texto;
-      const controles = document.createElement('div');
-      controles.className = 'controles';
-      def.vistas.forEach(([vista, rotulo], i) => {
+      const boton = ([vista, rotulo], principal) => {
         const b = document.createElement('button');
         b.type = 'button';
-        b.className = 'boton' + (i === (def.principal || 0) ? ' principal' : '');
+        b.className = 'boton' + (principal ? ' principal' : '');
         b.dataset.propuesta = def.id;
         b.dataset.vista = vista;
         b.textContent = rotulo;
         b.addEventListener('click', () => verPropuesta(def.id, vista));
-        controles.appendChild(b);
-      });
+        return b;
+      };
+      const controles = document.createElement('div');
+      controles.className = 'controles';
+      def.vistas.forEach((v, i) => controles.appendChild(boton(v, i === (def.principal || 0))));
       grupo.append(texto, controles);
+      if (def.mas && def.mas.length) {
+        const mas = document.createElement('details');
+        mas.className = 'pr-mas';
+        const resumen = document.createElement('summary');
+        resumen.textContent = `Más estados (${def.mas.length})`;
+        const otros = document.createElement('div');
+        otros.className = 'controles';
+        def.mas.forEach((v) => otros.appendChild(boton(v, false)));
+        mas.append(resumen, otros);
+        grupo.appendChild(mas);
+      }
       cajaDePropuestas.appendChild(grupo);
       cajaDePropuestas.hidden = false;
     },

@@ -2230,7 +2230,8 @@ const Comida = (() => {
           let i = 0;
           clearInterval(reloj);
           reloj = setInterval(() => {
-            if (!sub.classList.contains('hj-decir')) { clearInterval(reloj); return; }
+            // Con la hoja ya cerrada, lo que se estaba escribiendo se deja.
+            if (!s.hoja || !sub.classList.contains('hj-decir')) { clearInterval(reloj); return; }
             i = Math.min(frase.length, i + 3);
             area.value = frase.slice(0, i);
             if (i >= frase.length) { parar(); entenderYa(); }
