@@ -13,7 +13,8 @@
 //   nadie desde la app (0004_medir.sql);
 // - que las noches propias (la cara de la mañana y la hora sin reloj) siguen las mismas reglas
 //   (0005_noches.sql), y que la ventana tranquila va solo con lo estimado, también cuando la build 6
-//   sube una noche sin ella (0010_noches_quieto.sql y 0011_noches_quieto_build6.sql);
+//   sube una noche sin ella (0010_noches_quieto.sql y 0011_noches_quieto_build6.sql); y los despertares,
+//   igual, sin que la versión que no los conoce los borre (0023_noches_despertares.sql);
 // - que lo comido y el catálogo guardan los micronutrientes, y que las búsquedas sin resultado y
 //   los reportes de errores se anotan sin usuario y no se leen desde la app (0006_alimentos.sql);
 // - que lo armado por el plan guarda su opción y cómo comes va en el perfil (0007_plan.sql);
@@ -322,8 +323,31 @@ comprobar(
     && Number(conVentanaTodavia?.cara) === 4 && conVentanaTodavia.quieto_desde !== null,
   'la build 6 sube solo la cara sobre una noche con ventana: se guarda y la ventana se va con lo estimado (si confirma lo estimado, queda)',
 );
+// Los despertares (0023_noches_despertares.sql): una lista con sus dos horas en orden, solo con lo estimado.
+const conDespertares = (fecha, despertares, estimada = true) => como(A, `insert into moss.noches (fecha, dormirse, despertar, origen, confianza${estimada ? ', estimada_dormirse, estimada_despertar' : ''}, despertares, actualizado)
+  values ('${fecha}', '${fecha}T03:00:00Z', '${fecha}T11:00:00Z', 'estimada', 'media'${estimada ? `, '${fecha}T03:00:00Z', '${fecha}T11:00:00Z'` : ''}, $1::jsonb, '${fecha}T11:30:00Z')`, [JSON.stringify(despertares)]).then(() => true, () => false);
+const unDespertar = (fecha) => [{ desde: `${fecha}T06:00:00Z`, hasta: `${fecha}T06:20:00Z` }];
+comprobar(
+  await conDespertares('2026-10-08', unDespertar('2026-10-08'))
+    && !(await conDespertares('2026-10-07', unDespertar('2026-10-07'), false))
+    && !(await conDespertares('2026-10-07', [{ desde: '2026-10-07T06:20:00Z', hasta: '2026-10-07T06:00:00Z' }]))
+    && !(await conDespertares('2026-10-07', { desde: '2026-10-07T06:00:00Z', hasta: '2026-10-07T06:20:00Z' }))
+    && !(await conDespertares('2026-10-07', [{ desde: '2026-10-07T06:00:00Z' }]))
+    && !(await conDespertares('2026-10-07', Array.from({ length: 49 }, () => unDespertar('2026-10-07')[0]))),
+  'los despertares de una noche: una lista, cada uno con sus dos horas y la primera antes, solo con lo estimado',
+);
+// La versión de antes no los conoce: su upsert no los nombra, así que quedan; si sube la noche sin lo estimado, se van con él.
+await conDespertares('2026-10-07', unDespertar('2026-10-07'));
+const confirmadaDeAntes = await deLaBuild6('2026-10-08', true);
+const soloLaCaraDeAntes = await deLaBuild6('2026-10-07', false);
+const [conLosDespertares, sinLosDespertares] = (await como(A, `select cara, despertares from moss.noches where fecha in ('2026-10-08', '2026-10-07') order by fecha desc`)).rows;
+comprobar(
+  confirmadaDeAntes && soloLaCaraDeAntes && Number(conLosDespertares?.cara) === 4 && JSON.stringify(conLosDespertares.despertares) === JSON.stringify(unDespertar('2026-10-08'))
+    && Number(sinLosDespertares?.cara) === 4 && sinLosDespertares.despertares === null,
+  'la versión que no conoce los despertares no los borra al subir una noche; si la sube sin lo estimado, se van con él',
+);
 // Las de prueba se van: lo que sigue cuenta las noches de A.
-await como(A, `delete from moss.noches where fecha in ('2026-10-11', '2026-10-10', '2026-10-09')`);
+await como(A, `delete from moss.noches where fecha in ('2026-10-11', '2026-10-10', '2026-10-09', '2026-10-08', '2026-10-07')`);
 const subirNoche = (cara, dormirse, despertar, origen, actualizado) => como(A, `
   insert into moss.noches (fecha, cara, dormirse, despertar, origen, confianza, actualizado) values ('2026-10-21', $1, $2, $3, $4, case when $4::text is null then null else 'media' end, $5)
   on conflict (usuario, fecha) do update set cara = excluded.cara, dormirse = excluded.dormirse, despertar = excluded.despertar,
@@ -768,20 +792,22 @@ await b.sinc.vuelta();
 await a.sinc.vuelta();
 comprobar(a.almacen.estado().registros.get(delAlmuerzo.id)?.planificado === false, 'app: «Comí esto» en un teléfono queda anotado en el otro');
 
-// Sueño: la cara de la mañana y la hora confirmada de una noche sin reloj llegan al otro teléfono.
+// Sueño: la cara de la mañana y la hora confirmada de una noche sin reloj llegan al otro teléfono, con sus despertares.
 pasa();
 a.almacen.ponerCara(hoyA, 4);
+const despertaresDeA = [{ desde: new Date(Date.parse(`${hoyA}T06:00:00Z`)).toISOString(), hasta: new Date(Date.parse(`${hoyA}T06:35:00Z`)).toISOString() }];
 a.almacen.ponerHoraDeLaNoche(hoyA, {
   dormirse: new Date(Date.parse(`${hoyA}T03:30:00Z`)).toISOString(), despertar: new Date(Date.parse(`${hoyA}T11:10:00Z`)).toISOString(), origen: 'corregida', confianza: 'media',
-  estimada: { dormirse: new Date(Date.parse(`${hoyA}T03:00:00Z`)).toISOString(), despertar: new Date(Date.parse(`${hoyA}T11:10:00Z`)).toISOString() },
+  estimada: { dormirse: new Date(Date.parse(`${hoyA}T03:00:00Z`)).toISOString(), despertar: new Date(Date.parse(`${hoyA}T11:10:00Z`)).toISOString(), despertares: despertaresDeA },
 });
 await a.sinc.vuelta();
 await b.sinc.vuelta();
 const nocheDeB = b.almacen.estado().noches.get(hoyA);
 comprobar(
   nocheDeB?.cara === 4 && nocheDeB?.hora?.origen === 'corregida' && nocheDeB?.hora?.confianza === 'media'
-    && nocheDeB?.hora?.estimada && Date.parse(nocheDeB.hora.estimada.dormirse) === Date.parse(`${hoyA}T03:00:00Z`) && !(await pendiente(b)),
-  'app: la cara de la mañana y la hora corregida de la noche (con lo que había estimado el teléfono) llegan al otro teléfono, sin volver a subir',
+    && nocheDeB?.hora?.estimada && Date.parse(nocheDeB.hora.estimada.dormirse) === Date.parse(`${hoyA}T03:00:00Z`)
+    && JSON.stringify(nocheDeB.hora.estimada.despertares) === JSON.stringify(despertaresDeA) && !(await pendiente(b)),
+  'app: la cara de la mañana y la hora corregida de la noche (con lo que había estimado el teléfono y sus despertares) llegan al otro teléfono, sin volver a subir',
 );
 
 // Tu nombre (0009_perfil.sql): el que trajo Apple llega al otro teléfono, y el que escribes le gana, sin tocar el perfil.
