@@ -1,9 +1,34 @@
-# Lo que te toca a vos (al 9/11/2026)
+# Lo que te toca a vos (al 28/11/2026)
 
 Todo lo que no puedo hacer yo: aprobar, decidir, entrar con tus cuentas, tocar el iPhone y lo de Ascent.
 Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar hecho: no lo puedo ver desde acá.
 
-Galería (versión 64): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
+Galería (versión 65): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
+
+## La tanda del 27 y 28/11/2026
+
+Por aire en `production` y `preview` (huella 27c0c152, commit 25671b8), con las migraciones 0020, 0021 y 0022
+aplicadas con tu sí:
+- Los precios: la pantalla de pago ya no entra gratis ni corta el acceso mientras tardan los precios o Apple, y va
+  después del cuestionario; «¿Tienes un código?» abre el canje de Apple.
+- Las metas de fuerza de Ascent: kilos en total, una por ejercicio, borrar, el tope y los errores.
+- Los hábitos de comida («Llegar a tus macros», las calorías según tu objetivo), la X de las hojas que se desliza y
+  los nombres que ya no se cortan.
+- La voz: el micrófono sin el momento apagado, «un batido de:» con la lista y guardar lo dicho como receta con nombre.
+- Los avisos que llegan sin poder leer Salud (D45) y el aviso de la noche con el texto nuevo. El título largo queda
+  así (lo decidiste el 28/11), aunque en la pantalla bloqueada se corte antes de la hora.
+
+**Te toca:**
+- Cerrar y abrir Moss dos veces para que tome la OTA.
+- Aprobar en la galería 65 las propuestas nuevas: dónde vive Ascent (¿selector o un solo scroll?, ¿Perfil como botón
+  arriba de Inicio?, ¿«Fuerza», «Ascent» o «Gimnasio»?), Ascent A, B y C, «¿Por qué no estás mejorando?», «En qué se
+  basa Moss» con dibujos, «¿Por qué?» dentro de Ascent, los avisos a la vista y tu plan de sueño, «¿Tienes un código?»,
+  la animación al abrir (elegí una de tres), decir lo que comí y el pago mientras cargan los precios.
+- Decidir: sumar a la privacidad (docs/ y el sitio) dos líneas sobre lo mínimo de tus noches que queda en el teléfono;
+  guardar también la hora en que terminó el entreno de hoy; sumar a la base creatina, colágeno, caseína y matcha.
+- Para la próxima build: expo-doctor pide actualizar 13 paquetes de Expo (expo 58.1 y parches). Cambia la huella.
+- En espera, como dijiste: la build 10 (1.1.1) y su ficha, y el código de oferta con el póster (piden tu sesión de
+  Apple).
 
 ## 0. El lanzamiento y la 1.1 (desde el 14/11/2026): dónde quedé
 
