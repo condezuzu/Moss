@@ -9,6 +9,7 @@ import Animated, { FadeInLeft, FadeInRight, LayoutAnimationConfig, useReducedMot
 import { buscarConstelacion, type Constelacion } from '@/datos/catalogo';
 import { cumplimiento, diasDelMes, resumenDelMes } from '@/dominio/estadisticas';
 import { diaDeLaSemana, type ClaveDia } from '@/dominio/fechas';
+import { enDosLineas } from '@/dominio/habitos';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Icono } from '../comida/comunes';
@@ -32,7 +33,7 @@ const LETRA_DE_CELDA = 1.2;
 
 export function Mes({ alCerrar }: { alCerrar: () => void }) {
   const e = useEstado();
-  const { width } = useWindowDimensions();
+  const { width, fontScale } = useWindowDimensions();
   const reducido = useReducedMotion();
   const [hoyAnio, hoyMes] = [Number(e.hoy.slice(0, 4)), Number(e.hoy.slice(5, 7)) - 1];
   const [visto, setVisto] = useState({ anio: hoyAnio, mes: hoyMes });
@@ -70,6 +71,9 @@ export function Mes({ alCerrar }: { alCerrar: () => void }) {
   );
   const resumen = resumenDelMes(e.dias, visto.anio, visto.mes, e.hoy);
   const vigentes = e.habitos.filter((h) => !h.hasta || h.hasta >= e.hoy).sort((a, b) => a.orden - b.orden);
+  // Las letras del nombre que entran en su renglón, a ojo: unos 7 puntos cada una, sin los 30 del ícono y los huecos
+  // ni las 8 de la cuenta («30 de 30»). Uno más largo va en dos líneas parejas en vez de cortarse con «…».
+  const caben = Math.floor((ancho - 30) / (7 * fontScale)) - 8;
 
   const titulo = `${lista('fecha.meses')[visto.mes]} ${visto.anio}`;
   const clave = `${visto.anio}-${visto.mes}`;
@@ -145,7 +149,7 @@ export function Mes({ alCerrar }: { alCerrar: () => void }) {
                 <View key={h.id} style={st.habito}>
                   <View style={st.habitoFila}>
                     <Icono nombre={h.icono as 'star'} tam={14} color="rgba(239, 230, 207, 0.6)" />
-                    <Text style={st.habitoNombre} numberOfLines={1}>{h.nombre}</Text>
+                    <Text style={st.habitoNombre} numberOfLines={2}>{enDosLineas(h.nombre, caben).join('\n')}</Text>
                     <Text style={st.habitoCuenta}>{t('habitos.mes.deVeces', { hechos: numero(c.hechos), total: numero(c.total) })}</Text>
                   </View>
                   <View style={st.pista}>

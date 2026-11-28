@@ -3,24 +3,25 @@
 // entiende (src/comida/frase.ts y entender.ts) y lo muestra para revisar: cada alimento con su
 // cantidad, que se cambia ahí mismo, y una pregunta solo si cambia el número, con la respuesta ya
 // marcada. «Agregar» no espera a que se conteste nada. Con varias comidas en la frase (18/11/2026),
-// lo entendido se muestra por comida y se anota cada cosa en la suya.
+// lo entendido se muestra por comida y se anota cada cosa en la suya. Lo que la persona guardó (una
+// receta, una comida, un alimento suyo) se dice por su nombre y se anota entero (27/11/2026).
 
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { elAlmacen } from '@/almacen';
 import { baseDeAlimentos } from '@/comida/base';
 import { normalizar } from '@/comida/buscar';
-import { claveMedida, entender, type Entendido, type Opcion } from '@/comida/entender';
+import { claveMedida, entender, loTuyo, type Entendido, type Opcion } from '@/comida/entender';
 import { conCon, leerFrase, mismoNombre, porComida } from '@/comida/frase';
 import { TAMANOS as TAMANOS_DE_PLATO } from '@/comida/platos';
 import { pasoDeCantidad, pasoDePorcion, type Sistema } from '@/dominio/cantidades';
 import { COMIDAS, type Comida } from '@/dominio/comidas';
 import type { FotoDeComida } from '@/dominio/fotos';
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
-import { itemDeAlimento, premios, recientes, sumarValores, ultimaCantidad, valoresDeCantidad, type Cantidad, type Item } from '@/dominio/registros';
+import { alDia, itemDeAlimento, itemRapido, premios, recientes, sumarValores, ultimaCantidad, valoresDeCantidad, vigentes, type Cantidad, type Item } from '@/dominio/registros';
 import { t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
@@ -29,7 +30,7 @@ import { ACOMODA } from '../tarjetas';
 import { Boton, Etiqueta, Icono, Pastilla } from './comunes';
 import { CabezaDeFoto } from './FotosDelDia';
 import { cantidadDeTexto, numero, opcionesDeIdioma, useEstado, useNumeros } from './datos';
-import { hayDictado, useDictado } from './dictado';
+import { contextoDelDictado, hayDictado, useDictado } from './dictado';
 import { agregarADe } from './hoja';
 import { claveDe, Panel, useSinGuardar } from './Paneles';
 import type { Rect } from './Visor';
@@ -86,6 +87,17 @@ function otraCantidad(o: Opcion, signo: 1 | -1): Opcion {
   return { ...o, cantidad, valores: valoresDeCantidad(o.alimento.por100g, cantidad) };
 }
 
+/** Lo elegido, como se anota: lo de la base va «a ojo»; lo que la persona guardó, con su fuente y como estaba. */
+function itemDicho(o: Opcion): Item {
+  const a = o.alimento;
+  if (a.fuente === 'rapida') return itemRapido(a.nombre, o.valores);
+  const item = itemDeAlimento(a.fuente ?? 'base', a.ref, a.nombre, a.por100g, o.cantidad);
+  return !a.fuente || a.estimado ? { ...item, estimado: true } : item;
+}
+
+/** Lo más nuevo primero: si dos cosas guardadas se llaman igual, se dice la última que se guardó. */
+const nuevoPrimero = <T extends { actualizado: string }>(lista: T[]) => lista.sort((a, b) => (a.actualizado < b.actualizado ? 1 : -1));
+
 export function PanelDecir(p: Props) {
   const e = useEstado();
   // Sin los números (Perfil › Los números), lo entendido va con sus cantidades, sin calorías.
@@ -96,6 +108,11 @@ export function PanelDecir(p: Props) {
   const [entendiendo, setEntendiendo] = useState(false);
   // El texto que se entendió: si se cambia, hay que volver a entender.
   const [entendido, setEntendido] = useState<string | null>(null);
+  // Lo que la persona guardó se dice por su nombre («mi batido de la mañana»), con lo que vale ahora.
+  const tuyos = useMemo(
+    () => loTuyo(nuevoPrimero(vigentes(e.recetas.values())), nuevoPrimero(vigentes(e.propios.values())), t('comida.receta.plato'), (i) => alDia(i, e.propios, e.recetas)),
+    [e.recetas, e.propios],
+  );
 
   /** Entiende la frase; con `sumarA`, lo nuevo va después de lo que ya estaba revisado. */
   const entenderTexto = async (frase: string, sumarA?: { lista: Revisado[]; completo: string }) => {
@@ -110,7 +127,7 @@ export function PanelDecir(p: Props) {
       const [r] = await buscar(b);
       if (r && mismoNombre(r.coincide, b)) conNombre.add(b);
     }));
-    const leida = leerFrase(frase, op.idioma, (b) => conNombre.has(b));
+    const leida = leerFrase(frase, op.idioma, (b) => conNombre.has(b), tuyos.map((x) => x.nombre));
     // Lo que no dice comida va a la de la hoja; lo que se suma después («y una banana»), a la de lo último.
     const ultimo = sumarA?.lista[sumarA.lista.length - 1];
     // Con la foto, todo va a una comida: la de la foto.
@@ -124,6 +141,7 @@ export function PanelDecir(p: Props) {
       alias: (b: string) => e.alias[normalizar(b)],
       conocido: (id: number) => (premio.get(id) ?? 0) > 0,
       medido: (b: string) => e.alias[claveMedida(b)],
+      tuyo: (cual: number) => tuyos[cual]?.filas,
     };
     // Cada comida con sus preguntas: como mucho tres por comida.
     const lista = (await Promise.all(grupos.map(async (g) => (await entender(g.dichos, para)).map((x) => ({ ...x, comida: g.comida, ayer: g.ayer }))))).flat();
@@ -142,17 +160,24 @@ export function PanelDecir(p: Props) {
     const antes = previo.texto.replace(/[\s,.;]+$/, '');
     return antes && nuevo ? `${antes}, ${nuevo}` : antes || nuevo;
   };
+  const conMicrofono = hayDictado();
   const dictado = useDictado({
     alTexto: (x) => setTexto(conPrevio(x)),
     alTerminar: (x) => {
-      if (previo.lista?.length && x.trim()) entenderYa(x, { lista: previo.lista, completo: conPrevio(x) });
+      // Sin nada nuevo, lo ya revisado queda como estaba, con lo que se cambió a mano.
+      if (previo.lista?.length && !x.trim()) return;
+      if (previo.lista?.length) entenderYa(x, { lista: previo.lista, completo: conPrevio(x) });
       else entenderYa(conPrevio(x));
     },
+    // Abre escuchando: el micrófono se ve encendido desde el primer cuadro, no un instante apagado.
+    alAbrir: p.escuchar && conMicrofono,
   });
-  const conMicrofono = hayDictado();
-  // Lo que la persona suele comer ayuda a reconocer los nombres.
-  const contexto = () => recientes(e.registros.values(), 60).map((i) => i.nombre);
+  // Lo que la persona suele comer y lo que guardó ayudan a reconocer los nombres.
+  const contexto = () => contextoDelDictado(recientes(e.registros.values(), 60).map((i) => i.nombre), tuyos.map((x) => x.nombre));
+  // Si se toca el micrófono antes de que el panel termine de entrar, manda ese toque: ya no arranca solo.
+  const tocado = useRef(false);
   const hablar = () => {
+    tocado.current = true;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     if (dictado.escuchando) dictado.parar();
     else {
@@ -164,8 +189,9 @@ export function PanelDecir(p: Props) {
   // Al abrir, cuando el panel ya entró: escucha, o entiende lo que se escribió en el buscador.
   useEffect(() => {
     const espera = setTimeout(() => {
-      if (p.escuchar && conMicrofono) dictado.empezar(contexto()).catch(() => {});
-      else if (p.textoInicial) entenderYa(p.textoInicial);
+      if (p.escuchar && conMicrofono) {
+        if (!tocado.current) dictado.empezar(contexto()).catch(() => {});
+      } else if (p.textoInicial) entenderYa(p.textoInicial);
     }, 320);
     return () => clearTimeout(espera);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -222,7 +248,7 @@ export function PanelDecir(p: Props) {
       ayer: g.ayer,
       items: g.filas.flatMap(({ x }) => {
         const o = x.opciones[x.elegida];
-        return o ? [{ ...itemDeAlimento('base', o.alimento.ref, o.alimento.nombre, o.alimento.por100g, o.cantidad), estimado: true as const }] : [];
+        return o ? [itemDicho(o)] : [];
       }),
     }));
   };
@@ -360,24 +386,29 @@ function Fila({ x, sistema, numeros, alMover, alQuitar, alElegir, alBuscar }: {
       </View>
     );
   }
+  // Lo que se guardó sin cantidad (una carga rápida dentro de una comida guardada) va con sus kcal, sin − ni +.
+  const sinCantidad = o.alimento.fuente === 'rapida';
+  const detalle = [sinCantidad ? '' : cantidadDeTexto(o.cantidad, sistema), numeros ? `${numero(Math.round(o.valores.kcal))} kcal` : ''].filter(Boolean).join(' · ');
   return (
     <View style={st.bloque}>
       <View style={st.fila}>
         <View style={st.textos}>
           <Text style={st.nombre} numberOfLines={1}>{o.alimento.nombre}</Text>
           <Text style={st.detalle} numberOfLines={1}>
-            {numeros ? `${cantidadDeTexto(o.cantidad, sistema)} · ${numero(Math.round(o.valores.kcal))} kcal` : cantidadDeTexto(o.cantidad, sistema)}
+            {detalle}
             {x.supuesto ? <Text style={st.supuesto}>{` · ${t('comida.decir.supuesto')}`}</Text> : null}
           </Text>
         </View>
-        <View style={st.pasos}>
-          <BotonDePaso alPaso={() => alMover(-1)} etiqueta={t('comun.menos', { que: o.alimento.nombre })} lado={32} style={st.paso}>
-            <Icono nombre="minus" tam={14} peso="semibold" />
-          </BotonDePaso>
-          <BotonDePaso alPaso={() => alMover(1)} etiqueta={t('comun.mas', { que: o.alimento.nombre })} lado={32} style={st.paso}>
-            <Icono nombre="plus" tam={14} peso="semibold" />
-          </BotonDePaso>
-        </View>
+        {!sinCantidad && (
+          <View style={st.pasos}>
+            <BotonDePaso alPaso={() => alMover(-1)} etiqueta={t('comun.menos', { que: o.alimento.nombre })} lado={32} style={st.paso}>
+              <Icono nombre="minus" tam={14} peso="semibold" />
+            </BotonDePaso>
+            <BotonDePaso alPaso={() => alMover(1)} etiqueta={t('comun.mas', { que: o.alimento.nombre })} lado={32} style={st.paso}>
+              <Icono nombre="plus" tam={14} peso="semibold" />
+            </BotonDePaso>
+          </View>
+        )}
         <Quitar que={o.alimento.nombre} alTocar={alQuitar} />
       </View>
       {x.pregunta && (

@@ -18,9 +18,11 @@ import { yaNoEsDeMoss } from '@/secciones/perfil/cuentaApple';
 import { buscarDespertar } from '@/salud/despertar';
 import { leerPasos, leerSalud } from '@/salud/leer';
 import { estimarAnoche, rehacerLasNoches } from '@/salud/nocheSinReloj';
+import { saludPedida } from '@/salud/salud';
 import { idioma } from '@/textos';
 import { abrirRepositorio } from './abrir';
 import { crearAlmacen, type Almacen } from './almacen';
+import { gimnasioGuardado } from './ascent';
 import { avisarSesion, buzon } from './buzonDeMoss';
 import { remotoSupabase } from './remoto';
 import { sinCambios } from './repositorio';
@@ -30,7 +32,7 @@ import { crearSincronizador, type Sincronizador } from './sincronizar';
 let almacen: Almacen | undefined;
 
 export function elAlmacen(): Almacen {
-  almacen ??= crearAlmacen({ abrir: abrirRepositorio, catalogo, sembrar: (hoy) => habitosDeEjemplo(hoy, idioma()) });
+  almacen ??= crearAlmacen({ abrir: abrirRepositorio, catalogo, sembrar: (hoy) => habitosDeEjemplo(hoy, idioma()), gimnasioGuardado });
   return almacen;
 }
 
@@ -245,6 +247,8 @@ export async function esperarLaCuenta(tope = ESPERA_DE_LA_CUENTA): Promise<boole
 export async function actualizarSalud(): Promise<void> {
   const s = await leerSalud(new Date(), elAlmacen().estado().fuenteDelSueno, elAlmacen().estado().corte).catch(() => null);
   if (s) elAlmacen().ponerSalud(s);
+  // Sin Salud pedida no hay noches de Salud que esperar: los avisos se arman con las de Moss (D45).
+  else if (!(await saludPedida())) elAlmacen().sinSalud();
   // La primera vez con la regla del 17/11/2026, las noches estimadas de antes se arman de nuevo.
   await rehacerLasNoches(elAlmacen(), new Date(), leerPasos).catch(() => {});
   await estimarAnoche(elAlmacen()).catch(() => {});

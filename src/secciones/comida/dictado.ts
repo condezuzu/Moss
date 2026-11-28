@@ -41,21 +41,54 @@ export function hayDictado(): boolean {
   return Platform.OS === 'ios';
 }
 
+/** Cuántas palabras de contexto se le pasan a iOS. */
+const CONTEXTO = 100;
+
+/**
+ * Las palabras que ayudan a reconocer los nombres: lo que la persona suele comer y lo que guardó, intercaladas y sin
+ * repetir. Con muchas cosas guardadas, lo de todos los días sigue entrando en las que acepta iOS.
+ */
+export function contextoDelDictado(suele: readonly string[], guardado: readonly string[]): string[] {
+  const vistas = new Set<string>();
+  const lista: string[] = [];
+  for (let i = 0; i < Math.max(suele.length, guardado.length) && lista.length < CONTEXTO; i++) {
+    for (const nombre of [suele[i], guardado[i]]) {
+      const clave = nombre?.trim().toLowerCase();
+      if (!clave || vistas.has(clave) || lista.length >= CONTEXTO) continue;
+      vistas.add(clave);
+      lista.push(nombre);
+    }
+  }
+  return lista;
+}
+
 /**
  * Escuchar: el texto llega mientras se habla (`alTexto`) y, al terminar, entero (`alTerminar`). Para
  * solo con un silencio, o con `parar`. Las palabras de `contexto` (lo que la persona suele comer)
- * ayudan a reconocer los nombres de acá.
+ * ayudan a reconocer los nombres de acá. `escuchando` ya es verdadero mientras arranca (lo pediste el
+ * 27/11/2026: el micrófono no se ve apagado un instante antes de prenderse); con `alAbrir`, desde el
+ * primer cuadro, para la pantalla que abre escuchando. Si no arranca, vuelve a apagado con su `error`.
  */
-export function useDictado(op: { alTexto: (texto: string) => void; alTerminar: (texto: string) => void }) {
+export function useDictado(op: { alTexto: (texto: string) => void; alTerminar: (texto: string) => void; alAbrir?: boolean }) {
   const [escuchando, setEscuchando] = useState(false);
+  // Desde que se pide hasta que iOS avisa que empezó: el permiso, el idioma y el audio tardan un momento.
+  const [arrancando, setArrancando] = useState(!!op.alAbrir);
   const [error, setError] = useState<ErrorDelDictado | null>(null);
   const ultimo = useRef('');
-  // Si se cierra mientras escucha, el micrófono se apaga: no queda escuchando de fondo.
-  const activo = useRef(false);
+  // Cada pedido de escuchar, con su número: parar o cerrar deja sin efecto al que todavía está arrancando.
+  const pedido = useRef(0);
+  // El último pedido que llegó a iOS y el que iOS empezó a escuchar. Los eventos de iOS no dicen de qué pedido son:
+  // solo tocan el de ahora si es el que llegó (y empezó); un «end» viejo que llega tarde no lo apaga.
+  const enviado = useRef(0);
+  const empezado = useRef(0);
+  // Hay algo mandado a iOS que no terminó: si se cierra, el micrófono se apaga y no queda escuchando de fondo.
+  const vivo = useRef(false);
   useEffect(() => {
-    const vivo = activo;
+    const mandado = vivo;
+    const elPedido = pedido;
     return () => {
-      if (!vivo.current) return;
+      elPedido.current += 1;
+      if (!mandado.current) return;
       try {
         ExpoSpeechRecognitionModule.abort();
       } catch {
@@ -65,30 +98,58 @@ export function useDictado(op: { alTexto: (texto: string) => void; alTerminar: (
   }, []);
 
   useSpeechRecognitionEvent('start', () => {
-    ultimo.current = '';
-    activo.current = true;
+    // De un pedido que se paró o se reemplazó mientras arrancaba: se corta.
+    if (enviado.current !== pedido.current) {
+      try {
+        ExpoSpeechRecognitionModule.abort();
+      } catch {
+        // Ya había terminado.
+      }
+      return;
+    }
+    empezado.current = pedido.current;
+    setArrancando(false);
     setEscuchando(true);
   });
   useSpeechRecognitionEvent('result', (ev) => {
+    if (empezado.current !== pedido.current) return;
     const texto = ev.results[0]?.transcript ?? '';
     ultimo.current = texto;
     op.alTexto(texto);
   });
   useSpeechRecognitionEvent('end', () => {
-    activo.current = false;
+    // De un pedido viejo, del que se paró mientras arrancaba o del stop() de iOS quieto: no toca el de ahora, y lo
+    // de la vez anterior no vuelve.
+    if (empezado.current !== pedido.current) return;
+    empezado.current = 0;
+    vivo.current = false;
+    setArrancando(false);
     setEscuchando(false);
     op.alTerminar(ultimo.current);
   });
   useSpeechRecognitionEvent('error', (ev) => {
-    activo.current = false;
+    // «Aborted» es de un abort de acá; y el error de un pedido viejo no apaga el de ahora.
+    if (ev.error === 'aborted' || enviado.current !== pedido.current) return;
+    vivo.current = false;
+    setArrancando(false);
     setEscuchando(false);
     // Sin hablar no es un error: solo no hay nada.
-    if (ev.error === 'no-speech' || ev.error === 'aborted') return;
+    if (ev.error === 'no-speech') return;
     setError(ev.error === 'not-allowed' ? 'permiso' : ev.error === 'language-not-supported' || ev.error === 'service-not-allowed' ? 'idioma' : 'otro');
   });
 
   const empezar = async (contexto: readonly string[]) => {
+    const mio = ++pedido.current;
+    // Cada pedido empieza de cero.
+    ultimo.current = '';
+    /** No arrancó: vuelve a apagado, con su mensaje. Si ya se pidió otra cosa, no toca nada. */
+    const dejar = (porQue: ErrorDelDictado) => {
+      if (mio !== pedido.current) return;
+      setArrancando(false);
+      setError(porQue);
+    };
     setError(null);
+    setArrancando(true);
     try {
       // Si recién se le dijo que no a la pregunta de iOS, alcanza con el texto del panel; si ya se había
       // dicho antes, iOS no vuelve a preguntar y se ofrece ir a Ajustes.
@@ -96,10 +157,15 @@ export function useDictado(op: { alTexto: (texto: string) => void; alTerminar: (
       const permiso = antes.granted ? antes : await ExpoSpeechRecognitionModule.requestPermissionsAsync();
       if (!permiso.granted) {
         if (!antes.canAskAgain) ofrecerAjustes();
-        return setError('permiso');
+        return dejar('permiso');
       }
       const lang = await idiomaDelDictado();
-      if (!lang) return setError('idioma');
+      if (!lang) return dejar('idioma');
+      // Se tocó de nuevo, o se cerró, mientras arrancaba.
+      if (mio !== pedido.current) return;
+      // Desde acá hay algo que apagar si se cierra, aunque iOS todavía no haya avisado que empezó.
+      vivo.current = true;
+      enviado.current = mio;
       ExpoSpeechRecognitionModule.start({
         lang,
         interimResults: true,
@@ -107,19 +173,23 @@ export function useDictado(op: { alTexto: (texto: string) => void; alTerminar: (
         // Solo en el teléfono: el audio no sale de ahí.
         requiresOnDeviceRecognition: true,
         addsPunctuation: true,
-        contextualStrings: contexto.slice(0, 100),
+        contextualStrings: contexto.slice(0, CONTEXTO),
         iosTaskHint: 'dictation',
       });
     } catch {
-      setError('otro');
+      if (mio === pedido.current) vivo.current = false;
+      dejar('otro');
     }
   };
   const parar = () => {
+    // Mientras arranca, se deja sin efecto; si ya escucha, se para y llega lo dicho.
+    if (empezado.current !== pedido.current) pedido.current += 1;
+    setArrancando(false);
     try {
       ExpoSpeechRecognitionModule.stop();
     } catch {
       setEscuchando(false);
     }
   };
-  return { escuchando, error, empezar, parar };
+  return { escuchando: escuchando || arrancando, error, empezar, parar };
 }

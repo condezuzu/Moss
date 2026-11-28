@@ -6,11 +6,11 @@
 
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { reglasDeCuidados } from '@/almacen/almacen';
-import { deAscent, useAscent } from '@/almacen/ascent';
+import { deAscent, falloDeMeta, useAscent, type FalloDeMeta, type MetaPedida } from '@/almacen/ascent';
 import type { Sistema } from '@/dominio/cantidades';
 import { POCAS_PESADAS, PROTEINA_POR_KG, type Razon } from '@/dominio/progresoCompartido';
 import { musculosPrincipales } from '@/dominio/fatiga';
@@ -25,12 +25,19 @@ import { sugerenciasDeHoy, type Sugerencia, type SugerenciasDeHoy } from '@/domi
 import { lista, plural, t, type ClaveDeLista } from '@/textos';
 import { letras } from '@/tema';
 import { duracion, hora, metaDelDia, numero, sistemaDe, useEstado } from '../comida/datos';
+import { avisar, cerrarRegistro } from '../comida/registro';
 import { usePersona, useSueno } from '../ganchos';
+import { cerrarLasHojas } from '../HojaModal';
+import { alReabrirLaMeta, reabrirLaMeta } from './abrir';
 import { C, GRUPOS_DEL_ANIO, useAcento } from './colores';
 import { Cuerpo, Parte as ParteDeCerca, Reloj, type EstadoDibujado } from './Dibujos';
-import { conMayuscula, enFrase, enLaUnidad, enLista, kilosDeLaMeta, nivelEn, nombreDelEjercicio, nombreDelMusculo, pesoEn, siguienteEn, tx } from './palabras';
-import { Accion, Cambia, Desplegable, Etiqueta, Flecha, Fundido, Nota, Parte, Una, Escala, Enlace } from './piezas';
-import { calcularTodo, calcularTusMusculos, type EjercicioDeLaSemana, type Estancado, type Hoy, type MetaConProyeccion, type MusculoDeLaSemana, type Todo, type TusMusculos as DeTusMusculos } from './vista';
+import { HojaDeMeta, type Borrador } from './HojaDeMeta';
+import { conMayuscula, enFrase, enLaUnidad, enLista, ladoDe, nivelEn, nombreDelEjercicio, nombreDelMusculo, pesoEn, siguienteEn, tx, type Lado } from './palabras';
+import { Cambia, Desplegable, Etiqueta, Flecha, Fundido, Nota, Parte, Una, Escala, Enlace } from './piezas';
+import {
+  calcularTodo, calcularTusMusculos, METAS_TOPE, objetivoDeHoy, type EjercicioDeLaSemana, type Estancado, type Falta, type Hoy, type MetaConProyeccion, type MusculoDeLaSemana, type Todo,
+  type TusMusculos as DeTusMusculos,
+} from './vista';
 
 /** La barra del sueño va de 0 a 10 horas; la de la proteína, hasta 2,6 g por kilo. */
 const SUENO_TOPE = 10 * 60;
@@ -106,7 +113,8 @@ function useSugerenciasDeHoy(h: Hoy, tm: DeTusMusculos): SugerenciasDeHoy {
     return sugerenciasDeHoy({
       sesion: h.sesion ? { musculos, minutos: h.sesion.minutos, hecha: h.sesion.como === 'hecha' } : null,
       sinRecuperar,
-      objetivo: 'musculo',
+      // Las repeticiones que dice son las del objetivo: si la rutina de hoy pide pocas, las de fuerza.
+      objetivo: objetivoDeHoy(h),
       noche: h.noche ? { dormido: h.noche.dormido, despertoAntes: h.noche.despertoAntes } : null,
       deuda: h.deuda === null ? null : juicioDeLaDeuda({ minutos: h.deuda }),
       necesidad: sueno.necesidad,
@@ -159,12 +167,12 @@ const DE_ESPALDA: readonly Musculo[] = ['trapecio', 'dorsales', 'triceps', 'espa
 /** La barra de cada músculo va de 0 a 30 series, con la franja de 10 a 20 marcada. */
 const TOPE_DE_SERIES = 30;
 const enLaBarra = (n: number) => (Math.min(TOPE_DE_SERIES, Math.max(0, n)) / TOPE_DE_SERIES) * 100;
-/** Las series se dicen redondeadas: «6,5» (una media serie del músculo que ayuda) se leía raro. */
-const series = (n: number) => numero(Math.round(n));
+/** Las series se dicen con su medio (la del músculo que ayuda cuenta media): redondeado, 9,5 decía «10» al lado de «Le faltan». */
+const series = (n: number) => numero(n, 1);
 /** Un peso redondo cuando lo es («60»), con un decimal cuando no («62,5»). */
 const cifra = (v: number) => numero(v, v % 1 ? 1 : 0);
-/** Un peso de Ascent (en kg) en la unidad de cada uno: «62,5 kg» o «137,5 lb». */
-const conUnidad = (kg: number, s: Sistema) => enLaUnidad(`${cifra(pesoEn(kg, s))} kg`, s);
+/** Un peso de Ascent (en kg) en la unidad de cada uno: «62,5 kg» o «137,5 lb»; el de un lado, «27,5 kg por mancuerna». */
+const conUnidad = (kg: number, s: Sistema, lado: Lado = null) => enLaUnidad(`${cifra(pesoEn(kg, s))} kg`, s, lado);
 
 export function TusMusculos({ tm, hoy }: { tm: DeTusMusculos; hoy?: ReactNode }) {
   const { width } = useWindowDimensions();
@@ -338,10 +346,13 @@ function DetalleDelMusculo({ m, tm, alCerrar }: { m: MusculoDeLaSemana; tm: DeTu
 function FilaDelEjercicio({ x, musculo, ayuda, sistema }: { x: EjercicioDeLaSemana; musculo: Musculo; ayuda: boolean; sistema: Sistema }) {
   const a = useAcento();
   const p = x.proxima;
-  const siguiente = siguienteEn(x.peso, sistema);
-  const peso = x.peso > 0 ? conUnidad(x.peso, sistema) : t('ascent.tus.mismoPeso');
+  // Lo que se anota por mancuerna o por lado se dice así: el peso llega en total.
+  const lado = ladoDe({ id: x.e.id, carga: x.carga });
+  const kg = lado ? x.peso / 2 : x.peso;
+  const siguiente = siguienteEn(kg, sistema);
+  const peso = x.peso > 0 ? conUnidad(kg, sistema, lado) : t('ascent.tus.mismoPeso');
   const proxima = p.decision === 'subir'
-    ? (siguiente === null ? t('ascent.tus.proxima.subirSinPeso') : enLaUnidad(t('ascent.tus.proxima.subirA', { kg: cifra(siguiente) }), sistema))
+    ? (siguiente === null ? t('ascent.tus.proxima.subirSinPeso') : enLaUnidad(t('ascent.tus.proxima.subirA', { kg: cifra(siguiente) }), sistema, lado))
     : p.decision === 'noSeSabe' ? t('ascent.tus.proxima.pocasSesiones', { peso }) : tx(`ascent.tus.proxima.${p.razon}`, { tope: x.tope ?? '', peso });
   return (
     <View style={st.ej}>
@@ -532,54 +543,156 @@ function PorQue({ todo }: { todo: Todo }) {
 
 
 // ------------------------------------------------------------ metas (arriba de todo: lo que menos importa)
+/** Lo que dice el aviso si no se pudo guardar o borrar una meta: lo de cada caso. */
+function textoDelFallo(porQue: FalloDeMeta, borrando: boolean): string {
+  if (porQue === 'demasiadas') return t('ascent.metas.demasiadas', { n: METAS_TOPE });
+  if (porQue === 'sinVinculo') return t('ascent.metas.sinVinculo');
+  if (porQue === 'sinRespuesta') return t(borrando ? 'ascent.metas.sinRespuestaBorrar' : 'ascent.metas.sinRespuesta');
+  return t(borrando ? 'ascent.metas.errorBorrar' : 'ascent.metas.error');
+}
+
+/** Lo que falta para estimar cuándo llegas, dicho. */
+const textoDeLaFalta = (f: Falta) => (f.que === 'sesiones' || f.que === 'semanas'
+  ? plural(f.que === 'sesiones' ? 'ascent.metas.faltanSesiones' : 'ascent.metas.faltanSemanas', f.n)
+  : t(f.que === 'sinReps' ? 'ascent.metas.faltaReps' : f.que === 'sinPeso' ? 'ascent.metas.faltaPeso' : 'ascent.metas.muchasReps'));
+
+/**
+ * Las filas de una lista que cambia: las que llegan después de la primera vez crecen, y las que se van se pliegan en su
+ * lugar antes de irse (`sacar`, al terminar). `clave` reconoce cada una de una vez a otra.
+ */
+function useFilas<T>(lista: readonly T[], clave: (x: T) => string) {
+  type Fila = { k: string; x: T; entra: boolean; sale: boolean };
+  // Si dos llegan con la misma (un momento, dos pendientes del mismo ejercicio), la segunda va aparte: React las quiere únicas.
+  const claves = (xs: readonly T[]) => {
+    const vistas = new Set<string>();
+    return xs.map((x) => {
+      let k = clave(x);
+      while (vistas.has(k)) k += '+';
+      vistas.add(k);
+      return k;
+    });
+  };
+  const [hay, setHay] = useState(() => {
+    const ks = claves(lista);
+    return { de: lista, filas: lista.map((x, i): Fila => ({ k: ks[i], x, entra: false, sale: false })) };
+  });
+  let filas = hay.filas;
+  if (hay.de !== lista) {
+    const antes = new Map(filas.map((f) => [f.k, f]));
+    const ks = claves(lista);
+    const nuevas = lista.map((x, i): Fila => {
+      const k = ks[i];
+      return { k, x, entra: antes.get(k)?.entra ?? true, sale: false };
+    });
+    const quedan = new Set(nuevas.map((f) => f.k));
+    filas.forEach((f, i) => {
+      if (quedan.has(f.k)) return;
+      const arriba = filas.slice(0, i).reverse().find((g) => quedan.has(g.k));
+      nuevas.splice(arriba ? nuevas.findIndex((g) => g.k === arriba.k) + 1 : 0, 0, { ...f, sale: true });
+      quedan.add(f.k);
+    });
+    filas = nuevas;
+    setHay({ de: lista, filas });
+  }
+  const sacar = (k: string) => setHay((x) => ({ ...x, filas: x.filas.filter((f) => f.k !== k || !f.sale) }));
+  return { filas, sacar };
+}
+
 function Metas({ todo, tm }: { todo: Todo; tm: DeTusMusculos }) {
-  const [nueva, setNueva] = useState(false);
   const sistema = sistemaDe(useEstado());
+  // La hoja de la meta: la que se cambia o, con null, una nueva; con lo escrito, si no se pudo guardar. `vez` la arma de
+  // nuevo en cada apertura.
+  const [hoja, setHoja] = useState<{ abierta: boolean; meta: MetaConProyeccion | null; borrador: Borrador | null; vez: number }>({ abierta: false, meta: null, borrador: null, vez: 0 });
+  // Una meta por ejercicio: la fila se reconoce por él, así no se arma de nuevo cuando llega el id del servidor.
+  const { filas, sacar } = useFilas(todo.metas, (x) => x.meta.ejercicio);
+  const abrir = (meta: MetaConProyeccion | null, borrador: Borrador | null = null) => setHoja((x) => ({ abierta: true, meta, borrador, vez: x.vez + 1 }));
+  // «Reintentar» llega también con la sección cerrada (este componente ya no estaba): lo pedido espera en abrir.ts.
+  useEffect(() => alReabrirLaMeta((b) => abrir(null, b)));
+  const guardar = (m: MetaPedida, borrador: Borrador) => {
+    deAscent().guardarMeta(m).catch((e: unknown) => {
+      const porQue = falloDeMeta(e);
+      // Sin conexión o sin respuesta, se vuelve a la hoja con lo escrito: se cierra lo que haya encima y se abre la sección.
+      const volver = porQue === 'red' || porQue === 'sinRespuesta';
+      const reintentar = () => {
+        cerrarLasHojas();
+        cerrarRegistro();
+        reabrirLaMeta(borrador);
+      };
+      avisar(textoDelFallo(porQue, false), volver ? reintentar : undefined, volver ? t('ascent.metas.reintentar') : undefined);
+    });
+  };
+  // Se va al instante, plegándose; si el servidor no la borra, vuelve creciendo.
+  const borrar = (id: string) => {
+    deAscent().borrarMeta(id).catch((e: unknown) => avisar(textoDelFallo(falloDeMeta(e), true)));
+  };
   return (
     <Parte titulo={t('ascent.metas.titulo')}>
-      {!todo.metas.length && !nueva && <Una>{t('ascent.metas.ninguna')}</Una>}
-      {todo.metas.map((x, i) => <FilaDeMeta key={x.meta.id} x={x} todo={todo} tm={tm} primera={i === 0} sistema={sistema} />)}
-      <Desplegable abierto={nueva}>
-        <NuevaMeta todo={todo} alTerminar={() => setNueva(false)} sistema={sistema} />
+      <Desplegable abierto={!todo.metas.length}><Una>{t('ascent.metas.ninguna')}</Una></Desplegable>
+      {filas.map((f, i) => (
+        <Desplegable key={f.k} abierto={!f.sale} entra={f.entra} alPlegarse={() => sacar(f.k)}>
+          <FilaDeMeta x={f.x} todo={todo} tm={tm} primera={i === 0} sistema={sistema} alEditar={() => abrir(f.x)} />
+        </Desplegable>
+      ))}
+      <Enlace texto={t('ascent.metas.nueva')} alTocar={() => abrir(null)} />
+      <Desplegable abierto={todo.proteina !== null && todo.metas.some((x) => !x.alcanzada)}>
+        <Text style={st.metaHacer}>{t('ascent.metas.comer', { g: todo.proteina ?? 0 })}</Text>
       </Desplegable>
-      {!nueva && <Enlace texto={t('ascent.metas.nueva')} alTocar={() => setNueva(true)} />}
-      {todo.proteina !== null && todo.metas.some((x) => x.proyeccion.estado !== 'lograda') && <Text style={st.metaHacer}>{t('ascent.metas.comer', { g: todo.proteina })}</Text>}
       <EnQueSeBasa de="metas" />
+      <HojaDeMeta
+        key={hoja.vez}
+        abierta={hoja.abierta}
+        meta={hoja.meta}
+        borrador={hoja.borrador}
+        metas={todo.metas}
+        ejercicios={todo.paraMetas}
+        sistema={sistema}
+        alCerrar={() => setHoja((x) => ({ ...x, abierta: false }))}
+        alGuardar={guardar}
+        alBorrar={borrar}
+      />
     </Parte>
   );
 }
 
-function FilaDeMeta({ x, todo, tm, primera, sistema }: { x: MetaConProyeccion; todo: Todo; tm: DeTusMusculos; primera: boolean; sistema: Sistema }) {
+function FilaDeMeta({ x, todo, tm, primera, sistema, alEditar }: { x: MetaConProyeccion; todo: Todo; tm: DeTusMusculos; primera: boolean; sistema: Sistema; alEditar: () => void }) {
   const a = useAcento();
   const p = x.proyeccion;
-  const parte = x.nivel === null ? null : Math.min(1, x.nivel / x.objetivo);
-  const linea = p.estado === 'enCamino'
-    ? (p.semanas[1] === null ? plural('ascent.metas.enCaminoAbierto', p.semanas[0])
-      : p.semanas[1] === p.semanas[0] ? plural('ascent.metas.enCaminoExacto', p.semanas[0])
-      : t('ascent.metas.enCamino', { de: p.semanas[0], a: p.semanas[1] })) + (p.realista ? '' : ' ' + t('ascent.metas.lejana'))
-    : t(`ascent.metas.${p.estado}`);
+  // La meta y lo que llega de Ascent van en total: lo que se anota por mancuerna o por lado se dice así, la mitad.
+  const lado = ladoDe({ id: x.meta.ejercicio, carga: x.carga });
+  const deLado = (kg: number) => (lado ? kg / 2 : kg);
+  // Alcanzada, solo con una serie de verdad (metaAlcanzada). Si lo que ya pasa la meta es el nivel estimado, se dice
+  // eso y se invita a probarla: 40 kg × 8 no es haber levantado 50 kg una vez.
+  const parte = x.alcanzada ? 1 : x.nivel === null ? null : Math.min(1, x.nivel / x.objetivo);
+  const linea = x.alcanzada ? t('ascent.metas.alcanzada')
+    : p.estado === 'lograda' ? t('ascent.metas.nivelPasa')
+    : p.estado === 'enCamino'
+      ? (p.semanas[1] === null ? plural('ascent.metas.enCaminoAbierto', p.semanas[0])
+        : p.semanas[1] === p.semanas[0] ? plural('ascent.metas.enCaminoExacto', p.semanas[0])
+        : t('ascent.metas.enCamino', { de: p.semanas[0], a: p.semanas[1] })) + (p.realista ? '' : ' ' + t('ascent.metas.lejana'))
+      : p.estado === 'noSube' ? t('ascent.metas.noSube') : null;
   const ej = tm.ejercicios.find((y) => y.e.id === x.meta.ejercicio);
   const proxima = ej?.proxima;
-  const siguiente = ej ? siguienteEn(ej.peso, sistema) : null;
-  const peso = ej && ej.peso > 0 ? conUnidad(ej.peso, sistema) : t('ascent.tus.mismoPeso');
+  const siguiente = ej ? siguienteEn(deLado(ej.peso), sistema) : null;
+  const peso = ej && ej.peso > 0 ? conUnidad(deLado(ej.peso), sistema, lado) : t('ascent.tus.mismoPeso');
   const queHacer = !proxima || proxima.decision === 'noSeSabe' ? null
-    : proxima.decision === 'subir' ? (siguiente === null ? t('ascent.tus.proxima.subirSinPeso') : enLaUnidad(t('ascent.tus.proxima.subirA', { kg: cifra(siguiente) }), sistema))
+    : proxima.decision === 'subir' ? (siguiente === null ? t('ascent.tus.proxima.subirSinPeso') : enLaUnidad(t('ascent.tus.proxima.subirA', { kg: cifra(siguiente) }), sistema, lado))
     : tx(`ascent.tus.proxima.${proxima.razon}`, { tope: ej?.tope ?? '', peso });
-  const kg = cifra(pesoEn(x.meta.kilos, sistema));
+  const kg = cifra(pesoEn(deLado(x.meta.kilos), sistema));
   return (
     <View style={[st.meta, primera && st.sinBorde]}>
       <View style={st.metaCab}>
         <Text style={st.metaNombre}>{nombreDelEjercicio(x.e)}</Text>
-        <Text style={st.metaObjetivo}>{enLaUnidad(x.meta.reps === 1 ? t('ascent.metas.objetivoUna', { kg }) : t('ascent.metas.objetivoVarias', { kg, reps: x.meta.reps }), sistema)}</Text>
+        <Text style={st.metaObjetivo}>{enLaUnidad(x.meta.reps === 1 ? t('ascent.metas.objetivoUna', { kg }) : t('ascent.metas.objetivoVarias', { kg, reps: x.meta.reps }), sistema, lado)}</Text>
       </View>
-      {parte !== null && (
-        <>
-          <View style={st.metaPista}><View style={[st.metaLleno, { width: `${parte * 100}%`, backgroundColor: a.claro }]} /></View>
-          <Text style={st.metaNivel}>{enLaUnidad(t('ascent.metas.nivelKg', { kg: numero(nivelEn(x.meta.reps === 1 ? x.nivel! : x.nivel! / (1 + x.meta.reps / 30), sistema), 1) }), sistema)}</Text>
-        </>
+      {parte !== null && <View style={st.metaPista}><View style={[st.metaLleno, { width: `${parte * 100}%`, backgroundColor: a.claro }]} /></View>}
+      {x.nivel !== null && (
+        <Text style={st.metaNivel}>{enLaUnidad(t('ascent.metas.nivelKg', { kg: numero(nivelEn(deLado(x.meta.reps === 1 ? x.nivel : x.nivel / (1 + x.meta.reps / 30)), sistema), 1) }), sistema, lado)}</Text>
       )}
-      <Text style={st.metaLinea}>{linea}</Text>
-      {p.estado !== 'lograda' && (
+      {/* Lo que falta para estimarla se lee fuerte: es lo que hay que saber hasta que haya una fecha. */}
+      {x.falta && !x.alcanzada
+        ? <Text style={st.metaFalta}>{textoDeLaFalta(x.falta)}</Text>
+        : <Text style={st.metaLinea}>{linea}</Text>}
+      {!x.alcanzada && p.estado !== 'lograda' && (
         <>
           {queHacer && <Text style={st.metaHacer}>{queHacer}</Text>}
           {todo.alejan.map((y) => (
@@ -589,63 +702,8 @@ function FilaDeMeta({ x, todo, tm, primera, sistema }: { x: MetaConProyeccion; t
           ))}
         </>
       )}
-      <Enlace texto={t('ascent.metas.borrar')} alTocar={() => deAscent().borrarMeta(x.meta.id).catch(() => {})} />
-    </View>
-  );
-}
-
-function NuevaMeta({ todo, alTerminar, sistema }: { todo: Todo; alTerminar: () => void; sistema: Sistema }) {
-  const a = useAcento();
-  const [ejercicio, setEjercicio] = useState<string | null>(null);
-  const [kilos, setKilos] = useState('');
-  const [reps, setReps] = useState('1');
-  const [error, setError] = useState(false);
-  const [guardando, setGuardando] = useState(false);
-  const kg = kilosDeLaMeta(kilos, sistema);
-  // No hay texto para «Libras»: con el sistema imperial, «Peso (lb)».
-  const etiqueta = sistema === 'imperial' ? `${t('progreso.peso')} (lb)` : t('ascent.metas.kilos');
-  const r = Number(reps);
-  const lista = !!ejercicio && kg >= 1 && kg <= 1000 && Number.isInteger(r) && r >= 1 && r <= 10;
-  const guardar = () => {
-    if (!lista || guardando || !ejercicio) return;
-    setGuardando(true);
-    setError(false);
-    deAscent().guardarMeta({ ejercicio, kilos: kg, reps: r }).then(() => {
-      setGuardando(false);
-      setKilos('');
-      setEjercicio(null);
-      alTerminar();
-    }, () => {
-      setGuardando(false);
-      setError(true);
-    });
-  };
-  return (
-    <View style={st.nueva}>
-      <Text style={st.nuevaEtq}>{t('ascent.metas.elegir')}</Text>
-      <View style={st.nuevaEjercicios}>
-        {todo.paraMetas.map((x) => {
-          const elegido = x.id === ejercicio;
-          return (
-            <Pressable key={x.id} onPress={() => setEjercicio(x.id ?? null)} style={[st.nuevaPildora, elegido && { backgroundColor: a.claro, borderColor: a.claro }]} accessibilityRole="button" accessibilityState={{ selected: elegido }}>
-              <Text style={[st.nuevaPildoraTexto, elegido && { color: C.fondo }]}>{nombreDelEjercicio(x)}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
-      <View style={st.nuevaNumeros}>
-        <View style={st.crece}>
-          <Text style={st.nuevaEtq}>{etiqueta}</Text>
-          <TextInput value={kilos} onChangeText={setKilos} keyboardType="decimal-pad" style={st.nuevaCampo} placeholder={sistema === 'imperial' ? '225' : '100'} placeholderTextColor={C.tenue} accessibilityLabel={etiqueta} />
-        </View>
-        <View style={st.crece}>
-          <Text style={st.nuevaEtq}>{t('ascent.metas.reps')}</Text>
-          <TextInput value={reps} onChangeText={setReps} keyboardType="number-pad" style={st.nuevaCampo} accessibilityLabel={t('ascent.metas.reps')} />
-        </View>
-      </View>
-      {error && <Text style={[st.metaHacer, { color: C.lejos }]}>{t('ascent.metas.error')}</Text>}
-      <Accion texto={t('ascent.metas.guardar')} alTocar={guardar} apagado={!lista || guardando} estilo={st.nuevaGuardar} />
-      <Enlace texto={t('ascent.metas.cancelar')} alTocar={alTerminar} />
+      {/* Recién puesta, todavía no tiene su id: se puede cambiar cuando el servidor la guardó. */}
+      <Enlace texto={t('ascent.metas.editar')} alTocar={x.meta.pendiente ? () => {} : alEditar} estilo={x.meta.pendiente && st.apretado} />
     </View>
   );
 }
@@ -886,22 +944,16 @@ const st = StyleSheet.create({
   contexto: { marginTop: 12, marginBottom: 2, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17.5, color: C.apagado },
   // Metas
   meta: { paddingTop: 14, paddingBottom: 6, borderTopWidth: 1, borderTopColor: C.lineaSuave },
-  metaCab: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 },
+  // Si el nombre y el objetivo no entran en una línea («35 kg por mancuerna 8 veces»), el objetivo baja.
+  metaCab: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', columnGap: 10, rowGap: 3 },
   metaNombre: { flexShrink: 1, fontFamily: letras.texto, fontSize: 15.5, lineHeight: 19, color: C.tinta },
   metaObjetivo: { fontFamily: letras.numero, fontSize: 13, color: C.sub, fontVariant: ['tabular-nums'] },
   metaPista: { height: 6, borderRadius: 3, marginTop: 10, backgroundColor: 'rgba(170, 178, 196, 0.12)', overflow: 'hidden' },
   metaLleno: { height: 6, borderRadius: 3 },
   metaNivel: { marginTop: 5, fontFamily: letras.texto, fontSize: 11.5, color: C.apagado },
   metaLinea: { marginTop: 8, fontFamily: letras.texto, fontSize: 14, lineHeight: 19, color: C.tinta },
+  metaFalta: { marginTop: 8, fontFamily: letras.textoMedio, fontSize: 15, lineHeight: 20.5, color: C.tinta },
   metaHacer: { marginTop: 5, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: C.sub },
-  nueva: { paddingTop: 14, gap: 8 },
-  nuevaEtq: { fontFamily: letras.texto, fontSize: 12, color: C.sub },
-  nuevaEjercicios: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  nuevaPildora: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: C.lineaFuerte },
-  nuevaPildoraTexto: { fontFamily: letras.texto, fontSize: 12.5, color: C.tinta },
-  nuevaNumeros: { flexDirection: 'row', gap: 12, marginTop: 6 },
-  nuevaCampo: { marginTop: 4, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: C.lineaFuerte, fontFamily: letras.numero, fontSize: 16, color: C.tinta },
-  nuevaGuardar: { marginTop: 10 },
   // Tu año
   mapa: { marginTop: 14, gap: 2 },
   mapaFila: { flexDirection: 'row', alignItems: 'center', gap: 1.5 },

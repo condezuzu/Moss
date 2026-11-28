@@ -661,16 +661,23 @@ export function pocoSuenoSostenido(noches: (Noche | null)[], edad?: number): boo
 }
 
 /**
+ * Las últimas 14 noches de un reloj o un anillo, sin las anotadas a mano ni las de confianza baja, aunque sean de hace
+ * semanas: de esas sale lo que sueles estar despierto en la noche (despiertoDeLaNoche). Son también las que se guardan
+ * para los avisos (nochesParaGuardar, en src/salud/convertir.ts).
+ */
+export const lasDelAparato = (noches: readonly Noche[]): Noche[] => noches
+  .filter((n) => !n.moss && !n.aMano && (n.fuente.tipo === 'reloj' || n.fuente.tipo === 'otra') && n.confianza.duracion !== 'baja')
+  .sort((a, b) => (a.clave < b.clave ? -1 : 1))
+  .slice(-14);
+
+/**
  * Lo que sueles estar despierto adentro de la noche, en minutos: con al menos 7 noches de un reloj o un anillo
  * (de las últimas 14 que hay), su mediana más lo que el reloj no ve. Sin eso, nada (desde el 17/11/2026): solo
  * con el teléfono no se mide, y restarle media hora fija a todos sumaba más de 3 horas de deuda. Lo usan la
  * noche sin reloj (nocheDeMoss, en sinReloj.ts) y la hora de acostarte (horaDeDormir, en avisos.ts).
  */
 export function despiertoDeLaNoche(noches: readonly Noche[]): number {
-  const conAparato = noches
-    .filter((n) => !n.moss && !n.aMano && (n.fuente.tipo === 'reloj' || n.fuente.tipo === 'otra') && n.confianza.duracion !== 'baja')
-    .sort((a, b) => (a.clave < b.clave ? -1 : 1))
-    .slice(-14);
+  const conAparato = lasDelAparato(noches);
   // Un aparato que nunca escribe un rato despierto no dice que no lo hubo: no lo ve.
   if (conAparato.length < MINIMOS.loTuyo || conAparato.every((n) => n.despierto === 0)) return 0;
   return Math.round(mediana(conAparato.map((n) => n.despierto))) + LO_QUE_EL_RELOJ_NO_VE;

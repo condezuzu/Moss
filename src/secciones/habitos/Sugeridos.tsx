@@ -14,7 +14,7 @@ import { soloLosDeEjemplo } from '@/almacen/almacen';
 import { avisoDeFabrica } from '@/dominio/avisos';
 import { pedirPermisoDeAvisos } from '@/recordatorios/programar';
 import type { DiaSemana } from '@/dominio/fechas';
-import type { Fuente } from '@/dominio/habitos';
+import { fuenteDeComida, type Fuente } from '@/dominio/habitos';
 import { plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Boton, Icono } from '../comida/comunes';
@@ -26,7 +26,7 @@ type Sugerido = { clave: string; fuente: Fuente; icono: SFSymbol; nombre?: () =>
 
 const SUGERIDOS: readonly Sugerido[] = [
   { clave: 'proteina', fuente: { tipo: 'comida', meta: 'proteina' }, icono: 'fork.knife' },
-  { clave: 'registrar', fuente: { tipo: 'comida', meta: 'registrar' }, icono: 'list.bullet' },
+  { clave: 'macros', fuente: fuenteDeComida('macros'), icono: 'chart.pie' },
   { clave: 'calorias', fuente: { tipo: 'comida', meta: 'calorias' }, icono: 'flame' },
   { clave: 'dormir', fuente: { tipo: 'salud', dato: 'sueno', meta: 420 }, icono: 'moon' },
   { clave: 'pasos', fuente: { tipo: 'salud', dato: 'pasos', meta: 8000 }, icono: 'figure.walk' },
@@ -36,7 +36,7 @@ const SUGERIDOS: readonly Sugerido[] = [
   { clave: 'entrenar', fuente: { tipo: 'manual' }, icono: 'dumbbell', nombre: () => t('habitos.sugeridos.entrenar'), dias: [1, 3, 5], manual: 'entrenar' },
   { clave: 'escribir', fuente: { tipo: 'manual' }, icono: 'pencil', nombre: () => t('habitos.sugeridos.escribir'), manual: 'escribir' },
 ];
-const DE_FABRICA = ['proteina', 'registrar', 'dormir', 'pasos'];
+const DE_FABRICA = ['proteina', 'macros', 'dormir', 'pasos'];
 const MINIMO = 3;
 /** Si se cerró la hoja con la cruz: es un «no, gracias», y no se vuelve a ofrecer. */
 const CERRADA_SIN_ELEGIR = 'moss:primerosHabitosCerrados';

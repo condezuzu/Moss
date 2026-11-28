@@ -15,9 +15,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { elAlmacen } from '@/almacen';
 import { claveDelDia, partesDe, type ClaveDia } from '@/dominio/fechas';
-import { ahorroDelAnual, DIA_DEL_AVISO, DIAS_DE_PRUEBA, diasDePrueba, MESES_DE_REGALO, planDe, porMes, PRECIOS, tieneAcceso, type Plan } from '@/dominio/premium';
+import { DIA_DEL_AVISO, DIAS_DE_PRUEBA, diasDePrueba, MESES_DE_REGALO, planDe, tieneAcceso, type Plan } from '@/dominio/premium';
 import type { Tramo } from '@/dominio/sueno';
-import { accesoActual, accesoDe, administrarSuscripcion, comprar, contestoApple, finDelRegaloDe, hayCompras, leerPrecios, precioDeRespaldo, restaurar, seSabeElAcceso, suscripcionActual, useEstadoDePremium, type EstadoDePremium } from '@/lib/premium';
+import { accesoActual, accesoDe, administrarSuscripcion, comprar, contestoApple, finDelRegaloDe, hayCompras, leerPrecios, pedirLosPreciosQueFalten, planQueSePuede, precioDelPlan, preciosDe, restaurar, seSabeElAcceso, suscripcionActual, useEstadoDePremium, type EstadoDePremium } from '@/lib/premium';
 import { abrirPagina } from '@/lib/sitio';
 import { pedirPermisoDeAvisos, programarAvisos } from '@/recordatorios/programar';
 import { idioma, lista, plural, t } from '@/textos';
@@ -30,7 +30,7 @@ import { anunciar } from '../anuncio';
 import { HojaModal } from '../HojaModal';
 import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
 import { borrarLaCuenta, exportarTodo, salirDeLaCuenta } from '../perfil/cuenta';
-import { Aparece, Parrafo } from '../tarjetas';
+import { ACOMODA, Aparece, Parrafo } from '../tarjetas';
 
 /** La noche del ejemplo: 5 h 40 dormidas, la misma de la galería. */
 const NOCHE_CORTA: { desde: number; hasta: number; dormido: number; tramos: Tramo[] } = {
@@ -111,21 +111,12 @@ const degradado = (g: string) => (Platform.OS === 'web' ? { backgroundImage: g }
 const FONDO = degradado('linear-gradient(180deg, rgb(24, 34, 70) 0%, rgb(9, 12, 26) 45%)');
 
 // ------------------------------------------------------------------ los precios
-function losPrecios(e: EstadoDePremium) {
-  const anual = e.productos.anual;
-  const mensual = e.productos.mensual;
-  return {
-    anual: anual?.precio ?? precioDeRespaldo(PRECIOS.anual),
-    mensual: mensual?.precio ?? precioDeRespaldo(PRECIOS.mensual),
-    porMes: anual?.porMes ?? precioDeRespaldo(porMes(PRECIOS.anual)),
-    ahorro: ahorroDelAnual(anual?.valor ?? PRECIOS.anual, mensual?.valor ?? PRECIOS.mensual),
-  };
-}
-
 /** Lo que cuesta, para la introducción: `dias` es 0 si esta cuenta de Apple ya usó la prueba. */
 export function usePreciosDeLaEntrada() {
   const e = useEstadoDePremium();
-  const p = losPrecios(e);
+  // Si al abrir Moss no llegaron, se vuelven a pedir al llegar a lo que cuesta.
+  useEffect(pedirLosPreciosQueFalten, []);
+  const p = preciosDe(e);
   return { anual: p.anual, mensual: p.mensual, dias: e.productos.anual ? e.productos.anual.prueba : DIAS_DE_PRUEBA };
 }
 
@@ -208,11 +199,12 @@ function LineaDePrueba({ dias, precio }: { dias: number; precio: string }) {
   return (
     <View style={st.linea}>
       <View style={st.lineaHilo} />
-      {puntos.map((p) => (
-        <View key={p.titulo} style={st.lineaPunto}>
+      {puntos.map((p, i) => (
+        <View key={i} style={st.lineaPunto}>
           <View style={[st.lineaNodo, p.hoy && st.lineaNodoHoy]} />
-          <Text style={st.lineaTitulo}>{p.titulo}</Text>
-          <Text style={st.lineaTexto}>{p.texto}</Text>
+          {/* Lo que cambia (el plan, el precio de Apple cuando llega, los días) pasa al nuevo con un fundido. */}
+          <Animated.Text key={p.titulo} entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} style={st.lineaTitulo}>{p.titulo}</Animated.Text>
+          <Animated.Text key={p.texto} entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} style={st.lineaTexto}>{p.texto}</Animated.Text>
         </View>
       ))}
     </View>
@@ -220,19 +212,21 @@ function LineaDePrueba({ dias, precio }: { dias: number; precio: string }) {
 }
 
 function OpcionDePlan({ plan, precio, debajo, elegido, alElegir, atenuado }: { plan: Plan; precio: string; debajo: string[]; elegido: boolean; alElegir: () => void; atenuado: boolean }) {
-  // El borde pasa al otro plan de a poco.
+  // El borde pasa al otro plan de a poco, y el plan se enciende de a poco cuando llega su precio.
   const caja = useAnimatedStyle(() => ({
     borderColor: withTiming(elegido ? colores.oro : 'rgba(239, 230, 207, 0.16)', { duration: 200 }),
     backgroundColor: withTiming(elegido ? 'rgba(232, 196, 106, 0.08)' : 'rgba(232, 196, 106, 0)', { duration: 200 }),
-  }), [elegido]);
+    opacity: withTiming(atenuado ? 0.5 : 1, { duration: 200, reduceMotion: ReduceMotion.Never }),
+  }), [elegido, atenuado]);
   return (
     <Pressable onPress={alElegir} style={st.planCaja} accessibilityRole="radio" accessibilityState={{ checked: elegido }}>
-      <Animated.View style={[st.plan, caja, atenuado && st.apagado]}>
+      <Animated.View layout={ACOMODA} style={[st.plan, caja]}>
         <Text style={st.planNombre}>{t(`suscripcion.${plan}.nombre`)}</Text>
-        {/* Lo que se cobra es lo más grande; lo que equivale, abajo y en chico (lo pide Apple). */}
-        <Text style={st.planPrecio} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{precio}</Text>
+        {/* Lo que se cobra es lo más grande; lo que equivale, abajo y en chico (lo pide Apple). Cuando llega el
+            precio de Apple, el de respaldo se va y el nuevo entra con un fundido, y el ahorro que deja de valer se va igual. */}
+        <Animated.Text key={precio} entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} style={st.planPrecio} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{precio}</Animated.Text>
         <Text style={st.planPor}>{t(`suscripcion.${plan}.por`)}</Text>
-        {debajo.map((d, i) => <Text key={d} style={[st.planDetalle, plan === 'anual' && i === 1 && st.planAhorro]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{d}</Text>)}
+        {debajo.map((d, i) => <Animated.Text key={d} entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} style={[st.planDetalle, plan === 'anual' && i === 1 && st.planAhorro]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{d}</Animated.Text>)}
       </Animated.View>
       {plan === 'anual' && <View style={st.reco}><Text style={st.recoTexto}>{t('suscripcion.anual.recomendado')}</Text></View>}
     </Pressable>
@@ -298,29 +292,54 @@ function abrirCuenta() {
 }
 
 // ------------------------------------------------------------------ la pantalla de pago
+/** Lo que pasó con lo último que se tocó (suscripcion.notas). */
+type NotaDelPago = 'cancelada' | 'pendiente' | 'error' | 'nada' | 'errorRestaurar';
+
 function Pago({ e }: { e: EstadoDePremium }) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const [plan, setPlan] = useState<Plan>('anual');
+  const [elegido, setElegido] = useState<Plan>('anual');
+  // Si el plan elegido no tiene precio y el otro sí, queda el otro, y ya no vuelve solo (planQueSePuede).
+  const [loEligio, setLoEligio] = useState(false);
+  const plan = planQueSePuede(elegido, loEligio, e.productos);
+  if (plan !== elegido) setElegido(plan);
   const [ocupado, setOcupado] = useState(false);
   // Restaurando, «Empezar» no se toca (sin cambiar lo que dice): las dos a la vez pedían dos veces la cuenta de Apple.
   const [restaurando, setRestaurando] = useState(false);
   // El segundo toque llega antes de que el estado se dibuje: esto lo frena ya.
   const enCamino = useRef(false);
-  const [nota, setNota] = useState<string | null>(null);
+  const [nota, setNota] = useState<NotaDelPago | null>(null);
   // La nota se ve y, con VoiceOver, se dice.
-  const decir = (texto: string) => {
-    setNota(texto);
-    anunciar(texto);
+  const decir = (n: NotaDelPago) => {
+    setNota(n);
+    anunciar(t(`suscripcion.notas.${n}`));
   };
   const acceso = accesoDe(e);
   const vencida = acceso === 'vencida';
-  const p = losPrecios(e);
+  const p = preciosDe(e);
   const producto = e.productos[plan];
   // Sin saber todavía, se promete solo a quien nunca tuvo una: Apple dice al final si le corresponde.
   const dias = producto ? producto.prueba : vencida ? 0 : DIAS_DE_PRUEBA;
   const conPrueba = dias > 0;
-  const sinConexion = e.sinPrecios && !producto;
+  // Sin el precio de Apple no se compra. Hasta que contesta la primera vez, se espera; después se dice por qué
+  // falta (no «sin conexión» si contestó) y se deja reintentar. Mientras la pantalla está abierta se piden solos.
+  const delPlan = precioDelPlan(e, plan);
+  const esperando = delPlan === 'esperando';
+  const sinPrecio = !producto && !esperando;
+  const [reintentando, setReintentando] = useState(false);
+  useEffect(pedirLosPreciosQueFalten, []);
+  const reintentar = () => {
+    // La nota de antes no tapa por qué falta el precio. Si el pedido en camino ya lleva un rato, sale otro.
+    setNota(null);
+    setReintentando(true);
+    leerPrecios(true).catch(() => {}).finally(() => setReintentando(false));
+  };
+  const elegir = (otro: Plan) => {
+    // La nota de antes era del otro plan.
+    if (otro !== plan) setNota(null);
+    setElegido(otro);
+    setLoEligio(true);
+  };
   const precio = plan === 'anual' ? p.anual : p.mensual;
   const precioCon = t(`suscripcion.${plan}.precioDe`, { precio });
 
@@ -340,9 +359,7 @@ function Pago({ e }: { e: EstadoDePremium }) {
       return;
     }
     cambiar({ abierta: antes });
-    if (r === 'cancelado') decir(t('suscripcion.notas.cancelada'));
-    else if (r === 'pendiente') decir(t('suscripcion.notas.pendiente'));
-    else decir(t('suscripcion.notas.error'));
+    decir(r === 'cancelado' ? 'cancelada' : r === 'pendiente' ? 'pendiente' : 'error');
   };
   const alRestaurar = async () => {
     if (enCamino.current) return;
@@ -359,9 +376,17 @@ function Pago({ e }: { e: EstadoDePremium }) {
       return;
     }
     cambiar({ abierta: antes });
-    decir(t(r === 'nada' ? 'suscripcion.notas.nada' : 'suscripcion.notas.errorRestaurar'));
+    decir(r === 'nada' ? 'nada' : 'errorRestaurar');
   };
-  const apagado = ocupado || restaurando || (!producto && !sinConexion);
+  // Por qué falta el precio va aparte de lo que pasó con lo último que se tocó: «No hay nada para restaurar» no lo
+  // tapa. Si las dos dicen que la App Store no contesta, queda la de lo último.
+  const motivo = sinPrecio && !(nota === 'errorRestaurar' && delPlan === 'sinRespuesta');
+  const enEspera = ocupado || esperando || reintentando;
+  const apagado = enEspera || restaurando;
+  const accion = sinPrecio ? t('suscripcion.reintentar') : conPrueba ? t('suscripcion.empezar', { n: dias }) : t('suscripcion.suscribirme');
+  const legal = conPrueba ? t('suscripcion.legal', { n: dias, precio: precioCon }) : t('suscripcion.legalSinPrueba', { precio: precioCon });
+  // Apagarse y encenderse es un fundido: también con Reducir movimiento.
+  const boton = useAnimatedStyle(() => ({ opacity: withTiming(apagado ? 0.5 : 1, { duration: 200, reduceMotion: ReduceMotion.Never }) }), [apagado]);
 
   return (
     <Animated.View exiting={FadeOut.duration(160).reduceMotion(ReduceMotion.Never)} style={st.pantalla}>
@@ -378,39 +403,57 @@ function Pago({ e }: { e: EstadoDePremium }) {
             </View>
           ))}
         </View>
-        {conPrueba && !vencida && <Aparece key={plan}><LineaDePrueba dias={dias} precio={precio} /></Aparece>}
+        {conPrueba && !vencida && <Aparece><LineaDePrueba dias={dias} precio={precio} /></Aparece>}
       </ScrollView>
-      <View style={[st.pie, { paddingBottom: insets.bottom + 8 }]}>
+      {/* Cuando entra o sale la nota (o el ahorro), el pie crece o se achica de a poco: sube su borde de arriba y lo
+          de abajo de la nota se queda donde estaba. */}
+      <Animated.View layout={ACOMODA} style={[st.pie, { paddingBottom: insets.bottom + 8 }]}>
         <View style={st.planes} accessibilityRole="radiogroup">
-          <OpcionDePlan plan="anual" precio={p.anual} debajo={[t('suscripcion.anual.porMes', { mes: p.porMes }), t('suscripcion.anual.ahorro', { ahorro: p.ahorro })]} elegido={plan === 'anual'} alElegir={() => setPlan('anual')} atenuado={sinConexion} />
-          <OpcionDePlan plan="mensual" precio={p.mensual} debajo={[t('suscripcion.mensual.detalle')]} elegido={plan === 'mensual'} alElegir={() => setPlan('mensual')} atenuado={sinConexion} />
+          {/* Cada plan queda atenuado hasta que llega su precio de Apple: el de respaldo no se muestra como si fuera el suyo. */}
+          <OpcionDePlan plan="anual" precio={p.anual} debajo={[t('suscripcion.anual.porMes', { mes: p.porMes }), ...(p.ahorro === null ? [] : [t('suscripcion.anual.ahorro', { ahorro: p.ahorro })])]} elegido={plan === 'anual'} alElegir={() => elegir('anual')} atenuado={!e.productos.anual} />
+          <OpcionDePlan plan="mensual" precio={p.mensual} debajo={[t('suscripcion.mensual.detalle')]} elegido={plan === 'mensual'} alElegir={() => elegir('mensual')} atenuado={!e.productos.mensual} />
         </View>
-        {(sinConexion || nota) && (
-          <Aparece key={nota ?? 'sinConexion'}>
-            <Text style={st.nota} accessibilityLiveRegion="polite">{nota ?? t('suscripcion.notas.sinConexion')}</Text>
+        {nota && (
+          <Aparece key={nota}>
+            <Text style={st.nota} accessibilityLiveRegion="polite">{t(`suscripcion.notas.${nota}`)}</Text>
           </Aparece>
         )}
-        <Pressable
-          onPress={() => { if (sinConexion) leerPrecios().catch(() => {}); else empezar().catch(() => {}); }}
-          disabled={apagado}
-          style={({ pressed }) => [st.principal, pressed && st.principalApretado, apagado && st.apagado]}
-          accessibilityRole="button"
-          accessibilityState={{ busy: ocupado || restaurando, disabled: apagado }}
-        >
-          {ocupado && <ActivityIndicator color="#0b0f1d" />}
-          <Text style={st.principalTexto}>{ocupado ? t('suscripcion.enCurso') : sinConexion ? t('suscripcion.reintentar') : conPrueba ? t('suscripcion.empezar', { n: dias }) : t('suscripcion.suscribirme')}</Text>
-        </Pressable>
-        <Aparece key={plan}>
-          <Text style={st.legal}>{conPrueba ? t('suscripcion.legal', { n: dias, precio: precioCon }) : t('suscripcion.legalSinPrueba', { precio: precioCon })}</Text>
+        {motivo && (
+          <Aparece key={delPlan}>
+            <Text style={st.nota} accessibilityLiveRegion="polite">{t(delPlan === 'faltaEnLaTienda' ? 'suscripcion.notas.sinPrecios' : 'suscripcion.notas.sinConexion')}</Text>
+          </Aparece>
+        )}
+        <Animated.View layout={ACOMODA} style={boton}>
+          <Pressable
+            onPress={() => { if (sinPrecio) reintentar(); else empezar().catch(() => {}); }}
+            disabled={apagado}
+            style={({ pressed }) => [st.principal, pressed && st.principalApretado]}
+            accessibilityRole="button"
+            accessibilityLabel={enEspera ? t('suscripcion.enCurso') : accion}
+            accessibilityState={{ busy: enEspera || restaurando, disabled: apagado }}
+          >
+            <Animated.Text key={accion} entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} style={st.principalTexto}>{accion}</Animated.Text>
+            {/* Mientras espera, la ruedita y «Un momento…» pasan por encima con un fundido, y se van igual. */}
+            {enEspera && (
+              <Animated.View entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} style={[StyleSheet.absoluteFill, st.principal]}>
+                <ActivityIndicator color="#0b0f1d" />
+                <Text style={st.principalTexto}>{t('suscripcion.enCurso')}</Text>
+              </Animated.View>
+            )}
+          </Pressable>
+        </Animated.View>
+        {/* Cambia con el plan y cuando llega el precio de Apple: lo viejo se va y lo nuevo entra con un fundido. */}
+        <Aparece key={legal}>
+          <Text style={st.legal}>{legal}</Text>
         </Aparece>
-        <Text style={st.renovacion}>{t('suscripcion.renovacion')}</Text>
-        <View style={st.enlaces}>
+        <Animated.Text layout={ACOMODA} style={st.renovacion}>{t('suscripcion.renovacion')}</Animated.Text>
+        <Animated.View layout={ACOMODA} style={st.enlaces}>
           <Enlace texto={t('suscripcion.restaurar')} alTocar={() => { alRestaurar().catch(() => {}); }} />
           <Enlace texto={t('suscripcion.terminos')} alTocar={() => abrirPagina('terminos')} rol="link" />
           <Enlace texto={t('suscripcion.privacidad')} alTocar={() => abrirPagina('privacidad')} rol="link" />
           {!vencida && <Enlace texto={t('suscripcion.cuenta.titulo')} alTocar={abrirCuenta} />}
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -434,7 +477,7 @@ function Listo({ titulo, texto, nota }: { titulo: string; texto: string; nota?: 
 function ListoDeLaCompra({ e }: { e: EstadoDePremium }) {
   const s = e.suscripcion;
   const plan = s ? planDe(s) : 'anual';
-  const precioCon = t(`suscripcion.${plan}.precioDe`, { precio: plan === 'anual' ? losPrecios(e).anual : losPrecios(e).mensual });
+  const precioCon = t(`suscripcion.${plan}.precioDe`, { precio: preciosDe(e)[plan] });
   const [sinAvisos, setSinAvisos] = useState(false);
   const enPrueba = !!s?.prueba;
   useEffect(() => {
@@ -507,7 +550,8 @@ function Bienvenida({ fin }: { fin: ClaveDia }) {
   const reducido = useReducedMotion();
   const entra = (ms: number) => (reducido ? FadeIn.delay(Math.min(ms, 300)).duration(250) : FadeInUp.delay(ms).duration(600)).reduceMotion(ReduceMotion.Never);
   return (
-    <View style={[st.bv, { paddingTop: insets.top + 6, paddingBottom: insets.bottom + 18 }]}>
+    // Al tocar «Mira lo nuevo» se va con un fundido mientras el pase entra con el suyo.
+    <Animated.View exiting={SALE_FUNDIDO} style={[st.bv, { paddingTop: insets.top + 6, paddingBottom: insets.bottom + 18 }]}>
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         {ESTRELLAS_DEL_REGALO.map(([x, y, d]) => <Titila key={`${x}-${y}`} x={x} y={y} demora={d} reducido={reducido} />)}
       </View>
@@ -536,7 +580,7 @@ function Bienvenida({ fin }: { fin: ClaveDia }) {
           <Text style={st.bvNoTexto}>{t('suscripcion.bienvenida.ahoraNo')}</Text>
         </Pressable>
       </Animated.View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -690,6 +734,8 @@ function FilaDeLaHoja({ titulo, valor }: { titulo: string; valor: string }) {
 /** «Tu suscripción», desde Perfil: qué tienes, cuándo cambia y cómo administrarla en Apple. */
 export function HojaDeSuscripcion({ alCerrar }: { alCerrar: () => void }) {
   const e = useEstadoDePremium();
+  // El precio de la hoja es el de Apple: si al abrir Moss no llegó, se pide ahora.
+  useEffect(pedirLosPreciosQueFalten, []);
   const acceso = accesoDe(e);
   const s = e.suscripcion ?? e.ultima;
   const [nota, setNota] = useState<string | null>(null);
@@ -707,7 +753,7 @@ export function HojaDeSuscripcion({ alCerrar }: { alCerrar: () => void }) {
     });
   };
   const plan = s ? planDe(s) : null;
-  const p = losPrecios(e);
+  const p = preciosDe(e);
   const cancelada = s?.renueva === false;
   const fin = finDelRegaloDe(e);
   return (
@@ -809,7 +855,6 @@ const st = StyleSheet.create({
   principal: { minHeight: 50, borderRadius: 15, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: colores.pergamino },
   principalApretado: { backgroundColor: '#d9d0b8' },
   principalTexto: { fontFamily: letras.textoMedio, fontSize: 15.5, color: '#0b0f1d' },
-  apagado: { opacity: 0.5 },
   legal: { fontFamily: letras.textoMedio, fontSize: 12.5, lineHeight: 17, color: 'rgba(239, 230, 207, 0.9)' },
   renovacion: { marginTop: -4, fontFamily: letras.texto, fontSize: 11, lineHeight: 15, color: 'rgba(239, 230, 207, 0.58)' },
   enlaces: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, rowGap: 2, paddingVertical: 4 },

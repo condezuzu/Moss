@@ -44,6 +44,7 @@ jest.mock('@/lib/premium', () => ({ cuentaDePremium: (creada: unknown, salio?: b
 jest.mock('@/recordatorios/programar', () => ({}));
 jest.mock('@/secciones/perfil/cuentaApple', () => ({ yaNoEsDeMoss: () => false }));
 jest.mock('@/salud/leer', () => ({}));
+jest.mock('@/salud/salud', () => ({}));
 jest.mock('@/salud/nocheSinReloj', () => ({}));
 jest.mock('@/textos', () => ({ idioma: () => 'es' }));
 jest.mock('./abrir', () => ({}));

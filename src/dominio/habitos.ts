@@ -4,14 +4,20 @@ import type { Comida } from './comidas';
 import { diaDeLaSemana, sumarDias, type ClaveDia, type DiaSemana } from './fechas';
 
 export type DatoDeSalud = 'pasos' | 'agua' | 'mindfulness' | 'sueno' | 'acostarse';
+/** Lo que enciende un hábito de comida. «Registrar» ya no se ofrece (27/11/2026); al que lo tiene le sigue andando. */
+export type MetaDeComida = 'proteina' | 'macros' | 'registrar' | 'calorias';
 
 /** De dónde sale que un hábito se cumpla: a mano o solo, desde Salud, Ascent o la comida. */
 export type Fuente =
   | { tipo: 'manual' }
   | { tipo: 'salud'; dato: DatoDeSalud; meta: number }
   | { tipo: 'ascent' }
-  /** Con la comida registrada (registros.ts, cumpleLaComida). «Registrar» pide desayuno, almuerzo y cena, o las comidas que se elijan. */
-  | { tipo: 'comida'; meta: 'proteina' | 'registrar' | 'calorias'; comidas?: Comida[] };
+  /**
+   * Con la comida registrada (registros.ts, cumpleLaComida). «Registrar» pide desayuno, almuerzo y cena, o las comidas
+   * que se elijan. «Llegar a tus macros» va como la proteína con `macros` (fuenteDeComida): una versión de Moss anterior
+   * no conoce 'macros' y se cerraba al dibujar su estrella; así lee la proteína, que también se cumple al llegar a todo.
+   */
+  | { tipo: 'comida'; meta: Exclude<MetaDeComida, 'macros'>; macros?: true; comidas?: Comida[] };
 
 export type Habito = {
   id: string;
@@ -32,6 +38,13 @@ export type Habito = {
 
 export const esAutomatico = (h: Habito) => h.fuente.tipo !== 'manual';
 
+/** Lo que enciende un hábito de comida, también «Llegar a tus macros» (ver Fuente). */
+export const metaDeComida = (f: Extract<Fuente, { tipo: 'comida' }>): MetaDeComida => (f.macros ? 'macros' : f.meta);
+
+/** Un hábito de comida como se guarda y se sincroniza: lo entiende también una versión anterior (ver Fuente). */
+export const fuenteDeComida = (meta: MetaDeComida): Extract<Fuente, { tipo: 'comida' }> =>
+  meta === 'macros' ? { tipo: 'comida', meta: 'proteina', macros: true } : { tipo: 'comida', meta };
+
 export function tocaElDia(h: Habito, clave: ClaveDia): boolean {
   return h.desde <= clave && (!h.hasta || clave <= h.hasta) && h.dias.includes(diaDeLaSemana(clave));
 }
@@ -50,6 +63,25 @@ export function cantidadesPorDia(habitos: Habito[], hoy: ClaveDia): number[] {
 /** Archivar es dejar de tocar desde hoy; lo anotado antes queda. */
 export function archivar(h: Habito, hoy: ClaveDia): Habito {
   return { ...h, hasta: sumarDias(hoy, -1) };
+}
+
+/**
+ * El nombre de un hábito en una línea o en dos parejas (lo pediste el 27/11/2026: «Quedar dentro» y abajo «de las
+ * calorías», en vez de cortarse): con más de `desde` letras se parte en el espacio que deja las dos líneas más
+ * parecidas y, entre dos cortes iguales, la primera más larga. Sin espacios, o si alguna de las dos pasara de `caben`,
+ * queda entero: lo acomoda quien lo dibuja.
+ */
+export function enDosLineas(nombre: string, desde: number, caben = desde): string[] {
+  const letras = [...nombre];
+  if (letras.length <= desde) return [nombre];
+  // Lo que se llevan de diferencia las dos líneas al partir en el espacio i.
+  const desparejo = (i: number) => Math.abs(letras.length - 1 - 2 * i);
+  let corte = -1;
+  letras.forEach((letra, i) => {
+    if (letra === ' ' && (corte < 0 || desparejo(i) <= desparejo(corte))) corte = i;
+  });
+  if (corte < 0 || Math.max(corte, letras.length - 1 - corte) > caben) return [nombre];
+  return [letras.slice(0, corte).join(''), letras.slice(corte + 1).join('')];
 }
 
 /**

@@ -5,21 +5,24 @@
 // conAscent.ts); acá solo se juntan los datos. Con la rutina de Ascent (moss.ascent_rutina), la sesión de hoy es la
 // de la rutina y los estancados siguen sus multiarticulares; sin ella, los de las últimas cuatro semanas.
 
-import type { Estado } from '@/almacen/almacen';
+import { metaVigente, type Estado } from '@/almacen/almacen';
 import type { DeAscent } from '@/almacen/ascent';
 import {
-  bloquesDeLaRutina, diasDeEntrenar, diasDeLaRutina, entrenadoSegunAscent, grupoDe, gruposDelDia, gruposDeLaSesion, sesionesConBloques, tuAnio, type MarcaDeAscent, type RutinaDeAscent, type TuAnio,
+  bloquesDeLaRutina, diasDeEntrenar, diasDeLaRutina, entrenadoSegunAscent, grupoDe, gruposDelDia, gruposDeLaSesion, metaConAscentDe, sesionesConBloques, tuAnio, type MarcaDeAscent,
+  type RutinaDeAscent, type TuAnio,
 } from '@/dominio/conAscent';
 import {
   grupoDelAnio, type GrupoDelAnio, estaEstancado, razonesDeEstancamiento, UMBRAL_DE_ASCENT, type RazonesDeEstancamiento, type SemanaDeEntreno, tendenciaDeFuerza, type TendenciaDeFuerza, DIAS_DE_COMIDA, PROTEINA_POR_KG, proyeccionDeMeta, SUENO_POCO, type ProyeccionDeMeta,
+  SEMANAS_DE_LA_TENDENCIA, SEMANAS_MINIMAS_DE_HISTORIA, SESIONES_MINIMAS,
 } from '@/dominio/progresoCompartido';
 import { calidadParaRecuperar } from '@/dominio/entrenamiento';
 import { puntosDelEjercicio, semanaDeEntreno, semanasParaLasRazones } from '@/dominio/estancados';
 import { musculosParaLaFatiga } from '@/dominio/fatiga';
 import { diaDeLaSemana, diasEntre, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { metaRepartida } from '@/dominio/metas';
 import {
-  CATALOGO, claveDelEjercicio, esfuerzoDeSerie, grupoDelEjercicio, mejorE1rm, MUSCULOS, musculosDe, musculosTrabajados, PARTES, peorEstado,
-  type Bloque, type Cuando, type EstadoMuscular, type GrupoDeAscent, type Musculo, type Parte, type SesionConBloques, type UnoRMDe,
+  CARGA_DE_FABRICA, CATALOGO, claveDelEjercicio, esfuerzoDeSerie, grupoDelEjercicio, mejorE1rm, MUSCULOS, musculosDe, musculosTrabajados, PARTES, peorEstado,
+  type Bloque, type Carga, type Cuando, type EstadoMuscular, type GrupoDeAscent, type Musculo, type Parte, type Serie, type SesionConBloques, type UnoRMDe,
 } from '@/dominio/musculos';
 import {
   DE_PIERNAS, DIAS_DEL_E1RM, dentroDeLaSemana, e1rm, diasHastaListo, esDeTrabajo, esDura, estadoDeFatiga, estadoDelPuntaje, listoEl, mejorE1rm as mejorDeLasSeries, notaDeLaRutina,
@@ -32,6 +35,7 @@ import {
 } from '@/dominio/rendimiento';
 import { totalDelDia, vigentes } from '@/dominio/registros';
 import { habitualDe } from '@/dominio/sinReloj';
+import { SERIES_SEGUN, type Objetivo } from '@/dominio/sugerenciasDeHoy';
 import { calidadDeNoche, deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
 import type { MetaDeFuerza } from '@/lib/ascentRemoto';
 import type { Persona, Sueno } from '../persona';
@@ -129,7 +133,9 @@ export function calcularHoy({ e, d, sueno, ahora }: Entradas): Hoy {
       bloques: bloques.length ? bloques : null,
     };
   }
-  const sabeCuandoEntrena = !!rutina || !!e.entreno || d.sesiones.length > 0;
+  // Se sabe con la rutina de Ascent o con los días puestos en Perfil. Con solo lo que sueles entrenar se espera una
+  // sesión los días de siempre, pero un día sin ella no se afirma que descansas: «sin sesión hoy».
+  const sabeCuandoEntrena = !!rutina || !!e.entreno?.dias.length;
   const en = sesion?.como === 'prevista' ? instante(hoy, sesion.inicio - ANTES_DE_LA_SESION) : ahoraMs;
 
   // El mejor 1RM de cada ejercicio con lo de antes de un momento, una vez por ejercicio: la fatiga lo pide por serie.
@@ -202,13 +208,39 @@ function ultimaCon(previas: readonly SesionConFecha[], musculos: readonly Muscul
   return null;
 }
 
+/**
+ * Para qué se entrena hoy, para las sugerencias: fuerza si la mayoría de las series de hoy en la rutina de Ascent piden
+ * 6 repeticiones o menos (el tope del rango de fuerza de sugerenciasDeHoy.ts); si no, o sin rutina o sin repeticiones
+ * objetivo, músculo.
+ */
+export function objetivoDeHoy(h: Pick<Hoy, 'hoy' | 'rutina'>): Objetivo {
+  const deHoy = h.rutina?.dias.find((x) => x.dia === diaDeLaSemana(h.hoy) && !x.descanso)?.ejercicios ?? [];
+  const series = (pide: (reps: number) => boolean) => deHoy.reduce((s, y) => s + (y.reps && pide(y.reps) ? Math.max(1, y.series) : 0), 0);
+  return series((reps) => reps <= SERIES_SEGUN.fuerza.reps[1]) * 2 > series(() => true) ? 'fuerza' : 'musculo';
+}
+
 // ------------------------------------------------------------ todo lo demás
 
 export type DeLaFuerza = { e: Pick<Bloque, 'id' | 'ejercicio'>; t: TendenciaDeFuerza; puntos: { t: number; e1rm: number }[] };
 export type Estancado = { e: Pick<Bloque, 'id' | 'ejercicio'>; ultima: MarcaDeAscent; sinMarca: number; musculo: Musculo; antes: SemanaDeEntreno[]; ahora: SemanaDeEntreno[]; r: RazonesDeEstancamiento };
 export type DiaDelAnio = { fecha: ClaveDia; grupo: GrupoDelAnio | null; marca: boolean };
-/** Una meta de fuerza con tu nivel de hoy (el 1RM estimado de la tendencia), el de la meta y cuándo llegarías. */
-export type MetaConProyeccion = { meta: MetaDeFuerza; e: Pick<Bloque, 'id' | 'ejercicio'>; nivel: number | null; objetivo: number; proyeccion: ProyeccionDeMeta };
+/**
+ * Lo que le falta a un ejercicio para que se estime cuándo llegas: sesiones, o semanas de la primera a la última; o, si
+ * tus sesiones no cuentan para estimar (porQueNoCuenta), anotar las repeticiones (`sinReps`), hacer series de 10 o menos
+ * (`muchasReps`) o tener peso (`sinPeso`: sin él no hay máximo en kilos).
+ */
+export type Falta = { que: 'sesiones' | 'semanas'; n: number } | { que: NoCuenta };
+/**
+ * Una meta de fuerza con tu nivel de hoy (el 1RM estimado de la tendencia), el de la meta y cuándo llegarías; si todavía
+ * no se sabe, lo que falta. `alcanzada`: ya la hiciste en una serie de verdad (metaAlcanzada). `carga`: cómo anotaste el
+ * ejercicio la última vez y, si nunca lo anotaste, la de fábrica de Ascent (los kilos de la meta van en total).
+ */
+export type MetaConProyeccion = { meta: MetaDeFuerza; e: Pick<Bloque, 'id' | 'ejercicio'>; nivel: number | null; objetivo: number; proyeccion: ProyeccionDeMeta; falta: Falta | null; alcanzada: boolean; carga?: Carga };
+/**
+ * Un ejercicio para elegir en una meta. `hecho`: la última vez, si fue en las 12 semanas que mira la tendencia. `reps`:
+ * las que sueles hacer (repsDeSiempre); null si nunca las anotaste. `carga`, como en MetaConProyeccion.
+ */
+export type ParaLaMeta = { id: string; ejercicio: string; grupo: Exclude<GrupoDeAscent, 'cardio'>; hecho: ClaveDia | null; reps: number | null; carga?: Carga };
 /** Lo que puede alejar una meta: el sueño de la última semana o la proteína, por debajo de lo que pide. */
 export type Aleja = { que: 'sueno'; minutos: number } | { que: 'proteina'; gPorKg: number };
 
@@ -223,11 +255,67 @@ export type Todo = {
   anio: { dias: DiaDelAnio[]; ultimas: (MarcaDeAscent & { grupo: GrupoDelAnio | null; de: GrupoDeAscent | null; destacada: boolean })[]; datos: TuAnio };
   metas: MetaConProyeccion[];
   alejan: Aleja[];
-  /** La proteína del día que pide la meta (1,6 g por kilo); sin peso, null. */
+  /** La proteína del día para llegar: la de tu meta de hoy, la de Inicio; sin meta, 1,6 g por kilo, y sin peso, null. */
   proteina: number | null;
-  /** Los ejercicios para elegir una meta nueva: los de la rutina o, sin ella, los de las últimas 4 semanas. */
-  paraMetas: Pick<Bloque, 'id' | 'ejercicio'>[];
+  /** Los ejercicios para elegir una meta nueva: el catálogo de Ascent (sin el cardio), en su orden, y los propios que llegaron. */
+  paraMetas: ParaLaMeta[];
 };
+
+/**
+ * Por qué todavía no se estima cuándo llegas a una meta, con la regla de tendenciaDeFuerza: 6 sesiones en las últimas 12
+ * semanas y 6 semanas de la primera a la última. Las sesiones que faltan o, si alcanzan, las semanas; si faltan las dos
+ * cosas, lo que tarda más al ritmo de esas sesiones (una por semana, si todavía no se sabe). null si no falta nada.
+ */
+export function faltaParaEstimar(t: Pick<TendenciaDeFuerza, 'sesiones' | 'semanas'>): Falta | null {
+  const sesiones = Math.max(0, SESIONES_MINIMAS - t.sesiones);
+  const semanas = Math.max(0, Math.ceil(SEMANAS_MINIMAS_DE_HISTORIA - t.semanas));
+  if (!sesiones && !semanas) return null;
+  const porSemana = t.sesiones > 1 && t.semanas > 0 ? (t.sesiones - 1) / t.semanas : 1;
+  return sesiones && sesiones / porSemana >= semanas ? { que: 'sesiones', n: sesiones } : { que: 'semanas', n: semanas };
+}
+
+/** Las repeticiones de una meta, de 1 a 10: con más, el 1RM estimado ya no sirve (e1rm, en puntajeMuscular.ts). */
+export const REPS_DE_UNA_META = 10;
+/** Las metas de una cuenta, como mucho: el tope del servidor (0016_metas_de_fuerza.sql). */
+export const METAS_TOPE = 20;
+
+export type NoCuenta = 'sinReps' | 'muchasReps' | 'sinPeso';
+/**
+ * Por qué una sesión no cuenta para estimar cuándo llegas: la tendencia mira el 1RM estimado de las series de 1 a 10
+ * repeticiones con peso (e1rm). Sin peso (unas dominadas sin lastre), con más de 10 o sin las repeticiones anotadas,
+ * nunca va a contar, y «te faltan 6 sesiones» sería falso para siempre. null si cuenta (o sin series).
+ */
+export function porQueNoCuenta(series: readonly Serie[]): NoCuenta | null {
+  if (!series.length || mejorDeLasSeries(series) !== null) return null;
+  const conPeso = series.filter((x) => x.peso > 0);
+  if (!conPeso.length) return 'sinPeso';
+  if (conPeso.some((x) => x.reps !== null && x.reps > REPS_DE_UNA_META)) return 'muchasReps';
+  return conPeso.some((x) => x.reps === null) ? 'sinReps' : null;
+}
+/** Las últimas sesiones de un ejercicio que mira repsDeSiempre. */
+const SESIONES_PARA_LAS_REPS = 4;
+
+/**
+ * Las repeticiones que sueles hacer en un ejercicio, para proponerlas en una meta nueva: las que más se repiten en las
+ * series de trabajo (sin la entrada en calor) de tus últimas 4 sesiones con repeticiones anotadas; si empatan, las
+ * menos. Como mucho 10, el tope de una meta. Sin repeticiones anotadas, null. `sesiones`, de la más vieja a la más nueva.
+ */
+export function repsDeSiempre(sesiones: readonly (readonly Serie[])[]): number | null {
+  const series = sesiones.slice(-SESIONES_PARA_LAS_REPS).flat().filter((x) => x.reps !== null);
+  const uno = mejorDeLasSeries(series);
+  const veces = new Map<number, number>();
+  for (const x of series) if (esDeTrabajo(x, uno)) veces.set(x.reps!, (veces.get(x.reps!) ?? 0) + 1);
+  const [mas] = [...veces].sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+  return mas ? Math.min(REPS_DE_UNA_META, mas[0]) : null;
+}
+
+/**
+ * Si una meta ya se alcanzó de verdad: hay una serie anotada del ejercicio, no copiada, con los kilos (en total) y las
+ * repeticiones de la meta o más, las dos cosas en la misma serie. Una serie sin repeticiones anotadas no cuenta, y el
+ * 1RM estimado tampoco: 40 kg × 8 no es haber levantado 50 kg una vez. (Ascent va a escribir la compartida.)
+ */
+export const metaAlcanzada = (meta: Pick<MetaDeFuerza, 'ejercicio' | 'kilos' | 'reps'>, sesiones: readonly SesionConBloques[]): boolean =>
+  sesiones.some((s) => s.bloques.some((b) => b.id === meta.ejercicio && !b.copiada && b.series.some((x) => x.reps !== null && x.reps >= meta.reps && x.peso >= meta.kilos)));
 
 /** El mismo ejercicio: por el id de Ascent si los dos lo tienen; si no, por el nombre. */
 const mismo = (a: { id?: string; ejercicio: string }, b: { id?: string; ejercicio: string }) =>
@@ -241,9 +329,10 @@ export function calcularTodo(h: Hoy, { e, d, sueno, persona }: Entradas): Todo {
   const marcasDe = (b: Pick<Bloque, 'id' | 'ejercicio'>) => d.marcas.filter((m) => mismo(m, b));
   const ultimaMarca = (b: Pick<Bloque, 'id' | 'ejercicio'>) => marcasDe(b).reduce<MarcaDeAscent | null>((a, m) => (!a || m.fecha > a.fecha ? m : a), null);
 
-  /** La tendencia de un ejercicio con lo de antes de hoy (ya hecha, con la de hoy). */
+  // Lo de antes de hoy (ya hecha, con la de hoy).
+  const hasta = h.sesion?.como === 'hecha' ? sumarDias(hoy, 1) : hoy;
+  /** La tendencia de un ejercicio con lo de antes de hoy. */
   const tendenciaDe = (x: Pick<Bloque, 'id' | 'ejercicio'>) => {
-    const hasta = h.sesion?.como === 'hecha' ? sumarDias(hoy, 1) : hoy;
     const puntos = puntosDelEjercicio(h.sesiones.filter((s) => s.fecha < hasta), x, hoy);
     return { t: tendenciaDeFuerza(puntos, { hoy: 0, entrenado: h.entrenado }), puntos };
   };
@@ -333,11 +422,46 @@ export function calcularTodo(h: Hoy, { e, d, sueno, persona }: Entradas): Todo {
   // Las metas: cada una con la tendencia de su ejercicio. Lo que la puede alejar es de la persona: el sueño y la
   // proteína de la última semana, con los mismos cortes que las razones de estancamiento.
   const nombreDe = (id: string) => h.sesiones.flatMap((s) => s.bloques).find((b) => b.id === id)?.ejercicio ?? h.rutina?.dias.flatMap((x) => x.ejercicios).find((x) => x.id === id)?.nombre ?? id;
+  // De cada ejercicio, la última vez (para ofrecer primero los que haces) y cómo lo anotaste esa vez; y los que no
+  // están en el catálogo de Moss (los propios), con el nombre y el grupo con que llegaron.
+  const desde = sumarDias(hoy, -7 * SEMANAS_DE_LA_TENDENCIA);
+  const hechos = new Map<string, ClaveDia>();
+  const cargas = new Map<string, Carga>();
+  const conReps = new Map<string, Serie[][]>();
+  const propios = new Map<string, { ejercicio: string; grupo?: GrupoDeAscent }>();
+  for (const s of h.sesiones) {
+    // Para las repeticiones que sueles hacer (repsDeSiempre): las series con repeticiones de cada sesión, sin lo
+    // copiado. El mismo ejercicio en dos bloques es una sola sesión.
+    const anotadas = new Map<string, Serie[]>();
+    for (const b of s.bloques) {
+      if (!b.id) continue;
+      if (b.carga) cargas.set(b.id, b.carga);
+      if (s.fecha > desde) hechos.set(b.id, s.fecha);
+      if (!CATALOGO[b.id]) propios.set(b.id, { ejercicio: b.ejercicio, grupo: b.grupo });
+      if (!b.copiada) anotadas.set(b.id, [...(anotadas.get(b.id) ?? []), ...b.series.filter((x) => x.reps !== null)]);
+    }
+    for (const [id, series] of anotadas) if (series.length) conReps.set(id, [...(conReps.get(id) ?? []), series]);
+  }
+  // Cómo lo anotaste la última vez; si nunca, la carga de fábrica de Ascent (las mancuernas, por mancuerna).
+  const cargaDe = (id: string): Carga | undefined => cargas.get(id) ?? CARGA_DE_FABRICA[id];
+  /** Si la última sesión con el ejercicio en las 12 semanas de la tendencia no cuenta para estimar, por qué. */
+  const noCuenta = (x: Pick<Bloque, 'id' | 'ejercicio'>) => {
+    const clave = claveDelEjercicio(x);
+    const ultima = [...h.sesiones].reverse().filter((s) => s.fecha > desde && s.fecha < hasta)
+      .map((s) => s.bloques.filter((b) => !b.copiada && claveDelEjercicio(b) === clave)).find((bloques) => bloques.length);
+    return ultima ? porQueNoCuenta(ultima.flatMap((b) => b.series)) : null;
+  };
+  for (const y of h.rutina?.dias.flatMap((x) => x.ejercicios) ?? []) if (!CATALOGO[y.id] && !propios.has(y.id)) propios.set(y.id, { ejercicio: y.nombre, grupo: grupoDe(y) });
   const metas = d.metas.map((meta): MetaConProyeccion => {
     const x = { id: meta.ejercicio, ejercicio: nombreDe(meta.ejercicio) };
     const { t } = tendenciaDe(x);
     const objetivo = e1rm(meta.kilos, meta.reps) ?? meta.kilos;
-    return { meta, e: x, nivel: t.nivel, objetivo, proyeccion: proyeccionDeMeta(t, objetivo) };
+    const proyeccion = proyeccionDeMeta(t, objetivo);
+    const porQue = proyeccion.estado === 'noSeSabe' ? noCuenta(x) : null;
+    return {
+      meta, e: x, nivel: t.nivel, objetivo, proyeccion, falta: proyeccion.estado !== 'noSeSabe' ? null : porQue ? { que: porQue } : faltaParaEstimar(t),
+      alcanzada: metaAlcanzada(meta, h.sesiones), carga: cargaDe(meta.ejercicio),
+    };
   });
   const semana = Array.from({ length: 7 }, (_, i) => sumarDias(hoy, -1 - i));
   const dormido = promedio(semana.flatMap((f) => (noches.has(f) ? [noches.get(f)!] : [])));
@@ -347,13 +471,24 @@ export function calcularTodo(h: Hoy, { e, d, sueno, persona }: Entradas): Todo {
     ...(dormido !== null && dormido < SUENO_POCO ? [{ que: 'sueno' as const, minutos: dormido }] : []),
     ...(gPorKg !== null && gPorKg < PROTEINA_POR_KG ? [{ que: 'proteina' as const, gPorKg }] : []),
   ];
-  const vistosParaMetas = new Set<string>();
-  const paraMetas = (h.rutina ? h.rutina.dias.flatMap((x) => x.ejercicios.map((y) => ({ id: y.id, ejercicio: y.nombre })))
-    : h.sesiones.filter((s) => s.fecha >= sumarDias(hoy, -DIAS_DE_LA_REFERENCIA)).flatMap((s) => s.bloques.map((b) => ({ id: b.id, ejercicio: b.ejercicio }))))
-    .filter((x) => x.id && musculosDe(x) && !vistosParaMetas.has(x.id) && vistosParaMetas.add(x.id));
+  const paraMetas = [
+    ...Object.entries(CATALOGO).map(([id, c]) => ({ id, ejercicio: id, grupo: c.grupo as GrupoDeAscent | undefined })),
+    ...[...propios].map(([id, x]) => ({ id, ...x })),
+    // Lo que se hace con el peso del cuerpo no tiene kilos: no se le pone una meta en kilos.
+  ].flatMap((x): ParaLaMeta[] => (x.grupo && x.grupo !== 'cardio' && cargaDe(x.id) !== 'corporal'
+    ? [{ ...x, grupo: x.grupo, hecho: hechos.get(x.id) ?? null, reps: repsDeSiempre(conReps.get(x.id) ?? []), carga: cargaDe(x.id) }] : []));
 
+  // La meta de hoy, la misma que muestra Inicio (metaDelDia, en comida/datos.ts): la vigente, repartida en la semana y,
+  // con Ascent, la del día de gimnasio (con lo de Ascent como lo pasa gimnasioDe, en almacen/ascent.ts).
+  const vigente = metaVigente(e, hoy);
+  const gimnasio = d.vinculo.vinculada && d.desde ? { desde: d.desde, sesiones: d.sesiones } : null;
+  const deHoy = vigente
+    ? metaConAscentDe(metaRepartida({ kcal: vigente.kcal, proteina: vigente.proteina, carbohidratos: vigente.carbohidratos, grasas: vigente.grasas }, e.perfil, diaDeLaSemana(hoy)), e, hoy, gimnasio)
+    : null;
   return {
-    umbral, estancados, anio: { dias, ultimas, datos }, metas, alejan, proteina: pesoKg ? Math.round(PROTEINA_POR_KG * pesoKg) : null, paraMetas,
+    umbral, estancados, anio: { dias, ultimas, datos }, metas, alejan, paraMetas,
+    // Lo que dice Moss de la proteína es su meta de hoy: 1,6 g por kilo solo si todavía no hay una.
+    proteina: deHoy ? Math.round(deHoy.proteina) : pesoKg ? Math.round(PROTEINA_POR_KG * pesoKg) : null,
   };
 }
 
@@ -370,8 +505,9 @@ export type EjercicioDeLaSemana = {
   tope: number | null;
   /** Las series duras de la semana, las que fueron al fallo y el RIR de las que lo anotaron. */
   duras: number; alFallo: number; rir: number[]; proxima: Proxima;
-  /** El peso más alto de la última sesión con el ejercicio (0, con el del cuerpo). */
+  /** El peso más alto de la última sesión con el ejercicio (0, con el del cuerpo), en total, y cómo se anotó esa vez. */
   peso: number;
+  carga?: Carga;
 };
 /** `total`: los días desde su última sesión hasta que esté listo (para el reloj). */
 export type Fatigado = { musculo: Musculo; dias: number; listo: ClaveDia; total: number; fatiga: EstadoDeFatiga };
@@ -489,12 +625,12 @@ export function calcularTusMusculos(h: Hoy): TusMusculos {
     // el peso. Como en Ascent, la próxima vez sale de las sesiones de verdad.
     const deVerdad = (y: Bloque) => claveDelEjercicio(y) === k && !y.copiada;
     const sesiones = h.sesiones.map((s) => ({ series: s.bloques.filter(deVerdad).flatMap((y) => hechoDe(y)?.series ?? []) })).filter((s) => s.series.length);
-    const ultima = [...h.sesiones].reverse().find((s) => s.bloques.some(deVerdad));
-    const peso = Math.max(0, ...(ultima?.bloques.filter(deVerdad).flatMap((y) => y.series.map((z) => z.peso)) ?? []));
+    const ultimos = [...h.sesiones].reverse().find((s) => s.bloques.some(deVerdad))?.bloques.filter(deVerdad) ?? [];
+    const peso = Math.max(0, ...ultimos.flatMap((y) => y.series.map((z) => z.peso)));
     const fatigadoHoy = deHoy.has(k) && x.principal.some((m) => (musculos.find((y) => y.musculo === m)?.dias ?? 0) > 0);
     return {
       e: { id: b.id, ejercicio: b.ejercicio }, principal: x.principal as Musculo[], ayudan: x.ayuda as Musculo[], parte: (x.parte as Parte | undefined) ?? null, tope: x.objetivo ?? null,
-      duras, alFallo, rir, peso, proxima: proximaSesion({ sesiones, tope: x.objetivo ?? null, nocheCortaHoy: nocheCorta && deHoy.has(k), fatigadoHoy }),
+      duras, alFallo, rir, peso, carga: ultimos.at(-1)?.carga, proxima: proximaSesion({ sesiones, tope: x.objetivo ?? null, nocheCortaHoy: nocheCorta && deHoy.has(k), fatigadoHoy }),
     };
   });
 

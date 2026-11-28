@@ -2,17 +2,21 @@
 // por el buscador de siempre, y lo que la persona ya eligió o ya comió decide. Se pregunta solo si
 // cambia el número (40 kcal, o un 15 % si son al menos 15 kcal), con una respuesta ya marcada, una
 // vez por alimento y tres por comida, y cada respuesta se recuerda. Ningún número sale de un
-// modelo: todo es de la base.
+// modelo: todo es de la base, o de lo que la persona guardó y dice por su nombre (27/11/2026).
 
-import type { Cantidad, Valores } from '@/dominio/registros';
-import { gramosDe, valoresDeCantidad } from '@/dominio/registros';
+import type { AlimentoPropio, Cantidad, Fuente, Item, Receta, Valores } from '@/dominio/registros';
+import { escalar, gramosDe, valoresDeCantidad, valoresDeReceta } from '@/dominio/registros';
 import { normalizar, type Resultado } from './buscar';
 import type { Detalle } from './detalle';
-import { TAMANO_DE_LA_RECETA, type Dicho } from './frase';
+import { FAMILIAS_DE_BEBIDA, TAMANO_DE_LA_RECETA, type Dicho } from './frase';
 import { gramosDeLaEntera, porcionesAlDecirPlato, porcionesDePlato, porcionesDesde, TAMANOS as TAMANOS_DE_PLATO, type PorcionesDePlato, type Tamano as TamanoDePlato } from './platos';
 import { gramosDeLinea, METRICAS as DE_VOLUMEN, ML_POR } from './recetaDeTexto';
 
-export type AlimentoDicho = { ref: string; nombre: string; por100g: Valores; porciones: { nombre: string; gramos: number }[] };
+/**
+ * `fuente`: de dónde es, si no es de la base (lo que la persona guardó). `estimado`: ya estaba anotado a ojo. `rinde`:
+ * de una receta, cuántas porciones da («media tarta» es la mitad de todas).
+ */
+export type AlimentoDicho = { ref: string; nombre: string; por100g: Valores; porciones: { nombre: string; gramos: number }[]; fuente?: Fuente; estimado?: true; rinde?: number };
 export type Opcion = { alimento: AlimentoDicho; cantidad: Exclude<Cantidad, null>; valores: Valores };
 /**
  * Cuál de varios parecidos («¿qué leche?»), crudo o cocido (se dijeron gramos), cuánto (no se dijo), o
@@ -42,6 +46,8 @@ export type ParaEntender = {
   conocido: (id: number) => boolean;
   /** Lo que se contestó antes, crudo o cocido, para esas palabras con una cantidad medida (claveMedida). */
   medido?: (buscado: string) => number | undefined;
+  /** Lo que la persona guardó, por su lugar en los nombres que recibió leerFrase (`Dicho.tuyo`): sus filas (loTuyo). */
+  tuyo?: (cual: number) => readonly Opcion[] | undefined;
 };
 
 /** Dónde se recuerda crudo o cocido: aparte de «cuál», así «un plato de arroz» no queda crudo por «200 g de arroz». */
@@ -81,6 +87,8 @@ const CONTABLES = 60;
 const ML_DEL_POCILLO = 80;
 /** Cómo se cocinó, dicho: entonces no se pregunta crudo o cocido. */
 const COMO_SE_COCINA = /(?:plancha|horno|hervid|frit|asad|cocid|crud|revuelt|guisad|saltead|grill|baked|boiled|fried|roast|cooked|raw|scrambled)/;
+/** «Una banana congelada», «a frozen banana»: si la base no lo tiene congelado, es lo mismo (27/11/2026). */
+const CONGELADO = /(?<![\p{L}])(?:congelad[oa]s?|frozen)(?![\p{L}])/gu;
 
 type Porcion = Detalle['porciones'][number];
 
@@ -209,8 +217,7 @@ async function comoPlato(dicho: Dicho, primero: Detalle, resultados: readonly Re
   if (!plato) return null;
   const veces = dicho.vago ? (dicho.cantidad ?? 1) : 1;
   const de = (x: Plato, t: TamanoDePlato) => opcion(x.servido, { gramos: Math.round(x.porciones[t] * veces) });
-  // El tamaño dicho, con «plato» o sin él («milanesa grande»), o «un poco» y «mucho».
-  const dijo: TamanoDePlato | undefined = dicho.plato ?? (dicho.tamano && TAMANO_DE_LA_RECETA[dicho.tamano]) ?? (dicho.cuanto === 'poco' ? 'chico' : dicho.cuanto === 'mucho' ? 'grande' : undefined);
+  const dijo = tamanoDicho(dicho);
   if (!sabido && !p.conocido(base.id) && !p.conocido(plato.servido.id)) {
     const parecidos = resultados.filter((r) => r.id !== primero.id && r.id !== base.id && esParecido(r, cabeza)).slice(0, PARECIDOS - 1);
     const otros = await Promise.all(parecidos.map(async (r) => { const d = await p.detalle(r.id); return d && platoDe(dicho, d, p); }));
@@ -222,13 +229,43 @@ async function comoPlato(dicho: Dicho, primero: Detalle, resultados: readonly Re
       return { dicho, opciones, elegida: 0, pregunta: 'cual', supuesto: true };
     }
   }
-  const opciones = TAMANOS_DE_PLATO.map((t) => de(plato, t));
-  if (dijo) return { dicho, opciones: [opciones[TAMANOS_DE_PLATO.indexOf(dijo)]], elegida: 0, pregunta: null, supuesto: true };
   const antes = gramosDe((plato.servido.id === primero.id ? ultima : p.ultimaCantidad(String(plato.servido.id))) ?? null);
+  return enTamanos(dicho, plato.porciones, (gramos) => opcion(plato.servido, { gramos }), antes);
+}
+
+/** El tamaño dicho, con «plato» o sin él («milanesa grande»), o «un poco» y «mucho». */
+const tamanoDicho = (dicho: Dicho): TamanoDePlato | undefined =>
+  dicho.plato ?? (dicho.tamano && TAMANO_DE_LA_RECETA[dicho.tamano]) ?? (dicho.cuanto === 'poco' ? 'chico' : dicho.cuanto === 'mucho' ? 'grande' : undefined);
+
+/** Un plato en chico, mediano y grande: el tamaño dicho, sin preguntar; si no, el mediano (o el más cercano a los gramos de `antes`), con la pregunta. */
+function enTamanos(dicho: Dicho, porciones: PorcionesDePlato, conGramos: (gramos: number) => Opcion, antes: number | null): Entendido {
+  const veces = dicho.vago ? (dicho.cantidad ?? 1) : 1;
+  const opciones = TAMANOS_DE_PLATO.map((t) => conGramos(Math.round(porciones[t] * veces)));
+  const dijo = tamanoDicho(dicho);
+  if (dijo) return { dicho, opciones: [opciones[TAMANOS_DE_PLATO.indexOf(dijo)]], elegida: 0, pregunta: null, supuesto: true };
   const marcada = antes === null
     ? TAMANOS_DE_PLATO.indexOf('mediano')
-    : TAMANOS_DE_PLATO.reduce((m, t, k) => (Math.abs(plato.porciones[t] * veces - antes) < Math.abs(plato.porciones[TAMANOS_DE_PLATO[m]] * veces - antes) ? k : m), 0);
+    : TAMANOS_DE_PLATO.reduce((m, t, k) => (Math.abs(porciones[t] * veces - antes) < Math.abs(porciones[TAMANOS_DE_PLATO[m]] * veces - antes) ? k : m), 0);
   return { dicho, opciones, elegida: marcada, pregunta: 'tamano', supuesto: true };
+}
+
+/**
+ * Cuánto: no se dijo, no hay una vez anterior y cambia mucho. El acompañante, sus porciones chicas (la cucharadita
+ * o la cucharada de manteca, nunca una taza); lo demás, media, una o una y media.
+ */
+function conPreguntaDeCuanto(sola: Entendido, porciones: readonly Porcion[], conCantidad: (c: Exclude<Cantidad, null>) => Opcion): Entendido {
+  const { dicho } = sola;
+  const [elegida] = sola.opciones;
+  const cantidad = elegida.cantidad;
+  if (!sola.supuesto || dicho.cantidad !== null || dicho.cuanto || !('porcion' in cantidad)) return sola;
+  const chicas = [...porciones].sort((a, b) => a.gramos - b.gramos).filter((x) => x.gramos <= 3.5 * cantidad.gramosPorcion).slice(0, 3);
+  const cantidades = dicho.acompanante
+    ? chicas.map((x) => ({ porcion: x.nombre, gramosPorcion: x.gramos, veces: 1 }))
+    : [0.5, 1, 1.5].map((veces) => ({ ...cantidad, veces }));
+  const opciones = cantidades.map(conCantidad);
+  const marcada = opciones.findIndex((o) => 'porcion' in o.cantidad && o.cantidad.porcion === cantidad.porcion && o.cantidad.veces === cantidad.veces);
+  if (opciones.length >= 2 && opciones.some((o) => cambiaElNumero(o.valores.kcal, elegida.valores.kcal))) return { ...sola, opciones, elegida: Math.max(0, marcada), pregunta: 'cuanto' };
+  return sola;
 }
 
 /** «Un poco» y «mucho» de lo que no es un plato: media porción de lo de siempre y una y media. */
@@ -245,14 +282,28 @@ const opcion = (d: Detalle, cantidad: Exclude<Cantidad, null>): Opcion => ({ ali
 async function entenderUno(dicho: Dicho, p: ParaEntender): Promise<Entendido> {
   const nada: Entendido = { dicho, opciones: [], elegida: 0, pregunta: null, supuesto: false };
   const deAntes = p.alias(dicho.buscado);
+  const sinCongelar = dicho.buscado.replace(CONGELADO, ' ').replace(/\s+/g, ' ').trim();
+  if (sinCongelar && sinCongelar !== dicho.buscado && deAntes === undefined && !(await loTiene(dicho, p))) {
+    return { ...(await entenderUno({ ...dicho, buscado: sinCongelar }, p)), dicho };
+  }
   // El nombre exacto primero: «Papas fritas» antes que «Bife con papas fritas». Lo demás, como lo ordena el buscador.
   const buscado = llano(dicho.buscado);
   const esExacto = (r: Resultado) => llano(r.nombre) === buscado || llano(r.coincide) === buscado;
   const resultados = deAntes === undefined ? [...(await p.buscar(dicho.buscado))].sort((a, b) => Number(esExacto(b)) - Number(esExacto(a))) : [];
   const exacto = resultados.length > 0 && esExacto(resultados[0]);
   const id = deAntes ?? resultados[0]?.id;
-  const primero = id === undefined ? null : await p.detalle(id);
+  let primero = id === undefined ? null : await p.detalle(id);
   if (!primero) return nada;
+  // Con una medida («two scoops of ice cream»), el primero que la tiene: el helado, no el cono que el buscador trae antes.
+  if (dicho.unidad === 'medida' && deAntes === undefined && gramosDeLinea(dicho, primero) === null) {
+    for (const r of resultados.slice(1)) {
+      const otro = await p.detalle(r.id);
+      if (otro && gramosDeLinea(dicho, otro) !== null) {
+        primero = otro;
+        break;
+      }
+    }
+  }
   const ultima = p.ultimaCantidad(String(primero.id));
   // Un plato sin cuánto (comoPlato). Lo que se cuenta («2 empanadas») o se acompaña no lo es.
   const sinCantidad = dicho.cantidad === null && !dicho.unidad;
@@ -290,18 +341,147 @@ async function entenderUno(dicho: Dicho, p: ParaEntender): Promise<Entendido> {
       if (antes !== primero.id && cambiaElNumero(alterna.valores.kcal, elegida.valores.kcal)) return { ...sola, opciones: [elegida, alterna], pregunta: 'crudo' };
     }
   }
-  // Cuánto: no se dijo, no hay una vez anterior y cambia mucho. El acompañante, sus porciones chicas
-  // (la cucharadita o la cucharada de manteca, nunca una taza); lo demás, media, una o una y media.
-  if (supuesto && dicho.cantidad === null && !dicho.cuanto && 'porcion' in cantidad) {
-    const chicas = [...primero.porciones].sort((a, b) => a.gramos - b.gramos).filter((x) => x.gramos <= 3.5 * cantidad.gramosPorcion).slice(0, 3);
-    const cantidades = dicho.acompanante
-      ? chicas.map((x) => ({ porcion: x.nombre, gramosPorcion: x.gramos, veces: 1 }))
-      : [0.5, 1, 1.5].map((veces) => ({ ...cantidad, veces }));
-    const opciones = cantidades.map((c) => opcion(primero, c));
-    const marcada = opciones.findIndex((o) => 'porcion' in o.cantidad && o.cantidad.porcion === cantidad.porcion && o.cantidad.veces === cantidad.veces);
-    if (opciones.length >= 2 && opciones.some((o) => cambiaElNumero(o.valores.kcal, elegida.valores.kcal))) return { ...sola, opciones, elegida: Math.max(0, marcada), pregunta: 'cuanto' };
+  return conPreguntaDeCuanto(sola, primero.porciones, (c) => opcion(primero, c));
+}
+
+// ------------------------------------------------------------ lo tuyo, por su nombre
+/**
+ * Lo que la persona guardó, para decirlo por su nombre (lo pediste el 27/11/2026: «mi batido de la mañana»).
+ * Una receta o un alimento suyo es una fila, con un plato o su porción; una comida guardada, una fila por
+ * cada cosa suya, con la cantidad con que se guardó.
+ */
+export type Tuyo = { nombre: string; filas: Opcion[] };
+
+/** Una cosa de una comida guardada, como fila, con lo que valía. Lo que no tiene cantidad (la carga rápida) va tal cual. */
+function filaDeItem(i: Item): Opcion {
+  const gramos = gramosDe(i.cantidad);
+  if (!i.cantidad || !i.ref || !gramos) return { alimento: { fuente: 'rapida', ref: '', nombre: i.nombre, por100g: i.valores, porciones: [] }, cantidad: { gramos: 100 }, valores: i.valores };
+  // Lo salteado ya trae su aceite en los valores: en la cantidad se contaría dos veces.
+  const { aceite: _aceite, ...cantidad } = i.cantidad;
+  return { alimento: { fuente: i.fuente, ref: i.ref, nombre: i.nombre, por100g: escalar(i.valores, 100 / gramos), porciones: [], ...(i.estimado ? { estimado: true as const } : {}) }, cantidad, valores: i.valores };
+}
+
+/**
+ * Lo tuyo, con sus nombres (para leerFrase) y sus filas (para entender). `plato`: cómo se llama la porción de una
+ * receta («1 plato»). `alDia`: cada cosa de una comida guardada con lo que vale ahora (alDia, en registros.ts).
+ */
+export function loTuyo(recetas: Iterable<Receta>, propios: Iterable<AlimentoPropio>, plato: string, alDia: (i: Item) => Item = (i) => i): Tuyo[] {
+  const lista: Tuyo[] = [];
+  for (const r of recetas) {
+    if (!r.items.length) continue;
+    if (r.tipo === 'comida') {
+      lista.push({ nombre: r.nombre, filas: r.items.map((i) => filaDeItem(alDia(i))) });
+      continue;
+    }
+    // Un plato: lo que pesa terminada (o sus ingredientes) dividido por lo que rinde. Sin pesos, vale lo de una porción.
+    const { porcion, por100g, gramos } = valoresDeReceta(r);
+    const cantidad = { porcion: plato, gramosPorcion: gramos ? gramos / Math.max(1, r.porciones) : 100, veces: 1 };
+    const alimento: AlimentoDicho = { fuente: 'receta', ref: r.id, nombre: r.nombre, por100g: por100g ?? porcion, porciones: [{ nombre: plato, gramos: cantidad.gramosPorcion }], rinde: Math.max(1, r.porciones) };
+    lista.push({ nombre: r.nombre, filas: [{ alimento, cantidad, valores: porcion }] });
   }
-  return sola;
+  for (const a of propios) {
+    const [p] = a.porciones;
+    const cantidad = p ? { porcion: p.nombre, gramosPorcion: p.gramos, veces: 1 } : { gramos: 100 };
+    lista.push({ nombre: a.nombre, filas: [{ alimento: { fuente: 'propio', ref: a.id, nombre: a.nombre, por100g: a.por100g, porciones: a.porciones }, cantidad, valores: valoresDeCantidad(a.por100g, cantidad) }] });
+  }
+  return lista;
+}
+
+/** Lo guardado, las veces que se dijo: «medio batido de la mañana» es la mitad. */
+function porVeces(o: Opcion, veces: number): Opcion {
+  const c = o.cantidad;
+  const cantidad = 'porcion' in c ? { ...c, veces: c.veces * veces } : { ...c, gramos: c.gramos * veces, ...(c.ml !== undefined ? { ml: c.ml * veces } : {}) };
+  return { ...o, cantidad, valores: escalar(o.valores, veces) };
+}
+
+/**
+ * Lo tuyo, con lo que se dijo. Por su nombre, solo o contado, es lo que guardaste con su porción: «medio batido de la
+ * mañana» es la mitad, y una comida guardada va entera. «Media tarta» de una receta de seis porciones son tres, como
+ * en la base: la mitad de la entera. Con una medida, un plato, «un poco», «mucho», un tamaño, como acompañante o sin
+ * porción tuya («un huevo»), pasa por la misma cuenta que lo de la base (27/11/2026): «tres fetas de mi queso» son
+ * tres fetas, y «una cucharada de mi manteca», una cucharada y no 100 g (loTuyoConCantidad).
+ */
+async function loTuyoDicho(dicho: Dicho, filas: readonly Opcion[], p: ParaEntender): Promise<Entendido[]> {
+  const [o] = filas;
+  const deLaEntera = (o.alimento.rinde ?? 1) > 1 && dicho.cantidad !== null && dicho.cantidad < 1 && !dicho.unidad && gramosDeLaEntera(o.alimento.nombre, dicho.buscado) !== null;
+  const veces = !dicho.unidad && dicho.cantidad !== null && dicho.cantidad > 0 ? dicho.cantidad * (deLaEntera ? o.alimento.rinde ?? 1 : 1) : 1;
+  // Cada fila con su dicho: la pantalla las distingue por él.
+  const sola = (x: Opcion): Entendido => ({ dicho: { ...dicho }, opciones: [x], elegida: 0, pregunta: null, supuesto: false });
+  const comoSeGuardo = o.alimento.porciones.length > 0 && !dicho.unidad && !dicho.vago && !dicho.cuanto && !dicho.acompanante && !dicho.tamano && veces < 20;
+  if (filas.length > 1 || o.alimento.fuente === 'rapida' || comoSeGuardo) return filas.map((x) => sola(porVeces(x, veces)));
+  return [await loTuyoConCantidad(dicho, o, p)];
+}
+
+/** El mismo alimento en la base, por su nombre entero («Manteca» para tu manteca): de ahí salen las medidas que lo tuyo no tiene. */
+async function mismoEnLaBase(nombre: string, p: ParaEntender): Promise<Detalle | null> {
+  const buscado = llano(nombre);
+  const igual = (await p.buscar(nombre)).find((r) => llano(r.nombre) === buscado || llano(r.coincide) === buscado);
+  return igual ? p.detalle(igual.id) : null;
+}
+
+/**
+ * Lo tuyo con la cantidad dicha, como lo de la base: sus porciones (las tuyas, el plato que rinde la receta) y, para la
+ * medida que no tiene, las del mismo alimento en la base o, si no, la regla de esa medida (una taza son 237 ml).
+ */
+async function loTuyoConCantidad(dicho: Dicho, o: Opcion, p: ParaEntender): Promise<Entendido> {
+  const a = o.alimento;
+  const conCantidad = (cantidad: Exclude<Cantidad, null>): Opcion => ({ alimento: a, cantidad, valores: valoresDeCantidad(a.por100g, cantidad) });
+  const igual = await mismoEnLaBase(a.nombre, p);
+  const deLaBase = (igual?.porciones ?? []).filter((x) => !a.porciones.some((y) => normalizar(y.nombre) === normalizar(x.nombre)));
+  const d = { porciones: [...a.porciones, ...deLaBase], densidad: igual?.densidad ?? null };
+  // Un plato, «un poco», «mucho» o un tamaño: el plato de la receta (lo que rinde) o, si no, el de la tabla.
+  if (!dicho.acompanante && (dicho.vago || (dicho.cantidad === null && !dicho.unidad && (dicho.cuanto || tamanoDicho(dicho))))) {
+    const suPlato = a.porciones.find((x) => PLATO_DE_LA_BASE.test(x.nombre));
+    const delPlato = dicho.recipiente === 'otro' ? platoDeSiempre(d) : null;
+    const porciones = suPlato ? porcionesDesde(suPlato.gramos)
+      : dicho.vago ? porcionesAlDecirPlato((igual && platoDeLaBase(igual)) ?? delPlato, a.nombre, dicho.buscado)
+      : porcionesDePlato(a.nombre, igual?.nombre);
+    if (porciones) return enTamanos(dicho, porciones, (gramos) => conCantidad({ gramos }), null);
+  }
+  // Contado y sin ninguna porción, ni tuya ni de la base: no se sabe cuánto pesa uno, se pregunta.
+  if (!d.porciones.length && dicho.cantidad !== null && !dicho.unidad && dicho.cantidad < 20) {
+    const cantidad = dicho.cantidad;
+    return { dicho, opciones: [0.5, 1, 1.5].map((f) => conCantidad({ gramos: Math.round(100 * f * cantidad) })), elegida: 1, pregunta: 'cuanto', supuesto: true };
+  }
+  // Una medida de volumen que no está en ningún lado va con la regla de esa medida, con la densidad del agua.
+  const conMedida = dicho.unidad && ML_POR[dicho.unidad] && gramosDeLinea(dicho, d) === null ? { ...d, densidad: 1 } : d;
+  const paraEste = cantidadPara(dicho, conMedida, undefined);
+  const elegida = conCantidad(conCuanto(dicho, paraEste.cantidad));
+  const sola: Entendido = { dicho, opciones: [elegida], elegida: 0, pregunta: null, supuesto: paraEste.supuesto || !!dicho.cuanto };
+  return conPreguntaDeCuanto(sola, d.porciones, conCantidad);
+}
+
+/**
+ * Si la base tiene algo que se llama como lo dicho, con todas sus palabras enteras: «batido de proteína», sí; «batido
+ * de kiwi», que solo se parece a otros batidos, no.
+ */
+async function loTiene(dicho: Dicho, p: ParaEntender): Promise<boolean> {
+  if (p.alias(dicho.buscado) !== undefined) return true;
+  const palabras = llano(dicho.buscado).split(' ').filter((x) => x && !UNIONES.has(x));
+  const nombra = (texto: string) => { const suyas = llano(texto).split(' '); return palabras.every((x) => suyas.includes(x)); };
+  return (await p.buscar(dicho.buscado)).some((r) => nombra(r.coincide) || nombra(r.nombre));
+}
+
+/**
+ * Si la base trajo una bebida de la misma familia que la dicha («Licuado de frutilla» para «un licuado de kiwi»): lleva
+ * el líquido que no se dijo, y va esa, como antes; la fruta sola sería menos de la mitad.
+ */
+function esLaMismaBebida(d: Dicho, e: Entendido): boolean {
+  const o = e.opciones[e.elegida];
+  const [dicha, hallada] = [llano(d.buscado).split(' ')[0], o ? llano(o.alimento.nombre).split(' ')[0] : ''];
+  return FAMILIAS_DE_BEBIDA.some((f) => f.includes(dicha) && f.includes(hallada));
+}
+
+/**
+ * Si lo encontrado es eso mismo, nombrado primero: «Kiwi» para «kiwi» o «Banana» para «banana congelada»; no «Ensalada
+ * de frutas» para «fruta», ni «Frutos del bosque» para «frutos rojos».
+ */
+function esLoMismo(e: Entendido): boolean {
+  const o = e.opciones[e.elegida];
+  if (!o) return false;
+  const palabras = (t: string) => llano(t.replace(CONGELADO, ' ')).split(' ').filter((x) => x && !UNIONES.has(x));
+  const [dicho, nombre] = [palabras(e.dicho.buscado), palabras(o.alimento.nombre)];
+  return dicho.length > 0 && dicho[0] === nombre[0] && dicho.every((x) => nombre.includes(x));
 }
 
 /** Cuánto mueve el número una pregunta: entre la opción más chica y la más grande. */
@@ -323,17 +503,41 @@ export async function entender(dichos: readonly Dicho[], p: ParaEntender): Promi
   // «Arroz y pollo»: si la base no tiene el nombre entero, cada uno por su lado, con lo que se dijo de
   // los dos: «un poco de arroz y pollo» es un poco de cada uno, y «un plato de arroz y pollo», un plato.
   // Lo encontrado tiene que ser eso y nada más: «eggs and toast» no es un sándwich con huevo y tostada.
+  /**
+   * Una cosa dicha: lo que la persona guardó, con sus filas; lo demás, de la base. Una comida guardada (varias cosas)
+   * que se llama como algo de la base («Asado», «Pizza») va solo si se la nombró sin dudas («mi asado», «el asado de
+   * siempre», la frase entera): «200 g de asado» o «una pizza y una coca» son lo de la base.
+   */
+  const uno = async (x: Dicho): Promise<Entendido[]> => {
+    const filas = x.tuyo === undefined ? undefined : p.tuyo?.(x.tuyo);
+    if (!filas?.length) return [await entenderUno(x, p)];
+    if (filas.length > 1 && !x.sinDudas && (await mismoEnLaBase(x.buscado, p))) return [await entenderUno({ ...x, tuyo: undefined }, p)];
+    return loTuyoDicho(x, filas, p);
+  };
   const lista = (await Promise.all(dichos.map(async (d) => {
-    const e = await entenderUno(d, p);
+    if (d.tuyo !== undefined) return uno(d);
+    // «Un batido de kiwi»: si la base no tiene nada con ese nombre, va lo que lleva, si lo encontrado es eso mismo:
+    // «un licuado de frutas» no es la ensalada de frutas, ni «un smoothie de frutos rojos» los frutos del bosque solos,
+    // y siguen como antes (27/11/2026). Si la base trae una bebida de la misma familia, es esa: «un licuado de kiwi» es
+    // un licuado, con su leche, no un kiwi. «Un batido de la mañana», que no lleva nada que se coma, sigue sin encontrarse.
+    let e: Entendido | null = null;
+    if (d.lleva && !(await loTiene(d, p))) {
+      e = await entenderUno(d, p);
+      if (!esLaMismaBebida(d, e)) {
+        const lleva = (await Promise.all(d.lleva.map(uno))).flat();
+        if (lleva.length && lleva.every((x) => x.dicho.tuyo !== undefined || esLoMismo(x))) return lleva;
+      }
+    }
+    e ??= await entenderUno(d, p);
     const o = e.opciones[e.elegida];
     if (!d.partes || (o && (p.alias(d.buscado) !== undefined || esEso(d.buscado, o.alimento.nombre)))) return [e];
     const deLosDos: Partial<Dicho> = { ...(d.vago ? { vago: true, recipiente: d.recipiente } : {}), ...(d.plato ? { plato: d.plato } : {}), ...(d.cuanto ? { cuanto: d.cuanto } : {}) };
-    return Promise.all(d.partes.map((x) => entenderUno({
+    return (await Promise.all(d.partes.map((x) => uno({
       ...x,
       ...deLosDos,
       ...(x.cantidad === null && d.vago ? { cantidad: d.cantidad } : {}),
       ...(x.cantidad === null && d.acompanante ? { acompanante: true as const } : {}),
-    }, p)));
+    })))).flat();
   }))).flat();
   const conPregunta = lista.filter((e) => e.pregunta).sort((a, b) => cuantoMueve(b) - cuantoMueve(a));
   for (const e of conPregunta.slice(PREGUNTAS_POR_COMIDA)) {

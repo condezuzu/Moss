@@ -3,7 +3,7 @@
 
 import { aKg, KG_POR_LIBRA, type Sistema } from '@/dominio/cantidades';
 import { diaDeLaSemana, diasEntre, type ClaveDia } from '@/dominio/fechas';
-import { esPropio, type Bloque, type Cuando, type Musculo } from '@/dominio/musculos';
+import { esPropio, type Bloque, type Carga, type Cuando, type GrupoDeAscent, type Musculo } from '@/dominio/musculos';
 import { pesoSiguiente } from '@/dominio/puntajeMuscular';
 import es from '@/textos/es.json';
 import { lista, t, type Clave } from '@/textos';
@@ -28,6 +28,23 @@ export function enLista(xs: readonly string[]): string {
 /** Los nombres de unos músculos en una lista: «cuádriceps y glúteos». */
 export const listaDeMusculos = (ms: readonly Musculo[]) => enLista(ms.map((m) => nombreDelMusculo(m).toLowerCase()));
 export const cuandoDe = (c: Cuando) => tx(`ascent.titular.cuando.${c}`);
+
+const llano = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
+/**
+ * Buscar un ejercicio como en Ascent (su nucleo/ejercicios.ts): coinciden los que tienen todas las palabras escritas en
+ * el nombre o en el de su grupo, sin importar los acentos, primero los que empiezan con lo escrito; y «entrenan lo
+ * mismo» los demás de esos grupos, hasta 12. Sin texto, nada.
+ */
+export function buscarEjercicios<T extends { id: string; ejercicio: string; grupo: GrupoDeAscent }>(lista: readonly T[], texto: string, maxParecidos = 12): { coinciden: T[]; parecidos: T[] } {
+  const palabras = llano(texto).split(/\s+/).filter(Boolean);
+  if (!palabras.length) return { coinciden: [], parecidos: [] };
+  const coinciden = lista.map((e) => ({ e, n: llano(nombreDelEjercicio(e)), g: llano(tx(`ascent.hoy.grupos.${e.grupo}`)) }))
+    .filter(({ n, g }) => palabras.every((p) => n.includes(p) || g.includes(p)))
+    .sort((a, b) => Number(!a.n.startsWith(palabras[0])) - Number(!b.n.startsWith(palabras[0])))
+    .map(({ e }) => e);
+  const grupos = new Set(coinciden.map((e) => e.grupo));
+  return { coinciden, parecidos: lista.filter((e) => grupos.has(e.grupo) && !coinciden.includes(e)).slice(0, maxParecidos) };
+}
 
 // Los pesos llegan de Ascent en kg y la meta se guarda en kg: con el sistema imperial de Moss, se dicen en libras.
 /** El peso de una serie o de una marca: en libras, al medio, como en Ascent (así lo anotado en libras vuelve igual). */
@@ -55,8 +72,23 @@ export function kilosDeLaMeta(escrito: string, s: Sistema): number {
   return s === 'imperial' ? Math.round(aKg(n, s) * 100) / 100 : n;
 }
 
-/** Los textos de los pesos dicen «kg», como en Ascent: en libras, la misma frase con «lb» (como progreso/unidades.ts). */
-export const enLaUnidad = (frase: string, s: Sistema) => (s === 'imperial' ? frase.replace(/\bkg\b/g, 'lb') : frase);
+/** Los `par` que son dos poleas y no dos mancuernas, como en Ascent (su nucleo/carga.ts). */
+const PAR_EN_POLEA: readonly string[] = ['cruce_polea_alta', 'cruce_polea_baja'];
+/**
+ * Cómo se dice el peso de un ejercicio, según cómo lo anotaste en Ascent la última vez: con dos mancuernas, «por
+ * mancuerna»; con un lado por vez o dos poleas, «por lado». Ahí se dice y se pide la mitad: los kilos que llegan de
+ * Ascent y los de una meta van siempre en total. Sin saberlo, en total.
+ */
+export type Lado = 'porMancuerna' | 'porLado' | null;
+export const ladoDe = (e: { id?: string; carga?: Carga }): Lado =>
+  e.carga === 'par' && !PAR_EN_POLEA.includes(e.id ?? '') ? 'porMancuerna' : e.carga === 'par' || e.carga === 'una' ? 'porLado' : null;
+
+/**
+ * Los textos de los pesos dicen «kg», como en Ascent: en libras, la misma frase con «lb» (como progreso/unidades.ts); y
+ * si el peso es el de un lado, con «por mancuerna» o «por lado» después de la unidad.
+ */
+export const enLaUnidad = (frase: string, s: Sistema, lado: Lado = null) =>
+  s === 'imperial' || lado ? frase.replace(/\bkg\b/g, `${s === 'imperial' ? 'lb' : 'kg'}${lado ? ` ${tx(`ascent.metas.${lado}`)}` : ''}`) : frase;
 
 /** «hoy», «ayer» o «el lunes». */
 export function cuandoFue(fecha: ClaveDia, hoy: ClaveDia): string {

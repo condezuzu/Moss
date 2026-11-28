@@ -13,10 +13,16 @@
 //   noches en la semana), el aviso del periodo no suena y la hora es la de antes, con tu despertar y tu deuda.
 // - Lo que hay que hacer hoy (17/11): con «anotar lo que tienes en la cabeza» prendido, los pendientes de ese día
 //   vuelven a la mañana, 20 minutos después de la pregunta del desayuno.
+// - La mañana y la noche llegan siempre (lo pediste el 27/11/2026: no te llegaba ninguno). La deuda queda programada
+//   de antes para 45 minutos después de tu hora de siempre de despertarte (o del despertador de Moss): si a esa hora Moss
+//   todavía no sabe cómo fue la noche, suena con la de ayer, sin inventar la de hoy; si lo sabe antes, suena la de
+//   siempre en su lugar. Una sola vez: el teléfono dice cuál quedó programada y si ya sonó (deudaPendiente); si nunca
+//   se programó (recién prendida), suena al saberlo mientras sea de mañana. Y sin periodo, el de la noche suena igual
+//   una hora antes de acostarte, si no lo dicen ya bajar el ritmo o acostarte.
 // Entra en avisosDelDia como lo que conviene: el mismo máximo, de a uno y nada de lo que ya pasó. Acá van códigos;
 // el texto sale de textoDelAviso y tituloDelAviso (avisos.ts). Las fuentes, en spec/estudio/momentos.md.
 
-import { avisosDelDia, DESPERTAR_SIN_SUENO, horasDeSueno, inicioDeLaManana, PESARSE_DESPUES, SEPARACION, type Aviso, type Avisos, type DelDia, type Notificacion } from './avisos';
+import { avisosDelDia, DESPERTAR_SIN_SUENO, horasDeSueno, inicioDeLaManana, PESARSE_DESPUES, SEPARACION, type Aviso, type Avisos, type DelDia, type Notificacion, type Sueno } from './avisos';
 import { CON_HORA, horasCorridas, type Comida } from './comidas';
 import { diaDeLaSemana } from './fechas';
 import { loQueConviene, type DeLoQueConviene } from './loQueConviene';
@@ -29,12 +35,13 @@ type ConHora = (typeof CON_HORA)[number];
 type SinDesayuno = Exclude<ConHora, 'desayuno'>;
 
 /**
- * Lo que dice cada uno. La deuda, a la media hora (redondearDeuda, como en Sueño), la de esta mañana y la de ayer;
+ * Lo que dice cada uno. La deuda, a la media hora (redondearDeuda, como en Sueño), la de esta mañana y la de ayer
+ * (`ahora` null: Moss todavía no sabe cómo fue la noche, y dice solo la de ayer, si la sabe);
  * en las comidas, a cuáles va lo que no comiste en el desayuno (desde esta) y, con números, las kcal de esta; en
  * el periodo de melatonina, sus dos horas, en minutos del día; y en lo que hay que hacer hoy, lo que falta hacer.
  */
 export type DelDespertar =
-  | { que: 'deuda'; ahora: number; antes: number | null }
+  | { que: 'deuda'; ahora: number | null; antes: number | null }
   | { que: 'desayuno' }
   | { que: 'comida'; comida: SinDesayuno; van: SinDesayuno[]; kcal?: number }
   | { que: 'melatonina'; desde: number; hasta: number }
@@ -74,12 +81,33 @@ export const DESCARGA = 5;
  * El desayuno sí pregunta. Es una convención.
  */
 export const MANANA_QUE_SE_PASO = 120;
+/**
+ * Si este rato después de tu hora de siempre de despertarte (o del despertador de Moss) Moss todavía no sabe cómo fue la
+ * noche, la deuda suena igual, con la de ayer. Con dos minutos, el día que dormías de más te despertaba (27/11/2026).
+ * Tres cuartos de hora es una convención.
+ */
+export const DEUDA_SIN_SABERLO = 45;
 
 const aDiez = (x: number) => Math.round(x / 10) * 10;
 
-export type DeSigueElDespertar = Pick<DelDia, 'dia' | 'ajustes' | 'sueno' | 'horaDeComida' | 'anotadas' | 'eventos' | 'diaDelControl'> & {
-  /** La deuda de ayer, en minutos (deudaDeSueno sin la noche de hoy): para decir si bajó o subió. */
+export type DeSigueElDespertar = Pick<DelDia, 'dia' | 'ajustes' | 'sueno' | 'horaDeComida' | 'anotadas' | 'eventos' | 'diaDelControl' | 'ahora'> & {
+  /**
+   * La deuda del día anterior a `dia`, en minutos (deudaDeSueno sin la noche de ese día): para decir si bajó o subió
+   * o, sin saber la noche, cuánta era. Null si no se sabe: sin la noche de ese día anterior (el anillo no sincronizó), o
+   * de pasado mañana en adelante.
+   */
   deudaAntes?: number | null;
+  /**
+   * Hoy, en el teléfono, el aviso de la deuda que ya quedó programado y todavía no sonó: a qué hora, en minutos del día, y
+   * si es el de sin saber la noche. null si ya sonó (o hoy no tocaba): no se arma otro. Sin esto, no se programó: los días
+   * que vienen van a la hora de siempre; hoy (con `ahora`), también, o al saberlo si Moss lo supo después de esa hora y
+   * todavía es de mañana (recién prendida, o la primera vez con la versión del 27/11/2026).
+   */
+  deudaPendiente?: { minutos: number; sinLaNoche: boolean } | null;
+  /** Si ya está la noche de ese día (la que terminó esa mañana): sin ella no se sabe la deuda de hoy. Sin esto, está. */
+  conLaNoche?: boolean;
+  /** El despertador de Moss de cada día de la semana, en minutos desde la medianoche: la deuda sin saberlo cuenta desde él. */
+  despertador?: Sueno['alarmas'];
   /** Lo que contestaste hoy a «¿Desayunas hoy?», si contestaste. */
   desayuno?: RespuestaDelDesayuno | null;
   /** Para repartir lo del desayuno: la meta de hoy y lo comido hasta ahora. Sin meta o sin números, sin kcal. */
@@ -132,15 +160,42 @@ export function avisosDelDespertar(op: DeSigueElDespertar): Aviso[] {
   // de que Moss sepa que te despertaste (inicioDeLaManana).
   const despertar = horas.despertar;
   const inicio = inicioDeLaManana(op.dia, sueno, despertar);
+  const deuda = prendido('deuda') ? sueno.deuda : null;
+  const antes = op.deudaAntes == null ? null : redondearDeuda(op.deudaAntes);
+  // Moss sabe la de hoy cuando sabe que te despertaste y ya tiene la noche: sin ella, la deuda de ahora no la cuenta.
+  const sabe = deuda !== null && inicio !== null && op.conLaNoche !== false;
+  const laDeuda = (minutos: number, conLaDeHoy: boolean): Aviso =>
+    ({ id: 'deuda', tipo: 'deuda', minutos, despertar: { que: 'deuda', ahora: conLaDeHoy && deuda !== null ? redondearDeuda(deuda) : null, antes } });
+  // La deuda llega todas las mañanas, una sola vez: queda programada de antes para un rato después de tu hora de siempre
+  // de despertarte (la de horasDeSueno sin el despertar de hoy, o la del despertador de Moss), con la de ayer, por si a
+  // esa hora Moss todavía no sabe cómo fue la noche. Si lo sabe antes, suena la de siempre en su lugar.
+  const deSiempre = deuda === null ? null : horasDeSueno(op.dia, { ...sueno, alarmas: op.despertador ?? sueno.alarmas, despertarReal: undefined, periodo: undefined }).despertar;
+  const respaldo = deSiempre === null ? null : deSiempre + DEUDA_SIN_SABERLO;
+  const pendiente = op.deudaPendiente;
+  if (respaldo !== null && pendiente) {
+    // Hoy ya quedó una programada y no sonó: sigue a la hora en que de verdad quedó (otro aviso pudo correrla, o tu hora
+    // de siempre cambió con noches nuevas), con la de hoy si Moss ya la sabe. Si se enteró recién, suena antes, al saberlo.
+    const alSaberlo = pendiente.sinLaNoche && sabe && inicio !== null && inicio > (op.ahora ?? -Infinity) && inicio < pendiente.minutos;
+    lista.push(laDeuda(alSaberlo && inicio !== null ? inicio : pendiente.minutos, sabe));
+  } else if (respaldo !== null) {
+    // Sin una programada: la de siempre si Moss lo supo antes de esa hora y, si no, la de ayer a esa hora. Hoy, si ya sonó,
+    // guarda su lugar sin sonar; si no se programó nunca y Moss lo supo después de esa hora, la de siempre al saberlo,
+    // mientras sea de mañana (como lo demás de la mañana: MANANA_QUE_SE_PASO).
+    const supo = despertar === null ? null : Math.max(despertar, sueno.despertarSabido?.(op.dia) ?? despertar);
+    const nunca = pendiente === undefined && op.ahora !== undefined && despertar !== null && inicio !== null && inicio - despertar <= MANANA_QUE_SE_PASO;
+    const alSaberlo = sabe && inicio !== null && supo !== null && (supo < respaldo || nunca);
+    lista.push({ ...laDeuda(alSaberlo && inicio !== null ? inicio : respaldo, alSaberlo), ...(pendiente === null ? { sobra: true as const } : {}) });
+  }
   if (despertar !== null && inicio !== null) {
     let libre = inicio;
     // Lo que no suena guarda su lugar, en el máximo y en la mañana: si después llega un despertar más temprano (la
     // noche del anillo, más tarde que abrir Moss), lo que ya sonó sigue contando y lo de después no se corre a antes.
     const aTiempo = inicio - despertar <= MANANA_QUE_SE_PASO;
     const callado = aTiempo ? {} : { sobra: true as const };
-    if (prendido('deuda') && sueno.deuda !== null) {
-      const antes = op.deudaAntes == null ? null : redondearDeuda(op.deudaAntes);
-      lista.push({ id: 'deuda', tipo: 'deuda', minutos: inicio, despertar: { que: 'deuda', ahora: redondearDeuda(sueno.deuda), antes }, ...callado });
+    // La deuda guarda su lugar en la mañana aunque ya haya sonado, y aunque sus noches no se puedan leer ahora.
+    if (deuda !== null || (prendido('deuda') && sueno.sinLeer)) {
+      // Sin tu hora de siempre no hay la de ayer: va la de siempre, desde que Moss lo sabe.
+      if (respaldo === null && sabe) lista.push({ ...laDeuda(inicio, true), ...callado });
       libre = inicio + SEPARACION;
     }
     const control = op.diaDelControl === diaDeLaSemana(op.dia);
@@ -197,9 +252,12 @@ export function avisosDelDespertar(op: DeSigueElDespertar): Aviso[] {
   const cama = horas.acostarse;
   if (cama !== null) {
     // El periodo se anuncia una hora antes de que empiece, con las mismas horas que dice Sueño: para ir dejando las
-    // pantallas. Sin periodo, no suena.
+    // pantallas. Sin periodo (pocas noches) suena igual, una hora antes de acostarte y sin nombrar la melatonina: lo
+    // que dice bajar el ritmo. No si ya lo dice bajar el ritmo, o el de acostarte (de 15 a 60 minutos antes), que dice
+    // la misma hora.
     const p = horas.periodo;
     if (prendido('melatonina') && p) lista.push({ id: 'melatonina', tipo: 'melatonina', minutos: p.desde - ANTES_DEL_PERIODO, despertar: { que: 'melatonina', desde: p.desde, hasta: p.hasta } });
+    else if (prendido('melatonina') && !prendido('revoluciones') && !ajustes.dormir?.encendido) lista.push({ id: 'melatonina', tipo: 'melatonina', minutos: cama - ANTES_DEL_PERIODO, despertar: { que: 'revoluciones', cama } });
     if (prendido('gafas')) lista.push({ id: 'gafas', tipo: 'gafas', minutos: cama - GAFAS, despertar: { que: 'gafas', cama } });
     if (prendido('revoluciones')) lista.push({ id: 'revoluciones', tipo: 'revoluciones', minutos: cama - REVOLUCIONES, despertar: { que: 'revoluciones', cama } });
     if (prendido('descarga')) lista.push({ id: 'descarga', tipo: 'descarga', minutos: cama - DESCARGA, despertar: { que: 'descarga' } });

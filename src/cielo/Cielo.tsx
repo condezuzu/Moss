@@ -36,6 +36,7 @@ import { useAnimatedReaction, useDerivedValue, useSharedValue, type DerivedValue
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 
 import { elAlmacen } from '@/almacen';
+import { objetivoDeAhora } from '@/almacen/almacen';
 import { riquezaDe } from '@/dominio/luz';
 import { pinturaQueAgranda } from './agrandar';
 import { bajarLaAutomatica } from './calidad';
@@ -70,7 +71,7 @@ import { CELDA, crearReserva, volcarLuces, type Reserva } from './luces';
 import { CALIDADES, HORIZONTE, PARALAJE, VIA_LACTEA, ZONA_UNIVERSO, type Calidad } from './mundo';
 import type { Brote } from './musgo';
 import { armarPlano, armarPlanoDelMusgo, type Plano } from './plano';
-import { useTextos } from './textosDelCielo';
+import { seEnciendeCon, useTextos } from './textosDelCielo';
 import { MITAD_DEL_VIAJE, parametrosDelViaje } from './viaje';
 import { avanceDelViaje, useViajando } from './viajar';
 import { anunciar } from '@/secciones/anuncio';
@@ -308,7 +309,7 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
             // Dice qué la enciende y lleva a Comida, donde se anota.
             const irAComida = alIrAComida;
             setAviso({
-              texto: t.t(`cielo.seEnciendeCon.${h.comida ?? 'registrar'}`),
+              texto: seEnciendeCon(h.comida, objetivoDeAhora(elAlmacen().estado())),
               clave: Date.now(),
               ...(irAComida ? { accion: { texto: t.t('cielo.verComida'), alTocar: () => { setAviso(null); irAComida(); } } } : {}),
             });

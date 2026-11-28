@@ -5,19 +5,20 @@
 // el gimnasio de hoy y tu año. Las formas son las de src/lib/ascentRemoto.ts, sin importarlo: el
 // dominio no sabe de dónde llegan.
 
-import type { Peso } from './control';
+import { ultimoDiaDeControl, type Peso } from './control';
 import {
   caloriasSegunElDia, costoDeSesion, frecuenciaPorDia, metaConEntrenamiento, promedioDeSesiones, proteinaDespuesDeEntrenar, semanaDeMoss,
   SEMANAS_DE_HISTORIA, sesionesAnteriores, tamanoDeSesion, type DiaConEntrenamiento, type SemanaDeMoss, type Sesion,
 } from './entrenamiento';
-import { diasEntre, lunesDe, sumarDias, type ClaveDia, type DiaSemana } from './fechas';
+import { diaDeLaSemana, diasEntre, lunesDe, sumarDias, type ClaveDia, type DiaSemana } from './fechas';
 import type { Macros, Sexo } from './metas';
-import { claveDelEjercicio, grupoDelEjercicio, unRmDeAscent, type Bloque, type GrupoDeAscent, type SesionConBloques } from './musculos';
+import { claveDelEjercicio, grupoDelEjercicio, unRmDeAscent, type Bloque, type Carga, type GrupoDeAscent, type SesionConBloques } from './musculos';
 
 /** `rir`: las repeticiones que quedaban, si se anotaron en Ascent («al fallo» es 0). */
 export type SerieDeAscent = { kilos: number | null; reps: number | null; rir?: number | null };
 /** Un ejercicio de una sesión: el nombre de Ascent, su grupo (uno solo), sus series y su id ('sentadilla', o 'propio_…'). */
-export type EjercicioDeAscent = { nombre: string; musculos: string[]; series: SerieDeAscent[]; id?: string; copiada?: true };
+/** `carga`: cómo se anotó ese día; null si el bloque no la trae, y falta mientras la base no la manda (0020). */
+export type EjercicioDeAscent = { nombre: string; musculos: string[]; series: SerieDeAscent[]; id?: string; copiada?: true; carga?: Carga | null };
 /** Un día de gimnasio en Ascent; sin cronómetro llega con 0 series, 0 kilos, 0 minutos y sin ejercicios. */
 export type SesionDeAscent = Sesion & { ejercicios: EjercicioDeAscent[]; inicio?: string };
 export type MarcaDeAscent = { ejercicio: string; fecha: ClaveDia; kilos: number; reps: number; id?: string };
@@ -132,7 +133,7 @@ export function sesionesConBloques(sesiones: readonly SesionDeAscent[], inicioDe
   return sesiones.filter((s) => s.ejercicios.length).map((s) => ({
     fecha: s.fecha,
     inicio: inicioDe(s),
-    bloques: s.ejercicios.map((e) => ({ ejercicio: e.nombre, ...(e.id ? { id: e.id } : {}), grupo: grupoDe(e), series: e.series.map((x) => ({ peso: x.kilos ?? 0, reps: x.reps, ...(x.rir != null ? { rir: x.rir } : {}) })), ...(e.copiada ? { copiada: true } : {}) })),
+    bloques: s.ejercicios.map((e) => ({ ejercicio: e.nombre, ...(e.id ? { id: e.id } : {}), grupo: grupoDe(e), series: e.series.map((x) => ({ peso: x.kilos ?? 0, reps: x.reps, ...(x.rir != null ? { rir: x.rir } : {}) })), ...(e.copiada ? { copiada: true } : {}), ...(e.carga ? { carga: e.carga } : {}) })),
   }));
 }
 
@@ -199,6 +200,32 @@ export function metaDelDiaConAscent(p: { meta: Macros; inicio: ClaveDia; dia: Cl
     total: semana.reduce((t, d) => t + d.meta.kcal, 0),
     meta: metaConEntrenamiento(dia, extra),
   };
+}
+
+/** Lo de Ascent que mueve la meta de cada día, con el vínculo: desde qué día llegaron sus sesiones, y ellas. */
+export type GimnasioDeAscent = { desde: ClaveDia; sesiones: readonly Sesion[] };
+
+/**
+ * La meta de un día con Ascent vinculada (spec/ascent.md, funciones 5 y 8), la que se ve en Inicio y en Comida y contra la
+ * que se encienden las estrellas de la comida: las calorías según el día de la semana del control y la proteína de la
+ * sesión. Reemplaza al reparto de la semana a mano (`base`): con Ascent, los días altos son los de gimnasio. Sin vínculo
+ * (`gimnasio` null), sin sesiones en las 4 semanas antes de la del control, sin datos de esa semana o sin peso, `base`.
+ */
+export function metaConAscentDe(
+  base: Macros,
+  e: { metas: readonly (Macros & { desde: ClaveDia })[]; perfil: { diaDelControl?: DiaSemana; sexo: Sexo } | null; pesos: readonly { kg: number }[]; hoy: ClaveDia },
+  dia: ClaveDia,
+  gimnasio: GimnasioDeAscent | null,
+): Macros {
+  if (!gimnasio || !e.perfil || !e.metas.length) return base;
+  const inicio = ultimoDiaDeControl(dia, e.perfil.diaDelControl ?? diaDeLaSemana(e.metas[0].desde));
+  if (inicio < gimnasio.desde || !gimnasio.sesiones.some((s) => s.fecha >= sumarDias(inicio, -28) && s.fecha <= sumarDias(inicio, 6))) return base;
+  // La meta que vale ese día, sin repartir (como metaVigente, en el almacén): la última que empezó hasta ese día.
+  const vigente = e.metas.filter((m) => m.desde <= dia).at(-1);
+  const pesoKg = e.pesos.at(-1)?.kg;
+  if (!vigente || pesoKg === undefined) return base;
+  const meta = { kcal: vigente.kcal, proteina: vigente.proteina, carbohidratos: vigente.carbohidratos, grasas: vigente.grasas };
+  return metaDelDiaConAscent({ meta, inicio, dia, hoy: e.hoy, sesiones: gimnasio.sesiones, pesoKg, sexo: e.perfil.sexo })?.meta ?? base;
 }
 
 // ------------------------------------------------------------ la carga, para la recuperación

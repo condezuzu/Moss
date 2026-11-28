@@ -4,7 +4,7 @@ import { cambioPorDia, controlSemanal, pesadasQueCuentan, tendencia, type Comida
 import { eleccionDe, metaDelCuestionario, proteinaDelNivel, type Respuestas } from './cuestionario';
 import { sumarDias, type DiaSemana } from './fechas';
 import {
-  ajusteDiario, ajustePorRitmo, EDAD_MINIMA, enRango, ESTILOS, gastoBasal, macrosConProteina, macrosDePorcentajes, macrosPara, metaDeFibra, metaManual, metaPara, metaRepartida, metasIniciales, motivoParaNo, objetivoPermitido, pesoMinimoSano, pisoDe,
+  ajusteDiario, ajustePorRitmo, EDAD_MINIMA, enRango, ESTILOS, gastoBasal, macrosConProteina, macrosDePorcentajes, macrosPara, metaDeFibra, metaManual, metaPara, metaRepartida, metasIniciales, motivoParaNo, objetivoDelDia, objetivoPermitido, pesoMinimoSano, pisoDe,
   RANGOS_DEL_CUESTIONARIO, repartirSemana, RITMOS, ritmoPermitido,
   type Cuestionario, type Macros,
 } from './metas';
@@ -26,6 +26,16 @@ describe('los límites que cuidan', () => {
     const gasto = 2700;
     expect(metaPara(gasto, { ...bajar, sinDeficit: true }).kcal).toBe(metaPara(gasto, BASE).kcal);
     expect(metaPara(gasto, bajar).kcal).toBeLessThan(gasto);
+  });
+
+  it('un día que ya pasó se mide con el objetivo que regía ese día: el último anotado hasta él', () => {
+    const anotados = { '2026-11-10': 'subir', '2026-11-22': 'bajar' } as const;
+    expect(objetivoDelDia(anotados, '2026-11-21', 'mantener')).toBe('subir');
+    expect(objetivoDelDia(anotados, '2026-11-22', 'mantener')).toBe('bajar');
+    expect(objetivoDelDia(anotados, '2026-11-25', 'mantener')).toBe('bajar');
+    // De antes de lo anotado no se sabe más que el primero; sin nada anotado, el de ahora.
+    expect(objetivoDelDia(anotados, '2026-11-01', 'mantener')).toBe('subir');
+    expect(objetivoDelDia({}, '2026-11-21', 'mantener')).toBe('mantener');
   });
 
   it('sin déficit, keto no: queda la equilibrada', () => {

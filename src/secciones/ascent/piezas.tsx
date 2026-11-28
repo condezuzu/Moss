@@ -6,7 +6,7 @@
 
 import { useFonts } from 'expo-font';
 import { Outfit_200ExtraLight } from '@expo-google-fonts/outfit/200ExtraLight';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useState, type ReactNode } from 'react';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -54,7 +54,8 @@ export const Nota = ({ children, style }: { children: ReactNode; style?: StylePr
 /** Una parte: cuelga de una línea de pelo de borde a borde, con su título y, a la derecha, lo que la acompaña. */
 export function Parte({ titulo, derecha, children, primera, estilo }: { titulo: string; derecha?: ReactNode; children?: ReactNode; primera?: boolean; estilo?: StyleProp<ViewStyle> }) {
   return (
-    <View style={[st.parte, primera && st.partePrimera, estilo]}>
+    // Cada parte es una vista de verdad en el scroll de la sección: es de lo que se agarra para no moverse (Ascent.tsx).
+    <View collapsable={false} style={[st.parte, primera && st.partePrimera, estilo]}>
       <View style={st.parteCab}>
         <Etiqueta>{titulo}</Etiqueta>
         {typeof derecha === 'string' ? <Text style={st.derecha}>{derecha}</Text> : derecha}
@@ -120,24 +121,44 @@ export function Accion({ texto, alTocar, apagado, estilo }: { texto: string; alT
   );
 }
 
-/** Lo que se despliega y se pliega: crece desde arriba, con un fundido; al plegarse, se achica y recién ahí se va. */
-export function Desplegable({ abierto, children, style }: { abierto: boolean; children: ReactNode; style?: StyleProp<ViewStyle> }) {
+/**
+ * Lo que se despliega y se pliega: crece desde arriba, con un fundido; al plegarse, se achica y recién ahí se va.
+ * Con `entra`, lo que aparece ya abierto también crece. `alPlegarse` avisa cuando terminó de plegarse. Con `sigue`, si
+ * lo de adentro cambia de alto estando abierto (una lista que cambia), el alto lo sigue deslizándose.
+ */
+export function Desplegable({ abierto, children, style, entra, alPlegarse, sigue }: {
+  abierto: boolean; children: ReactNode; style?: StyleProp<ViewStyle>; entra?: boolean; alPlegarse?: () => void; sigue?: boolean;
+}) {
   const reducido = useReducedMotion();
   const [montado, setMontado] = useState(abierto);
   if (abierto && !montado) setMontado(true);
-  const v = useSharedValue(abierto ? 1 : 0);
+  const v = useSharedValue(abierto && !entra ? 1 : 0);
   const alto = useSharedValue(0);
+  const plegado = useEffectEvent(() => {
+    setMontado(false);
+    alPlegarse?.();
+  });
   useEffect(() => {
+    const alTerminar = () => plegado();
     v.set(withTiming(abierto ? 1 : 0, { duration: reducido ? 120 : 300, easing: LLEGA }, (fin) => {
-      if (fin && !abierto) scheduleOnRN(setMontado, false);
+      if (fin && !abierto) scheduleOnRN(alTerminar);
     }));
   }, [abierto, reducido, v]);
-  // Hasta medir lo de adentro, a su alto: así no salta.
-  const estilo = useAnimatedStyle(() => (alto.get() ? { height: alto.get() * (reducido ? 1 : v.get()), opacity: v.get() } : { opacity: v.get() }));
+  // Hasta medir lo de adentro: lo que arranca abierto, a su alto; lo que se abre, cerrado (a su alto, lo de abajo
+  // bajaba de golpe un cuadro y volvía).
+  const estilo = useAnimatedStyle(() => (alto.get() || v.get() < 1 ? { height: alto.get() * (reducido ? 1 : v.get()), opacity: v.get() } : { opacity: v.get() }));
   if (!montado) return null;
   return (
     <Animated.View style={[st.desplegable, estilo]}>
-      <View style={style} onLayout={(ev) => alto.set(ev.nativeEvent.layout.height)}>{children}</View>
+      <View
+        style={style}
+        onLayout={(ev) => {
+          const nuevo = ev.nativeEvent.layout.height;
+          alto.set(sigue && !reducido && alto.get() > 0 ? withTiming(nuevo, { duration: 250, easing: LLEGA }) : nuevo);
+        }}
+      >
+        {children}
+      </View>
     </Animated.View>
   );
 }

@@ -54,12 +54,13 @@ export function useRegistro() {
   return useSyncExternalStore(suscribir, () => actual);
 }
 
-// El aviso de abajo de toda la app: lo que se registró desde la hoja o desde el «+», con «Deshacer».
-let aviso: { texto: string; deshacer?: () => void; vez: number } | null = null;
+// El aviso de abajo de toda la app: lo que se registró desde la hoja o desde el «+», con «Deshacer» (o, con `boton`,
+// lo que diga: «Reintentar»).
+let aviso: { texto: string; deshacer?: () => void; boton?: string; vez: number } | null = null;
 const oyentesDelAviso = new Set<() => void>();
 
-export function avisar(texto: string, deshacer?: () => void) {
-  aviso = { texto, deshacer, vez: (aviso?.vez ?? 0) + 1 };
+export function avisar(texto: string, deshacer?: () => void, boton?: string) {
+  aviso = { texto, deshacer, boton, vez: (aviso?.vez ?? 0) + 1 };
   oyentesDelAviso.forEach((o) => o());
 }
 

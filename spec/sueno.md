@@ -102,6 +102,13 @@ cual con cuatro semanas de mentira.
   - el orden de prioridad de fuentes que elegiste en Salud;
   - el puntaje de sueño de Apple (watchOS 26): no hay forma de leerlo desde otra app.
 - **Un permiso negado se ve igual que «no hay datos».**
+- **Con el iPhone bloqueado Salud no deja leer nada** (sus datos van cifrados hasta desbloquear), y la tarea de fondo
+  corre casi siempre así. Por eso, desde el 27/11/2026 (D45), Moss guarda lo mínimo de las noches cada vez que lee
+  Salud: el día, cuándo te dormiste y te despertaste, lo dormido, las siestas, lo despierto, si es de un aparato, si se
+  anotó a mano y la confianza (las de los últimos 16 días y, de un aparato, las últimas 14). Es para los avisos: con
+  eso, de fondo, la deuda, el periodo y la hora de acostarte salen igual que con Salud. Queda solo en el teléfono,
+  fuera de la copia de seguridad, no sube, y se borra con tus datos. Lo demás de Salud (las etapas, los tramos, la
+  frecuencia, la variabilidad, la respiración) se sigue leyendo cada vez y queda en memoria.
 
 ## Las reglas para que sea confiable
 
@@ -717,7 +724,8 @@ Mientras no esté medido, Moss no publica ningún porcentaje de precisión (guí
 - **Guía 1.4.1:** explicar los datos y el método de lo que se mide y recordar
   consultar a un médico.
 - **Guía 5.1.3:** nada de publicidad con datos de salud, decir qué se lee y no
-  guardarlos en iCloud.
+  guardarlos en iCloud. Lo mínimo de las noches que se guarda para los avisos (D45) está en la carpeta de SQLite, que
+  `modules/respaldo` saca de la copia de seguridad.
 - **Los nombres:** se dice «Salud» («Apple Health» en inglés), nunca «HealthKit»,
   y no se muestran capturas de la app Salud.
 - **No se llama «puntaje de sueño»,** y se explica que el de Apple no se puede

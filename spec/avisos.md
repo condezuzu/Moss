@@ -25,9 +25,10 @@ Para quien no eligió nada en Perfil › Avisos (`deFabrica` y `comidasSinAnotar
 - **Prendidos:** la deuda al despertarte, tu periodo de melatonina y las comidas sin anotar.
 - **Apagados:** el horario de comidas (la hora de cada comida), acostarte (`dormir`), bajar las luces y bajar el ritmo
   (`revoluciones`). Se prenden en Perfil › Avisos. Lo de «Más avisos» sigue apagado, y pesarse, como lo elegiste.
-- **Tu periodo de melatonina** suena una hora antes de que empiece (`ANTES_DEL_PERIODO`): «En 1 hora empieza tu
-  periodo de melatonina · A las 23:30. Ve dejando las pantallas y baja las luces: así te duermes más fácil.» Antes
-  sonaba dos horas antes, cuando la melatonina empieza a subir.
+- **Tu periodo de melatonina** suena una hora antes de que empiece (`ANTES_DEL_PERIODO`): «Tu periodo de melatonina
+  empieza a las 23:30 · Evita las pantallas y las comidas pesadas. Empieza tu rutina de sueño.» (el dato en el título
+  y una sugerencia corta: lo pediste el 27/11/2026; antes, «En 1 hora empieza tu periodo de melatonina · A las 23:30.
+  Ve dejando las pantallas…»). Antes del 25/11 sonaba dos horas antes, cuando la melatonina empieza a subir.
 - **La deuda al despertar:** el título dice si bajó o subió, y el cuerpo, en cuánto quedó: «Tu deuda de sueño bajó ·
   Ahora es de 3 h 20 min: 40 min menos que ayer.» Si no, «subió», «sigue igual», «bajó a cero» o «Sin deuda de
   sueño»; sin el día anterior, «Tu deuda de sueño: 4 h».
@@ -35,6 +36,75 @@ Para quien no eligió nada en Perfil › Avisos (`deFabrica` y `comidasSinAnotar
   Dicen «No olvides anotar lo que comiste en el almuerzo». Sin elegir se guarda `null`; apagadas, vacías (`[]`), y
   no vuelven a prenderse. Quien las había apagado antes del 25/11 lo guardaba como `null`: le vuelven prendidas.
 - **El máximo de fábrica** sigue en 10.
+
+## Que la mañana y la noche lleguen siempre (27/11/2026, lo pediste: «no me están llegando los avisos»)
+
+**Por qué no llegaban** (con el anillo, y anotando las comidas):
+
+- **La noche se borraba sola.** Las noches de un reloj o un anillo están solo en Salud, que no se guarda entre
+  arranques y no se puede leer con el iPhone bloqueado. Cada vez que iOS abría Moss de fondo (la tarea de segundo
+  plano, un Atajo, el enfoque) o se salía antes de que Salud contestara, los avisos se volvían a programar sin esas
+  noches: sin periodo ni deuda, se borraba lo del sueño de toda la semana y quedaban solo las comidas sin anotar.
+  Hasta el 25/11 no se notaba, porque el horario de comidas seguía sonando. **Ahora**, ver «Las noches guardadas en
+  el teléfono», abajo.
+- **La deuda no quedaba programada nunca.** Solo existía después de que Moss supiera que te despertaste, y sonaba dos
+  minutos después de abrirla, con Moss delante; si se enteraba más de dos horas tarde, no sonaba.
+- **Sin periodo** (menos de 3 noches en la semana) no había aviso de la noche.
+
+**Cómo queda** (`programar.ts` y `avisosDelDespertar`, en `sigueElDespertar.ts`; revisado el mismo 27/11):
+
+- **Las noches guardadas en el teléfono** (D45, lo decidiste el 27/11/2026): cada vez que Salud se lee bien, el
+  almacén guarda lo mínimo de sus noches (`nochesParaGuardar`, en `src/salud/convertir.ts`; la tabla
+  `noches_de_salud`, en `src/almacen/sqlite.ts`): las de los últimos 16 días y, de un reloj o un anillo, las últimas
+  14 aunque sean de antes, cada una con su día, cuándo te dormiste y te despertaste, lo dormido, las siestas, lo
+  despierto adentro, si es de un aparato, si se anotó a mano y la confianza de la duración y del horario. Nada más:
+  ni etapas, ni tramos, ni la app, ni lo que mide el reloj. Queda en la base de Moss, fuera de la copia de seguridad,
+  y se lee con el iPhone bloqueado; no sube ni se sincroniza, y se borra al cerrar sesión, borrar tus datos o la
+  cuenta (`olvidarTodo`). Sin Salud pedida en el teléfono se guarda vacío: no hay noches que esperar.
+  - **Cuándo se usa:** solo cuando Salud no se puede leer (de fondo con el iPhone bloqueado, o si `leerSalud`
+    falla). Las noches guardadas entran por el mismo camino que las de Salud (`conLasGuardadas`, en `programar.ts`) y
+    la semana se rearma entera: lo hecho deja de sonar, el máximo y los 20 minutos se respetan, el día nuevo llega
+    con lo de la noche y la deuda suena cada mañana. Los tests comprueban que una semana entera de fondo suena igual
+    que con Salud. Lo único que de fondo no se sabe son los entrenamientos de Salud: haber entrenado se sabe por el
+    hábito (marcado a mano o en el widget).
+  - **La primera vez con esta versión** (la OTA del 27/11) todavía no hay noches guardadas: se guardan recién cuando
+    Salud se lee. Mientras, si no se puede leer, lo de las noches que ya estaba programado queda como está (se
+    reconoce por su identificador, `AAAA-MM-DD:<id>`, y por lo que lleva), salvo lo que se apagó, el hábito que ya no
+    está y lo hecho; lo demás se rehace sin inventar horas de fábrica para la noche.
+  - **Antes** (dos rondas del mismo 27/11, sin publicar) lo de las noches se dejaba como estaba programado en iOS, y
+    la revisión encontró que una programación cortada a la mitad perdía la semana, que la primera corrida de fondo con
+    la OTA lo borraba y que «Entrenar tarde», el máximo y los 20 minutos fallaban de fondo.
+- **La deuda, todas las mañanas, una sola vez.** Queda programada para 45 minutos después de tu hora de siempre de
+  despertarte (`DEUDA_SIN_SABERLO`; el día que suena el despertador de Moss, desde él), con sonido, los siete días.
+  Antes eran dos minutos, y el día que dormías de más te despertaba. Si a esa hora Moss todavía no sabe cómo fue la
+  noche, suena «Tu deuda de sueño · Ayer era de 3 h 30 min. Al abrir Moss se suma la noche de anoche.» (sin deuda
+  ayer, «Ayer no tenías deuda…»). El número va solo con la noche de ese día: sin ella (el anillo todavía no
+  sincronizó) y de pasado mañana en adelante, «Al abrir Moss se suman tus últimas noches.».
+- **Si Moss sabe antes tu despertar y la noche de hoy**, suena la de siempre («bajó», «subió») en su lugar, con el
+  mismo nombre (`AAAA-MM-DD:deuda`): al saberlo o, si la mañana ya había empezado (lo supo de fondo, sin la noche), a
+  la hora en que quedó. Cuál suena y cuándo se decide con lo que de verdad quedó programado (iOS lo dice): la que no
+  sonó sigue a su hora (otro aviso pudo correrla, o tu hora de siempre cambió con noches nuevas), y la que está por
+  sonar no se corre; si ya no está y llegó hoy, o está programada la de otro día (con ella se programó la de hoy), ya
+  sonó y no se arma otra, tampoco en el borde del minuto. Si no, nunca se programó (recién prendida, o la primera vez
+  con esta versión): va a la hora de siempre o, si Moss lo supo después, al saberlo, mientras sea de mañana (hasta
+  dos horas después de despertarte, como pesarte). Antes se daba por sonada, y ese día no sonaba. Sin datos de la
+  deuda o sin tu hora de siempre, no suena. Quien abre Moss más tarde ya no ve «bajó» o «subió»: lo ve en Sueño.
+- **La noche sin periodo:** con tu periodo de melatonina prendido y sin periodo, suena igual una hora antes de
+  acostarte (la hora de «La hora de dormir», abajo), con el texto de bajar el ritmo, que no nombra la melatonina: «Tu
+  hora de acostarte es a las 23:15 · Evita las pantallas y las comidas pesadas. Empieza tu rutina de sueño.» (desde el
+  28/11; a la una, «es a la 01:00», en singular). Con bajar el ritmo o «Acostarte» prendidos (este, de 15 a 60
+  minutos antes), alcanza con ese: sonaban dos de la misma hora. Sin noches para calcular la hora, no suena.
+- **«Acostarte» nombra la deuda solo la noche en que se sabe:** la de hoy, con la noche de hoy (`Sueno.deudaDe`). Los
+  días que vienen no la nombran: antes decía la del día en que se programó, que el viernes ya no era la de verdad.
+- **Cerrar sesión, borrar tus datos o la cuenta** borra todo lo programado y saca del centro de notificaciones lo que
+  ya había llegado (los hábitos llevan sus nombres): sin la entrada hecha no suena nada, aunque Apple todavía no haya
+  dicho si hay acceso. Antes quedaba hasta una semana de avisos de la cuenta de antes. Apagarlo todo o quedarse sin
+  acceso también borra todo, se pueda leer Salud o no.
+- **Una programación a la vez, y sin cortarse a la mitad:** si llega otra mientras una programa (la tarea de fondo y
+  el almacén, casi juntas), espera o la reemplaza (`programarAvisos`, una cola). Todo se arma antes de tocar lo
+  programado (si algo falla, queda como estaba); después sale lo que ya no va y cada aviso se reemplaza en su lugar, con
+  su mismo identificador (iOS reemplaza el que tenía ese nombre). Si iOS suspende a Moss a la mitad, queda la semana
+  de antes con parte de la nueva, nunca media semana. Antes se borraba todo primero.
 
 ## La hora de dormir
 
@@ -553,7 +623,8 @@ los cuatro primeros.
 
 | Aviso | Título | Cuerpo |
 |---|---|---|
-| Tu periodo de melatonina (25/11, una hora antes) | «En 1 hora empieza tu periodo de melatonina» | «A las 23:30. Ve dejando las pantallas y baja las luces: así te duermes más fácil.» |
+| Tu periodo de melatonina (25/11, una hora antes; el texto, del 28/11) | «Tu periodo de melatonina empieza a las 23:30» | «Evita las pantallas y las comidas pesadas. Empieza tu rutina de sueño.» |
+| Sin periodo, y bajar el ritmo (28/11) | «Tu hora de acostarte es a las 23:15» (a la una, «es a la 01:00») | «Evita las pantallas y las comidas pesadas. Empieza tu rutina de sueño.» |
 | Bajar las luces | «Baja las luces» | «Luz baja y cálida desde ahora: la luz fuerte atrasa tu sueño. Te acuestas a las 23:15.» |
 | Bajar el ritmo (antes, «las revoluciones») | «Baja el ritmo» | «Deja lo que te acelera y las pantallas brillantes. Te acuestas a las 23:15.» |
 | Acostarte | «Acuéstate a las 23:15» | «En media hora. Así te duermes dentro de tu periodo de melatonina (23:30 – 00:30).» Con la deuda: «En media hora. Con 4 h de deuda de sueño, esta noche no lo dejes para más tarde.» |
@@ -580,7 +651,7 @@ tus noches de los últimos 7 días y tu margen para dormirte.
   teléfono lo arma `suenoParaAvisos` (`programar.ts`) con las mismas noches, el mismo día y el mismo margen que la
   tarjeta (`Sueno.tsx`); los días que vienen todavía no tienen noches y usan el de hoy.
 - **El aviso del periodo**, desde el 25/11/2026, suena una hora antes de que empiece (`ANTES_DEL_PERIODO`) y dice a
-  qué hora empieza, al minuto: «En 1 hora empieza tu periodo de melatonina · A las 22:57…». Antes sonaba cuando la
+  qué hora empieza, al minuto: «Tu periodo de melatonina empieza a las 22:57 · Evita las pantallas…». Antes sonaba cuando la
   melatonina empieza a subir (`inicio`, dos horas antes). Con acostarte prendido y 15 minutos de margen, el de
   acostarte cae 15 minutos después: el del periodo va 20 minutos antes de él, y la noche queda las luces, bajar el
   ritmo, el periodo y acostarte.

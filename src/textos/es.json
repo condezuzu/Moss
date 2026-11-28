@@ -25,8 +25,11 @@
     "seEnciendeSola": "Se enciende sola con Salud",
     "seEnciendeCon": {
       "proteina": "Se enciende sola cuando llegas a tu proteína",
+      "macros": "Se enciende sola cuando llegas a tus macros",
       "registrar": "Se enciende sola cuando anotas todas tus comidas",
-      "calorias": "Se enciende sola cuando quedas dentro de tus calorías"
+      "calorias": "Se enciende sola cuando quedas en tus calorías o hasta un 10 % por encima o por debajo",
+      "caloriasBajando": "Se enciende sola cuando quedas en tus calorías o hasta un 10 % por debajo",
+      "caloriasSubiendo": "Se enciende sola cuando quedas en tus calorías o hasta un 10 % por encima"
     },
     "verComida": "Comida",
     "desdeSalud": "{habito} · encendida desde Salud",
@@ -2909,14 +2912,14 @@
       "necesitoTexto": "Las guías dicen de 7 a 9 horas, y cambia de una persona a otra. Si con lo de siempre te levantas cansado, prueba con media hora más: la usan la deuda y la calidad.",
       "necesitoTextoMenor": "A tu edad se recomiendan de 8 a 10 horas, y cambia de una persona a otra. Si con lo de siempre te levantas cansado, prueba con media hora más: la usan la deuda y la calidad.",
       "tuDia": "Tu día",
-      "tuDiaTexto": "Sigue a tu despertar: nada de la mañana suena hasta que Moss sabe que te despertaste, y la noche se calcula con esa hora y tu deuda.",
+      "tuDiaTexto": "Sigue a tu despertar: salvo tu deuda de sueño, nada de la mañana suena hasta que Moss sabe que te despertaste, y la noche se calcula con esa hora y tu deuda.",
       "mas": "Más avisos",
       "masTexto": "Apagados de fábrica: enciende los que te sirvan.",
       "deuda": "Tu deuda de sueño",
-      "deudaTexto": "Al despertarte: cuánta tienes y cuánto cambió desde ayer.",
+      "deudaTexto": "Cada mañana: si bajó o subió y en cuánto quedó. Si 45 minutos después de tu hora de siempre (o del despertador de Moss) todavía no sabe cómo dormiste, te dice la de ayer.",
       "horarioTextoDia": "Al despertarte te pregunta si desayunas. Si no, lo del desayuno se reparte entre las comidas que quedan, y la primera que anotas mueve las demás.",
       "melatonina": "Tu periodo de melatonina",
-      "melatoninaTexto": "Unas dos horas antes, te dice a qué hora empieza: es cuando menos te cuesta dormirte. Es una estimación.",
+      "melatoninaTexto": "Una hora antes, te dice a qué hora empieza: es cuando menos te cuesta dormirte. Es una estimación. Con pocas noches todavía, te avisa una hora antes de tu hora de acostarte, si no te avisan ya Acostarte o Bajar el ritmo.",
       "revoluciones": "Bajar el ritmo",
       "revolucionesTexto": "Una hora antes de acostarte: algo tranquilo y sin pantallas brillantes.",
       "descarga": "Anotar lo que tienes en la cabeza",
@@ -4168,7 +4171,7 @@
       "metas": [
         "Cuándo llegas sale de tu tendencia de 12 semanas, del ritmo más rápido al más lento.",
         "Es un rango porque cada uno sube distinto (Latella 2020; Swinton 2024).",
-        "Con menos de 6 sesiones del ejercicio no se calcula.",
+        "Con menos de 6 sesiones del ejercicio en esas 12 semanas, o menos de 6 semanas de la primera a la última, no se calcula.",
         "La alejan dormir menos de 6 h o comer menos de 1,6 g de proteína por kilo (Morton 2018).",
         "Lo que comiste ayer no cambia la sesión de hoy."
       ]
@@ -4235,7 +4238,38 @@
       "error": "No se pudo guardar. Revisa la conexión.",
       "objetivoUna": "Levantar {kg} kg una vez",
       "objetivoVarias": "Levantar {kg} kg {reps} veces",
-      "nivelKg": "Hoy podrías levantar cerca de {kg} kg (estimado)"
+      "nivelKg": "Hoy podrías levantar cerca de {kg} kg (estimado)",
+      "faltanSesiones": {
+        "uno": "Te falta {n} sesión de este ejercicio para estimar cuándo llegas.",
+        "otros": "Te faltan {n} sesiones de este ejercicio para estimar cuándo llegas."
+      },
+      "faltanSemanas": {
+        "uno": "Te falta {n} semana más de sesiones para estimar cuándo llegas.",
+        "otros": "Te faltan {n} semanas más de sesiones para estimar cuándo llegas."
+      },
+      "editar": "Editar meta",
+      "buscar": "Buscar ejercicio",
+      "hechos": "Los que ya hiciste",
+      "parecidos": "Entrenan lo mismo",
+      "nada": "Ninguno con ese nombre.",
+      "porMancuerna": "por mancuerna",
+      "porLado": "por lado",
+      "enTotal": "{kg} kg en total",
+      "alcanzada": "Ya llegaste",
+      "nivelPasa": "Tu nivel estimado ya pasa la meta. Pruébala cuando te sientas bien.",
+      "yaTiene": "Ya tiene meta",
+      "borrarTitulo": "¿Borrar esta meta?",
+      "borrarTexto": "También se borra en Ascent.",
+      "errorBorrar": "No se pudo borrar. Revisa la conexión.",
+      "sinRespuesta": "No se sabe si se guardó.",
+      "sinRespuestaBorrar": "No se sabe si se borró.",
+      "demasiadas": "Ya tienes {n} metas: borra una antes.",
+      "sinVinculo": "Moss ya no está vinculada con Ascent.",
+      "reintentar": "Reintentar",
+      "tope": "Ya tienes {n} metas: borra una para poner otra, o elige un ejercicio con meta para cambiarla.",
+      "faltaReps": "Anota las repeticiones en Ascent para estimar cuándo llegas.",
+      "muchasReps": "Con más de 10 repeticiones no se puede estimar tu máximo: prueba series de 10 o menos.",
+      "faltaPeso": "Tus series no tienen peso: sin él no hay un máximo para estimar cuándo llegas."
     },
     "sugerencias": {
       "titulo": "Sugerencias para hoy",
@@ -4298,6 +4332,7 @@
     },
     "comidas": {
       "proteina": "Llegar a la proteína",
+      "macros": "Llegar a tus macros",
       "registrar": "Registrar todas las comidas",
       "calorias": "Quedar dentro de las calorías"
     },
@@ -4595,13 +4630,19 @@
         "es": "Es lo que te falta dormir de las últimas dos semanas.",
         "cero": "Dormiste lo que te faltaba.",
         "sin": "Duermes lo que necesitas.",
+        "sinLaNoche": {
+          "ayer": "Ayer era de {deuda}. Al abrir Moss se suma la noche de anoche.",
+          "ayerSin": "Ayer no tenías deuda. Al abrir Moss se suma la noche de anoche.",
+          "despues": "Al abrir Moss se suman tus últimas noches."
+        },
         "titulos": {
           "bajo": "Tu deuda de sueño bajó",
           "subio": "Tu deuda de sueño subió",
           "igual": "Tu deuda de sueño sigue igual",
           "es": "Tu deuda de sueño: {deuda}",
           "cero": "Tu deuda de sueño bajó a cero",
-          "sin": "Sin deuda de sueño"
+          "sin": "Sin deuda de sueño",
+          "sinLaNoche": "Tu deuda de sueño"
         }
       },
       "desayuno": {
@@ -4625,12 +4666,14 @@
       },
       "y": "{a} y {b}",
       "melatonina": {
-        "titulo": "En 1 hora empieza tu periodo de melatonina",
-        "texto": "A las {desde}. Ve dejando las pantallas y baja las luces: así te duermes más fácil."
+        "titulo": "Tu periodo de melatonina empieza a las {hora}",
+        "tituloALaUna": "Tu periodo de melatonina empieza a la {hora}",
+        "texto": "Evita las pantallas y las comidas pesadas. Empieza tu rutina de sueño."
       },
       "revoluciones": {
-        "titulo": "Se acerca tu hora de acostarte",
-        "texto": "Es a las {cama}. Algo tranquilo y lejos de las pantallas brillantes hace más fácil dormirte."
+        "titulo": "Tu hora de acostarte es a las {hora}",
+        "tituloALaUna": "Tu hora de acostarte es a la {hora}",
+        "texto": "Evita las pantallas y las comidas pesadas. Empieza tu rutina de sueño."
       },
       "gafas": {
         "titulo": "Las gafas para la luz azul, si las tienes",
@@ -4861,7 +4904,8 @@
     },
     "notas": {
       "cancelada": "No se te cobró nada. Cuando quieras, aquí sigue.",
-      "sinConexion": "Sin conexión. Cuando vuelvas a tener internet, verás el precio en tu moneda y podrás empezar.",
+      "sinConexion": "No se pudo conectar con la App Store. Cuando responda, verás el precio en tu moneda y podrás empezar.",
+      "sinPrecios": "La App Store no devolvió el precio de este plan. Cuando lo haga, lo verás en tu moneda y podrás empezar.",
       "nada": "No hay nada para restaurar en esta cuenta de Apple.",
       "errorRestaurar": "No se pudo conectar con la App Store. Prueba de nuevo con conexión.",
       "error": "No se pudo completar. No se te cobró nada.",

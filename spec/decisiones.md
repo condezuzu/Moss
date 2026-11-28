@@ -330,6 +330,26 @@ Están en la galería, sección 10, «Para decidir»:
 
 ## Resueltas
 
+### D45 · Lo mínimo de las noches de Salud, guardado en el teléfono para los avisos (dijiste que sí el 27/11/2026)
+
+Te dejaron de llegar los avisos de la noche y de la mañana: las noches de tu anillo están solo en Salud, Salud no se
+puede leer con el iPhone bloqueado, y cada vez que iOS abría Moss de fondo los avisos se rearmaban sin ellas. Dos
+arreglos que no guardaban nada (dejar lo programado en iOS) fallaron en la revisión. Lo decidiste así:
+
+- **Se guarda lo mínimo de las noches que usan los avisos** (el periodo de melatonina, la deuda, tu horario de siempre
+  y lo que sueles estar despierto): de cada noche, el día, cuándo te dormiste y te despertaste, lo dormido, las siestas,
+  lo despierto adentro, si es de un aparato, si se anotó a mano y la confianza. Las de los últimos 16 días y, de un
+  aparato, las últimas 14. Sin etapas, tramos, la app ni lo que mide el reloj.
+- **Solo en el teléfono:** en la base de Moss, fuera de la copia de seguridad de iCloud; no sube ni se sincroniza. Se
+  escribe cada vez que Salud se lee bien y se borra al cerrar sesión, borrar tus datos o la cuenta, o con otra cuenta.
+- **Se usa solo cuando Salud no se puede leer:** entra por el mismo camino que lo de Salud, y los avisos se rearman
+  enteros, igual que con Salud. La primera vez con la versión nueva, sin nada guardado, lo de las noches que ya estaba
+  programado queda como está.
+- Cómo funciona, en [`avisos.md`](avisos.md) («Las noches guardadas en el teléfono») y [`sueno.md`](sueno.md). La
+  política de privacidad no dice que lo de Salud no se guarde en el teléfono, pero conviene nombrarlo en «Solo en el
+  teléfono»: la línea propuesta va en el informe del 28/11 (no se tocó `docs/`, que se publica aparte). Las respuestas
+  a Apple no cambian: lo que no sale del teléfono no se declara.
+
 ### D43 · Los widgets nuevos: aprobados el 2/11/2026
 
 Hoy (con «Anotado ✓» y otro toque para deshacer), Anotar, Agua, el cielo con el cielo de verdad de fondo, la noche también a la
@@ -851,7 +871,8 @@ Cómo anda, en [`nutricion.md`](nutricion.md), «El plan de comidas».
   borra lo de Moss y solo borra el usuario si es solo de Moss.
 - **Cerrar sesión y borrar dejan el teléfono vacío**: así otra cuenta no hereda
   nada, y vuelve la entrada.
-- **Salud** se lee al abrir Moss y al volver a ella, y queda en memoria:
+- **Salud** se lee al abrir Moss y al volver a ella, y queda en memoria (salvo lo mínimo de las noches, que desde el
+  27/11/2026 queda en el teléfono para los avisos: D45):
   - enciende los hábitos automáticos que llegaron a su meta, pero nunca apaga
     uno encendido;
   - suma el peso solo en los días sin una pesada propia;

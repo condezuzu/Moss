@@ -9,6 +9,7 @@
 
 import { leerAjustesDeAscent, leerRutinaDeAscent, type AjustesDeAscent, type RutinaDeAscent } from '@/dominio/conAscent';
 import type { ClaveDia } from '@/dominio/fechas';
+import { CARGAS, type Carga } from '@/dominio/musculos';
 import { esCodigoDeVinculo } from '@/lib/codigoDeVinculo';
 import { haySupabase, supabase } from '@/lib/supabase';
 
@@ -37,6 +38,11 @@ export type EjercicioDeAscent = {
    * ese día de la rutina. Cuenta para los músculos, el volumen y la fatiga, y no para la tendencia de fuerza.
    */
   copiada?: true;
+  /**
+   * Qué número se escribió ese día en Ascent (0020_carga_de_cada_ejercicio.sql): con 'par' y 'una', el de una mancuerna o
+   * un lado, y los kilos llegan por 2. null si el bloque no la trae; falta mientras la base no la manda.
+   */
+  carga?: Carga | null;
 };
 
 /**
@@ -120,7 +126,8 @@ async function llamar(funcion: string, argumentos?: Objeto): Promise<unknown> {
   const tope = new Promise<never>((_, mal) => (reloj = setTimeout(() => mal(new Error(`moss.${funcion}: sin respuesta`)), ESPERA_MS)));
   try {
     const { data, error } = await Promise.race([sesion.cliente.rpc(funcion, argumentos), tope]);
-    if (error) throw new Error(`moss.${funcion}: ${error.code || error.message}`);
+    // `detalle`: lo que dijo la base (el «demasiadas» de guardar_meta_de_fuerza).
+    if (error) throw Object.assign(new Error(`moss.${funcion}: ${error.code || error.message}`), { detalle: error.message });
     return data;
   } finally {
     clearTimeout(reloj);
@@ -225,11 +232,15 @@ function ejercicioDe(e: Objeto): EjercicioDeAscent[] {
     series: lista(e.series).map(serieDe),
     ...(id ? { id } : {}),
     ...(e.copiada === true ? { copiada: true as const } : {}),
+    ...('carga' in e ? { carga: CARGAS.find((c) => c === e.carga) ?? null } : {}),
   }];
 }
 
-/** Una meta de fuerza (0016_metas_de_fuerza.sql): «llegar a `kilos` × `reps` en el ejercicio». */
-export type MetaDeFuerza = { id: string; ejercicio: string; kilos: number; reps: number };
+/**
+ * Una meta de fuerza (0016_metas_de_fuerza.sql): «llegar a `kilos` × `reps` en el ejercicio». Los kilos van siempre en
+ * total, como los de las series que llegan de Ascent. `pendiente`: recién puesta en el teléfono, todavía sin guardar.
+ */
+export type MetaDeFuerza = { id: string; ejercicio: string; kilos: number; reps: number; pendiente?: true };
 
 /** Las metas de fuerza de la cuenta de Moss del vínculo; sin vínculo, null. */
 export async function metasDeFuerza(): Promise<MetaDeFuerza[] | null> {
@@ -241,9 +252,14 @@ export async function metasDeFuerza(): Promise<MetaDeFuerza[] | null> {
   });
 }
 
-/** Crea una meta (sin id) o la cambia. Devuelve su id; sin vínculo, null. */
+/**
+ * Crea una meta (sin id; desde 0022, si el ejercicio ya tiene una, la cambia) o la cambia. Devuelve su id; sin vínculo, o
+ * si la que se cambia ya no está, null. Con 20 metas, crear otra rechaza con «demasiadas».
+ */
 export async function guardarMetaDeFuerza(m: { id?: string; ejercicio: string; kilos: number; reps: number }): Promise<string | null> {
-  const r = await llamar('guardar_meta_de_fuerza', { p_id: m.id ?? null, p_ejercicio: m.ejercicio, p_kilos: m.kilos, p_reps: m.reps });
+  const r = await llamar('guardar_meta_de_fuerza', { p_id: m.id ?? null, p_ejercicio: m.ejercicio, p_kilos: m.kilos, p_reps: m.reps }).catch((e: unknown) => {
+    throw (e as { detalle?: unknown }).detalle === 'demasiadas' ? new Error('demasiadas') : e;
+  });
   return typeof r === 'string' ? r : null;
 }
 

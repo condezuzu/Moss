@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  acceso, ahorroDelAnual, avisoDelRegalo, avisoDePrueba, avisosHasta, cuentaDeMossDesde, cuentaParaElRegalo, DIA_DEL_AVISO, DIAS_DE_PRUEBA, diasDePrueba, esDeRegalo, finDelRegalo,
+  acceso, ahorroDelAnual, avisoDelRegalo, avisoDePrueba, avisosHasta, codigoDeOferta, cuentaDeMossDesde, cuentaParaElRegalo, DIA_DEL_AVISO, DIAS_DE_PRUEBA, diasDePrueba, esDeRegalo, finDelRegalo,
   hastaDelRegalo, MESES_DE_REGALO, planDe, porMes, PRECIOS, PRODUCTOS, regaloVigente, tieneAcceso, type Suscripcion,
 } from './premium';
 
@@ -228,5 +228,28 @@ describe('los planes y el precio', () => {
   it('el ahorro sale de los precios reales de cada país', () => {
     expect(ahorroDelAnual(44.99, 10.99)).toBe(66);
     expect(ahorroDelAnual(60, 5)).toBe(0);
+  });
+});
+
+describe('el código de oferta', () => {
+  it('letras y números, como se escribió', () => {
+    expect(codigoDeOferta('MOSS14')).toBe('MOSS14');
+    expect(codigoDeOferta('moss14')).toBe('moss14');
+    expect(codigoDeOferta('A'.repeat(64))).toBe('A'.repeat(64));
+  });
+
+  it('los espacios escritos de más se sacan: el teclado suele dejar uno al final', () => {
+    expect(codigoDeOferta(' MOSS14 ')).toBe('MOSS14');
+    expect(codigoDeOferta('MOSS 14\n')).toBe('MOSS14');
+  });
+
+  it('con cualquier otra cosa no hay código: no llega nada raro al enlace de la App Store', () => {
+    expect(codigoDeOferta('')).toBeNull();
+    expect(codigoDeOferta('   ')).toBeNull();
+    expect(codigoDeOferta('MOSS-14')).toBeNull();
+    expect(codigoDeOferta('MOSS14&id=1')).toBeNull();
+    expect(codigoDeOferta('MOSS14?x')).toBeNull();
+    expect(codigoDeOferta('MOÑO14')).toBeNull();
+    expect(codigoDeOferta('A'.repeat(65))).toBeNull();
   });
 });

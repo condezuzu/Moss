@@ -8,7 +8,7 @@ import { useSyncExternalStore } from 'react';
 import { AppState, Linking, Platform } from 'react-native';
 
 import type { ClaveDia } from '@/dominio/fechas';
-import { acceso, cuentaParaElRegalo, DIAS_DE_PRUEBA, esDeRegalo, finDelRegalo, hastaDelRegalo, porMes, PRECIOS, PRODUCTOS, regaloVigente, tieneAcceso, type Acceso, type Plan, type Suscripcion } from '@/dominio/premium';
+import { acceso, ahorroDelAnual, codigoDeOferta, cuentaParaElRegalo, DIAS_DE_PRUEBA, esDeRegalo, finDelRegalo, hastaDelRegalo, porMes, PRECIOS, PRODUCTOS, regaloVigente, tieneAcceso, type Acceso, type Plan, type Suscripcion } from '@/dominio/premium';
 import { idioma } from '@/textos';
 import { CON_PREMIUM, PREMIUM_SALE } from './banderas';
 
@@ -16,6 +16,10 @@ import { CON_PREMIUM, PREMIUM_SALE } from './banderas';
 export type Producto = { id: string; precio: string; porMes: string; valor: number; prueba: number };
 export type ResultadoDeCompra = 'comprado' | 'cancelado' | 'pendiente' | 'error';
 export type ResultadoDeRestaurar = 'restaurada' | 'nada' | 'error';
+/** `sinCodigo`: esta build no trae la hoja de Apple y el código que se pasó no puede ser uno. */
+export type ResultadoDeCanje = 'abierto' | 'sinCodigo' | 'error';
+/** Lo que se sabe del precio de un plan: `esperando`, hasta que Apple contesta la primera vez; después, por qué falta. */
+export type PrecioDelPlan = 'listo' | 'esperando' | 'sinRespuesta' | 'faltaEnLaTienda';
 
 type Tienda = {
   productos(ids: string[]): Promise<Producto[]>;
@@ -23,15 +27,35 @@ type Tienda = {
   ultima(ids: string[]): Promise<Suscripcion | null>;
   comprar(id: string): Promise<ResultadoDeCompra>;
   restaurar(): Promise<Suscripcion | null>;
+  /** La hoja de Apple para canjear un código: recién en la build que la trae. false si no pudo abrirla. */
+  canjearCodigo?(): Promise<boolean>;
   addListener(evento: 'alCambiar', oyente: () => void): { remove(): void };
 };
 
 /** Lo que Apple pide para administrar la suscripción: abre su pantalla, en Ajustes. */
 const ADMINISTRAR = 'https://apps.apple.com/account/subscriptions';
+/** El enlace de canje de la App Store (spec/suscripcion.md): el de la página de la oferta; el código, si se sabe, va al final. */
+const CANJEAR = 'https://apps.apple.com/redeem?ctx=offercodes&id=6828034537';
 /** Lo que se espera a Apple antes de decidir si va la pantalla de pago. */
 const ESPERA_A_APPLE = 3000;
 /** Lo que se esperan los precios de quien ya tuvo una, para saber si hay conexión. */
 const ESPERA_A_LOS_PRECIOS = 5000;
+/** Lo más que se espera cada pedido de precios: si StoreKit no contesta, el siguiente tiene que poder salir. */
+const TOPE_DE_LOS_PRECIOS = 10_000;
+/**
+ * Mientras se los mira y faltan, cada cuánto se vuelven a pedir solos; la última espera se repite. Crecen hasta
+ * cinco minutos: la pantalla de pago es la pantalla fija de quien venció, y con un pedido cada 30 segundos eran
+ * más de cien por hora.
+ */
+const ESPERAS_DE_LOS_PRECIOS = [2000, 4000, 8000, 15_000, 30_000, 60_000, 300_000];
+/** Un pedido a mano («Reintentar», o volver a Moss) espera al que está en camino solo si salió hace menos que esto. */
+const PEDIDO_RECIENTE = 2000;
+/** Con StoreKit colgado, lo más que se junta sin contestar: de los que salen solos y, contando los pedidos a mano, en total. */
+const SIN_CONTESTAR = 3;
+const SIN_CONTESTAR_A_MANO = 6;
+/** Después de una compra, si Apple todavía no la da por vigente: cuántas veces más se le pregunta, y cada cuánto. */
+const RELEER_LA_COMPRA = 3;
+const ENTRE_RELECTURAS = 300;
 
 /** El precio decidido, en dólares: el respaldo si la App Store no contesta (spec/suscripcion.md). */
 export function precioDeRespaldo(valor: number): string {
@@ -76,10 +100,15 @@ export type EstadoDePremium = {
   /** Si la cuenta es de antes de que se prendiera: tiene el regalo mientras dura (finDelRegaloActual). */
   regalo: boolean;
   productos: Partial<Record<Plan, Producto>>;
-  /** Si no se pudieron traer los precios: no hay conexión con la App Store, y sin precio no se puede comprar. */
+  /**
+   * Si no se pudieron traer los precios (la App Store no contestó, o contestó sin ninguno): para el acceso vale
+   * como estar sin conexión (accesoDe), y sin precio no se puede comprar.
+   */
   sinPrecios: boolean;
+  /** Si la App Store contestó y falta el precio de algún plan: no es la conexión, y la pantalla de pago no dice que lo sea. */
+  faltanEnLaTienda: boolean;
 };
-let estado: EstadoDePremium = { listo: false, suscripcion: null, ultima: null, leido: 0, regalo: false, productos: {}, sinPrecios: false };
+let estado: EstadoDePremium = { listo: false, suscripcion: null, ultima: null, leido: 0, regalo: false, productos: {}, sinPrecios: false, faltanEnLaTienda: false };
 const oyentes = new Set<() => void>();
 const suscribir = (o: () => void) => {
   oyentes.add(o);
@@ -90,53 +119,267 @@ function cambiar(nuevo: Partial<EstadoDePremium>) {
   oyentes.forEach((o) => o());
 }
 
-/** Lo que está en camino: dos toques en «Reintentar» (o volver a la app mientras tanto) esperan al mismo pedido. */
-let leyendoPrecios: Promise<void> | null = null;
+/**
+ * Que el acceso no dependa del orden en que terminan los pedidos de precios. `paso`, un reloj que solo avanza, ordena
+ * cuándo sale cada pedido, cuándo llegan precios y cuándo se le pregunta a Apple, y con él valen dos reglas:
+ * (i) «no hay conexión» lo dice un pedido que falla, llega vacío o no contesta a tiempo, haya o no otro en camino,
+ *     salvo que después de que salió hayan llegado precios (sinConexionDesde);
+ * (ii) bajar a «vencida» a quien pudo renovar sin conexión pide una respuesta de Apple de después de los últimos
+ *     precios: si llegaron después de la pregunta, se le vuelve a preguntar antes de cambiar nada (loQueDiceApple).
+ */
+let paso = 0;
+/** El paso de los últimos precios que llegaron y el del último «no hay conexión» que valió. */
+let ultimoExito = 0;
+let ultimoFallo = 0;
+/** Un pedido de precios: `listo` termina cuando contesta o a su tope; `salida`, el paso en que salió. */
+type Pedido = { listo: Promise<void>; salida: number };
+/** El que está en camino, hasta su tope: mientras tanto, los que salen solos esperan a ese. */
+let enCamino: Pedido | null = null;
 let restaurando: Promise<ResultadoDeRestaurar> | null = null;
+/** Cuándo salió el último, y cuántos le quedan a StoreKit sin contestar. */
+let salioEl = 0;
+let sinContestar = 0;
+/** Cuántas pantallas están mirando los precios, el reloj del pedido que sigue y por cuál de las esperas va. */
+let mirando = 0;
+let reloj: ReturnType<typeof setTimeout> | undefined;
+let espera = 0;
 
-export function leerPrecios(): Promise<void> {
-  leyendoPrecios ??= leerLosPrecios().finally(() => {
-    leyendoPrecios = null;
-  });
-  return leyendoPrecios;
-}
+const faltanPrecios = () => !estado.productos.mensual || !estado.productos.anual;
 
-async function leerLosPrecios(): Promise<void> {
-  if (!tienda) return;
-  try {
-    const lista = await tienda.productos(Object.values(PRODUCTOS));
-    const de = (id: string) => lista.find((p) => p.id === id);
-    cambiar({ productos: { mensual: de(PRODUCTOS.mensual), anual: de(PRODUCTOS.anual) }, sinPrecios: lista.length === 0 });
-  } catch {
-    cambiar({ sinPrecios: true });
+/**
+ * Pide los precios; si ya hay un pedido en camino, es ese. `aMano`: lo pidió la persona (tocó «Reintentar» o
+ * volvió a Moss). Si el que está en camino salió hace más de un momento, sale uno nuevo en vez de colgarse de uno
+ * que puede estar condenado, y las esperas de los que salen solos empiezan de nuevo. Con muchos sin contestar no
+ * sale ninguno más: StoreKit está colgado, y otro pedido no lo arregla.
+ */
+function pedirPrecios(aMano = false): Pedido | null {
+  if (!tienda) return null;
+  if (aMano) {
+    clearTimeout(reloj);
+    reloj = undefined;
+    espera = 0;
   }
+  if (enCamino && (!aMano || Date.now() - salioEl < PEDIDO_RECIENTE)) return enCamino;
+  if (sinContestar >= (aMano ? SIN_CONTESTAR_A_MANO : SIN_CONTESTAR)) {
+    seguirPidiendo();
+    return enCamino;
+  }
+  const salida = ++paso;
+  salioEl = Date.now();
+  const pedido: Pedido = {
+    salida,
+    listo: leerLosPrecios(salida).finally(() => {
+      if (enCamino === pedido) enCamino = null;
+      seguirPidiendo();
+    }),
+  };
+  enCamino = pedido;
+  return pedido;
 }
+
+export const leerPrecios = (aMano = false): Promise<void> => pedirPrecios(aMano)?.listo ?? Promise.resolve();
+
+/** Agenda el pedido que sigue, si alguien está mirando los precios y falta alguno. */
+function seguirPidiendo() {
+  if (reloj !== undefined || mirando === 0 || !faltanPrecios()) return;
+  reloj = setTimeout(() => {
+    reloj = undefined;
+    pedirSolos();
+  }, ESPERAS_DE_LOS_PRECIOS[Math.min(espera++, ESPERAS_DE_LOS_PRECIOS.length - 1)]);
+}
+
+function pedirSolos() {
+  if (mirando > 0 && faltanPrecios()) leerPrecios().catch(() => {});
+}
+
+/** Si tiene acceso solo porque no hay conexión (accesoDe): ya tuvo una, Apple no la da por vigente y renovaba. */
+const dependeDeLaConexion = () => estado.sinPrecios && tieneAcceso(accesoDe(estado)) && !tieneAcceso(accesoDe({ ...estado, sinPrecios: false }));
+
+async function leerLosPrecios(salida: number): Promise<void> {
+  if (!tienda) return;
+  sinContestar++;
+  let contesto = false;
+  const sinRespuesta = () => sinConexionDesde(salida, false);
+  const pedido = (async () => {
+    let lista: Producto[] | null = null;
+    try {
+      lista = await tienda.productos(Object.values(PRODUCTOS));
+    } catch {
+      // Sin lista: abajo queda anotado que no contestó.
+    }
+    contesto = true;
+    sinContestar--;
+    if (Array.isArray(lista)) await llegaronLosPrecios(lista, salida);
+    else sinRespuesta();
+  })();
+  let relojDelTope: ReturnType<typeof setTimeout> | undefined;
+  const tope = new Promise<void>((listo) => {
+    relojDelTope = setTimeout(listo, TOPE_DE_LOS_PRECIOS);
+  }).then(() => {
+    if (!contesto) sinRespuesta();
+  });
+  await Promise.race([pedido, tope]);
+  clearTimeout(relojDelTope);
+}
+
+/** Regla (i): no hay conexión, salvo que después de que salió el pedido (`salida`) ya hayan llegado precios. */
+function sinConexionDesde(salida: number, faltanEnLaTienda: boolean) {
+  if (ultimoExito > salida) return;
+  ultimoFallo = ++paso;
+  cambiar({ sinPrecios: true, faltanEnLaTienda });
+}
+
+/**
+ * Llegó una lista de la App Store. Con algún precio, hay conexión ahora (haya salido el pedido cuando haya salido),
+ * y lo que trae se suma a lo que ya se tenía: un precio que ya llegó no se pierde porque esta lista traiga menos.
+ * Vacía, vale para el acceso como estar sin conexión (regla i).
+ */
+async function llegaronLosPrecios(lista: Producto[], salida: number): Promise<void> {
+  const de = (id: string) => lista.find((p) => p.id === id);
+  const mensual = de(PRODUCTOS.mensual);
+  const anual = de(PRODUCTOS.anual);
+  if (!mensual && !anual) {
+    sinConexionDesde(salida, faltanPrecios());
+    return;
+  }
+  ultimoExito = ++paso;
+  const productos = { ...estado.productos, ...(mensual ? { mensual } : {}), ...(anual ? { anual } : {}) };
+  const conEllos = { productos, faltanEnLaTienda: !productos.mensual || !productos.anual };
+  if (!dependeDeLaConexion()) {
+    cambiar({ ...conEllos, sinPrecios: false });
+    return;
+  }
+  // Sigue adentro solo porque no había conexión: Apple, que sin conexión no podía saber que renovó, ahora puede.
+  // Los precios se ven ya, pero sinPrecios baja recién con lo que conteste Apple, y en el mismo cambio: si no,
+  // quedaba «vencida» con lo que Apple había dicho sin conexión. Si Apple no contesta, sigue adentro, y también si
+  // mientras tanto un pedido más nuevo constató que no hay conexión.
+  cambiar(conEllos);
+  const respuesta = await preguntarAApple();
+  if (respuesta) cambiar({ sinPrecios: ultimoFallo > ultimoExito, ...loQueVale(respuesta) });
+}
+
+/**
+ * Mientras se miran los precios (la pantalla de pago, lo que cuesta en la entrada, Tu suscripción): si falta
+ * alguno, se pide, y se vuelve a pedir solo hasta tenerlos, cada vez más espaciado. Antes se pedían una vez, al
+ * abrir Moss, y si esa vez fallaba la pantalla quedaba sin precio hasta tocar «Reintentar» o salir y volver.
+ * Devuelve cómo dejar de pedir.
+ */
+export function pedirLosPreciosQueFalten(): () => void {
+  if (!tienda) return () => {};
+  mirando++;
+  // Cada pantalla que se abre empieza de nuevo por las esperas cortas.
+  clearTimeout(reloj);
+  reloj = undefined;
+  espera = 0;
+  pedirSolos();
+  let abierta = true;
+  return () => {
+    if (!abierta) return;
+    abierta = false;
+    if (--mirando > 0) return;
+    clearTimeout(reloj);
+    reloj = undefined;
+  };
+}
+
+export function precioDelPlan(e: EstadoDePremium, plan: Plan): PrecioDelPlan {
+  if (e.productos[plan]) return 'listo';
+  if (e.faltanEnLaTienda) return 'faltaEnLaTienda';
+  return e.sinPrecios ? 'sinRespuesta' : 'esperando';
+}
+
+/**
+ * Lo que se muestra de cada plan: su precio de Apple o, si falta, el decidido en dólares. Lo que acompaña al anual
+ * sale de la misma fuente que su precio: «por mes», siempre; el ahorro, solo si el mensual también (comparar un
+ * precio de Apple con uno de respaldo, que puede estar en otra moneda, no dice nada), y si no, null.
+ */
+export function preciosDe(e: EstadoDePremium): { anual: string; mensual: string; porMes: string; ahorro: number | null } {
+  const { anual, mensual } = e.productos;
+  const ahorro = anual && mensual ? ahorroDelAnual(anual.valor, mensual.valor) : anual || mensual ? null : ahorroDelAnual(PRECIOS.anual, PRECIOS.mensual);
+  return {
+    anual: anual?.precio ?? precioDeRespaldo(PRECIOS.anual),
+    mensual: mensual?.precio ?? precioDeRespaldo(PRECIOS.mensual),
+    porMes: anual?.porMes ?? precioDeRespaldo(porMes(PRECIOS.anual)),
+    ahorro,
+  };
+}
+
+/**
+ * El plan que queda elegido en la pantalla de pago. Si el de ahora no tiene precio y el otro sí, el otro: así el
+ * botón compra en vez de decir «Reintentar». Lo que eligió la persona no se pisa, y de un plan que se puede comprar
+ * no se sale solo (aunque después llegue el otro: lo cambiaría justo cuando va a tocar el botón).
+ */
+export function planQueSePuede(elegido: Plan, loEligio: boolean, productos: EstadoDePremium['productos']): Plan {
+  const otro: Plan = elegido === 'anual' ? 'mensual' : 'anual';
+  return !loEligio && !productos[elegido] && productos[otro] ? otro : elegido;
+}
+
+type Lectura = Pick<EstadoDePremium, 'suscripcion' | 'ultima' | 'leido'>;
+/** `orden`: el paso en que se le preguntó. */
+type Respuesta = { lectura: Lectura; orden: number };
+/** El de la respuesta guardada: lo que contesta a una pregunta anterior no pisa lo ya guardado de una posterior. */
+let guardadaLaDe = 0;
 
 /** Lo que dice Apple, sin guardarlo todavía; null si no contestó. Apple contesta sin conexión. */
-async function preguntarAApple(): Promise<Pick<EstadoDePremium, 'suscripcion' | 'ultima' | 'leido'> | null> {
+async function preguntarAApple(): Promise<Respuesta | null> {
   if (!tienda) return null;
+  const orden = ++paso;
   try {
     const [suscripcion, ultima] = await Promise.all([tienda.estado(), tienda.ultima(Object.values(PRODUCTOS))]);
-    return { suscripcion, ultima, leido: Date.now() };
+    return { lectura: { suscripcion, ultima, leido: Date.now() }, orden };
   } catch {
     return null;
   }
 }
 
-/** Dice si contestó: si no contesta, no se le muestra la pantalla de pago a nadie. */
-async function leerSuscripcion(): Promise<boolean> {
-  const leida = await preguntarAApple();
-  if (leida) cambiar(leida);
-  return !!leida;
+/** Lo que hay que guardar de una respuesta de Apple: nada, si ya se guardó la de una pregunta posterior. */
+function loQueVale(respuesta: Respuesta): Partial<EstadoDePremium> {
+  if (respuesta.orden < guardadaLaDe) return {};
+  guardadaLaDe = respuesta.orden;
+  return respuesta.lectura;
 }
 
 /**
- * Quien ya tuvo una y Apple no la da por vigente: si no hay conexión, pudo haber renovado. Se esperan los
- * precios, con tope: si no llegan a tiempo, no hay conexión.
+ * Se esperan los precios del pedido, hasta 5 s: si no llegan, no hay conexión (salvo que hayan llegado de otro
+ * después de que salió, regla i). Terminar no es contestar: si termina sin precios y hay otro más nuevo en camino,
+ * se sigue esperando a ese con lo que queda.
  */
-async function esperarLosPrecios(precios: Promise<void>): Promise<void> {
-  const llegaron = await Promise.race([precios.then(() => true), new Promise<boolean>((listo) => setTimeout(() => listo(false), ESPERA_A_LOS_PRECIOS))]);
-  if (!llegaron) cambiar({ sinPrecios: true });
+async function esperarLosPrecios(pedido: Pedido | null): Promise<void> {
+  if (!pedido) return;
+  const hasta = Date.now() + ESPERA_A_LOS_PRECIOS;
+  let esperado = pedido;
+  for (;;) {
+    let relojDeLaEspera: ReturnType<typeof setTimeout> | undefined;
+    const termino = await Promise.race([esperado.listo.then(() => true), new Promise<boolean>((listo) => { relojDeLaEspera = setTimeout(() => listo(false), Math.max(0, hasta - Date.now())); })]);
+    clearTimeout(relojDeLaEspera);
+    if (!termino) {
+      // Tampoco se sigue diciendo que el precio falta en la tienda: eso era de una respuesta anterior, y esta vez no contestó.
+      sinConexionDesde(pedido.salida, false);
+      return;
+    }
+    if (ultimoExito > esperado.salida || !enCamino || enCamino === esperado) return;
+    esperado = enCamino;
+  }
+}
+
+/**
+ * Lo que dice Apple, para guardar; null si no contestó. Quien ya tuvo una y Apple no la da por vigente pudo haber
+ * renovado sin conexión: se esperan los precios (`precios`, o un pedido nuevo: los de antes no dicen si ahora hay
+ * conexión) y, si llegaron después de la pregunta, se le vuelve a preguntar (regla ii). Si no llegan, no hay conexión
+ * y sigue adentro.
+ */
+async function loQueDiceApple(precios?: Pedido | null): Promise<Respuesta | null> {
+  const respuesta = await preguntarAApple();
+  if (!respuesta || respuesta.lectura.suscripcion || !respuesta.lectura.ultima) return respuesta;
+  await esperarLosPrecios(precios ?? pedirPrecios(true));
+  return ultimoExito > respuesta.orden ? preguntarAApple() : respuesta;
+}
+
+/** Guarda lo que dice Apple, con `mas` en el mismo cambio. Dice si contestó: si no, no se le muestra la pantalla de pago a nadie. */
+async function leerSuscripcion(precios?: Pedido | null, mas: Partial<EstadoDePremium> = {}): Promise<boolean> {
+  const respuesta = await loQueDiceApple(precios);
+  if (respuesta) cambiar({ ...loQueVale(respuesta), ...mas });
+  return !!respuesta;
 }
 
 /**
@@ -176,29 +419,21 @@ type LeerCuenta = () => Promise<string | null | undefined>;
 
 async function arrancar(leerCuenta: LeerCuenta): Promise<void> {
   if (!tienda) return;
-  const leerAlVolver = async () => {
-    const leida = await preguntarAApple();
-    if (!leida) return;
-    // Los precios de la mañana no dicen si ahora hay conexión: se vuelve a esperar antes de cambiar lo que se ve,
-    // y hasta entonces queda lo de antes (si no, quien renovó vería la pantalla de pago mientras tanto).
-    if (!leida.suscripcion && leida.ultima) {
-      await esperarLosPrecios(leerPrecios().catch(() => {}));
-      // Mientras se esperaba llegó algo más nuevo (una compra, restaurar): vale eso.
-      if (estado.leido > leida.leido) return;
-    }
-    cambiar({ ...leida, listo: true });
-  };
+  // Hasta que se decide lo que dice Apple (loQueDiceApple) queda lo de antes: si no, quien renovó vería la pantalla
+  // de pago mientras tanto. Si mientras se esperaba se guardó algo más nuevo (una compra, restaurar, o lo que dijo
+  // Apple al llegar los precios), vale eso.
+  const leerAlVolver = () => leerSuscripcion(undefined, { listo: true });
   tienda.addListener('alCambiar', () => { leerAlVolver().catch(() => {}); });
   AppState.addEventListener('change', (a) => {
     if (a !== 'active') return;
     leerAlVolver().catch(() => {});
-    if (estado.sinPrecios) leerPrecios().catch(() => {});
+    // También si falta alguno sin que conste que falló: el pedido de antes podía seguir en camino y fallar después.
+    if (estado.sinPrecios || faltanPrecios()) leerPrecios(true).catch(() => {});
   });
-  // Los precios, aparte: sin conexión tardan, y saber si tiene acceso no los necesita.
-  const precios = leerPrecios().catch(() => {});
+  // Los precios, aparte: sin conexión tardan, y saber si tiene acceso solo los espera quien ya tuvo una.
+  const precios = pedirPrecios();
   // La cuenta guardada, sin esperar al primer aviso de la sesión. Sin sesión a mano, la trae ese aviso.
-  const [contesto] = await Promise.all([leerSuscripcion(), leerCuenta().then(cuentaDePremium).catch(() => {})]);
-  if (contesto && !estado.suscripcion && estado.ultima) await esperarLosPrecios(precios);
+  const [contesto] = await Promise.all([leerSuscripcion(precios), leerCuenta().then(cuentaDePremium).catch(() => {})]);
   if (contesto) cambiar({ listo: true });
 }
 
@@ -235,19 +470,35 @@ export const seSabeElAcceso = () => !tienda || estado.listo;
 export const hayPremium = () => !tienda || (estado.listo && tieneAcceso(accesoActual()));
 export const suscripcionActual = () => estado.suscripcion;
 
+export const estadoDePremium = () => estado;
+
 export function useEstadoDePremium(): EstadoDePremium {
-  return useSyncExternalStore(suscribir, () => estado);
+  return useSyncExternalStore(suscribir, estadoDePremium);
 }
 
 export async function comprar(plan: Plan): Promise<ResultadoDeCompra> {
   if (!tienda) return 'error';
   try {
     const resultado = await tienda.comprar(PRODUCTOS[plan]);
-    if (resultado === 'comprado') await leerSuscripcion();
+    if (resultado === 'comprado') await leerLaCompra();
     return resultado;
   } catch {
     return 'error';
   }
+}
+
+/**
+ * Lo que dice Apple después de una compra que confirmó: hubo conexión, y no se esperan los precios (con StoreKit
+ * lento, eran 5 s de «Un momento…» y un «sin conexión» falso). Si todavía no la da por vigente, se le vuelve a
+ * preguntar unas pocas veces, cortas, antes de mostrar el resultado.
+ */
+async function leerLaCompra(): Promise<void> {
+  let respuesta = await preguntarAApple();
+  for (let vez = 0; vez < RELEER_LA_COMPRA && !respuesta?.lectura.suscripcion; vez++) {
+    await new Promise((listo) => setTimeout(listo, ENTRE_RELECTURAS));
+    respuesta = (await preguntarAApple()) ?? respuesta;
+  }
+  if (respuesta) cambiar(loQueVale(respuesta));
 }
 
 /**
@@ -265,6 +516,8 @@ async function restaurarAhora(): Promise<ResultadoDeRestaurar> {
   if (!tienda) return 'nada';
   try {
     const s = await tienda.restaurar();
+    // Lo que Apple dice después de sincronizar es lo más nuevo: lo que se le preguntó antes ya no lo pisa.
+    guardadaLaDe = ++paso;
     cambiar({ suscripcion: s, ultima: s ?? estado.ultima, leido: Date.now() });
     return s ? 'restaurada' : 'nada';
   } catch {
@@ -275,4 +528,27 @@ async function restaurarAhora(): Promise<ResultadoDeRestaurar> {
 /** Cambiar de plan o cancelar: es de Apple, y lo abre su pantalla. */
 export function administrarSuscripcion() {
   Linking.openURL(ADMINISTRAR).catch(() => {});
+}
+
+/**
+ * Canjear un código de oferta. Con la build que la trae, la hoja de Apple: el código se escribe ahí, y `codigo`
+ * no se usa. Sin ella, la página de canje de la App Store, que pide el código ella (Apple no quiere una pantalla
+ * propia para escribirlo); con `codigo`, ya puesto. Lo canjeado no vuelve por acá: lo avisa Apple («alCambiar») y
+ * se vuelve a leer al volver a Moss (arrancar).
+ */
+export async function canjearCodigo(codigo?: string): Promise<ResultadoDeCanje> {
+  if (!tienda) return 'error';
+  try {
+    if (tienda.canjearCodigo) {
+      const abierta = await tienda.canjearCodigo();
+      await leerSuscripcion();
+      return abierta ? 'abierto' : 'error';
+    }
+    const valido = codigo === undefined ? '' : codigoDeOferta(codigo);
+    if (valido === null) return 'sinCodigo';
+    await Linking.openURL(valido ? `${CANJEAR}&code=${valido}` : CANJEAR);
+    return 'abierto';
+  } catch {
+    return 'error';
+  }
 }

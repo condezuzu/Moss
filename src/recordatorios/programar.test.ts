@@ -1,27 +1,35 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 import { crearAlmacen, type Estado } from '@/almacen/almacen';
-import { repositorioEnMemoria } from '@/almacen/repositorio';
+import { repositorioEnMemoria, type Memoria } from '@/almacen/repositorio';
 import type { Constelacion } from '@/datos/catalogo';
 import datos from '@/datos/constelaciones.json';
 import { horasDeSueno } from '@/dominio/avisos';
 import { entrenoParaGuardar } from '@/dominio/cuestionario';
 import { claveDeMarca } from '@/dominio/dias';
-import { sumarDias } from '@/dominio/fechas';
+import { diaDeLaSemana, sumarDias } from '@/dominio/fechas';
 import { periodoDeMelatonina } from '@/dominio/melatonina';
 import type { Habito } from '@/dominio/habitos';
 import type { MetaGuardada } from '@/dominio/metas';
 import type { Acceso, Suscripcion } from '@/dominio/premium';
 import type { Registro } from '@/dominio/registros';
+import { redondearDeuda, type Noche } from '@/dominio/sueno';
+import { nochesParaGuardar, type LoDeSalud } from '@/salud/convertir';
 
 type Disparador = { type: string; date?: Date; year?: number; month?: number; day?: number; hour?: number; minute?: number };
 /** Lo programado, con la fecha en que suena (de un disparador de calendario o de fecha). */
-const programadas: { identifier?: string; content: { title: string; body: string; data: { tipo: string; que?: string; dia?: string }; categoryIdentifier?: string }; trigger: { date: Date }; tipo: string }[] = [];
+const programadas: {
+  identifier?: string; content: { title: string; body: string; data: { tipo: string; que?: string; dia?: string; sinLaNoche?: true }; categoryIdentifier?: string }; trigger: { date: Date }; tipo: string;
+}[] = [];
 /** Los avisos que ya llegaron (el centro de notificaciones) y los que Moss sacó de ahí. */
 let mockLlegados: { date: number; request: { identifier: string; content: { data: Record<string, unknown> } } }[] = [];
 const mockSacados: string[] = [];
+/** Cuántas veces se sacaron todos los que llegaron. */
+let mockSacadosTodos = 0;
 /** Lo que dice Apple, para cada test: de fábrica, que hay acceso y ninguna suscripción. `fin`, el último día del regalo, si se sabe. */
 let mockPremium: { sabe: boolean; hay: boolean; suscripcion: Suscripcion | null; acceso: Acceso; fin?: string } = { sabe: true, hay: true, suscripcion: null, acceso: 'regalo' };
+/** El despertador de Moss puesto en el sistema; de fábrica, ninguno. */
+let mockAlarma: { hora: number; minuto: number; dias: number[] } | null = null;
 
 jest.mock('expo-notifications', () => ({
   setNotificationHandler: jest.fn(),
@@ -33,16 +41,39 @@ jest.mock('expo-notifications', () => ({
   scheduleNotificationAsync: jest.fn(async (p: { identifier?: string; content: (typeof programadas)[number]['content']; trigger: Disparador }) => {
     const d = p.trigger;
     const date = d.date ?? new Date(d.year!, d.month! - 1, d.day!, d.hour!, d.minute!);
-    programadas.push({ ...(p.identifier ? { identifier: p.identifier } : {}), content: p.content, trigger: { date }, tipo: d.type });
-    return 'id';
+    // Como iOS: el mismo identificador reemplaza al que estaba, en su lugar.
+    const i = p.identifier ? programadas.findIndex((x) => x.identifier === p.identifier) : -1;
+    const nuevo = { ...(p.identifier ? { identifier: p.identifier } : {}), content: p.content, trigger: { date }, tipo: d.type };
+    if (i >= 0) programadas[i] = nuevo;
+    else programadas.push(nuevo);
+    return p.identifier ?? 'id';
+  }),
+  cancelScheduledNotificationAsync: jest.fn(async (id: string) => {
+    const i = programadas.findIndex((x) => x.identifier === id);
+    if (i >= 0) programadas.splice(i, 1);
+  }),
+  // Lo programado que todavía no sonó, como lo devuelve iOS: el de calendario, con la fecha en sus partes. Lo que ya
+  // sonó deja de estar programado.
+  getAllScheduledNotificationsAsync: jest.fn(async () => {
+    for (let i = programadas.length - 1; i >= 0; i--) if (programadas[i].trigger.date.getTime() <= Date.now()) programadas.splice(i, 1);
+    return programadas.map((p) => ({
+      identifier: p.identifier ?? '', content: p.content,
+      trigger: p.tipo === 'calendar'
+        ? { type: 'calendar', repeats: false, dateComponents: { year: p.trigger.date.getFullYear(), month: p.trigger.date.getMonth() + 1, day: p.trigger.date.getDate(), hour: p.trigger.date.getHours(), minute: p.trigger.date.getMinutes(), second: 0 } }
+        : { type: p.tipo },
+    }));
   }),
   getPresentedNotificationsAsync: jest.fn(async () => mockLlegados),
   dismissNotificationAsync: jest.fn(async (id: string) => {
     mockSacados.push(id);
   }),
+  dismissAllNotificationsAsync: jest.fn(async () => {
+    mockSacadosTodos++;
+  }),
   SchedulableTriggerInputTypes: { DATE: 'date', CALENDAR: 'calendar' },
 }));
 jest.mock('@/almacen', () => ({ elAlmacen: jest.fn() }));
+jest.mock('@/secciones/sueno/despertador', () => ({ alarmaPuesta: async () => mockAlarma }));
 jest.mock('@/almacen/ascent', () => ({ estadoConAscent: jest.fn(), metaConAscent: (m: unknown) => m, suscribirConAscent: jest.fn() }));
 jest.mock('@/lib/premium', () => ({
   seSabeElAcceso: () => mockPremium.sabe,
@@ -65,6 +96,8 @@ const { suenoDe } = require('@/secciones/persona') as typeof import('@/secciones
 const { contextoDeHoy, lineasDeHoy } = require('@/secciones/comida/entreno') as typeof import('@/secciones/comida/entreno');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { energiaDeHoy } = require('@/secciones/sueno/datosDeEnergia') as typeof import('@/secciones/sueno/datosDeEnergia');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { duracion } = require('@/secciones/comida/datos') as typeof import('@/secciones/comida/datos');
 const MERIENDA = () => t('recordatorios.horario.merienda');
 
 const HOY = '2026-11-02';
@@ -89,8 +122,12 @@ const APAGADO = {
   dormir: { encendido: false }, horario: [], deuda: { encendido: false }, melatonina: { encendido: false }, revoluciones: { encendido: false }, luces: { encendido: false },
 };
 
+beforeEach(() => {
+  mockAlarma = null;
+});
+
 const estado = (extra: Partial<Estado> = {}) => ({
-  hoy: HOY, corte: 240, latencia: null, registros: new Map(), recordatorios: [], habitos: [entrenar], marcas: new Map(), perfil: null, salud: null, noches: new Map(),
+  hoy: HOY, corte: 240, latencia: null, entradaHecha: true, registros: new Map(), recordatorios: [], habitos: [entrenar], marcas: new Map(), perfil: null, salud: null, noches: new Map(),
   metas: [META], pesos: [], entreno: null, agua: new Map(), numeros: true, despertares: {}, desayunos: {}, cuidados: null, pendientes: [],
   avisos: { horario: ['merienda'], habitos: [{ habito: 'entrenar', cuando: { tipo: 'hora', minutos: 17 * 60 + 35 }, dias: [] }] },
   ...extra,
@@ -426,6 +463,18 @@ describe('los avisos que se programan', () => {
     await programarAvisos(estado());
     expect(programadas).toEqual([]);
   });
+
+  it('si algo falla al armar los avisos, lo programado queda como estaba: antes se borraba todo primero y el error no se veía', async () => {
+    await programarAvisos(estado());
+    const antes = programadas.length;
+    expect(antes).toBeGreaterThan(0);
+    const aviso = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    // Un estado roto (sin la lista de hábitos) hace fallar la cuenta.
+    await programarAvisos(estado({ habitos: null } as unknown as Partial<Estado>));
+    expect(programadas).toHaveLength(antes);
+    expect(aviso).toHaveBeenCalled();
+    aviso.mockRestore();
+  });
 });
 
 describe('las sesiones de cada día y lo del deporte', () => {
@@ -570,10 +619,11 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
     const [y, m, d] = clave.split('-').map(Number);
     return new Date(y, m - 1, d, hora).toISOString();
   };
-  const noches = new Map(Array.from({ length: 14 }, (_, i) => {
-    const fecha = sumarDias(HOY, -i - 1);
-    return [fecha, { fecha, actualizado: '2026-11-01T09:00:00.000Z', hora: { dormirse: local(sumarDias(fecha, -1), 23), despertar: local(fecha, 7), origen: 'confirmada' as const, confianza: 'media' as const } }];
-  }));
+  const noche = (fecha: string, dormirse = local(sumarDias(fecha, -1), 23)) =>
+    [fecha, { fecha, actualizado: '2026-11-01T09:00:00.000Z', hora: { dormirse, despertar: local(fecha, 7), origen: 'confirmada' as const, confianza: 'media' as const } }] as const;
+  const noches = new Map(Array.from({ length: 14 }, (_, i) => noche(sumarDias(HOY, -i - 1))));
+  /** Con la de anoche: al abrir Moss a la mañana, sin reloj, se estima (estimarAnoche) antes de buscar tu despertar. */
+  const conLaDeHoy = new Map([...noches, noche(HOY)]);
   /** La hora de cada comida y la noche entera, prendidas a mano: de fábrica (25/11/2026) no suenan. */
   const PRENDIDO = { horario: ['desayuno', 'almuerzo', 'cena'], dormir: { encendido: true }, luces: { encendido: true }, revoluciones: { encendido: true } };
   const conNoches = (extra: Partial<Estado> = {}) =>
@@ -590,10 +640,88 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
     jest.useRealTimers();
   });
 
-  it('antes de saber que te despertaste no suena nada de la mañana; la noche sí', async () => {
+  it('antes de saber que te despertaste, de la mañana queda solo la deuda, 45 minutos después de tu hora de siempre; la noche sí', async () => {
     await programarAvisos(conNoches());
-    for (const tipo of ['deuda', 'pesarse', 'desayuno']) expect(dice(tipo)).toEqual([]);
+    for (const tipo of ['pesarse', 'desayuno']) expect(dice(tipo)).toEqual([]);
+    expect(dice('deuda').map(hora)).toEqual([7 * 60 + 45]);
     expect(dice('melatonina')).toHaveLength(1);
+  });
+
+  it('la deuda queda programada para cada mañana, aunque Moss no se abra: hoy dice la de ayer, y mañana la de hoy solo con la noche de hoy', async () => {
+    // Trece noches de 8 h y la de ayer, de 4 h: la deuda de ayer (sin la noche de hoy) y la de hoy no son la misma.
+    const hastaAyer = new Map([...noches].map(([fecha, n]) => (fecha === sumarDias(HOY, -1) ? noche(fecha, local(fecha, 3)) : [fecha, n])));
+    const conHoy = new Map([...hastaAyer, noche(HOY)]);
+    const deudaHasta = (dia: string, lasNoches: typeof noches) => redondearDeuda(suenoParaAvisos(conNoches({ hoy: dia, noches: lasNoches } as unknown as Partial<Estado>))!.deuda!);
+    const [deAyer, deHoy] = [deudaHasta(sumarDias(HOY, -1), hastaAyer), deudaHasta(HOY, conHoy)];
+    expect(deAyer).not.toBe(deHoy);
+    const texto = (deuda: number | null) =>
+      t(`recordatorios.despertar.deuda.sinLaNoche.${deuda === null ? 'despues' : deuda === 0 ? 'ayerSin' : 'ayer'}`, { deuda: duracion(deuda ?? 0) });
+    const deudas = () => programadas.filter((p) => p.content.data.tipo === 'deuda').map((p) => [p.trigger.date.getDate(), hora(p), p.content.body]);
+    const sin = { avisos: {}, recordatorios: [] };
+    // A las 6:00, dormido: la de hoy a las 7:45 (tu despertar de siempre, las 7:00, más 45), con la de ayer. Mañana, sin
+    // la noche de hoy, sin número.
+    await programarAvisos(conNoches({ ...sin, noches: hastaAyer } as unknown as Partial<Estado>));
+    expect(deudas().slice(0, 2)).toEqual([[2, 7 * 60 + 45, texto(deAyer)], [3, 7 * 60 + 45, texto(null)]]);
+    expect(programadas.filter((p) => p.content.data.tipo === 'deuda').map((p) => p.identifier).slice(0, 2)).toEqual([`${HOY}:deuda`, '2026-11-03:deuda']);
+    // A las 21:00, con la noche de hoy: mañana dice la de hoy; de pasado mañana en adelante, sin número.
+    jest.setSystemTime(a(21));
+    await programarAvisos(conNoches({ ...sin, noches: conHoy } as unknown as Partial<Estado>));
+    expect(deudas()).toEqual([3, 4, 5, 6, 7, 8].map((d) => [d, 7 * 60 + 45, texto(d === 3 ? deHoy : null)]));
+    // Si la noche de hoy no llegó (el anillo todavía no sincronizó), mañana no dice una vieja: sin número.
+    await programarAvisos(conNoches({ ...sin, noches: hastaAyer } as unknown as Partial<Estado>));
+    expect(deudas()[0]).toEqual([3, 7 * 60 + 45, texto(null)]);
+  });
+
+  it('si Moss se entera antes, la de siempre (bajó o subió) va en su lugar, con el mismo nombre; después ya sonó, y no suena otra', async () => {
+    // A las 6:50 abriste Moss: te despertaste a las 6:45 y ya está la noche. Suena a las 6:52, y no a las 7:45.
+    const despertares = { [HOY]: { despertar: 6 * 60 + 45, sabido: 6 * 60 + 50 } };
+    jest.setSystemTime(a(6, 50));
+    await programarAvisos(conNoches({ noches: conLaDeHoy, avisos: {}, recordatorios: [], despertares } as unknown as Partial<Estado>));
+    expect(dice('deuda').map((p) => [hora(p), p.identifier, p.content.title])).toEqual([[6 * 60 + 52, `${HOY}:deuda`, t('recordatorios.despertar.deuda.titulos.sin')]]);
+    // A las 10:05 la abres otra vez: la de las 6:52 ya sonó, y no suena otra. La de mañana sigue en su lugar.
+    jest.setSystemTime(a(10, 5));
+    await programarAvisos(conNoches({ noches: conLaDeHoy, avisos: {}, recordatorios: [], despertares } as unknown as Partial<Estado>));
+    expect(dice('deuda')).toEqual([]);
+    expect(programadas.filter((p) => p.content.data.tipo === 'deuda').map((p) => [p.trigger.date.getDate(), hora(p)])[0]).toEqual([3, 7 * 60 + 45]);
+  });
+
+  it('una semana abriendo Moss solo a las 21: cada mañana suena la deuda a tu hora de siempre, y cada noche, tu periodo', async () => {
+    const sonaron: [number, number | null, string][] = [];
+    for (let i = 0; i < 7; i++) {
+      const dia = sumarDias(HOY, i);
+      const ahora = new Date(2026, 10, 2 + i, 21);
+      // Lo que sonó desde la última vez que se abrió.
+      for (const p of programadas) if (p.trigger.date <= ahora) sonaron.push([p.trigger.date.getDate(), hora(p), p.content.data.tipo]);
+      jest.setSystemTime(ahora);
+      // Abrirla a las 21 no dice a qué hora te despertaste; la noche de hoy ya está.
+      const hasta = new Map(Array.from({ length: 14 }, (_, k) => noche(sumarDias(dia, -k))));
+      await programarAvisos(conNoches({ hoy: dia, noches: hasta, avisos: {}, recordatorios: [] } as unknown as Partial<Estado>));
+    }
+    expect(sonaron.filter(([, , tipo]) => tipo === 'deuda')).toEqual([3, 4, 5, 6, 7, 8].map((d) => [d, 7 * 60 + 45, 'deuda']));
+    expect(sonaron.filter(([, , tipo]) => tipo === 'melatonina')).toEqual([2, 3, 4, 5, 6, 7].map((d) => [d, 21 * 60 + 30, 'melatonina']));
+  });
+
+  it('con las noches de un anillo y Salud sin leer (de fondo con el iPhone bloqueado), lo de las noches sale de las guardadas: antes se borraba', async () => {
+    // Duerme con un anillo: sus noches, de 23:00 a 7:00, están solo en Salud.
+    const delAnillo = (clave: string): Noche => ({
+      clave, fuente: { id: 'darings', nombre: 'Da Rings', tipo: 'otra' }, conEtapas: false, dormirse: 5 * 60, despertar: 13 * 60, enCama: null,
+      dormido: 420, despierto: 60, despertares: 1, etapas: { nucleo: 0, profundo: 0, rem: 0, sinEtapa: 420 }, siestas: 0, tramos: [], intervalos: [],
+      confianza: { duracion: 'media', horario: 'media', despertares: 'baja', etapas: null, enCama: null },
+    });
+    const delSalud = Array.from({ length: 14 }, (_, i) => delAnillo(sumarDias(HOY, -i)));
+    const e = estado({ perfil: { nacimiento: 1994 }, salud: { noches: delSalud }, nochesDeSalud: nochesParaGuardar(delSalud, HOY), avisos: {}, recordatorios: [], habitos: [] } as unknown as Partial<Estado>);
+    const delSueno = () => programadas.filter((p) => p.content.data.tipo === 'deuda' || p.content.data.tipo === 'melatonina').map((p) => `${p.identifier} ${hora(p)} ${p.content.body}`);
+    jest.setSystemTime(a(21));
+    await programarAvisos(e);
+    const antes = delSueno();
+    expect(antes.map((x) => x.split(' ')[0])).toEqual(expect.arrayContaining([`${HOY}:melatonina`, '2026-11-03:deuda', '2026-11-03:melatonina']));
+    // A las 21:15, iOS abre Moss de fondo con el teléfono bloqueado: Salud no deja leer nada, y están las guardadas.
+    jest.setSystemTime(a(21, 15));
+    await programarAvisos({ ...e, salud: null });
+    expect(delSueno()).toEqual(antes);
+    // Sin noches en Salud (sin reloj, o sin permiso para el sueño) se guarda que no hay ninguna: se rehace con las de Moss.
+    await programarAvisos({ ...e, salud: null, nochesDeSalud: [] });
+    expect(delSueno()).toEqual([]);
   });
 
   it('sin noches también: quien recién empieza y se despierta a las 10 no recibe pesarte a las 7:45', async () => {
@@ -621,8 +749,8 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
     expect(p).toMatchObject({ desde: 4 * 60 + 30, hasta: 5 * 60 + 30, acostarse: 4 * 60 + 15 });
     await programarAvisos(e);
     const periodo = dice('melatonina')[0];
-    expect([hora(periodo), periodo.content.title]).toEqual([21 * 60 + 25, t('recordatorios.despertar.melatonina.titulo')]);
-    expect(periodo.content.body).toBe(t('recordatorios.despertar.melatonina.texto', { desde: '22:30' }));
+    expect([hora(periodo), periodo.content.title]).toEqual([21 * 60 + 25, t('recordatorios.despertar.melatonina.titulo', { hora: '22:30' })]);
+    expect(periodo.content.body).toBe(t('recordatorios.despertar.melatonina.texto'));
     const acostarte = dice('dormir')[0];
     expect([hora(acostarte), acostarte.content.title]).toEqual([21 * 60 + 45, t('recordatorios.acostarte.titulo', { cama: '22:15' })]);
     expect(acostarte.content.body).toContain('22:30 – 23:30');
@@ -639,6 +767,18 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
     const acostarte = dice('dormir')[0];
     // Despertarte a las 7:00 con 8 h: dormirte a las 23:00 y, con el margen, acostarte a las 22:45.
     expect([hora(acostarte), acostarte.content.title]).toEqual([22 * 60 + 15, t('recordatorios.acostarte.titulo', { cama: '22:45' })]);
+  });
+
+  it('de fábrica y sin periodo, el de la noche suena igual una hora antes de acostarte, sin nombrar la melatonina', async () => {
+    // Dos noches en la última semana: no alcanzan para el periodo, pero sí para tu hora de siempre.
+    const pocas = new Map([...noches].filter(([fecha]) => fecha < sumarDias(HOY, -4)));
+    await programarAvisos(conNoches({ noches: pocas, avisos: {}, recordatorios: [] } as unknown as Partial<Estado>));
+    // Te acuestas a las 22:45: a las 21:45, con el texto de bajar el ritmo.
+    expect(dice('melatonina').map((p) => [hora(p), p.identifier, p.content.title, p.content.body])).toEqual([
+      [21 * 60 + 45, `${HOY}:melatonina`, t('recordatorios.despertar.revoluciones.titulo', { hora: '22:45' }), t('recordatorios.despertar.revoluciones.texto')],
+    ]);
+    // Y los días que siguen, también.
+    expect(programadas.filter((p) => p.content.data.tipo === 'melatonina')).toHaveLength(7);
   });
 
   it('sin periodo, Energía y la línea de entrenar dicen la misma hora de acostarte que el aviso, también con el despertar de hoy', async () => {
@@ -664,10 +804,11 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
   });
 
   it('con el despertar, de a uno desde que se supo: la deuda, pesarse y «¿Desayunas hoy?» con sus dos botones', async () => {
-    jest.setSystemTime(a(7, 40));
-    await programarAvisos(conNoches({ despertares: { [HOY]: { despertar: 7 * 60 + 30, sabido: 7 * 60 + 40 } } }));
-    expect(hora(dice('deuda')[0])).toBe(7 * 60 + 42);
-    expect(hora(dice('pesarse')[0])).toBe(8 * 60 + 2);
+    // Te despertaste a las 6:30 y Moss lo supo a las 6:40, antes de tu hora de siempre (las 7:00).
+    jest.setSystemTime(a(6, 40));
+    await programarAvisos(conNoches({ noches: conLaDeHoy, despertares: { [HOY]: { despertar: 6 * 60 + 30, sabido: 6 * 60 + 40 } } } as unknown as Partial<Estado>));
+    expect(hora(dice('deuda')[0])).toBe(6 * 60 + 42);
+    expect(hora(dice('pesarse')[0])).toBe(7 * 60 + 2);
     // Cada uno, con su título: la deuda dice cuánta, y pesarte, qué hacer.
     expect(dice('deuda')[0].content.title).not.toBe('Moss');
     expect(dice('pesarse')[0].content.title).toBe(t('recordatorios.pesarte.titulo'));
@@ -691,10 +832,11 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
     jest.setSystemTime(a(7, 40));
     const pendiente = (id: string, texto: string, hecho = false, para = HOY) => ({ id, texto, hecho, para });
     const con = (pendientes: ReturnType<typeof pendiente>[], avisos: Estado['avisos'] = { ...PRENDIDO, descarga: { encendido: true } } as Estado['avisos']) =>
-      conNoches({ despertares: { [HOY]: { despertar: 7 * 60 + 30, sabido: 7 * 60 + 40 } }, avisos, pendientes } as unknown as Partial<Estado>);
+      conNoches({ noches: conLaDeHoy, despertares: { [HOY]: { despertar: 7 * 60 + 30, sabido: 7 * 60 + 40 } }, avisos, pendientes } as unknown as Partial<Estado>);
     await programarAvisos(con([pendiente('1', 'Llamar al dentista'), pendiente('2', 'Pagar la luz', true), pendiente('3', 'Comprar el regalo'), pendiente('4', 'Lo de mañana', false, sumarDias(HOY, 1))]));
     const aviso = dice('pendientes')[0];
-    // La deuda a las 7:42 y la pregunta a las 8:02 (sin pesarte): la lista, a las 8:22, con lo de hoy sin tachar.
+    // La deuda a las 7:42 (Moss lo supo antes de las 7:45, con la noche), la pregunta a las 8:02 (sin pesarte) y la lista,
+    // a las 8:22, con lo de hoy sin tachar.
     expect([hora(dice('desayuno')[0]), hora(aviso)]).toEqual([8 * 60 + 2, 8 * 60 + 22]);
     expect([aviso.content.title, aviso.content.body]).toEqual([t('recordatorios.despertar.pendientes.titulo'), '· Llamar al dentista\n· Comprar el regalo']);
     // El de la noche, con el mismo interruptor. Lo de mañana espera a tu despertar de mañana, como todo lo de la mañana.
@@ -708,11 +850,11 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
   });
 
   it('sin elegir el máximo, prender anotar lo sube solo a 12 y entran todos; el que elegiste a mano queda', async () => {
-    jest.setSystemTime(a(7, 40));
+    jest.setSystemTime(a(6, 40));
     // Con pesarte y la merienda son doce: con diez se quedaban afuera el de anotar y bajar el ritmo.
     const horasDeComer = { desayuno: 8 * 60, almuerzo: 13 * 60, merienda: 17 * 60, cena: 20 * 60 };
     const con = (maximoPorDia?: number) => conNoches({
-      despertares: { [HOY]: { despertar: 7 * 60 + 30, sabido: 7 * 60 + 40 } }, horasDeComer,
+      despertares: { [HOY]: { despertar: 6 * 60 + 30, sabido: 6 * 60 + 40 } }, horasDeComer,
       avisos: { ...PRENDIDO, pesarse: { encendido: true, todos: true }, horario: ['desayuno', 'almuerzo', 'merienda', 'cena'], descarga: { encendido: true }, ...(maximoPorDia ? { maximoPorDia } : {}) },
       pendientes: [{ id: '1', texto: 'Pagar la luz', hecho: false, para: HOY }],
     } as unknown as Partial<Estado>);
@@ -728,6 +870,493 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
     expect(deHoy()).toHaveLength(10);
     expect(deHoy()).not.toContain('descarga');
     expect(deHoy()).not.toContain('revoluciones');
+  });
+});
+
+describe('mientras Salud no se puede leer: las noches guardadas en el teléfono (D45, 27/11/2026)', () => {
+  /** Una noche del anillo, solo en Salud: de 23:00 a `despertar` (en la cuenta de las noches), con una hora despierta. */
+  const delAnillo = (clave: string, despertar = 13 * 60, dormido = 420): Noche => ({
+    clave, fuente: { id: 'darings', nombre: 'Da Rings', tipo: 'otra' }, conEtapas: false, dormirse: 5 * 60, despertar, enCama: null,
+    dormido, despierto: 60, despertares: 1, etapas: { nucleo: 0, profundo: 0, rem: 0, sinEtapa: dormido }, siestas: 0, tramos: [], intervalos: [],
+    confianza: { duracion: 'media', horario: 'media', despertares: 'baja', etapas: null, enCama: null },
+  } as unknown as Noche);
+  /** Las noches del anillo de las dos semanas hasta `dia` (la de hoy llega cuando el anillo sincroniza). */
+  const hasta = (dia = sumarDias(HOY, -1), despertar?: number) => Array.from({ length: 14 }, (_, i) => delAnillo(sumarDias(dia, -i), despertar));
+  /** Salud leída y, como hace el almacén al leerla (ponerSalud), lo mínimo de sus noches guardado en el teléfono. */
+  const leida = (noches = hasta(), dia = HOY) => ({ salud: { dia, noches }, nochesDeSalud: nochesParaGuardar(noches, dia) }) as unknown as Partial<Estado>;
+  /** De fondo con el iPhone bloqueado: Salud no se lee, y están las noches que se guardaron la última vez que se leyó. */
+  const deFondo = (noches = hasta(), dia = HOY) => ({ salud: null, nochesDeSalud: nochesParaGuardar(noches, dia) }) as unknown as Partial<Estado>;
+  const MEDITAR: Habito = { ...entrenar, id: 'meditar', nombre: 'Meditar', icono: 'leaf' };
+  const LEER: Habito = { ...entrenar, id: 'leer', nombre: 'Leer', icono: 'book' };
+  const AVISOS = {
+    pesarse: { encendido: true, todos: true }, horario: ['desayuno'], descarga: { encendido: true },
+    habitos: [{ habito: 'meditar', cuando: { tipo: 'hora', minutos: 18 * 60 }, dias: [] }, { habito: 'leer', cuando: { tipo: 'dormir', antes: 45 }, dias: [] }],
+  };
+  /** La mañana prendida (pesarte, «¿Desayunas hoy?» y anotar lo que tienes en la cabeza), meditar a las 18 y leer antes de dormirte. */
+  const conAnillo = (extra: Partial<Estado> = {}) => estado({
+    perfil: { nacimiento: 1994 }, ...leida(), recordatorios: [], habitos: [MEDITAR, LEER], noches: new Map(), avisos: AVISOS,
+    pendientes: [{ id: '1', texto: 'Llamar al dentista', hecho: false, para: HOY }],
+    ...extra,
+  } as unknown as Partial<Estado>);
+  const hora = (p: (typeof programadas)[number]) => p.trigger.date.getHours() * 60 + p.trigger.date.getMinutes();
+  const deHoy = (tipo: string) => programadas.filter((p) => p.trigger.date.getDate() === 2 && p.content.data.tipo === tipo);
+  const DE_LAS_NOCHES = ['dormir', 'deuda', 'melatonina', 'revoluciones', 'gafas', 'descarga', 'luces', 'cafe', 'ultimaComida', 'entrenarTarde'];
+  /** Lo de las noches programado (también leer, antes de dormirte): cuándo suena y lo que dice. */
+  const deLasNoches = () => programadas.filter((p) => DE_LAS_NOCHES.includes(p.content.data.tipo) || p.content.body === 'Leer')
+    .map((p) => `${p.identifier} ${p.trigger.date.getDate()}/${hora(p)} ${p.content.title} · ${p.content.body}`);
+  /** Lo que iOS entregó desde la última vez que se programó: «2 deuda». */
+  const sonaron: string[] = [];
+  const programarA = async (cuando: Date, e: Estado) => {
+    for (const p of programadas) if (p.trigger.date <= cuando) sonaron.push(`${p.trigger.date.getDate()} ${p.content.data.tipo}`);
+    jest.setSystemTime(cuando);
+    await programarAvisos(e);
+  };
+  const SIN_LA_NOCHE = () => t('recordatorios.despertar.deuda.titulos.sinLaNoche');
+
+  beforeEach(() => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'] }).setSystemTime(a(6));
+    programadas.length = 0;
+    sonaron.length = 0;
+    mockLlegados = [];
+    mockPremium = { sabe: true, hay: true, suscripcion: null, acceso: 'regalo' };
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('se guarda lo mínimo: el día, las horas, lo dormido y lo despierto, el aparato y la confianza; ni las etapas, ni los tramos, ni de qué app', () => {
+    const [guardada] = nochesParaGuardar([delAnillo(HOY)], HOY);
+    expect(guardada).toEqual({
+      clave: HOY, dormirse: 5 * 60, despertar: 13 * 60, dormido: 420, siestas: 0, despierto: 60, aparato: 'otra', confianza: { duracion: 'media', horario: 'media' },
+    });
+  });
+
+  it('la semana de fondo: abres Moss el lunes con Salud y después solo corre de fondo, bloqueado; suena lo mismo que con Salud', async () => {
+    // El almacén de verdad: lo que guarda al leer Salud, y lo que carga cuando iOS abre Moss de fondo (sin Salud).
+    const avisos = { ...AVISOS, dormir: { encendido: true }, maximoPorDia: 6 };
+    const noches = hasta(HOY);
+    const salud = (dia: string): LoDeSalud => ({
+      dia, valores: {}, noches, soloEnCama: new Map(), lecturas: { frecuencia: [], variabilidad: [], respiracion: [], reposo: new Map() }, fuentes: [], aparatos: [], pasosRecientes: [], pesos: new Map(),
+    });
+    const semana = async (conSalud: boolean) => {
+      programadas.length = 0;
+      const llego: string[] = [];
+      const telefono = repositorioEnMemoria({
+        perfil: { nacimiento: 1994 }, habitos: [MEDITAR, LEER], ajustes: { entrada: 'hecha', semilla: 's', avisos: JSON.stringify(avisos), horasDeComer: JSON.stringify({ cena: 20 * 60 + 50 }) },
+      } as unknown as Partial<Memoria>);
+      const abrir = async () => {
+        const almacen = crearAlmacen({ abrir: async () => telefono, catalogo: datos.constelaciones as unknown as Constelacion[], nuevaSemilla: () => 's' });
+        await almacen.iniciar();
+        return almacen;
+      };
+      const correr = async (cuando: Date, leerSalud: boolean) => {
+        for (const p of programadas) if (p.trigger.date <= cuando) llego.push(`${p.trigger.date.getDate()}/${hora(p)} ${p.content.data.tipo} ${p.content.title} · ${p.content.body}`);
+        jest.setSystemTime(cuando);
+        // Cada vez, iOS abre Moss desde cero: el almacén arranca de lo guardado en el teléfono.
+        const almacen = await abrir();
+        if (leerSalud) almacen.ponerSalud(salud(almacen.estado().hoy));
+        await almacen.enCola(async () => {});
+        await programarAvisos(almacen.estado());
+      };
+      // El lunes a las 21, abierta: Salud con las noches del anillo hasta hoy.
+      await correr(new Date(2026, 10, 2, 21), true);
+      // Después, nueve días de fondo: a las 22:30, a las 3 y a las 6.
+      for (let i = 0; i < 9; i++) {
+        for (const [d, h, m] of [[0, 22, 30], [1, 3, 0], [1, 6, 0]]) await correr(new Date(2026, 10, 2 + i + d, h, m), conSalud);
+      }
+      return llego;
+    };
+    const deFondo = await semana(false);
+    const conSalud = await semana(true);
+    expect(deFondo).toEqual(conSalud);
+    // Y suena lo de las noches todos los días: la deuda cada mañana, y el periodo y acostarte cada noche.
+    const dias = (tipo: string) => [...new Set(deFondo.filter((x) => x.split(' ')[1] === tipo).map((x) => Number(x.split('/')[0])))];
+    expect(dias('deuda')).toEqual([3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(dias('dormir')).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  });
+
+  it('si de fondo Moss supo que te despertaste (paraste el despertador), la mañana llega igual y la deuda suena una vez, con la de hoy si la sabe', async () => {
+    const despertares = { [HOY]: { despertar: 6 * 60 + 30, sabido: 6 * 60 + 31 } };
+    // 6:00, con Salud: la deuda de hoy a las 7:45 (tu despertar de siempre, las 7:00, más 45) y la noche de la semana.
+    await programarA(a(6), conAnillo());
+    expect(deHoy('deuda').map((p) => [hora(p), p.content.title])).toEqual([[7 * 60 + 45, SIN_LA_NOCHE()]]);
+    const noche = deLasNoches().filter((x) => !x.startsWith(`${HOY}:deuda`));
+    expect(noche.length).toBeGreaterThan(20);
+    // 6:31, de fondo y bloqueado: con las noches guardadas, lo de las noches igual; la mañana, desde que se supo.
+    await programarA(a(6, 31), conAnillo({ ...deFondo(), despertares }));
+    expect(deHoy('deuda').map((p) => [hora(p), p.content.title])).toEqual([[7 * 60 + 45, SIN_LA_NOCHE()]]);
+    expect(deLasNoches().filter((x) => !x.startsWith(`${HOY}:deuda`))).toEqual(noche);
+    expect(['pesarse', 'desayuno', 'pendientes'].map((tipo) => deHoy(tipo).length)).toEqual([1, 1, 1]);
+    const manana = ['pesarse', 'desayuno', 'pendientes'].map((tipo) => hora(deHoy(tipo)[0]));
+    // 6:45 abres Moss y Salud ya tiene la noche de hoy: la deuda dice la de hoy, en su lugar; lo demás, donde estaba.
+    await programarA(a(6, 45), conAnillo({ ...leida(hasta(HOY)), despertares }));
+    expect(deHoy('deuda').map((p) => [hora(p), p.content.title === SIN_LA_NOCHE()])).toEqual([[7 * 60 + 45, false]]);
+    expect(['pesarse', 'desayuno', 'pendientes'].map((tipo) => hora(deHoy(tipo)[0]))).toEqual(manana);
+    // A las 9 sonó una vez cada uno, y no queda nada más de la mañana.
+    await programarA(a(9), conAnillo({ ...leida(hasta(HOY)), despertares }));
+    expect(['deuda', 'pesarse', 'desayuno', 'pendientes'].map((tipo) => sonaron.filter((x) => x === `2 ${tipo}`).length)).toEqual([1, 1, 1, 1]);
+    expect(['deuda', 'pesarse', 'desayuno', 'pendientes'].flatMap(deHoy)).toEqual([]);
+  });
+
+  it('lo que marcas mientras Salud no se puede leer deja de sonar, también lo de antes de dormirte; lo demás de las noches, como con Salud', async () => {
+    jest.setSystemTime(a(12));
+    await programarAvisos(conAnillo());
+    const habitos = () => deHoy('habito').map((p) => p.content.body);
+    expect(habitos()).toEqual(['Meditar', 'Leer']);
+    const leerALas = programadas.filter((p) => p.content.body === 'Leer').map((p) => `${p.trigger.date.getDate()}/${hora(p)}`);
+    // 15:00, la tarea de fondo con el iPhone bloqueado aplica lo tocado en los widgets: meditar y leer, hechos.
+    jest.setSystemTime(a(15));
+    const hecho = (id: string) => [claveDeMarca(id, HOY), { hecho: true, momento: a(14, 50).toISOString() }] as const;
+    const marcas = new Map([hecho('meditar'), hecho('leer')]) as Estado['marcas'];
+    await programarAvisos(conAnillo({ ...deFondo(), marcas }));
+    expect(habitos()).toEqual([]);
+    // Leer ya no corre tu periodo, que vuelve a su hora: lo mismo que con Salud.
+    const noche = deLasNoches();
+    await programarAvisos(conAnillo({ marcas }));
+    expect(deLasNoches()).toEqual(noche);
+    // Leer, los otros días, sigue a su hora: la de tu noche, que sale de las noches guardadas del anillo.
+    expect(programadas.filter((p) => p.content.body === 'Leer').map((p) => `${p.trigger.date.getDate()}/${hora(p)}`)).toEqual(leerALas.slice(1));
+  });
+
+  it('lo que apagas o cambias mientras Salud no se puede leer no vuelve', async () => {
+    jest.setSystemTime(a(12));
+    await programarAvisos(conAnillo());
+    expect(programadas.filter((p) => p.content.data.tipo === 'melatonina')).toHaveLength(7);
+    // Sin poder leer Salud apagas tu periodo y pasas leer a las 21:00.
+    const habitos = [{ habito: 'meditar', cuando: { tipo: 'hora', minutos: 18 * 60 }, dias: [] }, { habito: 'leer', cuando: { tipo: 'hora', minutos: 21 * 60 }, dias: [] }];
+    await programarAvisos(conAnillo({ ...deFondo(), avisos: { ...AVISOS, melatonina: { encendido: false }, habitos } } as unknown as Partial<Estado>));
+    expect(programadas.filter((p) => p.content.data.tipo === 'melatonina')).toEqual([]);
+    expect(deHoy('habito').map((p) => [p.content.body, hora(p)])).toEqual([['Meditar', 18 * 60], ['Leer', 21 * 60]]);
+    // Lo demás de las noches, como con Salud: la deuda de mañana.
+    expect(programadas.some((p) => p.identifier === '2026-11-03:deuda')).toBe(true);
+  });
+
+  it('sin reloj (Salud sin noches) no hay nada que esperar: lo marcado de fondo deja de sonar como siempre', async () => {
+    jest.setSystemTime(a(12));
+    await programarAvisos(conAnillo(leida([])));
+    expect(deHoy('habito').map((p) => p.content.body)).toEqual(['Meditar', 'Leer']);
+    jest.setSystemTime(a(15));
+    await programarAvisos(conAnillo({ ...deFondo([]), marcas: new Map([[claveDeMarca('meditar', HOY), { hecho: true, momento: a(14, 50).toISOString() }]]) as Estado['marcas'] }));
+    expect(deHoy('habito').map((p) => p.content.body)).toEqual(['Leer']);
+  });
+
+  it('entrenaste temprano y lo marcaste en el widget: de fondo, «Entrenar tarde» y el café dicen lo mismo que con Salud', async () => {
+    const entreno = { dias: [0, 1, 2, 3, 4, 5, 6], hora: 20 * 60, minutos: 60, tipo: 'fuerza' };
+    const base = { habitos: [entrenar], entreno, avisos: { entrenarTarde: { encendido: true }, cafe: { encendido: true } } } as unknown as Partial<Estado>;
+    const marcas = new Map([[claveDeMarca('entrenar', HOY), { hecho: true, momento: a(13).toISOString() }]]) as Estado['marcas'];
+    const dicen = () => programadas.filter((p) => p.trigger.date.getDate() === 2 && ['entrenarTarde', 'cafe'].includes(p.content.data.tipo)).map((p) => `${p.content.data.tipo} ${hora(p)} ${p.content.title} · ${p.content.body}`);
+    jest.setSystemTime(a(9));
+    await programarAvisos(conAnillo(base));
+    expect(dicen().some((x) => x.startsWith('entrenarTarde'))).toBe(true);
+    jest.setSystemTime(a(13, 30));
+    await programarAvisos(conAnillo({ ...base, ...deFondo(), marcas }));
+    const deFondoDice = dicen();
+    programadas.length = 0;
+    jest.setSystemTime(a(9));
+    await programarAvisos(conAnillo(base));
+    jest.setSystemTime(a(13, 30));
+    await programarAvisos(conAnillo({ ...base, marcas }));
+    expect(deFondoDice).toEqual(dicen());
+    expect(deFondoDice.some((x) => x.startsWith('entrenarTarde'))).toBe(false);
+  });
+
+  it('apagar todo, o quedarse sin acceso, borra todo aunque Salud no se pueda leer', async () => {
+    await programarAvisos(conAnillo());
+    expect(programadas.length).toBeGreaterThan(0);
+    await programarAvisos(conAnillo({ ...deFondo(), avisos: { ...APAGADO, deuda: { encendido: false }, melatonina: { encendido: false } } } as unknown as Partial<Estado>));
+    expect(programadas).toEqual([]);
+    await programarAvisos(conAnillo());
+    expect(programadas.length).toBeGreaterThan(0);
+    mockPremium = { ...mockPremium, hay: false };
+    await programarAvisos(conAnillo(deFondo()));
+    expect(programadas).toEqual([]);
+  });
+
+  it('cerrar sesión, borrar tus datos o la cuenta (olvidarTodo) borra las noches guardadas, lo programado y lo que llegó, aunque Apple no haya contestado', async () => {
+    await programarAvisos(conAnillo());
+    expect(programadas.some((p) => p.content.body === 'Meditar')).toBe(true);
+    // Leer, ya entregado en el centro de notificaciones con el nombre de un hábito de esta cuenta.
+    mockLlegados = [{ date: a(5).getTime() / 1000, request: { identifier: `${HOY}:habito:leer:0`, content: { data: { tipo: 'habito', dia: HOY } } } }];
+    const telefono = repositorioEnMemoria();
+    const almacen = crearAlmacen({ abrir: async () => telefono, catalogo: datos.constelaciones as unknown as Constelacion[], ahora: () => a(6), nuevaSemilla: () => 's' });
+    await almacen.iniciar();
+    almacen.ponerSalud({ dia: HOY, valores: {}, noches: hasta(), soloEnCama: new Map(), lecturas: { frecuencia: [], variabilidad: [], respiracion: [], reposo: new Map() }, fuentes: [], aparatos: [], pasosRecientes: [], pesos: new Map() });
+    await almacen.enCola(async () => {});
+    expect(almacen.estado().nochesDeSalud).toHaveLength(14);
+    expect((await telefono.cargar('2026-01-01', '2026-01-01')).nochesDeSalud).toHaveLength(14);
+    await almacen.olvidarTodo();
+    // Vuelve la entrada, sin Salud ni noches guardadas, y lo de fábrica prendido: no suena nada hasta terminarla.
+    expect([almacen.estado().salud, almacen.estado().nochesDeSalud, almacen.estado().entradaHecha]).toEqual([null, null, false]);
+    expect((await telefono.cargar('2026-01-01', '2026-01-01')).nochesDeSalud).toBeNull();
+    mockPremium = { ...mockPremium, sabe: false };
+    const antes = mockSacadosTodos;
+    await programarAvisos(almacen.estado());
+    expect(programadas).toEqual([]);
+    expect(mockSacadosTodos).toBe(antes + 1);
+  });
+
+  it('de fondo la semana sigue: el día nuevo llega entero, también lo de las noches, como con Salud', async () => {
+    jest.setSystemTime(a(21));
+    await programarAvisos(conAnillo());
+    // El martes 3 a las 21, de fondo y bloqueado, con las noches guardadas el lunes: todo llega al lunes 9.
+    const martes = { hoy: '2026-11-03', pendientes: [] } as unknown as Partial<Estado>;
+    jest.setSystemTime(new Date(2026, 10, 3, 21));
+    await programarAvisos(conAnillo({ ...martes, ...deFondo() }));
+    const dias = (que: (p: (typeof programadas)[number]) => boolean) => [...new Set(programadas.filter(que).map((p) => p.trigger.date.getDate()))];
+    const deFondoLlega = [dias((p) => p.content.body === 'Meditar'), dias((p) => p.content.body === 'Leer'), dias((p) => p.content.data.tipo === 'melatonina')];
+    expect(deFondoLlega).toEqual([[4, 5, 6, 7, 8, 9], [3, 4, 5, 6, 7, 8, 9], [3, 4, 5, 6, 7, 8, 9]]);
+    const lo = deLasNoches();
+    await programarAvisos(conAnillo({ ...martes, ...leida(hasta(), HOY) }));
+    expect(deLasNoches()).toEqual(lo);
+  });
+
+  it('abrir Moss antes de que el anillo sincronice no dice la deuda sin la noche de hoy: sigue la de ayer, hasta que llegue', async () => {
+    const abriste = { despertares: { [HOY]: { despertar: 7 * 60 + 3, sabido: 7 * 60 + 5 } } };
+    await programarA(a(6), conAnillo({ avisos: {} } as unknown as Partial<Estado>));
+    // 7:05: Salud se lee, pero todavía sin la noche de hoy. La de ayer sigue a las 7:45.
+    await programarA(a(7, 5), conAnillo({ avisos: {}, ...abriste } as unknown as Partial<Estado>));
+    expect(deHoy('deuda').map((p) => [hora(p), p.content.title])).toEqual([[7 * 60 + 45, SIN_LA_NOCHE()]]);
+    // 7:20 el anillo sincroniza: la de hoy, en su lugar.
+    await programarA(a(7, 20), conAnillo({ avisos: {}, ...leida(hasta(HOY)), ...abriste } as unknown as Partial<Estado>));
+    expect(deHoy('deuda').map((p) => [hora(p), p.content.title === SIN_LA_NOCHE()])).toEqual([[7 * 60 + 45, false]]);
+  });
+
+  it('la deuda que otro aviso corrió suena una vez, a su hora de verdad, y con la de hoy si Moss ya la sabe', async () => {
+    const meditar = { avisos: { habitos: [{ habito: 'meditar', cuando: { tipo: 'hora', minutos: 7 * 60 + 40 }, dias: [] }] } } as unknown as Partial<Estado>;
+    // Meditar a las 7:40 corre la de las 7:45 a las 8:00.
+    await programarA(a(6), conAnillo(meditar));
+    expect(deHoy('deuda').map((p) => [hora(p), p.content.title])).toEqual([[8 * 60, SIN_LA_NOCHE()]]);
+    // 7:42: abres Moss con la noche de hoy (te despertaste a las 7:41). Antes quedaba la de «sin saber la noche».
+    await programarA(a(7, 42), conAnillo({ ...meditar, ...leida(hasta(HOY)), despertares: { [HOY]: { despertar: 7 * 60 + 41, sabido: 7 * 60 + 42 } } }));
+    expect(deHoy('deuda').map((p) => [hora(p), p.content.title === SIN_LA_NOCHE()])).toEqual([[8 * 60, false]]);
+    await programarA(a(9), conAnillo({ ...meditar, ...leida(hasta(HOY)), despertares: { [HOY]: { despertar: 7 * 60 + 41, sabido: 7 * 60 + 42 } } }));
+    expect(sonaron.filter((x) => x === '2 deuda')).toHaveLength(1);
+  });
+
+  it('la que ya dice la de hoy no se corre: suena a la hora en que quedó, aunque Moss lo sepa antes', async () => {
+    const sabe = { ...leida(hasta(HOY)), despertares: { [HOY]: { despertar: 7 * 60 + 50, sabido: 8 * 60 } } } as unknown as Partial<Estado>;
+    await programarA(a(6), conAnillo({ avisos: {} } as unknown as Partial<Estado>));
+    const deuda = deHoy('deuda')[0];
+    // La de las 7:45 quedó a las 8:25, ya con la de hoy (otro aviso la corrió y después se hizo).
+    deuda.trigger.date = a(8, 25);
+    delete deuda.content.data.sinLaNoche;
+    await programarA(a(8), conAnillo({ avisos: {}, ...sabe } as unknown as Partial<Estado>));
+    expect(deHoy('deuda').map(hora)).toEqual([8 * 60 + 25]);
+    // La que todavía no sabía la noche, sí: va al saberlo.
+    deHoy('deuda')[0].content.data.sinLaNoche = true;
+    await programarA(a(8), conAnillo({ avisos: {}, ...sabe } as unknown as Partial<Estado>));
+    expect(deHoy('deuda').map(hora)).toEqual([8 * 60 + 2]);
+  });
+
+  it('si tu hora de siempre cambia con noches nuevas, la deuda no suena dos veces ni se pierde: cuenta la hora a la que quedó', async () => {
+    const sabe = (despertar: number, sabido: number, despertarDeLasNoches: number) =>
+      conAnillo({ avisos: {}, ...leida(hasta(HOY, despertarDeLasNoches)), despertares: { [HOY]: { despertar, sabido } } } as unknown as Partial<Estado>);
+    // Programada con noches que terminan a las 7:00 (a las 7:45); sonó, y a las 7:50 llegan noches que terminan a las 7:20.
+    await programarA(a(6), conAnillo({ avisos: {} } as unknown as Partial<Estado>));
+    await programarA(a(7, 50), sabe(7 * 60 + 48, 7 * 60 + 50, 13 * 60 + 20));
+    expect([sonaron.filter((x) => x === '2 deuda').length, deHoy('deuda').length]).toEqual([1, 0]);
+    // Al revés: programada a las 8:05 (noches de las 7:20); a las 7:55 llegan las de las 7:00 y Moss sabe la noche: va la de hoy.
+    programadas.length = 0;
+    sonaron.length = 0;
+    await programarA(a(6), conAnillo({ avisos: {}, ...leida(hasta(sumarDias(HOY, -1), 13 * 60 + 20)) } as unknown as Partial<Estado>));
+    expect(deHoy('deuda').map(hora)).toEqual([8 * 60 + 5]);
+    await programarA(a(7, 55), sabe(7 * 60 + 54, 7 * 60 + 55, 13 * 60));
+    expect(deHoy('deuda').map((p) => [hora(p), p.content.title === SIN_LA_NOCHE()])).toEqual([[7 * 60 + 57, false]]);
+  });
+
+  it('en el borde del minuto no suenan dos: si la de las 7:45 ya sonó, saberlo a las 7:44 y pico no arma otra', async () => {
+    await programarA(a(6), conAnillo({ avisos: {} } as unknown as Partial<Estado>));
+    // 7:45:00,6: la de las 7:45 acaba de sonar; Moss anotó que lo supo a las 7:44 (en minutos enteros).
+    await programarA(new Date(2026, 10, 2, 7, 45, 0, 600), conAnillo({ avisos: {}, ...leida(hasta(HOY)), despertares: { [HOY]: { despertar: 7 * 60 + 44, sabido: 7 * 60 + 44 } } } as unknown as Partial<Estado>));
+    expect([sonaron.filter((x) => x === '2 deuda').length, deHoy('deuda').length]).toEqual([1, 0]);
+  });
+
+  it('la deuda que nunca quedó programada suena igual hoy: recién prendida, o la primera vez con esta versión aunque sea después de su hora', async () => {
+    const deudas = () => [...sonaron.filter((x) => x === '2 deuda'), ...deHoy('deuda').map(() => 'pendiente')];
+    // Estaba apagada; a las 7:10 la prendes, con la noche de hoy y tu despertar (7:00) sabidos: suena al saberlo.
+    await programarA(a(6), conAnillo({ avisos: { deuda: { encendido: false } } } as unknown as Partial<Estado>));
+    const sabido = (h: number, m: number) => ({ despertares: { [HOY]: { despertar: h * 60 + m - 10, sabido: h * 60 + m } } });
+    await programarA(a(7, 10), conAnillo({ avisos: {}, ...leida(hasta(HOY)), ...sabido(7, 10) } as unknown as Partial<Estado>));
+    expect(deHoy('deuda').map(hora)).toEqual([7 * 60 + 12]);
+    await programarA(a(12), conAnillo({ avisos: {}, ...leida(hasta(HOY)), ...sabido(7, 10) } as unknown as Partial<Estado>));
+    expect(deudas()).toEqual(['2 deuda']);
+    // La primera vez con esta versión: la de antes no dejaba la deuda programada de antes. Abres Moss a las 8:40, después
+    // de las 7:45: suena una vez, al saberlo.
+    programadas.length = 0;
+    sonaron.length = 0;
+    await programarA(a(6), conAnillo({ avisos: {} } as unknown as Partial<Estado>));
+    programadas.splice(0, programadas.length, ...programadas.filter((p) => p.content.data.tipo !== 'deuda'));
+    await programarA(a(8, 40), conAnillo({ avisos: {}, ...leida(hasta(HOY)), ...sabido(8, 40) } as unknown as Partial<Estado>));
+    expect(deHoy('deuda').map(hora)).toEqual([8 * 60 + 42]);
+    await programarA(a(12), conAnillo({ avisos: {}, ...leida(hasta(HOY)), ...sabido(8, 40) } as unknown as Partial<Estado>));
+    expect(deudas()).toEqual(['2 deuda']);
+  });
+
+  it('con el despertador de Moss, la deuda sin saber la noche cuenta desde él', async () => {
+    jest.setSystemTime(a(21));
+    const deudas = () => programadas.filter((p) => p.content.data.tipo === 'deuda').map((p) => [p.trigger.date.getDate(), hora(p)]).slice(0, 3);
+    // El miércoles 4 suena a las 9:00: ese día, a las 9:45.
+    mockAlarma = { hora: 9, minuto: 0, dias: [diaDeLaSemana('2026-11-04')] };
+    await programarAvisos(conAnillo({ avisos: {} } as unknown as Partial<Estado>));
+    expect(deudas()).toEqual([[3, 7 * 60 + 45], [4, 9 * 60 + 45], [5, 7 * 60 + 45]]);
+    // Uno de una sola vez, el día en que va a sonar: el lunes a las 21, uno a las 8:30 es del martes.
+    mockAlarma = { hora: 8, minuto: 30, dias: [] };
+    await programarAvisos(conAnillo({ avisos: {} } as unknown as Partial<Estado>));
+    expect(deudas()).toEqual([[3, 9 * 60 + 15], [4, 7 * 60 + 45], [5, 7 * 60 + 45]]);
+  });
+
+  it('«Acostarte» nombra la deuda solo la noche en que se sabe: hoy, con la noche de hoy; los días que vienen, sin número', async () => {
+    // El 5/11 y el 9/11 son de los que la nombran (una noche de cada cuatro). Cinco horas cada noche: mucha deuda.
+    const JUEVES = '2026-11-05';
+    const cortas = (dia: string) => Array.from({ length: 14 }, (_, i) => delAnillo(sumarDias(dia, -i), 13 * 60, 300));
+    // El texto que nombra la deuda, en el idioma de la app: «Falta media hora. Tienes 3 h de deuda de sueño…».
+    const conDeuda = new RegExp(`^${t('recordatorios.acostarte.conDeuda', { tiempo: '§', deuda: '§' }).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/§/g, '.+')}$`);
+    const acostarte = () => programadas.filter((p) => p.content.data.tipo === 'dormir').map((p) => [p.trigger.date.getDate(), conDeuda.test(p.content.body)]);
+    const el = (dia: number) => acostarte().find(([d]) => d === dia)?.[1];
+    jest.setSystemTime(new Date(2026, 10, 5, 12));
+    const conDormir = { hoy: JUEVES, avisos: { dormir: { encendido: true } } } as unknown as Partial<Estado>;
+    await programarAvisos(conAnillo({ ...conDormir, ...leida(cortas(JUEVES), JUEVES) }));
+    expect([el(5), el(9)]).toEqual([true, false]);
+    // Sin la noche de hoy (el anillo no sincronizó), tampoco hoy: diría una que no es.
+    await programarAvisos(conAnillo({ ...conDormir, ...leida(cortas(sumarDias(JUEVES, -1)), JUEVES) }));
+    expect([el(5), el(9)]).toEqual([false, false]);
+  });
+});
+
+describe('la primera vez con esta versión (la OTA del 27/11/2026), antes de guardar las noches', () => {
+  const delAnillo = (clave: string): Noche => ({
+    clave, fuente: { id: 'darings', nombre: 'Da Rings', tipo: 'otra' }, conEtapas: false, dormirse: 5 * 60, despertar: 13 * 60, enCama: null,
+    dormido: 420, despierto: 60, despertares: 1, etapas: { nucleo: 0, profundo: 0, rem: 0, sinEtapa: 420 }, siestas: 0, tramos: [], intervalos: [],
+    confianza: { duracion: 'media', horario: 'media', despertares: 'baja', etapas: null, enCama: null },
+  } as unknown as Noche);
+  const noches = Array.from({ length: 14 }, (_, i) => delAnillo(sumarDias(HOY, -i)));
+  const MEDITAR: Habito = { ...entrenar, id: 'meditar', nombre: 'Meditar', icono: 'leaf' };
+  const LEER: Habito = { ...entrenar, id: 'leer', nombre: 'Leer', icono: 'book' };
+  const AVISOS = {
+    dormir: { encendido: true },
+    habitos: [{ habito: 'meditar', cuando: { tipo: 'hora', minutos: 18 * 60 }, dias: [] }, { habito: 'leer', cuando: { tipo: 'dormir', antes: 45 }, dias: [] }],
+  };
+  const conAnillo = (extra: Partial<Estado> = {}) => estado({
+    perfil: { nacimiento: 1994 }, salud: { dia: HOY, noches }, nochesDeSalud: nochesParaGuardar(noches, HOY), recordatorios: [], habitos: [MEDITAR, LEER], avisos: AVISOS, ...extra,
+  } as unknown as Partial<Estado>);
+  /** Recién llegada la OTA: Salud sin leer y todavía nada guardado. */
+  const conLaOta = (extra: Partial<Estado> = {}) => conAnillo({ salud: null, nochesDeSalud: null, ...extra } as unknown as Partial<Estado>);
+  const DE_LAS_NOCHES = ['dormir', 'deuda', 'melatonina', 'revoluciones', 'gafas', 'descarga', 'luces'];
+  /** Cada aviso de las noches entero, como está en iOS: identificador, hora y contenido. */
+  const deLasNoches = () => JSON.stringify(programadas.filter((p) => DE_LAS_NOCHES.includes(p.content.data.tipo) || p.content.body === 'Leer'));
+
+  beforeEach(async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'] }).setSystemTime(a(12));
+    programadas.length = 0;
+    mockLlegados = [];
+    mockPremium = { sabe: true, hay: true, suscripcion: null, acceso: 'regalo' };
+    // La versión de antes dejó la semana programada, sin lo que la nueva suma (la deuda de antes de saber que te despertaste).
+    await programarAvisos(conAnillo());
+    programadas.splice(0, programadas.length, ...programadas.filter((p) => p.content.data.tipo !== 'deuda'));
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('de fondo y bloqueado, lo de las noches queda como está, y lo demás se rehace: antes la primera corrida de fondo lo borraba', async () => {
+    const antes = deLasNoches();
+    expect(JSON.parse(antes).length).toBeGreaterThan(15);
+    jest.setSystemTime(a(15));
+    await programarAvisos(conLaOta({ marcas: new Map([[claveDeMarca('meditar', HOY), { hecho: true, momento: a(14).toISOString() }]]) as Estado['marcas'] }));
+    expect(deLasNoches()).toEqual(antes);
+    // Lo demás, rehecho: meditar ya hecho hoy no suena, y llega a los días que siguen.
+    expect(programadas.filter((p) => p.content.body === 'Meditar').map((p) => p.trigger.date.getDate())).toEqual([3, 4, 5, 6, 7, 8]);
+  });
+
+  it('lo que se apagó, el hábito que ya no está y lo hecho hoy salen; al leer Salud, se guardan las noches y todo se arma como siempre', async () => {
+    jest.setSystemTime(a(15));
+    // Leer, hecho hoy: el de hoy sale y los otros días quedan como estaban.
+    const leer = () => programadas.filter((p) => p.content.body === 'Leer').map((p) => p.trigger.date.getDate());
+    expect(leer()).toEqual([2, 3, 4, 5, 6, 7, 8]);
+    await programarAvisos(conLaOta({ marcas: new Map([[claveDeMarca('leer', HOY), { hecho: true, momento: a(14).toISOString() }]]) as Estado['marcas'] }));
+    expect(leer()).toEqual([3, 4, 5, 6, 7, 8]);
+    // Sin acostarte y sin leer (el hábito se borró): nada de eso queda de lo de antes. Tu periodo, sí.
+    await programarAvisos(conLaOta({ avisos: { ...AVISOS, dormir: { encendido: false } }, habitos: [MEDITAR] } as unknown as Partial<Estado>));
+    expect(programadas.filter((p) => p.content.data.tipo === 'dormir' || p.content.body === 'Leer')).toEqual([]);
+    expect(programadas.filter((p) => p.content.data.tipo === 'melatonina')).toHaveLength(7);
+    // Abres Moss: Salud se lee, las noches quedan guardadas y la semana se arma entera, con la deuda de cada mañana.
+    jest.setSystemTime(a(16));
+    await programarAvisos(conAnillo());
+    expect(programadas.filter((p) => p.content.data.tipo === 'deuda').map((p) => p.trigger.date.getDate())).toEqual([3, 4, 5, 6, 7, 8]);
+    expect(programadas.filter((p) => p.content.body === 'Leer').map((p) => p.trigger.date.getDate())).toEqual([2, 3, 4, 5, 6, 7, 8]);
+  });
+});
+
+describe('una programación no deja media semana, aunque se corte', () => {
+  const delAnillo = (clave: string): Noche => ({
+    clave, fuente: { id: 'darings', nombre: 'Da Rings', tipo: 'otra' }, conEtapas: false, dormirse: 5 * 60, despertar: 13 * 60, enCama: null,
+    dormido: 420, despierto: 60, despertares: 1, etapas: { nucleo: 0, profundo: 0, rem: 0, sinEtapa: 420 }, siestas: 0, tramos: [], intervalos: [],
+    confianza: { duracion: 'media', horario: 'media', despertares: 'baja', etapas: null, enCama: null },
+  } as unknown as Noche);
+  const noches = Array.from({ length: 14 }, (_, i) => delAnillo(sumarDias(HOY, -i)));
+  const deFondo = (extra: Partial<Estado> = {}) => estado({
+    perfil: { nacimiento: 1994 }, salud: null, nochesDeSalud: nochesParaGuardar(noches, HOY), recordatorios: null, habitos: [], avisos: { dormir: { encendido: true } }, ...extra,
+  } as unknown as Partial<Estado>);
+  /** Lo que tiene iOS en cada paso de una programación (antes de cada cambio). */
+  const pasos: string[][] = [];
+  let enCadaPaso: (() => void) | null = null;
+  const ids = () => programadas.map((p) => p.identifier ?? '');
+  const notificaciones = jest.requireMock('expo-notifications') as Record<'scheduleNotificationAsync' | 'cancelScheduledNotificationAsync', jest.Mock<(...args: never[]) => unknown>>;
+  const reales: Partial<Record<keyof typeof notificaciones, (...args: never[]) => unknown>> = {};
+
+  beforeEach(() => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'] }).setSystemTime(a(21));
+    programadas.length = 0;
+    pasos.length = 0;
+    mockPremium = { sabe: true, hay: true, suscripcion: null, acceso: 'regalo' };
+    for (const f of ['scheduleNotificationAsync', 'cancelScheduledNotificationAsync'] as const) {
+      const real = notificaciones[f].getMockImplementation()!;
+      reales[f] = real;
+      notificaciones[f].mockImplementation(async (...args: never[]) => {
+        pasos.push(ids());
+        enCadaPaso?.();
+        return real(...args);
+      });
+    }
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+    enCadaPaso = null;
+    for (const f of ['scheduleNotificationAsync', 'cancelScheduledNotificationAsync'] as const) notificaciones[f].mockImplementation(reales[f]!);
+  });
+
+  it('si iOS suspende a Moss en cualquier momento, queda la semana de antes con parte de la nueva: lo que sigue nunca falta', async () => {
+    await programarAvisos(deFondo());
+    const antes = new Set(ids());
+    // El martes a las 21, de fondo: cambia el texto de casi todo y suma el lunes 9.
+    jest.setSystemTime(new Date(2026, 10, 3, 21));
+    pasos.length = 0;
+    await programarAvisos(deFondo({ hoy: '2026-11-03' } as unknown as Partial<Estado>));
+    const despues = new Set(ids());
+    const siguen = [...antes].filter((x) => despues.has(x));
+    expect(siguen.length).toBeGreaterThan(10);
+    expect(pasos.length).toBeGreaterThan(siguen.length);
+    for (const paso of pasos) expect(siguen.filter((x) => !paso.includes(x))).toEqual([]);
+  });
+
+  it('si llega otra mientras programa (la tarea de fondo y el almacén, casi juntas), no se pisan: queda la semana entera', async () => {
+    await programarAvisos(deFondo());
+    jest.setSystemTime(a(22, 30));
+    pasos.length = 0;
+    let segunda: Promise<void> | undefined;
+    enCadaPaso = () => {
+      if (pasos.length !== 6) return;
+      enCadaPaso = null;
+      segunda = programarAvisos(deFondo());
+    };
+    await programarAvisos(deFondo());
+    await segunda;
+    expect(segunda).toBeDefined();
+    // Quedó la semana entera: una corrida más, sola, no cambia nada.
+    const quedo = JSON.stringify(programadas);
+    await programarAvisos(deFondo());
+    expect(JSON.stringify(programadas)).toBe(quedo);
+    expect(new Set(programadas.filter((p) => p.content.data.tipo === 'melatonina').map((p) => p.trigger.date.getDate()))).toEqual(new Set([3, 4, 5, 6, 7, 8]));
   });
 });
 

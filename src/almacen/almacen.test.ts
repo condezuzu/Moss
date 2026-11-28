@@ -2,10 +2,11 @@ import { describe, expect, it } from '@jest/globals';
 
 import type { Constelacion } from '../datos/catalogo';
 import datos from '../datos/constelaciones.json';
+import { metaDelDiaConAscent, type SesionDeAscent } from '../dominio/conAscent';
 import { progresoPorConstelacion } from '../dominio/dias';
 import { diaDeLaSemana, sumarDias } from '../dominio/fechas';
-import type { Habito } from '../dominio/habitos';
-import { metaPara, metasIniciales, type Cuestionario, type MetaGuardada } from '../dominio/metas';
+import { fuenteDeComida, type Habito } from '../dominio/habitos';
+import { metaPara, metasIniciales, type Cuestionario, type Macros, type MetaGuardada } from '../dominio/metas';
 import { aguaDelDia, borrado, delDia, itemDeAlimento, itemRapido, totalDelDia, vigentes, type Registro, type Valores } from '../dominio/registros';
 import { entrenoParaGuardar } from '../dominio/cuestionario';
 import { fechaProbableDe, metaConCuidados } from '../dominio/cuidados';
@@ -157,6 +158,20 @@ describe('local primero', () => {
     tercera.almacen.ponerHorasDeComer({ almuerzo: 12 * 60 + 30 });
     await tercera.almacen.esperar();
     expect((await armar(repositorio)).almacen.estado().horasDeComer).toEqual({ almuerzo: 12 * 60 + 30 });
+  });
+
+  it('sin poder saber si se pidió Salud, las noches guardadas para los avisos se quedan; sin ninguna, quedan vacías', async () => {
+    const repositorio = repositorioEnMemoria();
+    const noche = { clave: '2026-10-20', dormirse: 300, despertar: 780, dormido: 420, siestas: 0, despierto: 60, aparato: 'otra' as const, confianza: { duracion: 'media' as const, horario: 'media' as const } };
+    await repositorio.guardarNochesDeSalud([noche]);
+    const { almacen } = await armar(repositorio);
+    almacen.sinSalud();
+    await almacen.esperar();
+    expect(almacen.estado().nochesDeSalud).toEqual([noche]);
+    expect((await armar(repositorio)).almacen.estado().nochesDeSalud).toEqual([noche]);
+    const sinNada = (await armar()).almacen;
+    sinNada.sinSalud();
+    expect(sinNada.estado().nochesDeSalud).toEqual([]);
   });
 
   it('el «pan» que Decir recordaba como el panettone se olvida; lo demás que recuerda, no', async () => {
@@ -909,6 +924,21 @@ describe('la comida enciende estrellas', () => {
     almacen.registrar([banana()], { comida: 'cena' });
     expect(hoy(almacen).hechos).toEqual(['registrar']);
   });
+
+  it('llegar a los tres macros la enciende, y pasarse por mucho de uno la apaga', async () => {
+    const conMacros = () => [habito('meditar', 0), { ...habito('macros', 1), fuente: fuenteDeComida('macros') }, habito('leer', 2)];
+    const { almacen } = await armar(repositorioEnMemoria(), conMacros);
+    const meta = almacen.responderCuestionario({ edad: 36, sexo: 'm', alturaCm: 178, pesoKg: 80, actividad: 'algo', objetivo: 'mantener', ritmo: 'recomendado' });
+    const todo = (grasas: number) => itemRapido('Todo', { kcal: meta.kcal, proteina: meta.proteina, carbohidratos: meta.carbohidratos, grasas });
+    const [corto] = almacen.registrar([todo(meta.grasas - 5)], { comida: 'cena' });
+    expect(hoy(almacen).hechos).toEqual([]);
+    almacen.borrarRegistro(corto.id);
+    almacen.registrar([todo(meta.grasas)], { comida: 'cena' });
+    expect(hoy(almacen).hechos).toEqual(['macros']);
+    expect(almacen.estado().marcas.get('macros|2026-10-21')).toMatchObject({ hecho: true, origen: 'comida' });
+    almacen.registrar([itemRapido('Manteca', { kcal: 360, proteina: 0, carbohidratos: 0, grasas: 40 })], { comida: 'cena' });
+    expect(hoy(almacen).hechos).toEqual([]);
+  });
 });
 
 describe('el control de cada semana corre solo', () => {
@@ -1121,6 +1151,67 @@ describe('la comida enciende estrellas, también con la semana repartida y en lo
     expect(hoy(almacen).hechos).not.toContain('calorias');
   });
 
+  it('las calorías cuentan según el objetivo que se usa: bajando, pasarse la apaga; subiendo, quedar corto no la enciende', async () => {
+    const { almacen } = await armar(repositorioEnMemoria(), conComida);
+    almacen.responderCuestionario(respuestas);
+    // A mano, la meta no se mueve con el objetivo: cambia solo para qué lado cuentan.
+    almacen.ponerMetasAMano({ proteina: 150, carbohidratos: 250, grasas: 67, kcal: 2200 });
+    const [deMas] = almacen.registrar([kcal(2300)], { comida: 'cena' });
+    expect(hoy(almacen).hechos).toContain('calorias');
+    almacen.ponerEstrategia({ objetivo: 'bajar' });
+    expect(hoy(almacen).hechos).not.toContain('calorias');
+    // Sin déficit, bajar queda en mantener.
+    almacen.ponerEstrategia({ sinDeficit: true });
+    expect(hoy(almacen).hechos).toContain('calorias');
+    almacen.ponerEstrategia({ objetivo: 'subir', sinDeficit: false });
+    expect(hoy(almacen).hechos).toContain('calorias');
+    almacen.borrarRegistro(deMas.id);
+    almacen.registrar([kcal(2100)], { comida: 'cena' });
+    expect(hoy(almacen).hechos).not.toContain('calorias');
+    almacen.ponerEstrategia({ objetivo: 'bajar' });
+    expect(hoy(almacen).hechos).toContain('calorias');
+  });
+
+  it('un día que ya pasó se mide con el objetivo que regía ese día, también después de cerrar Moss', async () => {
+    const { almacen, ir, repositorio } = await armar(repositorioEnMemoria(), conComida);
+    almacen.responderCuestionario({ ...respuestas, objetivo: 'subir' });
+    almacen.ponerMetasAMano({ proteina: 150, carbohidratos: 250, grasas: 67, kcal: 2200 });
+    // Subiendo, 2.300 de 2.200 la enciende.
+    almacen.registrar([kcal(2300)], { comida: 'cena' });
+    const el21 = () => almacen.estado().dias.get('2026-10-21')!;
+    expect(el21().hechos).toContain('calorias');
+    ir('2026-10-22T13:00:00Z');
+    almacen.revisarDia();
+    almacen.ponerEstrategia({ objetivo: 'bajar' });
+    const resumen = el21();
+    // Un café en la cena del 21: se sigue midiendo subiendo, y su resumen (Tu mes, la luz) no cambia.
+    almacen.registrar([kcal(2)], { comida: 'cena', dia: '2026-10-21', momento: '2026-10-21T23:00:00.000Z' });
+    expect(almacen.estado().marcas.get('calorias|2026-10-21')?.hecho).toBe(true);
+    expect(el21()).toBe(resumen);
+    // Hoy sí cuenta bajando: 2.300 de 2.200 es pasarse.
+    almacen.registrar([kcal(2300)], { comida: 'cena' });
+    expect(hoy(almacen).hechos).not.toContain('calorias');
+    // Queda en el teléfono: abierta otra vez, Moss sigue midiendo el 21 subiendo.
+    await almacen.esperar();
+    const otra = crearAlmacen({ abrir: async () => repositorio, catalogo, ahora: () => new Date('2026-10-22T14:00:00Z'), zona: () => 'America/Montevideo', nuevoId: () => 'otro' });
+    await otra.iniciar();
+    expect(otra.estado().objetivos).toEqual({ '2026-10-21': 'subir', '2026-10-22': 'bajar' });
+    otra.registrar([kcal(3)], { comida: 'cena', dia: '2026-10-21', momento: '2026-10-21T23:30:00.000Z' });
+    expect(otra.estado().marcas.get('calorias|2026-10-21')?.hecho).toBe(true);
+  });
+
+  it('marcar un cuidado que deja sin déficit vuelve a medir las calorías de hoy, aunque las metas sean a mano', async () => {
+    const { almacen } = await armar(repositorioEnMemoria(), conComida);
+    almacen.responderCuestionario({ ...respuestas, objetivo: 'bajar' });
+    almacen.ponerMetasAMano({ proteina: 150, carbohidratos: 250, grasas: 67, kcal: 2200 });
+    almacen.registrar([kcal(2300)], { comida: 'cena' });
+    expect(hoy(almacen).hechos).not.toContain('calorias');
+    // El riñón: sin déficit, bajar queda en mantener, y 2.300 de 2.200 ya es quedar dentro.
+    almacen.ponerCuidados({ marcados: ['renal'], datos: { renal: { dialisis: false } } });
+    expect(almacen.estado().perfil?.sinDeficit).toBe(true);
+    expect(hoy(almacen).hechos).toContain('calorias');
+  });
+
   it('la cena de ayer anotada hoy enciende la estrella de ayer, y borrarla la apaga', async () => {
     const { almacen, ir } = await armar(repositorioEnMemoria(), conComida);
     almacen.registrar([banana()], { comida: 'desayuno' });
@@ -1134,6 +1225,48 @@ describe('la comida enciende estrellas, también con la semana repartida y en lo
     expect(hoy(almacen).hechos).toEqual([]);
     almacen.borrarRegistro(cena.id);
     expect(ayer().hechos).toEqual([]);
+  });
+});
+
+describe('con Ascent vinculada, las estrellas de la comida se miden con la meta que se ve en Inicio', () => {
+  // La semana de conAscent.test.ts: entrena lunes, miércoles y viernes desde hace un mes, y el control es los lunes.
+  const LUNES = '2026-10-19';
+  const META: Macros = { kcal: 2590, proteina: 150, carbohidratos: 322, grasas: 78 };
+  const sesion = (fecha: string): SesionDeAscent => ({ fecha, series: 16, kilos: 1000, minutos: 55, ejercicios: [] });
+  const historia = Array.from({ length: 28 }, (_, i) => sumarDias(LUNES, -28 + i)).filter((_, i) => i % 7 === 0 || i % 7 === 2 || i % 7 === 4).map(sesion);
+  const gimnasio = { desde: '2026-09-01', sesiones: [...historia, sesion(LUNES), sesion('2026-10-21')] };
+  const conComida = () => [
+    { ...habito('macros', 0), fuente: fuenteDeComida('macros') },
+    { ...habito('calorias', 1), fuente: { tipo: 'comida' as const, meta: 'calorias' as const } },
+    habito('leer', 2),
+  ];
+  // Lo que dice Inicio ese día: metaConAscent, en ascent.ts, hace esta cuenta.
+  const enInicio = (dia: string) => metaDelDiaConAscent({ meta: META, inicio: LUNES, dia, hoy: dia, sesiones: gimnasio.sesiones, pesoKg: 80, sexo: 'm' })!.meta;
+
+  it('comiendo justo lo que dice Inicio, el día de gimnasio y el de descanso se encienden, bajando y subiendo', async () => {
+    const { almacen, ir } = await armar(repositorioEnMemoria(), conComida);
+    almacen.responderCuestionario({ edad: 36, sexo: 'm', alturaCm: 178, pesoKg: 80, actividad: 'algo', objetivo: 'bajar', ritmo: 'recomendado' });
+    almacen.ponerMetasAMano(META);
+    almacen.ponerEstrategia({ diaDelControl: 1 });
+    // El miércoles entrenó: Inicio pide más calorías que la base, y comerlas, bajando, es «Te quedan 0».
+    const miercoles = enInicio('2026-10-21');
+    expect(miercoles.kcal).toBeGreaterThan(META.kcal);
+    almacen.registrar([itemRapido('Todo', miercoles)], { comida: 'cena' });
+    // Hasta que llega lo de Ascent, se mide contra la base: pasado de calorías.
+    expect(hoy(almacen).hechos).not.toContain('calorias');
+    almacen.ponerGimnasioDeAscent(gimnasio);
+    expect(hoy(almacen).hechos).toEqual(['macros', 'calorias']);
+    // El jueves descansa: menos calorías y carbohidratos que la base. Subiendo, comer justo eso también es llegar.
+    ir('2026-10-22T15:00:00Z');
+    almacen.revisarDia();
+    almacen.ponerEstrategia({ objetivo: 'subir' });
+    const jueves = enInicio('2026-10-22');
+    expect(jueves.kcal).toBeLessThan(META.kcal);
+    almacen.registrar([itemRapido('Todo', jueves)], { comida: 'cena' });
+    expect(hoy(almacen).hechos).toEqual(['macros', 'calorias']);
+    // Sin el vínculo vuelve la base, la que se ve entonces: los carbohidratos y las calorías quedan cortos.
+    almacen.ponerGimnasioDeAscent(null);
+    expect(hoy(almacen).hechos).toEqual([]);
   });
 });
 
@@ -1658,6 +1791,25 @@ describe('al llegar al peso meta, Moss aplica lo que sigue', () => {
     expect(ultima(almacen)).toMatchObject({ desde: dia(n + 14), motivo: 'objetivo' });
   });
 
+  it('con las metas a mano, lo que sigue cambia para qué lado cuentan las calorías de hoy, sin esperar otro registro', async () => {
+    const { almacen, vivir, n } = await bajando('despues', (a) => {
+      a.ponerMetasAMano({ proteina: 130, carbohidratos: 180, grasas: 60 });
+      a.crearHabito({ nombre: 'Calorías', icono: 'flame', dias: [0, 1, 2, 3, 4, 5, 6], fuente: { tipo: 'comida', meta: 'calorias' } });
+    });
+    for (let k = n + 1; k <= n + 14; k++) vivir(k);
+    expect(almacen.estado().llegada?.aplicada).toBe('pregunta');
+    const calorias = almacen.estado().habitos.find((h) => h.nombre === 'Calorías')!.id;
+    // Manteniendo, un 5 % menos que la meta la enciende.
+    const meta = metaVigente(almacen.estado(), almacen.estado().hoy)!;
+    almacen.registrar([itemRapido('Todo', { kcal: Math.round(meta.kcal * 0.95), proteina: 0, carbohidratos: 0, grasas: 0 })], { comida: 'cena' });
+    expect(hoy(almacen).hechos).toContain(calorias);
+    // Subiendo, quedar corto no: la meta a mano no cambia, pero la estrella se apaga ya.
+    almacen.elegirLoQueSigue('musculo');
+    expect(almacen.estado().perfil?.objetivo).toBe('subir');
+    expect(metaVigente(almacen.estado(), almacen.estado().hoy)?.kcal).toBe(meta.kcal);
+    expect(hoy(almacen).hechos).not.toContain(calorias);
+  });
+
   it('con las metas a mano, cambia el plan pero no la meta', async () => {
     let aMano: MetaGuardada | null = null;
     const { almacen, vivir, n } = await bajando('grasa', (a) => { aMano = a.ponerMetasAMano({ proteina: 130, carbohidratos: 180, grasas: 60 }); });
@@ -1875,5 +2027,36 @@ describe('los hábitos que se encienden solos y los días pasados (spec/bugs.md,
     const confirmada = { fecha: '2026-10-21', hora: { dormirse: local(0, 45), despertar: local(7, 0), origen: 'confirmada' as const, confianza: 'alta' as const }, actualizado: '2026-10-21T15:30:00.000Z' };
     await almacen.mezclar({ ...nada(), noches: [confirmada] });
     expect(almacen.estado().noches.get('2026-10-21')?.hora).toMatchObject({ origen: 'confirmada', dormirse: local(0, 45) });
+  });
+});
+
+describe('al volver a abrir Moss con Ascent vinculada, las estrellas de la comida no parpadean', () => {
+  const LUNES = '2026-10-19';
+  const META: Macros = { kcal: 2590, proteina: 150, carbohidratos: 322, grasas: 78 };
+  const sesion = (fecha: string): SesionDeAscent => ({ fecha, series: 16, kilos: 1000, minutos: 55, ejercicios: [] });
+  const historia = Array.from({ length: 28 }, (_, i) => sumarDias(LUNES, -28 + i)).filter((_, i) => i % 7 === 0 || i % 7 === 2 || i % 7 === 4).map(sesion);
+  const gimnasio = { desde: '2026-09-01', sesiones: [...historia, sesion(LUNES), sesion('2026-10-21')] };
+  const conComida = () => [{ ...habito('calorias', 0), fuente: { tipo: 'comida' as const, meta: 'calorias' as const } }];
+
+  it('arranca con lo de Ascent guardado en el teléfono: la marca queda como estaba, sin apagarse ni volver a guardarse', async () => {
+    const repositorio = repositorioEnMemoria();
+    const { almacen } = await armar(repositorio, conComida);
+    almacen.responderCuestionario({ edad: 36, sexo: 'm', alturaCm: 178, pesoKg: 80, actividad: 'algo', objetivo: 'bajar', ritmo: 'recomendado' });
+    almacen.ponerMetasAMano(META);
+    almacen.ponerEstrategia({ diaDelControl: 1 });
+    almacen.ponerGimnasioDeAscent(gimnasio);
+    const miercoles = metaDelDiaConAscent({ meta: META, inicio: LUNES, dia: '2026-10-21', hoy: '2026-10-21', sesiones: gimnasio.sesiones, pesoKg: 80, sexo: 'm' })!.meta;
+    almacen.registrar([itemRapido('Todo', miercoles)], { comida: 'cena' });
+    expect(hoy(almacen).hechos).toEqual(['calorias']);
+    await almacen.enCola(async () => {});
+    const marca = almacen.estado().marcas.get('calorias|2026-10-21');
+    // Otra vez Moss: Ascent todavía no leyó lo suyo, pero el almacén arranca con lo que quedó guardado.
+    const otra = crearAlmacen({
+      abrir: async () => repositorio, catalogo, ahora: () => new Date('2026-10-21T16:00:00Z'), zona: () => 'America/Montevideo', sembrar: conComida,
+      nuevaSemilla: () => 'semilla', gimnasioGuardado: () => gimnasio,
+    });
+    await otra.iniciar();
+    expect(hoy(otra).hechos).toEqual(['calorias']);
+    expect(otra.estado().marcas.get('calorias|2026-10-21')).toEqual(marca);
   });
 });

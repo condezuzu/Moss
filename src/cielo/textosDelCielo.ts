@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 
 import type { Texto } from '@/datos/catalogo';
+import type { MetaDeComida } from '@/dominio/habitos';
+import type { Objetivo } from '@/dominio/metas';
 import { duracion } from '@/secciones/comida/datos';
 import { idioma, t } from '@/textos';
 import type { HabitoDelCielo } from './dia';
@@ -13,6 +15,15 @@ function miles(n: number) {
 
 export function nombreEn(texto: Texto) {
   return texto[idioma()];
+}
+
+/**
+ * Lo que enciende la estrella de un hábito de comida (tocarla lo dice, y VoiceOver): las calorías, según hacia dónde vas
+ * (registros.ts, cumpleLaComida).
+ */
+export function seEnciendeCon(comida: MetaDeComida | undefined, objetivo: Objetivo): string {
+  if (comida === 'calorias' && objetivo !== 'mantener') return t(objetivo === 'bajar' ? 'cielo.seEnciendeCon.caloriasBajando' : 'cielo.seEnciendeCon.caloriasSubiendo');
+  return t(`cielo.seEnciendeCon.${comida ?? 'registrar'}`);
 }
 
 /** Lo que lleva hoy un hábito automático, o nada si todavía no hay datos (Salud llega en la etapa 8). */

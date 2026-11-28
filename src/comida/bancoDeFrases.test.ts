@@ -28,7 +28,7 @@ type Region = 'UY' | 'AR' | 'MX' | 'ES' | 'US';
 type EnComida = Comida | `${Comida} ayer`;
 /** En qué comida, qué alimento (el nombre de la base), cuánto se dijo (null: no se dijo) y en qué medida. */
 type Esperado = [EnComida, RegExp, number | null, Unidad?];
-type Caso = { f: string; region: Region; tipos: Tipo[]; items: Esperado[]; hora?: Comida; falla?: string; tanda?: 2 };
+type Caso = { f: string; region: Region; tipos: Tipo[]; items: Esperado[]; hora?: Comida; falla?: string; tanda?: 2 | 3 };
 
 const BANCO: Caso[] = [
   // ------------------------------------------------------------ Uruguay
@@ -375,6 +375,87 @@ const BANCO: Caso[] = [
     items: [['almuerzo', /burrito/i, 1], ['desayuno', /oat/i, null]],
   },
   { f: 'two cups of coffee and three eggs, no, two eggs', region: 'US', tipos: ['correccion'], hora: 'desayuno', tanda: 2, items: [['desayuno', /coffee/i, 2, 'taza'], ['desayuno', /egg/i, 2]] },
+  // ------------------------------------------------------------ tanda 3 (27/11/2026): un plato con nombre y lo que lleva, los verbos en presente y la medida del polvo
+  {
+    f: 'me tomo un batido de banana, leche y avena',
+    region: 'UY', tipos: ['lista', 'compuesto'], hora: 'desayuno', tanda: 3,
+    items: [['desayuno', /^banana$/i, null], ['desayuno', /^leche entera$/i, null], ['desayuno', /^avena/i, null]],
+  },
+  {
+    f: 'me tomo un batido de una banana una taza de leche dos cucharadas de avena y una de mantequilla de maní',
+    region: 'UY', tipos: ['lista', 'cantidad', 'dictado'], hora: 'desayuno', tanda: 3,
+    items: [['desayuno', /^banana$/i, 1], ['desayuno', /^leche entera$/i, 1, 'taza'], ['desayuno', /^avena/i, 2, 'cucharada'], ['desayuno', /man[ií]/i, 1, 'cucharada']],
+  },
+  {
+    f: 'almorcé una ensalada de lechuga, tomate y huevo',
+    region: 'UY', tipos: ['lista', 'compuesto'], tanda: 3,
+    items: [['almuerzo', /^lechuga$/i, null], ['almuerzo', /^tomate$/i, null], ['almuerzo', /^huevo$/i, null]],
+  },
+  {
+    f: 'en la merienda un licuado con banana y avena y de postre un alfajor',
+    region: 'AR', tipos: ['lista', 'compuesto'], tanda: 3,
+    items: [['merienda', /^banana$/i, null], ['merienda', /^avena/i, null], ['merienda', /alfajor/i, 1]],
+  },
+  { f: 'un bowl con arroz, pollo y palta', region: 'AR', tipos: ['lista', 'compuesto'], tanda: 3, items: [['almuerzo', /^arroz/i, null], ['almuerzo', /pollo/i, null], ['almuerzo', /^palta$/i, null]] },
+  { f: 'cené una tortilla de 3 huevos con queso', region: 'ES', tipos: ['lista', 'cantidad'], tanda: 3, items: [['cena', /^huevo$/i, 3], ['cena', /queso/i, null]] },
+  { f: 'un batido de proteína y una banana', region: 'UY', tipos: ['compuesto'], hora: 'snack', tanda: 3, items: [['snack', /^batido de prote[ií]nas$/i, 1], ['snack', /^banana$/i, 1]] },
+  {
+    f: 'me tomo un scoop de proteína con un vaso de leche',
+    region: 'UY', tipos: ['cantidad', 'compuesto'], hora: 'snack', tanda: 3,
+    items: [['snack', /^prote[ií]na/i, 1, 'medida'], ['snack', /^leche/i, 1, 'vaso']],
+  },
+  { f: 'comí una manzana y tomé un vaso de agua', region: 'UY', tipos: ['lista'], hora: 'snack', tanda: 3, items: [['snack', /manzana/i, 1], ['snack', /^agua$/i, 1, 'vaso']] },
+  { f: 'Dos huevos. Después un café.', region: 'UY', tipos: ['lista', 'dictado'], hora: 'desayuno', tanda: 3, items: [['desayuno', /^huevo$/i, 2], ['desayuno', /^caf[eé]$/i, 1]] },
+  { f: 'me hice un licuado de banana', region: 'UY', tipos: ['compuesto'], hora: 'merienda', tanda: 3, items: [['merienda', /^licuado de banana$/i, 1]] },
+  {
+    f: 'a smoothie with banana, milk and oats',
+    region: 'US', tipos: ['lista', 'compuesto'], hora: 'desayuno', tanda: 3,
+    items: [['desayuno', /^banana$/i, null], ['desayuno', /milk/i, null], ['desayuno', /^oats$/i, null]],
+  },
+  {
+    f: "I'm having a salad with lettuce, tomato and egg",
+    region: 'US', tipos: ['lista', 'compuesto'], tanda: 3,
+    items: [['almuerzo', /^lettuce$/i, null], ['almuerzo', /^tomato$/i, null], ['almuerzo', /^egg$/i, null]],
+  },
+  { f: 'two scoops of whey protein with water', region: 'US', tipos: ['cantidad'], hora: 'snack', tanda: 3, items: [['snack', /whey/i, 2, 'medida'], ['snack', /^water$/i, null]] },
+  {
+    f: 'un batido verde de espinaca, manzana y apio',
+    region: 'MX', tipos: ['lista', 'compuesto'], hora: 'desayuno', tanda: 3,
+    items: [['desayuno', /^espinaca$/i, null], ['desayuno', /^manzana$/i, null], ['desayuno', /^apio$/i, null]],
+  },
+  {
+    f: 'me hice un batido con una banana congelada, un vaso de leche de almendras y un scoop de whey',
+    region: 'AR', tipos: ['lista', 'cantidad'], hora: 'snack', tanda: 3,
+    items: [['snack', /^banana$/i, 1], ['snack', /^leche de almendras$/i, 1, 'vaso'], ['snack', /prote[ií]na de suero/i, 1, 'medida']],
+  },
+  // La revisión del 27/11/2026: lo que no va en el plato, el plato de la base, «como bebida» y los números sin unidad.
+  { f: 'un licuado con dos medialunas', region: 'UY', tipos: ['compuesto', 'cantidad'], hora: 'merienda', tanda: 3, items: [['merienda', /^licuado$/i, 1], ['merienda', /medialuna/i, 2]] },
+  {
+    f: 'un licuado de banana, tostadas y café',
+    region: 'UY', tipos: ['lista'], hora: 'merienda', tanda: 3,
+    items: [['merienda', /^licuado de banana$/i, 1], ['merienda', /^tostada$/i, null], ['merienda', /^caf[eé]$/i, null]],
+  },
+  { f: 'ensalada de zanahoria y huevo', region: 'UY', tipos: ['compuesto'], tanda: 3, items: [['almuerzo', /^ensalada de zanahoria y huevo$/i, null]] },
+  { f: 'una pizza y como bebida una coca', region: 'AR', tipos: ['lista'], hora: 'cena', tanda: 3, items: [['cena', /pizza/i, 1], ['cena', /cola|coca/i, 1]] },
+  {
+    f: 'una taza de café y 30 de leche',
+    region: 'UY', tipos: ['cantidad'], hora: 'desayuno', tanda: 3,
+    items: [['desayuno', /^caf[eé]$/i, 1, 'taza'], ['desayuno', /^leche/i, 30]],
+  },
+  { f: 'a smoothie with a bagel', region: 'US', tipos: ['compuesto'], hora: 'desayuno', tanda: 3, items: [['desayuno', /smoothie/i, 1], ['desayuno', /^bagel$/i, 1]] },
+  // La segunda revisión del 27/11/2026: lo contado después de una docena o de dos puntos, el kilo, los gramos sin unidad,
+  // la bebida sin el líquido, el tostado y la bocha de helado.
+  { f: 'tres empanadas: dos de carne y una de pollo', region: 'UY', tipos: ['cantidad', 'compuesto'], hora: 'cena', tanda: 3, items: [['cena', /^empanada de carne$/i, 2], ['cena', /^empanada de pollo$/i, 1]] },
+  {
+    f: 'media docena de empanadas, 3 de carne y 3 de pollo',
+    region: 'UY', tipos: ['cantidad', 'compuesto'], hora: 'cena', tanda: 3,
+    items: [['cena', /^empanada de carne$/i, 3], ['cena', /^empanada de pollo$/i, 3]],
+  },
+  { f: 'un kilo de asado y dos de chorizo', region: 'UY', tipos: ['cantidad'], tanda: 3, items: [['almuerzo', /asado/i, 1, 'kg'], ['almuerzo', /^chorizo$/i, 2]] },
+  { f: '200 de arroz y 200 de pollo', region: 'UY', tipos: ['cantidad'], tanda: 3, items: [['almuerzo', /^arroz/i, 200], ['almuerzo', /pollo/i, 200]] },
+  { f: 'un licuado de manzana', region: 'UY', tipos: ['compuesto'], hora: 'merienda', tanda: 3, items: [['merienda', /^licuado/i, 1]] },
+  { f: 'un tostado', region: 'UY', tipos: ['compuesto'], hora: 'merienda', tanda: 3, items: [['merienda', /s[aá]ndwich|tostado de jam/i, 1]] },
+  { f: 'two scoops of ice cream', region: 'US', tipos: ['cantidad'], hora: 'merienda', tanda: 3, items: [['merienda', /ice cream$/i, 2, 'medida']] },
 ];
 
 type Real = { comida: EnComida; nombre: string | null; cantidad: number | null; unidad: Unidad | null };
@@ -453,7 +534,7 @@ describe('el banco de frases de «Decir lo que comí»', () => {
       const total = lista.reduce((s, r) => s + r.total, 0);
       return `${nombre.padEnd(12)} frases ${String(frases).padStart(3)}/${String(lista.length).padEnd(3)} (${Math.round((100 * frases) / Math.max(1, lista.length))} %) · alimentos ${bien}/${total} (${Math.round((100 * bien) / Math.max(1, total))} %)`;
     };
-    const lineas = [linea('todo', resultados), linea('tanda 1', resultados.filter((x) => !x.caso.tanda)), linea('tanda 2', resultados.filter((x) => x.caso.tanda === 2))];
+    const lineas = [linea('todo', resultados), linea('tanda 1', resultados.filter((x) => !x.caso.tanda)), linea('tanda 2', resultados.filter((x) => x.caso.tanda === 2)), linea('tanda 3', resultados.filter((x) => x.caso.tanda === 3))];
     for (const r of ['UY', 'AR', 'MX', 'ES', 'US'] as const) lineas.push(linea(r, resultados.filter((x) => x.caso.region === r)));
     lineas.push(linea('español', resultados.filter((x) => x.caso.region !== 'US')));
     const tipos: Tipo[] = ['varias', 'repetida', 'sinComida', 'ayer', 'cantidad', 'compuesto', 'lista', 'correccion', 'marca', 'plato', 'dictado'];

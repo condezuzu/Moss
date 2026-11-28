@@ -8,6 +8,7 @@ import { Skia, type SkPath } from '@shopify/react-native-skia';
 import { PixelRatio } from 'react-native';
 
 import type { Texto } from '@/datos/catalogo';
+import { enDosLineas } from '@/dominio/habitos';
 import type { EstrellaDelUniverso } from './escena';
 import type { DiaDelCielo } from './dia';
 import { encajar, mundoDelFondo, profundidades, proyectar, separar, ZONA_UNIVERSO, type Punto } from './mundo';
@@ -19,6 +20,10 @@ export type Lado = 'abajo' | 'arriba' | 'der' | 'izq';
 const SEPARACION = 60;
 /** El ancho de la etiqueta de una estrella (Interfaz.tsx): un nombre más largo sigue en una segunda línea, y ahí termina con «…». */
 export const ANCHO_DE_ETIQUETA = 180;
+/** Con más letras, el nombre va en dos líneas parejas (enDosLineas): la etiqueta queda más angosta y tapa menos. */
+const LETRAS_EN_UNA_LINEA = 20;
+/** Lo más cerca del borde de la pantalla que llega una etiqueta. */
+const BORDE = 8;
 /** Hasta cuánto crecen las etiquetas y la cabecera del cielo con el texto grande de iOS (Interfaz.tsx). */
 export const LETRA_MAXIMA = 1.3;
 
@@ -30,8 +35,12 @@ export type Plano = {
   estrellas: Punto[];
   lineas: { a: number; b: number; prof: number }[];
   centro: Punto;
-  /** `caja`: lo que ocupa la etiqueta respecto de su estrella, en puntos (x0, y0, x1, y1): tocarla también vale. */
-  etiquetas: { x: number; y: number; lado: Lado; caja: number[] }[];
+  /**
+   * `nombre`: el del hábito como se escribe, con el salto de línea si va en dos. `corrida`: lo que la etiqueta de abajo o
+   * de arriba se aparta del centro de su estrella para no salirse de la pantalla. `caja`: lo que ocupa la etiqueta
+   * respecto de su estrella, en puntos (x0, y0, x1, y1): tocarla también vale.
+   */
+  etiquetas: { x: number; y: number; lado: Lado; nombre: string; corrida: number; caja: number[] }[];
   autos: { indice: number; avance: number }[];
   fantasmas: SkPath;
   universo: {
@@ -73,13 +82,13 @@ export function armarPlano(ancho: number, alto: number, dia: DiaDelCielo, escala
   const letra = Math.min(LETRA_MAXIMA, Math.max(1, escalaDeLetra));
   // Con un poco de margen, y con lugar para la segunda línea de los automáticos (Interfaz.tsx). `crece`:
   // lo que la etiqueta pasa del alto de siempre (las letras más grandes, o el nombre en dos líneas).
-  const cajaDe = (lado: Lado, anchoEtiqueta: number, crece: number) => (lado === 'abajo' ? [-anchoEtiqueta / 2 - 6, 8, anchoEtiqueta / 2 + 6, 46 + crece]
-    : lado === 'arriba' ? [-anchoEtiqueta / 2 - 6, -46 - crece, anchoEtiqueta / 2 + 6, -8]
+  const cajaDe = (lado: Lado, anchoEtiqueta: number, crece: number, corrida: number) => (lado === 'abajo' ? [corrida - anchoEtiqueta / 2 - 6, 8, corrida + anchoEtiqueta / 2 + 6, 46 + crece]
+    : lado === 'arriba' ? [corrida - anchoEtiqueta / 2 - 6, -46 - crece, corrida + anchoEtiqueta / 2 + 6, -8]
       : lado === 'der' ? [16, -16, 28 + anchoEtiqueta, 24 + crece]
         : [-28 - anchoEtiqueta, -16, -16, 24 + crece]);
   const entra = (lado: Lado, sx: number, sy: number, anchoEtiqueta: number, crece: number) =>
-    lado === 'der' ? sx + 22 + anchoEtiqueta <= ancho - 8
-      : lado === 'izq' ? sx - 22 - anchoEtiqueta >= 8
+    lado === 'der' ? sx + 22 + anchoEtiqueta <= ancho - BORDE
+      : lado === 'izq' ? sx - 22 - anchoEtiqueta >= BORDE
         : lado === 'arriba' ? sy - 46 - crece >= alto * 0.2
           : true;
   // Lo que ya ocupa lugar en la pantalla: las estrellas y las etiquetas puestas. En un iPhone chico,
@@ -95,16 +104,19 @@ export function armarPlano(ancho: number, alto: number, dia: DiaDelCielo, escala
   const etiquetas = estrellas.map((p, i) => {
     const [sx, sy] = enPantallaTodas[i];
     const h = dia.habitos[i];
-    // El ícono y las letras (11,5 pt, unos 6,4 puntos cada una). Lo que no entra en el ancho va en una
-    // segunda línea, y ahí se corta (Interfaz.tsx): la etiqueta ocupa todo el ancho y una línea más.
-    const natural = 18 + 6.4 * letra * h.nombre.length;
+    // El ícono y las letras (11,5 pt, unos 6,4 puntos cada una). Un nombre largo va en dos líneas parejas, si entran en
+    // el ancho; el que no, sigue en la segunda línea y ahí se corta (Interfaz.tsx): ocupa todo el ancho y una línea más.
+    const lineas = enDosLineas(h.nombre, LETRAS_EN_UNA_LINEA, Math.floor((ANCHO_DE_ETIQUETA - 18) / (6.4 * letra)));
+    const natural = 18 + 6.4 * letra * Math.max(...lineas.map((l) => l.length));
     const anchoEtiqueta = Math.min(ANCHO_DE_ETIQUETA, natural);
-    const crece = 28 * (letra - 1) + (natural > ANCHO_DE_ETIQUETA ? 15 * letra : 0);
+    const crece = 28 * (letra - 1) + (lineas.length > 1 || natural > ANCHO_DE_ETIQUETA ? 15 * letra : 0);
     const dx = (p[0] - centro[0]) / anchoFigura;
     let lado: Lado = estrellas.length < 2 || Math.abs(dx) < 0.22 ? 'abajo' : dx > 0 ? 'der' : 'izq';
     if (!entra(lado, sx, sy, anchoEtiqueta, crece)) lado = 'abajo';
+    // Abajo o arriba va centrada en su estrella; cerca del borde se corre hacia adentro: la pantalla le cortaba el nombre.
+    const corridaDe = (l: Lado) => (l === 'abajo' || l === 'arriba' ? Math.min(Math.max(0, BORDE + anchoEtiqueta / 2 - sx), ancho - BORDE - anchoEtiqueta / 2 - sx) : 0);
     const enPantalla = (l: Lado) => {
-      const c = cajaDe(l, anchoEtiqueta, crece);
+      const c = cajaDe(l, anchoEtiqueta, crece, corridaDe(l));
       return [sx + c[0], sy + c[1], sx + c[2], sy + c[3]];
     };
     // Si tapa algo, el lado que menos tapa (a igualdad, el de siempre).
@@ -114,7 +126,8 @@ export function armarPlano(ancho: number, alto: number, dia: DiaDelCielo, escala
       }
     }
     ocupado.push(enPantalla(lado));
-    return { x: sx, y: sy, lado, caja: cajaDe(lado, anchoEtiqueta, crece) };
+    const corrida = corridaDe(lado);
+    return { x: sx, y: sy, lado, nombre: lineas.join('\n'), corrida, caja: cajaDe(lado, anchoEtiqueta, crece, corrida) };
   });
 
   const constructorFantasmas = Skia.PathBuilder.Make();

@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  bloquesDeLaRutina, cargaAntesDe, diasDeLaRutina, entrenadoSegunAscent, entrenoEl, estancamiento, gruposDelDia, gruposDeLaSesion, horasSinComer, leerAjustesDeAscent, leerRutinaDeAscent, metaDelDiaConAscent, pesoUnico, SEMANAS_SIN_SUBIR, semanaDesde, semanasParaComparar, sesionesConBloques, tuAnio, type MarcaDeAscent, type SesionDeAscent,
+  bloquesDeLaRutina, cargaAntesDe, diasDeLaRutina, entrenadoSegunAscent, entrenoEl, estancamiento, gruposDelDia, gruposDeLaSesion, horasSinComer, leerAjustesDeAscent, leerRutinaDeAscent, metaConAscentDe, metaDelDiaConAscent, pesoUnico, SEMANAS_SIN_SUBIR, semanaDesde, semanasParaComparar, sesionesConBloques, tuAnio, type MarcaDeAscent, type SesionDeAscent,
 } from './conAscent';
 import { grupoDelAnio } from './progresoCompartido';
 import type { Peso } from './control';
@@ -37,6 +37,36 @@ describe('la meta del día con Ascent', () => {
 
   it('un día fuera de la semana del control no tiene meta con Ascent', () => {
     expect(metaDelDiaConAscent({ meta: META, inicio: LUNES, dia: sumarDias(LUNES, 7), hoy: LUNES, sesiones: historia, pesoKg: 80, sexo: 'm' })).toBeNull();
+  });
+});
+
+describe('la meta que se ve con Ascent vinculada, la misma para Inicio y para las estrellas de la comida', () => {
+  const historia = Array.from({ length: 28 }, (_, i) => sumarDias(LUNES, -28 + i)).filter((_, i) => i % 7 === 0 || i % 7 === 2 || i % 7 === 4).map((f) => sesion(f));
+  const MIERCOLES = sumarDias(LUNES, 2);
+  const gimnasio = { desde: '2026-09-01', sesiones: [...historia, sesion(LUNES), sesion(MIERCOLES)] };
+  // La meta desde el lunes, con el control los lunes; la base es la del reparto de la semana a mano.
+  const e = { metas: [{ ...META, desde: LUNES }], perfil: { diaDelControl: 1 as const, sexo: 'm' as const }, pesos: [{ kg: 80 }], hoy: MIERCOLES };
+  const base: Macros = { ...META, kcal: 2400 };
+
+  it('con Ascent, la del día según el gimnasio en lugar del reparto de la semana', () => {
+    const conAscent = metaDelDiaConAscent({ meta: META, inicio: LUNES, dia: MIERCOLES, hoy: MIERCOLES, sesiones: gimnasio.sesiones, pesoKg: 80, sexo: 'm' })!.meta;
+    expect(metaConAscentDe(base, e, MIERCOLES, gimnasio)).toEqual(conAscent);
+    expect(conAscent.kcal).toBeGreaterThan(META.kcal);
+  });
+
+  it('sin el día del control elegido, la semana empieza el día de la primera meta', () => {
+    const desdeElMartes = { ...e, metas: [{ ...META, desde: sumarDias(LUNES, 1) }], perfil: { sexo: 'm' as const } };
+    const conAscent = metaDelDiaConAscent({ meta: META, inicio: sumarDias(LUNES, 1), dia: MIERCOLES, hoy: MIERCOLES, sesiones: gimnasio.sesiones, pesoKg: 80, sexo: 'm' })!.meta;
+    expect(metaConAscentDe(base, desdeElMartes, MIERCOLES, gimnasio)).toEqual(conAscent);
+  });
+
+  it('sin vínculo, sin sesiones en las 4 semanas de antes, con las de Ascent desde después o sin peso ni meta, la de siempre', () => {
+    expect(metaConAscentDe(base, e, MIERCOLES, null)).toBe(base);
+    expect(metaConAscentDe(base, e, MIERCOLES, { desde: '2026-08-01', sesiones: [sesion('2026-08-03')] })).toBe(base);
+    expect(metaConAscentDe(base, e, MIERCOLES, { ...gimnasio, desde: sumarDias(LUNES, 1) })).toBe(base);
+    expect(metaConAscentDe(base, { ...e, pesos: [] }, MIERCOLES, gimnasio)).toBe(base);
+    expect(metaConAscentDe(base, { ...e, metas: [] }, MIERCOLES, gimnasio)).toBe(base);
+    expect(metaConAscentDe(base, { ...e, perfil: null }, MIERCOLES, gimnasio)).toBe(base);
   });
 });
 

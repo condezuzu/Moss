@@ -2,8 +2,8 @@
 // sueño con su etapa, su fuente y la zona horaria de ese momento, y las lecturas del reloj. Sin nada
 // del teléfono, para probarlo.
 
-import { claveDelDia, diaLogico, type ClaveDia } from '@/dominio/fechas';
-import { marcaDe, type Etapa, type Fuente, type Medida, type Muestra, type Noche, type TipoDeFuente } from '@/dominio/sueno';
+import { claveDelDia, diaLogico, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { lasDelAparato, marcaDe, type Confianza, type Etapa, type Fuente, type Medida, type Muestra, type Noche, type TipoDeFuente } from '@/dominio/sueno';
 
 /** Lo que importa de una muestra de HealthKit. */
 export type DeSalud = {
@@ -91,7 +91,7 @@ export const pasosDe = (muestras: DeSalud[]) =>
 /** Los minutos de unas sesiones (la atención plena). */
 export const minutosDe = (muestras: DeSalud[]) => Math.round(muestras.reduce((s, m) => s + Math.max(0, m.endDate.getTime() - m.startDate.getTime()), 0) / 60_000);
 
-/** Lo de Salud, leído al abrir la app y al volver: queda en memoria; no se guarda ni sube. */
+/** Lo de Salud, leído al abrir la app y al volver: queda en memoria y no sube. Solo lo mínimo de las noches se guarda en el teléfono (nochesParaGuardar). */
 export type LoDeSalud = {
   /** El día en que se leyó: los valores son de ese día. */
   dia: ClaveDia;
@@ -155,3 +155,70 @@ export const cuentaComoEntrenar = (e: EntrenoDeSalud) => e.minutos >= MINUTOS_PA
 /** Los entrenamientos de un día de Moss que cuentan como entrenar, en orden. */
 export const entrenosDelDia = (lista: readonly EntrenoDeSalud[] | undefined, dia: ClaveDia): EntrenoDeSalud[] =>
   (lista ?? []).filter((e) => e.dia === dia && cuentaComoEntrenar(e)).sort((a, b) => a.desde - b.desde);
+
+// ------------------------------------------------------------ las noches guardadas (D45)
+// Lo mínimo de las noches de Salud que usan los avisos (lo decidiste el 27/11/2026): con el iPhone bloqueado Salud no
+// deja leer nada, y los avisos que iOS programa de fondo se armaban sin lo del sueño. Se guarda cada vez que Salud se
+// lee bien, solo en el teléfono (SQLite, fuera de la copia de seguridad), y no sube ni se sincroniza. Sin las etapas,
+// sin los tramos ni sus instantes, sin el aparato ni nada de lo que mide el reloj (la frecuencia, la variabilidad).
+
+/**
+ * Una noche de Salud, guardada: de qué día es, cuándo te dormiste y te despertaste (en minutos desde las 18 del día
+ * anterior, como en Noche), lo dormido y las siestas, lo despierto adentro, si es de un reloj o un anillo, si se anotó a
+ * mano y qué tan segura es la duración y la hora. Es lo que miran la deuda, lo de siempre, el periodo de melatonina y lo
+ * que sueles estar despierto: con estas, los avisos dan lo mismo que con Salud.
+ */
+export type NocheGuardada = {
+  clave: ClaveDia;
+  dormirse: number;
+  despertar: number;
+  dormido: number;
+  siestas: number;
+  despierto: number;
+  aparato: TipoDeFuente;
+  aMano?: true;
+  confianza: { duracion: Confianza; horario: Confianza };
+};
+
+/** Las de los últimos 16 días: la deuda de ayer y lo de siempre de anoche miran dos semanas para atrás desde ayer. */
+export const DIAS_GUARDADOS = 16;
+
+/**
+ * Lo que se guarda de las noches de Salud leídas el día `dia`: las de los últimos DIAS_GUARDADOS días y, de un reloj o un
+ * anillo, las últimas 14 aunque sean de antes (lasDelAparato: de esas sale lo que sueles estar despierto).
+ */
+export function nochesParaGuardar(noches: readonly Noche[], dia: ClaveDia): NocheGuardada[] {
+  const desde = sumarDias(dia, 1 - DIAS_GUARDADOS);
+  const delAparato = new Set(lasDelAparato(noches));
+  return noches
+    .filter((n) => n.clave >= desde || delAparato.has(n))
+    .map((n) => ({
+      clave: n.clave, dormirse: n.dormirse, despertar: n.despertar, dormido: n.dormido, siestas: n.siestas, despierto: n.despierto, aparato: n.fuente.tipo,
+      ...(n.aMano ? { aMano: true as const } : {}), confianza: { duracion: n.confianza.duracion, horario: n.confianza.horario },
+    }));
+}
+
+const CONFIANZAS: readonly unknown[] = ['alta', 'media', 'baja'];
+const APARATOS: readonly unknown[] = ['reloj', 'otra', 'telefono', 'moss'];
+const esGuardada = (n: Partial<NocheGuardada> | null): n is NocheGuardada =>
+  !!n && typeof n.clave === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(n.clave) && APARATOS.includes(n.aparato)
+  && [n.dormirse, n.despertar, n.dormido, n.siestas, n.despierto].every(Number.isFinite)
+  && CONFIANZAS.includes(n.confianza?.duracion) && CONFIANZAS.includes(n.confianza?.horario);
+
+/** Las noches guardadas, como se leen del teléfono: lo que no tiene forma queda afuera; sin lista, null (no hay nada guardado). */
+export const nochesGuardadasDe = (x: unknown): NocheGuardada[] | null => (Array.isArray(x) ? x.filter(esGuardada) : null);
+
+/**
+ * Lo de Salud que queda guardado, para los avisos mientras Salud no se puede leer: solo las noches. Lo que no se guarda
+ * vuelve vacío (los avisos no lo usan): los tramos, las etapas, el aparato, las lecturas, los pasos y los entrenamientos.
+ */
+export function saludGuardada(noches: readonly NocheGuardada[], dia: ClaveDia): LoDeSalud {
+  return {
+    dia, valores: {}, soloEnCama: new Map(), lecturas: { frecuencia: [], variabilidad: [], respiracion: [], reposo: new Map() }, fuentes: [], aparatos: [], pasosRecientes: [], pesos: new Map(),
+    noches: noches.map((n): Noche => ({
+      clave: n.clave, fuente: { id: '', nombre: '', tipo: n.aparato }, conEtapas: false, dormirse: n.dormirse, despertar: n.despertar, enCama: null,
+      dormido: n.dormido, despierto: n.despierto, despertares: 0, etapas: { nucleo: 0, profundo: 0, rem: 0, sinEtapa: n.dormido }, siestas: n.siestas, tramos: [],
+      intervalos: [], confianza: { ...n.confianza, despertares: 'baja', etapas: null, enCama: null }, ...(n.aMano ? { aMano: true as const } : {}),
+    })),
+  };
+}

@@ -14,7 +14,9 @@ export const CEDE_EN_EL_BORDE = 0.25;
 /** La curva de lo que llega: sale rápido y frena largo, como en iOS. */
 export const LLEGA = Easing.bezier(0.16, 1, 0.3, 1);
 /** La de lo que se va: arranca suave y termina rápido, y dura menos que la llegada. */
-const SE_VA = Easing.bezier(0.4, 0, 1, 1);
+export const SE_VA = Easing.bezier(0.4, 0, 1, 1);
+/** Lo que tarda una hoja en irse para abajo. */
+export const SALE_HOJA_MS = 230;
 
 export function viaje(hasta: number) {
   'worklet';
@@ -24,7 +26,7 @@ export function viaje(hasta: number) {
 // Las hojas y los paneles: con la curva de iOS se sienten rápidos aunque duren lo mismo. Con la
 // curva pareja de antes, una hoja de casi medio segundo parecía en cámara lenta.
 export const ENTRA_HOJA = SlideInDown.duration(340).easing(LLEGA);
-export const SALE_HOJA = SlideOutDown.duration(230).easing(SE_VA);
+export const SALE_HOJA = SlideOutDown.duration(SALE_HOJA_MS).easing(SE_VA);
 export const ENTRA_PANEL = SlideInRight.duration(300).easing(LLEGA);
 export const SALE_PANEL = SlideOutRight.duration(220).easing(SE_VA);
 /** El fondo oscuro detrás de una hoja. Un fundido no es movimiento: con Reducir movimiento también se ve. */

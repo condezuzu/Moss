@@ -2,10 +2,10 @@
 // o la cabecera siempre, y desde lo de adentro solo con su scroll arriba de todo, así no se pelea con
 // el scroll. Al soltar, se cierra si bajó bastante o con un tirón corto; si no, vuelve a su lugar con
 // un resorte que sale con la velocidad del dedo. Con Reducir movimiento vuelve derecho, sin rebote, y
-// se va con el fundido de la hoja, sin viajar.
+// se va con el fundido de la hoja, sin viajar. La cruz y tocar afuera la bajan igual (`irse`).
 
 import { useCallback, useEffect, type ComponentProps, type ReactNode } from 'react';
-import { StyleSheet, View, type LayoutChangeEvent, type ScrollView as ScrollDeRN, type StyleProp, type ViewStyle } from 'react-native';
+import { Dimensions, StyleSheet, View, type LayoutChangeEvent, type ScrollView as ScrollDeRN, type StyleProp, type ViewStyle } from 'react-native';
 import { GestureDetector, ScrollView, usePanGesture, type PanGestureConfig } from 'react-native-gesture-handler';
 import {
   Easing, ReduceMotion, scrollTo, useAnimatedReaction, useAnimatedRef, useAnimatedStyle, useReducedMotion, useScrollOffset, useSharedValue, withSpring, withTiming,
@@ -14,7 +14,7 @@ import {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { confirmarDescartar } from './descartar';
-import { entre, LLEGA } from './movimiento';
+import { entre, LLEGA, SALE_HOJA_MS, SE_VA } from './movimiento';
 import { bajarTeclado, tecladoArriba } from './teclado';
 
 /** Un tirón hacia abajo más rápido que esto (puntos por segundo) cierra aunque la hoja haya bajado poco. */
@@ -151,7 +151,8 @@ export function useArrastre(m: Movimiento, activo: boolean, conScroll = true): A
  * Una hoja que baja con el dedo y lleva su propia bajada: se cierra yéndose para abajo con la velocidad
  * del dedo y recién abajo llama a `alCerrar`. Con Reducir movimiento llama enseguida: el fundido de la
  * hoja (el del Modal o su `exiting`) la saca desde donde quedó. Con `sinGuardar`, soltarla para cerrar
- * la devuelve a su lugar y pregunta si descartar lo escrito.
+ * la devuelve a su lugar y pregunta si descartar lo escrito. `irse` la cierra igual sin el dedo (la
+ * cruz, tocar afuera), para la hoja que no tiene su propia salida (la de un Modal, que solo se funde).
  */
 export function useBajarParaCerrar({ alCerrar, activo = true, conScroll = true, sinGuardar = false }: { alCerrar: () => void; activo?: boolean; conScroll?: boolean; sinGuardar?: boolean }) {
   const reducido = useReducedMotion();
@@ -162,7 +163,19 @@ export function useBajarParaCerrar({ alCerrar, activo = true, conScroll = true, 
     conCambios.set(sinGuardar);
   }, [sinGuardar, conCambios]);
   const cerrar = () => alCerrar();
-  const preguntar = () => confirmarDescartar(alCerrar);
+  const irse = () => {
+    bajarTeclado();
+    if (reducido) {
+      alCerrar();
+      return;
+    }
+    // El alto de la pantalla y no el de la hoja: con el teclado arriba, la hoja crece mientras el teclado se va con ella.
+    bajada.set(withTiming(Dimensions.get('window').height, { duration: SALE_HOJA_MS, easing: SE_VA }, (fin) => {
+      if (fin) scheduleOnRN(cerrar);
+    }));
+  };
+  // «Descartar» la baja también, como si se la hubiera soltado para cerrar.
+  const preguntar = () => confirmarDescartar(irse);
   const arrastre = useArrastre({
     bajada: () => {
       'worklet';
@@ -201,7 +214,7 @@ export function useBajarParaCerrar({ alCerrar, activo = true, conScroll = true, 
   const medir = useCallback((ev: LayoutChangeEvent) => alto.set(ev.nativeEvent.layout.height), [alto]);
   /** Para la hoja que queda armada entre una vez y otra: al abrirse, en su lugar. */
   const reiniciar = useCallback(() => bajada.set(0), [bajada]);
-  return { ...arrastre, bajada, estilo, velo, medir, reiniciar };
+  return { ...arrastre, bajada, estilo, velo, medir, reiniciar, irse };
 }
 
 /** La cabecera de una hoja (la pestañita, el título): bajarla siempre baja la hoja. */

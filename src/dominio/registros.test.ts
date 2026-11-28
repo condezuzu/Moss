@@ -2,6 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import type { Comida } from './comidas';
 import { minutosEnElDia, sumarDias } from './fechas';
+import type { Objetivo } from './metas';
 import {
   aguaDelDia, alDia, borrado, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, deSiempre, escalar, gramosDe, itemDeAlimento, itemDeReceta, itemDeRecetaEnGramos, itemRapido,
   deEstaHora, itemsParaRegistrar, premios, recientes, restaurado, sueles, sumarValores, totalDelDia, ultimaCantidad, valoresDeReceta,
@@ -198,6 +199,34 @@ describe('los hábitos de comida', () => {
     const mucho = [...cerca, reg(itemRapido('Postre', { kcal: 400, proteina: 0, carbohidratos: 0, grasas: 0 }), HOY, 'cena', 22)];
     expect(cumpleLaComida('calorias', mucho, HOY, meta)).toBe(false);
     expect(cumpleLaComida('calorias', [], HOY, meta)).toBe(false);
+  });
+
+  it('las calorías, según el objetivo: bajando, pasarse la apaga; subiendo, quedar corto no la enciende', () => {
+    const cumple = (kcal: number, objetivo: Objetivo) =>
+      cumpleLaComida('calorias', [reg(itemRapido('Todo', { kcal, proteina: 0, carbohidratos: 0, grasas: 0 }), HOY, 'cena', 21)], HOY, meta, undefined, objetivo);
+    // Un 5 % de más: manteniendo y subiendo, sí; bajando, no. Un 5 % de menos, al revés.
+    expect([cumple(2100, 'bajar'), cumple(2100, 'mantener'), cumple(2100, 'subir')]).toEqual([false, true, true]);
+    expect([cumple(1900, 'bajar'), cumple(1900, 'mantener'), cumple(1900, 'subir')]).toEqual([true, true, false]);
+    // Llegar y pasarse, con el número redondeado como se ve en Inicio: «Te quedan 0» es llegar y no es pasarse.
+    expect([cumple(2000, 'bajar'), cumple(2000.4, 'bajar'), cumple(1999.6, 'subir')]).toEqual([true, true, true]);
+    expect([cumple(2001, 'bajar'), cumple(1999, 'subir')]).toEqual([false, false]);
+    // Del otro lado sigue el 10 %: ni muy poco bajando ni mucho de más subiendo.
+    expect([cumple(1790, 'bajar'), cumple(2210, 'subir')]).toEqual([false, false]);
+  });
+
+  it('los macros: los tres en su franja, como sus puntos; con uno que falta o que se pasó por mucho, no', () => {
+    const cumple = (proteina: number, carbohidratos: number, grasas: number, extra: Partial<Registro> = {}) =>
+      cumpleLaComida('macros', [reg(itemRapido('Todo', { kcal: 4 * proteina + 4 * carbohidratos + 9 * grasas, proteina, carbohidratos, grasas }), HOY, 'cena', 21, extra)], HOY, meta);
+    expect(cumple(120, 230, 66)).toBe(true);
+    // Llegar es con el número redondeado, como el punto de cada macro.
+    expect(cumple(119.6, 229.5, 65.5)).toBe(true);
+    expect([cumple(119.4, 230, 66), cumple(120, 229.4, 66), cumple(120, 230, 65.4)]).toEqual([false, false, false]);
+    // Pasarse un poco no la apaga; por mucho (un 20 % y al menos 10 g), sí.
+    expect(cumple(143, 275, 79)).toBe(true);
+    expect([cumple(144, 230, 66), cumple(120, 276, 66), cumple(120, 230, 80)]).toEqual([false, false, false]);
+    // Lo planificado no cuenta, y sin meta no hay con qué comparar.
+    expect(cumple(120, 230, 66, { planificado: true })).toBe(false);
+    expect(cumpleLaComida('macros', [reg(itemRapido('Todo', { kcal: 2000, proteina: 120, carbohidratos: 230, grasas: 66 }), HOY, 'cena', 21)], HOY, null)).toBe(false);
   });
 });
 

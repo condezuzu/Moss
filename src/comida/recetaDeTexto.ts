@@ -11,7 +11,7 @@ import { pluralDePorcion, type Idioma } from './porciones';
 export type Unidad =
   | 'g' | 'kg' | 'mg' | 'oz' | 'lb'
   | 'ml' | 'l' | 'cl' | 'dl' | 'fl oz'
-  | 'taza' | 'cucharada' | 'cucharadita' | 'pizca' | 'vaso' | 'pocillo' | 'chorrito'
+  | 'taza' | 'cucharada' | 'cucharadita' | 'pizca' | 'vaso' | 'pocillo' | 'chorrito' | 'medida'
   | 'unidad' | 'diente' | 'rebanada' | 'feta' | 'lata' | 'paquete' | 'sobre' | 'puñado' | 'hoja' | 'rama' | 'atado'
   | 'cabeza' | 'filete' | 'trozo';
 
@@ -87,6 +87,8 @@ const UNIDADES: readonly (readonly [Unidad, readonly string[], readonly string[]
   ['vaso', ['vaso', 'vasito', 'copa'], ['glass'], []],
   ['pocillo', ['pocillo'], [], []],
   ['chorrito', ['chorrito', 'chorro'], ['splash', 'drizzle'], []],
+  // La del polvo («un scoop de proteína») y la de la bebida: pesa lo que diga la porción de ese nombre de cada alimento.
+  ['medida', ['medida', 'cacito'], ['scoop'], []],
   ['unidad', ['unidad', 'pieza', 'cubo', 'cubito', 'pastilla'], ['piece', 'unit', 'cube'], ['u', 'ud', 'uds', 'unid', 'pza', 'pzas', 'pz', 'pc', 'pcs']],
   ['diente', ['diente', 'dientito'], ['clove'], []],
   ['rebanada', ['rebanada', 'rodaja', 'tajada', 'loncha', 'lonja'], ['slice', 'wedge'], []],
@@ -105,7 +107,7 @@ const UNIDADES: readonly (readonly [Unidad, readonly string[], readonly string[]
 ];
 
 /** Las medidas de la casa: se dicen así («un vaso», «dos cucharadas») y así se anotan, de a una. */
-const DE_LA_CASA = new Set<Unidad>(['taza', 'cucharada', 'cucharadita', 'vaso', 'lata', 'rebanada', 'feta', 'diente', 'puñado', 'trozo', 'filete', 'paquete', 'sobre']);
+const DE_LA_CASA = new Set<Unidad>(['taza', 'cucharada', 'cucharadita', 'vaso', 'lata', 'rebanada', 'feta', 'diente', 'puñado', 'trozo', 'filete', 'paquete', 'sobre', 'medida']);
 
 /** El nombre en singular de una medida de la casa («vaso», «glass»); de lo que se pesa o se mide en ml, null. */
 export function nombreDeMedida(unidad: Unidad, idioma: Idioma): string | null {
@@ -397,7 +399,7 @@ const RE_TAMANOS = new RegExp(`(?<![\\p{L}])${RE_TAMANO.source}`, 'gu');
 // ——— El singular: el buscador encuentra por el principio de las palabras ———
 
 /** Lo que termina en s sin ser plural. */
-const SIN_SINGULAR = new Set(['humus', 'hummus', 'cuscus', 'couscous', 'cous', 'ananas', 'anis', 'tres', 'asparagus', 'molasses', 'swiss', 'citrus']);
+const SIN_SINGULAR = new Set(['humus', 'hummus', 'cuscus', 'couscous', 'cous', 'ananas', 'anis', 'tres', 'asparagus', 'molasses', 'swiss', 'citrus', 'oats', 'grits']);
 const SINGULARES: Record<string, string> = { chiles: 'chile', moles: 'mole' };
 const CONECTORES = new Set(['de', 'del', 'con', 'en', 'al', 'a', 'sin', 'para', 'y', 'o', 'la', 'el', 'los', 'las', 'of', 'with', 'in', 'and', 'or', 'the']);
 

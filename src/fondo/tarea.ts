@@ -13,6 +13,7 @@ import { programarAvisos } from '@/recordatorios/programar';
 import { buscarDespertar } from '@/salud/despertar';
 import { leerSalud } from '@/salud/leer';
 import { estimarAnoche } from '@/salud/nocheSinReloj';
+import { saludPedida } from '@/salud/salud';
 import { actualizarWidgets } from '@/widgets';
 
 export const TAREA = 'moss-fondo';
@@ -41,12 +42,13 @@ async function correr(): Promise<void> {
   await arrancarLoDePremium().catch(() => {});
   await a.iniciar();
   a.revisarDia();
-  // Con el teléfono bloqueado Salud no se lee: sin eso no se sabe si hay reloj, y la noche no se estima.
+  // Con el teléfono bloqueado Salud no se lee: sin eso no se sabe si hay reloj, y la noche no se estima. Los avisos se
+  // arman igual, con lo mínimo de las noches que quedó guardado la última vez que se leyó (D45).
   const salud = await leerSalud(new Date(), a.estado().fuenteDelSueno, a.estado().corte).catch(() => null);
   if (salud) {
     a.ponerSalud(salud);
     await estimarAnoche(a).catch(() => {});
-  }
+  } else if (!(await saludPedida())) a.sinSalud();
   // De mañana, con el teléfono desbloqueado, la noche de Salud o el despertador dicen que te despertaste: lo de la
   // mañana se programa recién con eso (el día que sigue tu despertar).
   await buscarDespertar(a).catch(() => {});

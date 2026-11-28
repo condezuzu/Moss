@@ -25,8 +25,11 @@
     "seEnciendeSola": "Lights up on its own from Health",
     "seEnciendeCon": {
       "proteina": "Lights up on its own when you reach your protein",
+      "macros": "Lights up on its own when you hit your macros",
       "registrar": "Lights up on its own when you log all your meals",
-      "calorias": "Lights up on its own when you stay within your calories"
+      "calorias": "Lights up on its own when you're at your calories or up to 10% over or under",
+      "caloriasBajando": "Lights up on its own when you're at your calories or up to 10% under",
+      "caloriasSubiendo": "Lights up on its own when you're at your calories or up to 10% over"
     },
     "verComida": "Food",
     "desdeSalud": "{habito} · lit from Health",
@@ -2909,14 +2912,14 @@
       "necesitoTexto": "Guidelines say 7 to 9 hours, and it varies from person to person. If you wake up tired on your usual amount, try half an hour more: your sleep debt and your sleep quality use it.",
       "necesitoTextoMenor": "At your age 8 to 10 hours are recommended, and it varies from person to person. If you wake up tired on your usual amount, try half an hour more: your sleep debt and your sleep quality use it.",
       "tuDia": "Your day",
-      "tuDiaTexto": "It follows when you wake up: nothing from the morning goes off until Moss knows you’re up, and the night is set from that time and your sleep debt.",
+      "tuDiaTexto": "It follows when you wake up: apart from your sleep debt, nothing from the morning goes off until Moss knows you’re up, and the night is set from that time and your sleep debt.",
       "mas": "More notifications",
       "masTexto": "Off by default: turn on the ones that help you.",
       "deuda": "Your sleep debt",
-      "deudaTexto": "When you wake up: how much you have and how it changed since yesterday.",
+      "deudaTexto": "Every morning: whether it went up or down and where it stands. If Moss still doesn’t know how you slept 45 minutes after your usual wake-up time (or the Moss alarm), it tells you yesterday’s.",
       "horarioTextoDia": "When you wake up, it asks whether you’re having breakfast. If not, breakfast is shared among the meals left, and the first one you log moves the rest.",
       "melatonina": "Your melatonin window",
-      "melatoninaTexto": "About two hours ahead, it tells you when it starts: that is when falling asleep is easiest. It is an estimate.",
+      "melatoninaTexto": "An hour ahead, it tells you when it starts: that is when falling asleep is easiest. It is an estimate. With only a few nights so far, you get it an hour before your bedtime, unless Bedtime or Wind down already reminds you.",
       "revoluciones": "Wind down",
       "revolucionesTexto": "An hour before bed: something calm, no bright screens.",
       "descarga": "Write down what’s on your mind",
@@ -4168,7 +4171,7 @@
       "metas": [
         "When you'll get there comes from your 12-week trend, from the fastest pace to the slowest.",
         "It's a range because everyone progresses differently (Latella 2020; Swinton 2024).",
-        "With fewer than 6 sessions of the exercise, it isn't estimated.",
+        "With fewer than 6 sessions of the exercise in those 12 weeks, or less than 6 weeks from the first to the last, it isn't estimated.",
         "Sleeping under 6 h or eating under 1.6 g of protein per kilo can push it back (Morton 2018).",
         "What you ate yesterday doesn't change today's session."
       ]
@@ -4235,7 +4238,38 @@
       "error": "Couldn't save. Check your connection.",
       "objetivoUna": "Lift {kg} kg once",
       "objetivoVarias": "Lift {kg} kg {reps} times",
-      "nivelKg": "Today you could lift about {kg} kg (estimate)"
+      "nivelKg": "Today you could lift about {kg} kg (estimate)",
+      "faltanSesiones": {
+        "uno": "You need {n} more session of this exercise to estimate when you'll get there.",
+        "otros": "You need {n} more sessions of this exercise to estimate when you'll get there."
+      },
+      "faltanSemanas": {
+        "uno": "You need {n} more week of sessions to estimate when you'll get there.",
+        "otros": "You need {n} more weeks of sessions to estimate when you'll get there."
+      },
+      "editar": "Edit goal",
+      "buscar": "Search exercise",
+      "hechos": "Ones you've done",
+      "parecidos": "Work the same muscles",
+      "nada": "None with that name.",
+      "porMancuerna": "per dumbbell",
+      "porLado": "per side",
+      "enTotal": "{kg} kg total",
+      "alcanzada": "You made it",
+      "nivelPasa": "Your estimated level is already past the goal. Try it when you feel good.",
+      "yaTiene": "Already has a goal",
+      "borrarTitulo": "Delete this goal?",
+      "borrarTexto": "It's also deleted in Ascent.",
+      "errorBorrar": "Couldn't delete. Check your connection.",
+      "sinRespuesta": "Not sure it was saved.",
+      "sinRespuestaBorrar": "Not sure it was deleted.",
+      "demasiadas": "You already have {n} goals: delete one first.",
+      "sinVinculo": "Moss is no longer linked to Ascent.",
+      "reintentar": "Retry",
+      "tope": "You already have {n} goals: delete one to add another, or choose an exercise with a goal to change it.",
+      "faltaReps": "Log your reps in Ascent to estimate when you'll get there.",
+      "muchasReps": "With more than 10 reps your max can't be estimated: try sets of 10 or fewer.",
+      "faltaPeso": "Your sets have no weight: without it there's no max to estimate when you'll get there."
     },
     "sugerencias": {
       "titulo": "Suggestions for today",
@@ -4298,6 +4332,7 @@
     },
     "comidas": {
       "proteina": "Hit your protein",
+      "macros": "Hit your macros",
       "registrar": "Log all your meals",
       "calorias": "Stay within your calories"
     },
@@ -4595,13 +4630,19 @@
         "es": "It's the sleep you're missing from the last two weeks.",
         "cero": "You slept what you were missing.",
         "sin": "You sleep what you need.",
+        "sinLaNoche": {
+          "ayer": "Yesterday it was {deuda}. Opening Moss adds last night.",
+          "ayerSin": "You had none yesterday. Opening Moss adds last night.",
+          "despues": "Opening Moss adds your latest nights."
+        },
         "titulos": {
           "bajo": "Your sleep debt went down",
           "subio": "Your sleep debt went up",
           "igual": "Your sleep debt stayed the same",
           "es": "Your sleep debt: {deuda}",
           "cero": "Your sleep debt is down to zero",
-          "sin": "No sleep debt"
+          "sin": "No sleep debt",
+          "sinLaNoche": "Your sleep debt"
         }
       },
       "desayuno": {
@@ -4625,12 +4666,14 @@
       },
       "y": "{a} and {b}",
       "melatonina": {
-        "titulo": "Your melatonin window starts in 1 hour",
-        "texto": "At {desde}. Start putting screens away and dim the lights: it makes falling asleep easier."
+        "titulo": "Your melatonin window starts at {hora}",
+        "tituloALaUna": "Your melatonin window starts at {hora}",
+        "texto": "Avoid screens and heavy meals. Start your sleep routine."
       },
       "revoluciones": {
-        "titulo": "Bedtime is getting close",
-        "texto": "It's at {cama}. Something calm, away from bright screens, makes it easier to fall asleep."
+        "titulo": "Your bedtime is at {hora}",
+        "tituloALaUna": "Your bedtime is at {hora}",
+        "texto": "Avoid screens and heavy meals. Start your sleep routine."
       },
       "gafas": {
         "titulo": "Blue-light glasses, if you have them",
@@ -4861,7 +4904,8 @@
     },
     "notas": {
       "cancelada": "You weren’t charged. It’s here whenever you want it.",
-      "sinConexion": "You’re offline. Once you’re back online, you’ll see the price in your currency and you can start.",
+      "sinConexion": "Couldn’t reach the App Store. Once it responds, you’ll see the price in your currency and you can start.",
+      "sinPrecios": "The App Store didn’t return this plan’s price. Once it does, you’ll see it in your currency and you can start.",
       "nada": "There’s nothing to restore on this Apple Account.",
       "errorRestaurar": "Couldn’t reach the App Store. Try again when you’re online.",
       "error": "That didn’t go through. You weren’t charged.",

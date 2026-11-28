@@ -14,6 +14,7 @@ import type { MetaGuardada, Perfil } from '@/dominio/metas';
 import { leerNombre, type Nombre } from '@/dominio/nombre';
 import type { NochePropia } from '@/dominio/sueno';
 import { claveDeFavorito, type AlimentoPropio, type Favorito, type Receta, type Registro, type TomaDeAgua } from '@/dominio/registros';
+import type { NocheGuardada } from '@/salud/convertir';
 
 /**
  * Lo que se come, las medidas del cuerpo y las noches propias, por colección. Cada cosa va entera y
@@ -48,6 +49,8 @@ export type Guardado = ListasDeComida & {
   metas: MetaGuardada[];
   pesos: Peso[];
   ajustes: Record<string, string>;
+  /** Lo mínimo de las noches de Salud, para los avisos (D45): solo en el teléfono, no sube. null si todavía no se guardó nada. */
+  nochesDeSalud: NocheGuardada[] | null;
 };
 
 /** Un paquete de cambios: lo que falta subir, o lo que bajó de la cuenta y ganó. Los períodos van enteros o no van: se reemplazan juntos. */
@@ -109,6 +112,8 @@ export interface Repositorio {
   /** De los ajustes, solo la semilla y tu nombre suben a la cuenta (AJUSTES_QUE_SUBEN). */
   guardarAjuste(clave: string, valor: string): Promise<void>;
   leerAjuste(clave: string): Promise<string | null>;
+  /** Lo mínimo de las noches de Salud (D45): reemplaza lo que había. Queda en el teléfono y nunca está pendiente. */
+  guardarNochesDeSalud(noches: NocheGuardada[]): Promise<void>;
   /** Lo que bajó de la cuenta y ganó: reemplaza lo del teléfono y no queda pendiente. */
   guardarDeLaNube(cambios: Cambios): Promise<void>;
   pendientes(): Promise<Pendientes>;
@@ -118,7 +123,7 @@ export interface Repositorio {
   borrarTodo(): Promise<void>;
 }
 
-export const guardadoVacio = (): Guardado => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], ...sinComida(), ajustes: {} });
+export const guardadoVacio = (): Guardado => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], ...sinComida(), ajustes: {}, nochesDeSalud: null });
 
 /** Lo que guarda la versión en memoria: los datos, el número de cambio de cada cosa y hasta dónde subió. */
 export type Memoria = Guardado & { cambios: Record<string, number>; secuencia: number; subido: number };
@@ -215,6 +220,10 @@ export function repositorioEnMemoria(inicial: Partial<Memoria> = {}, alCambiar?:
     },
     async leerAjuste(clave) {
       return m.ajustes[clave] ?? null;
+    },
+    async guardarNochesDeSalud(noches) {
+      m.nochesDeSalud = copia(noches);
+      await listo();
     },
     async guardarDeLaNube(c) {
       const llego = (clave: string) => {

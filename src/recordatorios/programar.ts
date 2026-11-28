@@ -4,6 +4,9 @@
 // melatonina, el mismo de Sueño). Se programan los de la semana cada vez que se abre Moss y
 // cada vez que cambia algo que los mueve (lo anotado, lo hecho, los hábitos, las noches o los
 // avisos), así lo ya hecho no avisa. Son avisos locales: no pasan por ningún servidor.
+// Mientras Salud no se puede leer (de fondo con el iPhone bloqueado, o si falla), las noches de un reloj o un anillo son
+// las que quedaron guardadas en el teléfono la última vez que se leyó (D45, 27/11/2026): la semana se rearma entera,
+// igual que con Salud (spec/avisos.md).
 
 import * as Notifications from 'expo-notifications';
 import { useEffect, useEffectEvent } from 'react';
@@ -12,12 +15,13 @@ import { Platform } from 'react-native';
 import { horasDeComerDe, noSueleDe, reglasDeCuidados, type Estado } from '@/almacen/almacen';
 import { comidasHabituales, sesionesDelDia } from '@/dominio/alrededorDelEntreno';
 import {
-  avisosDeLaSemana, cuandoSuena, esDeEntrenar, horasDeSueno, horaDeReloj, textoDelAviso, tituloDelAviso, yLasDeDespues, type Aviso, type Avisos, type Evento, type Notificacion, type Sueno as SuenoDeAvisos,
+  avisosDeLaSemana, cuandoSuena, deLasNoches, esDeEntrenar, horasDeSueno, horaDeReloj, textoDelAviso, tituloDelAviso, yLasDeDespues, type Aviso, type Avisos, type Evento, type Notificacion,
+  type Sueno as SuenoDeAvisos,
 } from '@/dominio/avisos';
 import type { Comida } from '@/dominio/comidas';
 import { apagaLoQueConviene, apagaLoQueFalta, metaDeAgua, type Reglas } from '@/dominio/cuidados';
 import { claveDeMarca } from '@/dominio/dias';
-import { diaDeLaSemana, diaLogico, diasEntre, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { diaDeLaSemana, diaLogico, diasEntre, minutosEnElDia, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
 import { delDeporte, loQueConviene, QUE_CONVIENE, type DeLoQueConviene } from '@/dominio/loQueConviene';
 import { periodoDeMelatonina } from '@/dominio/melatonina';
 import { edadDe } from '@/dominio/metas';
@@ -30,9 +34,10 @@ import { habitualDe, margenParaDormirte } from '@/dominio/sinReloj';
 import { avisoDelRegalo, avisoDePrueba, avisosHasta } from '@/dominio/premium';
 import { despiertoDeLaNoche, deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
 import { accesoActual, finDelRegaloActual, hastaDelRegaloActual, hayPremium, seSabeElAcceso, suscripcionActual } from '@/lib/premium';
-import { entrenosDelDia } from '@/salud/convertir';
+import { entrenosDelDia, saludGuardada } from '@/salud/convertir';
 import { duracion, fechaLarga, metaDelDia } from '@/secciones/comida/datos';
 import { suenoDe } from '@/secciones/persona';
+import { alarmaPuesta } from '@/secciones/sueno/despertador';
 import { t } from '@/textos';
 
 const hayAvisos = Platform.OS !== 'web';
@@ -83,6 +88,10 @@ export const LO_QUE_MUEVE_LOS_AVISOS = [
   'pendientes',
   // Tus horas de comer: las de tu día (y su «No suelo») y las que cambiaste a mano.
   'respuestas', 'horasDeComer',
+  // La entrada: hasta terminarla, y después de cerrar sesión o borrar todo, no suena nada.
+  'entradaHecha',
+  // Las noches de Salud guardadas: con ellas se arma todo mientras Salud no se puede leer (D45).
+  'nochesDeSalud',
 ] as const;
 
 type Para = Pick<Estado, (typeof LO_QUE_MUEVE_LOS_AVISOS)[number]>;
@@ -105,6 +114,8 @@ export function suenoParaAvisos(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'no
     // Tu periodo de melatonina, la misma cuenta de la tarjeta de Sueño: así el aviso y la tarjeta dicen las mismas
     // horas. Los días que vienen todavía no tienen noches: valen las de hoy.
     periodo: (dia) => periodoDeMelatonina(s.noches, dia < e.hoy ? dia : e.hoy, { margen: e.latencia, deuda }),
+    // La que nombra el aviso de acostarte: la de hoy, con la noche de hoy. La de los días que vienen todavía no se sabe.
+    deudaDe: (dia) => (dia === e.hoy && s.noches.some((n) => n.clave === e.hoy) ? deuda : null),
   };
 }
 
@@ -283,7 +294,7 @@ const TOPE_DE_PENDIENTES = 60;
 /** Borra los avisos que había y programa los de la semana, si hay alguno encendido y permiso. */
 export function programarAvisos(e: Para): Promise<void> {
   const esta = ++vuelta;
-  enCurso = enCurso.then(() => programar(e, () => esta !== vuelta)).catch(() => {});
+  enCurso = enCurso.then(() => programar(e, () => esta !== vuelta)).catch((error) => console.warn('Moss no pudo programar los avisos', error));
   return enCurso;
 }
 
@@ -291,11 +302,11 @@ export function programarAvisos(e: Para): Promise<void> {
  * Los avisos que ya llegaron y ya no dicen nada salen del centro de notificaciones y de la pantalla
  * bloqueada: lo de una comida con esa o una de después anotada («Hora de la merienda» con la cena anotada,
  * comer antes de entrenar, la última comida grande), lo que ya no falta, «pesarse» con el peso de hoy, y los
- * de días anteriores (salvo el del fin de la prueba o del regalo).
+ * de días anteriores (salvo el del fin de la prueba o del regalo). Devuelve los que habían llegado.
  */
-async function sacarLosQueYaNoDicenNada(e: Para): Promise<void> {
+async function sacarLosQueYaNoDicenNada(e: Para): Promise<Notifications.Notification[]> {
   const llegados = await Notifications.getPresentedNotificationsAsync().catch(() => [] as Notifications.Notification[]);
-  if (!llegados.length) return;
+  if (!llegados.length) return llegados;
   const hoy = diaLogico(new Date(), e.corte);
   const anotadas = new Set(vigentes(e.registros.values()).filter((r) => r.dia === hoy && !r.planificado).map((r) => r.comida));
   const pesadoHoy = e.pesos.some((p) => p.fecha === hoy);
@@ -321,18 +332,91 @@ async function sacarLosQueYaNoDicenNada(e: Para): Promise<void> {
     const yaNoFalta = datos.tipo === 'falta' && dia === hoy && (datos.que === 'agua' ? aguaDesde(llego) : !bajo.includes(datos.que ?? ''));
     if (deOtroDia || comidaHecha || pesoHecho || desayunoDicho || todoHecho || yaNoFalta) await Notifications.dismissNotificationAsync(n.request.identifier).catch(() => {});
   }
+  return llegados;
 }
 
-async function programar(e: Para, vieja: () => boolean): Promise<void> {
+/** Lo que lleva cada aviso programado: lo que abre al tocarlo y, en la deuda que todavía no sabe la noche, eso. */
+type DatosDelAviso = Pick<AlTocarUnAviso, 'tipo' | 'comida' | 'dia' | 'que'> & {
+  /** La deuda que suena sin saber cómo fue la noche (dice la de ayer): si Moss la sabe antes, va la de siempre en su lugar. */
+  sinLaNoche?: true;
+};
+
+/**
+ * Un aviso programado que todavía no sonó, como lo dice iOS: su identificador y, si es uno de la semana (`AAAA-MM-DD:<id>`,
+ * con ese día en lo que lleva), cuál es, de qué tipo y a qué hora, en minutos de la cuenta de su día.
+ */
+type Programado = { identificador: string; dia?: ClaveDia; id?: string; tipo?: Aviso['tipo']; minutos?: number; sinLaNoche?: boolean };
+
+/** La hora de un disparador de calendario de iOS, en minutos de la cuenta de `dia`: pasada la medianoche, más de 1440. */
+function minutosDelDisparador(disparador: unknown, dia: ClaveDia): number | undefined {
+  const f = (disparador as { dateComponents?: Partial<Record<'year' | 'month' | 'day' | 'hour' | 'minute', number>> } | null)?.dateComponents;
+  if (!f || ![f.year, f.month, f.day, f.hour, f.minute].every(Number.isFinite)) return undefined;
+  const fecha = `${f.year}-${String(f.month).padStart(2, '0')}-${String(f.day).padStart(2, '0')}`;
+  return diasEntre(dia, fecha) * 24 * 60 + f.hour! * 60 + f.minute!;
+}
+
+/** Lo programado que todavía no sonó. Si iOS no deja leerlo, null. */
+async function loProgramado(): Promise<Programado[] | null> {
+  try {
+    return (await Notifications.getAllScheduledNotificationsAsync()).map((p) => {
+      const datos = p.content.data as Partial<DatosDelAviso> | null;
+      const [, dia, id] = /^(\d{4}-\d{2}-\d{2}):(.+)$/.exec(p.identifier) ?? [];
+      if (!dia || !id || datos?.dia !== dia || typeof datos.tipo !== 'string') return { identificador: p.identifier };
+      return { identificador: p.identifier, dia, id, tipo: datos.tipo as Aviso['tipo'], minutos: minutosDelDisparador(p.trigger, dia), sinLaNoche: datos.sinLaNoche === true };
+    });
+  } catch {
+    return null;
+  }
+}
+
+type DeLasNoches = 'dormir' | 'deuda' | 'melatonina' | 'revoluciones' | 'gafas' | 'descarga' | 'luces' | 'cafe' | 'ultimaComida' | 'entrenarTarde';
+
+/**
+ * Lo de las noches que dejó programado la versión de antes sigue mientras siga prendido: lo que apagaste no vuelve, ni el
+ * de un hábito que ya no existe o ya no avisa antes de dormirte. Lo hecho lo saca avisosDelDia, como siempre.
+ */
+function sigueValiendo(a: Pick<Aviso, 'id' | 'tipo' | 'habito'>, ajustes: Avisos, habitos: Para['habitos']): boolean {
+  if (!deLasNoches(a, ajustes)) return false;
+  if (a.tipo === 'habito') return habitos.some((h) => h.id === a.habito);
+  return !!ajustes[a.tipo as DeLasNoches]?.encendido;
+}
+
+/**
+ * Lo de Salud con que se arman los avisos: lo leído o, mientras Salud no se puede leer (de fondo con el iPhone bloqueado,
+ * o si falló), las noches que quedaron guardadas en el teléfono (D45). Entran por el mismo camino y la semana se rearma
+ * entera, igual que con Salud. De Salud se guardan solo las noches: de fondo, haber entrenado se sabe por el hábito.
+ */
+const conLasGuardadas = (e: Para): Para => (e.salud || !e.nochesDeSalud ? e : { ...e, salud: saludGuardada(e.nochesDeSalud, e.hoy) });
+
+/**
+ * El despertador de Moss por día de la semana, en minutos desde la medianoche: el que se repite, sus días; el de una sola
+ * vez, el día en que va a sonar. Sin despertador (o sin iOS 26), ninguno.
+ */
+async function despertadorPorDia(ahora: Date): Promise<Partial<Record<DiaSemana, number>>> {
+  const alarma = await alarmaPuesta().catch(() => null);
+  if (!alarma) return {};
+  const minutos = alarma.hora * 60 + alarma.minuto;
+  const unaVez = ((ahora.getDay() + (ahora.getHours() * 60 + ahora.getMinutes() < minutos ? 0 : 1)) % 7) as DiaSemana;
+  return Object.fromEntries((alarma.dias.length ? alarma.dias : [unaVez]).map((d) => [d, minutos]));
+}
+
+async function programar(estado: Para, vieja: () => boolean): Promise<void> {
   if (!hayAvisos || vieja()) return;
-  await sacarLosQueYaNoDicenNada(e);
+  // Sin la entrada hecha no suena nada: tampoco después de cerrar sesión o borrar tus datos o la cuenta (olvidarTodo),
+  // que dejaban hasta una semana de avisos de la cuenta de antes. Lo que ya había llegado (los hábitos, con sus nombres)
+  // también sale del centro de notificaciones. Aunque Apple todavía no haya dicho si hay acceso.
+  if (!estado.entradaHecha) {
+    await Notifications.dismissAllNotificationsAsync().catch(() => {});
+    return Notifications.cancelAllScheduledNotificationsAsync();
+  }
+  const e = conLasGuardadas(estado);
+  const llegados = await sacarLosQueYaNoDicenNada(e);
   if (vieja()) return;
   // Mientras Apple y la cuenta no contestan no se sabe si hay acceso: lo programado queda como estaba, y
   // se rehace cuando contestan (el almacén oye alCambiarPremium). Borrarlo dejaba la semana sin avisos.
   if (!seSabeElAcceso()) return;
-  await Notifications.cancelAllScheduledNotificationsAsync();
   // Sin acceso (venció o canceló) no suena nada: lo elegido queda, y vuelve al suscribirse.
-  if (!hayPremium()) return;
+  if (!hayPremium()) return Notifications.cancelAllScheduledNotificationsAsync();
   const horaDeComida = horasDeComida(e);
   // Lo que un cuidado de salud apaga (Cuidados) no suena, aunque esté prendido: de lo que conviene y pesarte.
   const cuidados = cuidadosDe(e);
@@ -349,7 +433,7 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   const hasta = avisosHasta(suscripcionActual(), accesoActual(), hastaDelRegaloActual());
   const elegido = algunAviso({ avisos: ajustes, recordatorios: ajustes.comidas ?? null });
   const conFalta = conLoQueFalta(ajustes);
-  if ((!elegido && !conFalta && finDePrueba === null && avisoDeRegalo === null) || !(await Notifications.getPermissionsAsync()).granted) return;
+  if ((!elegido && !conFalta && finDePrueba === null && avisoDeRegalo === null) || !(await Notifications.getPermissionsAsync()).granted) return Notifications.cancelAllScheduledNotificationsAsync();
   await prepararCategorias();
   const ahora = new Date();
   // Hoy y ahora, del mismo instante: justo al corte, el almacén todavía puede tener el día anterior.
@@ -367,14 +451,27 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   const entrenoDeHoy = entrenosDelDia(e.salud?.entrenamientos, hoy).at(-1);
   if (entrenoDeHoy) eventosHoy.entrenamiento = minutosEnElDia(new Date(entrenoDeHoy.hasta), hoy);
   const minutos = minutosEnElDia(ahora, hoy);
-  const sueno = suenoDelDia(e) ?? soloElDespertar(e);
+  const programado = await loProgramado();
+  // La primera vez con esta versión (la OTA del 27/11/2026) todavía no hay noches guardadas: se guardan recién cuando
+  // Salud se lee. Mientras, si no se puede leer, lo de las noches que ya estaba programado queda como está (se reconoce por
+  // su identificador y lo que lleva, que la versión de antes no traía entero), salvo lo que se apagó, y lo demás se rehace.
+  // Sin esto, la primera corrida de fondo con la versión nueva lo borraba.
+  const sinNoches = e.salud === null && e.nochesDeSalud === null;
+  const guardados = !sinNoches ? [] : (programado ?? []).flatMap((p) => {
+    if (!p.dia || !p.id || !p.tipo || p.minutos === undefined) return [];
+    const aviso: Aviso = { id: p.id, tipo: p.tipo, minutos: p.minutos, ...(p.tipo === 'habito' ? { habito: p.id.split(':')[1] } : {}) };
+    return sigueValiendo(aviso, ajustes, e.habitos) ? [{ dia: p.dia, aviso, identificador: p.identificador }] : [];
+  });
+  const sueno: SuenoDeAvisos = sinNoches ? { ...soloElDespertar(e), sinLeer: true } : (suenoDelDia(e) ?? soloElDespertar(e));
+  const { deEjemplo, noches } = suenoDe(e.hoy, e.perfil, e.salud, e.noches, e.necesidad);
+  const hayNoche = (dia: ClaveDia) => !deEjemplo && noches.some((n) => n.clave === dia);
   // El control es el día que se eligió o, sin elegir, el de la primera meta (como en el almacén).
   const diaDelControl = e.perfil?.diaDelControl ?? (e.metas[0] ? diaDeLaSemana(e.metas[0].desde) : undefined);
   // Según el deporte: los partidos de cada semana (el de mañana también cuenta para el último día) y la próxima carrera.
   const deporte = delDeporte(e.entreno, sumarDias(hoy, -1), sumarDias(hoy, DIAS));
   // Lo que conviene y lo del día que sigue tu despertar, de cada día; hoy, con lo que ya anotaste e hiciste.
   const comun: Omit<DeLoQueConviene & DeSigueElDespertar, 'dia'> = {
-    ajustes, sueno, horaDeComida, diaDelControl, deudaAntes: deudaDeAyer(e), sinNumeros: !e.numeros,
+    ajustes, sueno, horaDeComida, diaDelControl, sinNumeros: !e.numeros,
     viaje: e.entreno?.viaje, pesoKg: e.pesos[e.pesos.length - 1]?.kg ?? null, ...(e.perfil ? { edad: edadDe(e.perfil, hoy) } : {}),
     comidasHabituales: comidasHabituales(e.registros.values(), hoy), cafeinaPorToma: cafeinaPorToma(e),
     partidos: deporte.partidos, carrera: deporte.proximaCarrera,
@@ -386,9 +483,26 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
     anotadas: new Set(deHoy.map((r) => r.comida)), eventos: eventosHoy, comido: totalDelDia(e.registros.values(), hoy, false),
     desayuno: e.desayunos[hoy] ?? null, entrenado: entrenadoHoy ? minutosEnElDia(new Date(entrenadoHoy.momento), hoy) : null,
   };
+  // La deuda del día anterior a cada día, para decir «ayer era de…»: hoy, la de ayer; mañana, la de hoy. Solo con la
+  // noche de ese día: sin ella (el anillo todavía no sincronizó) diría un número que no es. De pasado mañana, no se sabe.
+  const deudaDeAntes: Partial<Record<ClaveDia, number | null>> = {
+    [hoy]: hayNoche(sumarDias(hoy, -1)) ? deudaDeAyer(e) : null, [sumarDias(hoy, 1)]: hayNoche(hoy) ? sueno.deuda : null,
+  };
+  // La deuda de hoy que quedó programada y no sonó: a qué hora quedó de verdad, y si todavía no sabía la noche. Si no está,
+  // ya sonó cuando llegó hoy o cuando está programada la de otro día (con ella se programó la de hoy): no se arma otra. Si
+  // no, no se programó nunca (recién prendida, o la primera vez con esta versión) y va como siempre (sigueElDespertar.ts).
+  const deudaDeHoy = programado?.find((p) => p.dia === hoy && p.id === 'deuda' && p.minutos !== undefined);
+  const yaSono = llegados.some((n) => n.request.identifier === `${hoy}:deuda`) || !!programado?.some((p) => p.id === 'deuda' && !!p.dia && p.dia > hoy);
+  const deudaPendiente = deudaDeHoy ? { minutos: deudaDeHoy.minutos!, sinLaNoche: !!deudaDeHoy.sinLaNoche } : yaSono ? null : undefined;
+  const despertador = await despertadorPorDia(ahora);
   const convieneDe = (dia: ClaveDia): Aviso[] => {
-    const op = { ...comun, dia, sesiones: sesionesDelDia(e.entreno, dia), meta: metaDelDia(e, dia), pendientes: pendientesPara(e.pendientes, dia), ...(dia === hoy ? deHoyParaConviene : {}) };
-    return [...loQueConviene(op), ...avisosDelDespertar(op)];
+    const op = {
+      ...comun, dia, deudaAntes: deudaDeAntes[dia] ?? null, conLaNoche: hayNoche(dia), despertador,
+      sesiones: sesionesDelDia(e.entreno, dia), meta: metaDelDia(e, dia), pendientes: pendientesPara(e.pendientes, dia),
+      ...(dia === hoy ? { ...deHoyParaConviene, ahora: minutos, deudaPendiente } : {}),
+    };
+    // Sin noches guardadas todavía, lo de ellas es lo que ya estaba programado: guarda su lugar con lo demás del día.
+    return [...loQueConviene(op), ...avisosDelDespertar(op), ...guardados.filter((x) => x.dia === dia).map((x) => x.aviso)];
   };
   const lista = avisosDeLaSemana({
     hoy, ahora: minutos, ajustes, habitos: e.habitos, sueno, horaDeComida, corte: e.corte,
@@ -405,6 +519,7 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   // Dos días antes de que termine la prueba, como dice la pantalla de pago.
   if (finDePrueba !== null) {
     pedidos.push({
+      identifier: 'prueba',
       content: { title: 'Moss', body: t('recordatorios.pruebaTermina'), data: { tipo: 'prueba' } },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(finDePrueba) },
     });
@@ -412,6 +527,7 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   // Dos días antes del último día del regalo, como dice la bienvenida («Moss te avisa unos días antes»).
   if (finDelRegalo && avisoDeRegalo !== null) {
     pedidos.push({
+      identifier: 'regalo',
       content: { title: t('recordatorios.regaloTermina.titulo'), body: t('recordatorios.regaloTermina.texto', { fecha: fechaLarga(finDelRegalo) }), data: { tipo: 'prueba' } },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(avisoDeRegalo) },
     });
@@ -433,7 +549,11 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
         // Cada uno va con su día: la comida tocada pasada la medianoche o a la mañana se anota en el día del aviso, y
         // sacarLosQueYaNoDicenNada sabe de qué día es sin leer la hora que da el teléfono.
         content: {
-          title: tituloDe(n), body: textoDe(n, e), data: { tipo: aviso.tipo, dia: n.dia, ...(aviso.comida ? { comida: aviso.comida } : {}), ...(aviso.falta ? { que: aviso.falta.que } : {}) },
+          title: tituloDe(n), body: textoDe(n, e),
+          data: {
+            tipo: aviso.tipo, dia: n.dia, ...(aviso.comida ? { comida: aviso.comida } : {}), ...(aviso.falta ? { que: aviso.falta.que } : {}),
+            ...(aviso.despertar?.que === 'deuda' && aviso.despertar.ahora === null ? { sinLaNoche: true as const } : {}),
+          } satisfies DatosDelAviso,
           ...(aviso.tipo === 'dormir' ? { categoryIdentifier: CATEGORIA_DORMIR } : aviso.tipo === 'desayuno' ? { categoryIdentifier: CATEGORIA_DESAYUNO } : {}),
         },
         // A la hora del reloj y no «dentro de tantos segundos» (eso hace DATE en iOS): quien viaja a otra
@@ -443,8 +563,19 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
     });
   }
   deLaSemana.sort((x, y) => x.en - y.en);
-  for (const pedido of [...pedidos, ...deLaSemana.map((x) => x.pedido)].slice(0, TOPE_DE_PENDIENTES)) {
-    if (vieja()) return;
+  const van = [...pedidos, ...deLaSemana.map((x) => x.pedido)].slice(0, TOPE_DE_PENDIENTES);
+  // Lo de antes se cambia recién ahora, con todo lo nuevo armado (si algo falla al armarlo, queda como estaba), y una vez
+  // empezado no se corta (27/11/2026): primero sale lo que ya no va y después cada uno se reemplaza en su lugar, con su
+  // mismo identificador. Si iOS suspende a Moss en el medio, queda la semana de antes con parte de la nueva, nunca media
+  // semana, y la próxima vez se termina. Antes se borraba todo primero, y cortarse ahí dejaba solo lo ya programado.
+  if (vieja()) return;
+  const quedan = new Set(van.map((p) => p.identifier));
+  const comoEstan = new Set(guardados.map((g) => g.identificador));
+  if (programado) {
+    for (const p of programado) if (!quedan.has(p.identificador)) await Notifications.cancelScheduledNotificationAsync(p.identificador).catch(() => {});
+  } else await Notifications.cancelAllScheduledNotificationsAsync();
+  for (const pedido of van) {
+    if (pedido.identifier && comoEstan.has(pedido.identifier)) continue;
     try {
       await Notifications.scheduleNotificationAsync(pedido);
     } catch {

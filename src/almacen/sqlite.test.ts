@@ -4,6 +4,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 
 import type { Marca } from '@/dominio/dias';
+import type { NocheGuardada } from '@/salud/convertir';
 import { sinCambios, sinComida } from './repositorio';
 import { repositorioSQLite } from './sqlite';
 
@@ -78,6 +79,34 @@ describe('el repositorio en SQLite', () => {
     await r.guardarDeLaNube({ ...nada, nombre: { valor: 'Ana María', actualizado: '2026-10-26T13:00:00.000Z' } });
     expect(sinCambios(await r.pendientes())).toBe(true);
     expect((await r.cargar('2026-10-01', '2026-10-01')).ajustes.nombre).toContain('Ana María');
+  });
+
+  it('las noches de Salud guardadas (D45) quedan en el teléfono: se leen al volver a abrir, se reemplazan, nunca suben y borrarTodo las borra', async () => {
+    const noche: NocheGuardada = { clave: '2026-11-02', dormirse: 300, despertar: 780, dormido: 420, siestas: 0, despierto: 60, aparato: 'otra', confianza: { duracion: 'media', horario: 'media' } };
+    const r = await repositorioSQLite('noches.db');
+    expect((await r.cargar('2026-10-01', '2026-10-01')).nochesDeSalud).toBeNull();
+    await r.guardarNochesDeSalud([noche]);
+    await r.guardarNochesDeSalud([noche, { ...noche, clave: '2026-11-01' }]);
+    expect(sinCambios(await r.pendientes())).toBe(true);
+    const otraVez = await repositorioSQLite('noches.db');
+    expect((await otraVez.cargar('2026-10-01', '2026-10-01')).nochesDeSalud?.map((x) => x.clave)).toEqual(['2026-11-02', '2026-11-01']);
+    // Sin Salud en el teléfono, vacío: no es lo mismo que no saberlo todavía.
+    await otraVez.guardarNochesDeSalud([]);
+    expect((await otraVez.cargar('2026-10-01', '2026-10-01')).nochesDeSalud).toEqual([]);
+    await otraVez.borrarTodo();
+    expect((await otraVez.cargar('2026-10-01', '2026-10-01')).nochesDeSalud).toBeNull();
+  });
+
+  it('una base de la 1.1.0 (versión 5, sin las noches de Salud) abre con la OTA: suma la tabla y lo de antes queda', async () => {
+    const vieja = await repositorioSQLite('v5.db');
+    await vieja.guardarMarca(marca('2026-10-26'));
+    base('v5.db').exec('DROP TABLE noches_de_salud; PRAGMA user_version = 5');
+    const r = await repositorioSQLite('v5.db');
+    const g = await r.cargar('2026-10-01', '2026-10-01');
+    expect([g.marcas.map((m) => m.dia), g.nochesDeSalud]).toEqual([['2026-10-26'], null]);
+    await r.guardarNochesDeSalud([]);
+    expect((await r.cargar('2026-10-01', '2026-10-01')).nochesDeSalud).toEqual([]);
+    expect((await r.pendientes()).marcas).toHaveLength(1);
   });
 
   it('una migración que quedó a medias se termina la próxima vez', async () => {

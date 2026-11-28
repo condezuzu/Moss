@@ -4,39 +4,39 @@ import es from '../textos/es.json';
 import en from '../textos/en.json';
 import compartido from './catalogoMuscular.json';
 import {
-  caidaInicial, CATALOGO, cuandoListo, dosisDeLaSesion, esfuerzoDeSerie, estadoDe, grupoDelEjercicio, listoEn, mejorE1rm, MUSCULOS, musculosDe, musculosTrabajados, peorEstado,
+  caidaInicial, CARGA_DE_FABRICA, CATALOGO, cuandoListo, dosisDeLaSesion, esfuerzoDeSerie, estadoDe, grupoDelEjercicio, listoEn, mejorE1rm, MUSCULOS, musculosDe, musculosTrabajados, peorEstado,
   PARTES, porLasSeries, residual, unRmDeAscent, type GrupoDeAscent, type SesionConBloques,
 } from './musculos';
 import { e1rm } from './puntajeMuscular';
 
 // El catálogo de Ascent a la versión 96 de su esquema, por id y con su grupo, como está en sus migraciones
-// (008_fuerza, 029_catalogo_100, 056_crunch_declinado, 076_ejercicios_propios_y_cardio y 096_press_en_smith).
-// Si Ascent suma un ejercicio, va acá y en CATALOGO.
+// (008_fuerza, 029_catalogo_100, 056_crunch_declinado, 076_ejercicios_propios_y_cardio y 096_press_en_smith), cada
+// grupo en el orden de su columna `orden` (el de su selector). Si Ascent suma un ejercicio, va acá y en CATALOGO.
 const DE_ASCENT: Record<GrupoDeAscent, string[]> = {
   piernas: [
-    'sentadilla', 'sentadilla_frontal', 'peso_muerto_rumano', 'prensa', 'hip_thrust', 'zancadas', 'extension_cuadriceps', 'curl_femoral', 'gemelos',
-    'sentadilla_bulgara', 'sentadilla_goblet', 'sentadilla_hack', 'sentadilla_smith', 'peso_muerto_sumo', 'peso_muerto_rigidas', 'peso_muerto_una_pierna', 'buenos_dias',
-    'prensa_una_pierna', 'zancadas_caminando', 'zancada_inversa', 'subida_cajon', 'curl_femoral_pie', 'gemelos_sentado', 'gemelos_prensa', 'aductores', 'abductores',
+    'sentadilla', 'sentadilla_frontal', 'sentadilla_bulgara', 'sentadilla_goblet', 'sentadilla_hack', 'sentadilla_smith', 'peso_muerto_rumano', 'peso_muerto_sumo',
+    'peso_muerto_rigidas', 'peso_muerto_una_pierna', 'buenos_dias', 'prensa', 'prensa_una_pierna', 'hip_thrust', 'zancadas', 'zancadas_caminando', 'zancada_inversa',
+    'subida_cajon', 'extension_cuadriceps', 'curl_femoral', 'curl_femoral_pie', 'gemelos', 'gemelos_sentado', 'gemelos_prensa', 'aductores', 'abductores',
     'puente_gluteo', 'patada_gluteo',
   ],
   pecho: [
-    'press_banca', 'press_inclinado', 'press_mancuernas', 'aperturas', 'fondos', 'press_declinado', 'press_inclinado_mancuernas', 'press_pecho_maquina', 'cruce_polea_alta',
-    'cruce_polea_baja', 'pec_deck', 'flexiones', 'pullover', 'press_plano_smith', 'press_inclinado_smith',
+    'press_banca', 'press_inclinado', 'press_declinado', 'press_plano_smith', 'press_inclinado_smith', 'press_mancuernas', 'press_inclinado_mancuernas',
+    'press_pecho_maquina', 'aperturas', 'cruce_polea_alta', 'cruce_polea_baja', 'pec_deck', 'fondos', 'flexiones', 'pullover',
   ],
   espalda: [
-    'peso_muerto', 'dominadas', 'remo_barra', 'remo_mancuerna', 'jalon', 'remo_polea', 'dominadas_supinas', 'dominadas_lastradas', 'remo_invertido', 'remo_pendlay', 'remo_t',
-    'remo_maquina', 'remo_unilateral_polea', 'jalon_cerrado', 'jalon_unilateral', 'pullover_polea', 'rack_pull', 'hiperextensiones',
+    'peso_muerto', 'dominadas', 'dominadas_supinas', 'dominadas_lastradas', 'remo_invertido', 'remo_barra', 'remo_pendlay', 'remo_t', 'remo_mancuerna', 'remo_maquina',
+    'remo_unilateral_polea', 'jalon', 'jalon_cerrado', 'jalon_unilateral', 'remo_polea', 'pullover_polea', 'rack_pull', 'hiperextensiones',
   ],
   hombros: [
-    'press_militar', 'press_arnold', 'elevaciones_laterales', 'pajaros', 'press_militar_mancuernas', 'press_hombro_maquina', 'elevaciones_frontales', 'elevaciones_polea',
-    'elevaciones_maquina', 'face_pull', 'remo_menton', 'rotacion_externa', 'encogimientos',
+    'press_militar', 'press_militar_mancuernas', 'press_hombro_maquina', 'press_arnold', 'elevaciones_laterales', 'elevaciones_frontales', 'elevaciones_polea',
+    'elevaciones_maquina', 'pajaros', 'face_pull', 'remo_menton', 'rotacion_externa', 'encogimientos',
   ],
   brazos: [
-    'curl_barra', 'curl_mancuernas', 'martillo', 'press_frances', 'triceps_polea', 'curl_predicador', 'curl_inclinado', 'curl_concentrado', 'curl_polea', 'curl_barra_z',
-    'curl_muneca', 'press_cerrado', 'triceps_mancuerna', 'triceps_sobre_cabeza', 'patada_triceps', 'fondos_banco', 'triceps_maquina',
+    'curl_barra', 'curl_predicador', 'curl_mancuernas', 'curl_inclinado', 'curl_concentrado', 'curl_polea', 'curl_barra_z', 'martillo', 'curl_muneca', 'press_frances',
+    'press_cerrado', 'triceps_mancuerna', 'triceps_polea', 'triceps_sobre_cabeza', 'patada_triceps', 'fondos_banco', 'triceps_maquina',
   ],
   core: [
-    'abdominales_polea', 'rueda_abdominal', 'plancha', 'plancha_lateral', 'crunch', 'crunch_declinado', 'elevacion_piernas', 'elevacion_rodillas', 'giros_rusos',
+    'plancha', 'plancha_lateral', 'abdominales_polea', 'crunch', 'crunch_declinado', 'elevacion_piernas', 'elevacion_rodillas', 'rueda_abdominal', 'giros_rusos',
     'bicicleta_abdominal', 'dead_bug', 'press_pallof',
   ],
   cardio: ['cinta', 'correr', 'caminar', 'bicicleta_fija', 'eliptica', 'remo_ergometro', 'escaladora', 'soga', 'natacion'],
@@ -59,6 +59,19 @@ describe('las mismas listas que Ascent', () => {
     expect(cubiertos.length).toBe(IDS.length);
     expect(Object.keys(CATALOGO).sort()).toEqual([...IDS].sort());
     for (const [grupo, ids] of Object.entries(DE_ASCENT)) for (const id of ids) expect([id, CATALOGO[id].grupo]).toEqual([id, grupo]);
+  });
+
+  it('cada grupo va en el orden de Ascent: al elegir el ejercicio de una meta se listan igual que en su selector', () => {
+    for (const [grupo, ids] of Object.entries(DE_ASCENT)) expect(Object.keys(CATALOGO).filter((id) => CATALOGO[id].grupo === grupo)).toEqual(ids);
+  });
+
+  it('la carga de fábrica de Ascent (sus migraciones 38 y 47): por mancuerna, un lado por vez o el lastre; los demás, en total', () => {
+    for (const id of Object.keys(CARGA_DE_FABRICA)) expect([id, !!CATALOGO[id]]).toEqual([id, true]);
+    const cuantas = (c: string) => Object.values(CARGA_DE_FABRICA).filter((x) => x === c).length;
+    expect([cuantas('par'), cuantas('una'), cuantas('lastre'), Object.keys(CARGA_DE_FABRICA).length]).toEqual([21, 3, 13, 37]);
+    expect(['press_mancuernas', 'elevaciones_laterales', 'cruce_polea_alta', 'remo_mancuerna', 'dominadas'].map((id) => CARGA_DE_FABRICA[id])).toEqual(['par', 'par', 'par', 'una', 'lastre']);
+    // La 47 pasó a total la goblet, el pullover y el tríceps con mancuerna; la barra, la máquina y el cardio, siempre.
+    expect(['sentadilla_goblet', 'pullover', 'triceps_mancuerna', 'press_banca', 'prensa', 'cinta'].map((id) => CARGA_DE_FABRICA[id] ?? 'total')).toEqual(Array(6).fill('total'));
   });
 
   it('cada uno de fuerza tiene su músculo principal, sin repetir con los que ayudan; el cardio no tiene ninguno', () => {

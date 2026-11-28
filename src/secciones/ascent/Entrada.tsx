@@ -47,7 +47,8 @@ export function EntradaDeAscent({ alAbrir, conPista }: { alAbrir: () => void; co
   else {
     cifra = tx(`ascent.entrada.titular.${h.titular.que}`);
     const s = h.sesion;
-    sub = !s ? (h.sabeCuandoEntrena ? t('ascent.entrada.descanso') : '') : s.como === 'hecha' ? t('ascent.senal.hoy', { sesion: enFrase(s.nombre) }) : t('ascent.entrada.sesion', { sesion: s.nombre, hora: hora(s.inicio) });
+    // Sin sesión hoy, la cifra ya lo dice: «Hoy descansas» o, si no se sabe cuándo entrenas, «Sin sesión hoy».
+    sub = !s ? '' : s.como === 'hecha' ? t('ascent.senal.hoy', { sesion: enFrase(s.nombre) }) : t('ascent.entrada.sesion', { sesion: s.nombre, hora: hora(s.inicio) });
   }
   const etiqueta = vinculada ? t('ascent.entrada.etiquetaTitular', { titular: cifra }) : t('ascent.flecha');
   return (

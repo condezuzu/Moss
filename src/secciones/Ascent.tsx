@@ -5,8 +5,8 @@
 // rango, como las estrellas. Volver es bajar: abajo de todo, empujar para arriba, «Volver a Progreso» o tocar
 // Progreso. El cielo sigue detrás, apenas oscurecido para leer.
 
-import { useEffect, useState, type ReactNode } from 'react';
-import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View, type NativeScrollEvent, type NativeSyntheticEvent, type ViewStyle } from 'react-native';
 import { GestureDetector, ScrollView, usePanGesture } from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation, Easing, scrollTo, useAnimatedReaction, useAnimatedRef, useAnimatedStyle, useDerivedValue, useReducedMotion, useScrollOffset, useSharedValue,
@@ -19,6 +19,8 @@ import { useAscent } from '@/almacen/ascent';
 import { irALaAppStore } from '@/lib/ascent';
 import { t } from '@/textos';
 import { letras } from '@/tema';
+import { olvidarLaMetaPedida } from './ascent/abrir';
+import { dondeEsta, loMovioLaPersona, type DondeEsta } from './ascent/pegado';
 import { C, useAcento } from './ascent/colores';
 import { Cuerpo, Marca } from './ascent/Dibujos';
 import { HojaDeVincular } from './ascent/HojaDeVincular';
@@ -36,6 +38,11 @@ import { entre, subirOBajar, UMBRAL, VELOCIDAD_MINIMA } from './movimiento';
 const DEGRADE = 'linear-gradient(180deg, rgba(5, 6, 10, 0.5) 0px, rgba(5, 6, 10, 0.42) 240px, rgba(5, 6, 10, 0.6) 100%)';
 /** El cuerpo de tu rango, de fondo: qué parte del camino de la sección hace al bajar y cuánto se corre con todo el scroll (está lejos). */
 const CUERPO_SIGUE = 0.38;
+/**
+ * Lo primero que se ve (una parte de la sección) queda en su lugar si cambia el alto de lo de más arriba: el scroll lo
+ * compensa solo, en el mismo cuadro. Lo que cambia desde ahí para abajo no corre nada.
+ */
+const ANCLA = { minIndexForVisible: 0 };
 
 // moss://vincular (desde Ascent): Secciones abre la sección y esto, la hoja; vinculada, solo la sección.
 const alPedirVincular = new Set<() => void>();
@@ -82,12 +89,28 @@ export function Ascent({ subida, abierta, abajo, alCerrar, alIrASueno }: Props) 
   );
   const [vezDelTutorial, setVezDelTutorial] = useState(0);
 
-  // El scroll: se llega abajo de todo y, al volver a pintar, se queda donde estaba contando desde abajo (-1: abajo de todo).
+  // El scroll: se llega abajo de todo y ahí se queda mientras se arma lo de arriba, hasta que la persona toca. Desde
+  // ahí manda lo que está mirando (ANCLA). Antes se guardaba la distancia al final y se la reponía con cada cambio de
+  // alto: abrir algo corría para arriba todo lo de antes, también lo que se había tocado, y lo sacaba de la pantalla.
   const scroll = useAnimatedRef<ScrollView>();
   const scrollY = useScrollOffset(scroll);
   const altoDelContenido = useSharedValue(0);
   const altoVisible = useSharedValue(0);
-  const desdeAbajo = useSharedValue(-1);
+  const pegado = useRef(true);
+  // Solo lo suelta la persona: un toque, arrastrar o, en la web, la rueda (que react-native-web le pasa al elemento y RN
+  // no tipa). Un scroll que no hizo ella, como el ajuste del ANCLA (en RN 0.88 también avisa como scroll), no.
+  const soltar = () => {
+    pegado.current = false;
+  };
+  const conLaRueda = (Platform.OS === 'web' ? { onWheel: soltar } : {}) as object;
+  // Lo que mueve el scroll sin tocar (VoiceOver, Control por voz, el teclado) llega solo como scroll: también lo suelta,
+  // si no es el ajuste del ANCLA (pegado.ts).
+  const ultimoScroll = useRef<DondeEsta>({ alto: 0, alFinal: 0 });
+  const alScroll = ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const ahora = dondeEsta(nativeEvent);
+    if (loMovioLaPersona(ultimoScroll.current, ahora)) soltar();
+    ultimoScroll.current = ahora;
+  };
   const alFondo = useDerivedValue(() => scrollY.get() >= altoDelContenido.get() - altoVisible.get() - 2);
 
   // Las cuentas de la sección se hacen cuando empieza a bajar, no con cada toque. Al cerrarse, lo desplegado se
@@ -96,7 +119,7 @@ export function Ascent({ subida, abierta, abajo, alCerrar, alIrASueno }: Props) 
   const alMoverse = (visible: boolean) => {
     setALaVista(visible);
     if (visible) return;
-    desdeAbajo.set(-1);
+    pegado.current = true;
     scroll.current?.scrollToEnd({ animated: false });
   };
   useAnimatedReaction(
@@ -149,6 +172,15 @@ export function Ascent({ subida, abierta, abajo, alCerrar, alIrASueno }: Props) 
     cambio.set(withTiming(1, { duration: 600, easing: Easing.bezier(0.2, 0.7, 0.2, 1) }));
   }
   const estiloCambio = useAnimatedStyle(() => ({ opacity: cambio.get(), transform: [{ translateY: 8 * (1 - cambio.get()) }] }));
+  // Al vincular o desvincular cambia todo lo de arriba: se vuelve a lo principal, abajo.
+  useEffect(() => {
+    pegado.current = true;
+    scroll.current?.scrollToEnd({ animated: false });
+  }, [vinculada, scroll]);
+  // Desvinculada, una meta pedida con «Reintentar» ya no va.
+  useEffect(() => {
+    if (!vinculo.vinculada) olvidarLaMetaPedida();
+  }, [vinculo.vinculada]);
   const estiloZona = useAnimatedStyle(() => ({ transform: [{ translateY: -(1 - subida.get()) * alto }], opacity: subida.get() > 0.0005 ? 1 : 0 }));
   // El cuerpo baja con la sección más despacio que ella y, con el scroll, se corre apenas.
   const bajaDelCuerpo = useDerivedValue(() => {
@@ -192,28 +224,36 @@ export function Ascent({ subida, abierta, abajo, alCerrar, alIrASueno }: Props) 
           <CuerpoDeFondo baja={bajaDelCuerpo} activo={aLaVista} />
         </View>
         <GestureDetector gesture={cerrar}>
-          <View collapsable={false} style={StyleSheet.absoluteFill}>
-            <ScrollView
-              ref={scroll}
-              simultaneousWith={cerrar}
-              scrollEventThrottle={16}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={[st.contenido, { paddingTop: insets.top + 6, paddingBottom: abajo + 14 }]}
-              onLayout={(ev) => altoVisible.set(ev.nativeEvent.layout.height)}
-              onContentSizeChange={(_, nuevo) => {
-                altoDelContenido.set(nuevo);
-                const visible = altoVisible.get();
-                const lejos = desdeAbajo.get();
-                scroll.current?.scrollTo({ y: Math.max(0, nuevo - (lejos < 0 ? visible : lejos)), animated: false });
-              }}
-              onScroll={(ev) => {
-                const { contentSize, contentOffset } = ev.nativeEvent;
-                desdeAbajo.set(contentSize.height - contentOffset.y);
-              }}
-            >
-              {/* Lo que sobra va arriba: así lo principal queda pegado abajo aunque haya poco. */}
-              <View style={st.lleno} />
-              <Animated.View style={[st.sinAchicar, estiloCambio]}>
+          <View
+            collapsable={false}
+            style={StyleSheet.absoluteFill}
+            // Cualquier toque: ya no se sigue el final.
+            onStartShouldSetResponderCapture={() => {
+              soltar();
+              return false;
+            }}
+            {...conLaRueda}
+          >
+            <Animated.View style={[StyleSheet.absoluteFill, estiloCambio]}>
+              <ScrollView
+                ref={scroll}
+                simultaneousWith={cerrar}
+                scrollEventThrottle={16}
+                showsVerticalScrollIndicator={false}
+                maintainVisibleContentPosition={ANCLA}
+                contentContainerStyle={[st.contenido, { paddingTop: insets.top + 6, paddingBottom: abajo + 14 }]}
+                onLayout={(ev) => altoVisible.set(ev.nativeEvent.layout.height)}
+                onContentSizeChange={(_, nuevo) => {
+                  altoDelContenido.set(nuevo);
+                  // También si se achicó lo de abajo de todo y el scroll quedó más allá del final: iOS no lo trae solo.
+                  if (pegado.current || scrollY.get() > nuevo - altoVisible.get()) scroll.current?.scrollToEnd({ animated: false });
+                }}
+                onScrollBeginDrag={soltar}
+                onScroll={alScroll}
+              >
+                {/* Lo que sobra va arriba: así lo principal queda pegado abajo aunque haya poco. */}
+                <View style={st.lleno} />
+                {/* Cada parte, suelta en el scroll y no en una caja: el ancla se agarra de la primera que se ve. */}
                 {vinculada && h && tm ? (
                   <RestoVinculada h={h} tm={tm} preparada={aLaVista} />
                 ) : (
@@ -223,8 +263,8 @@ export function Ascent({ subida, abierta, abajo, alCerrar, alIrASueno }: Props) 
                   {vinculada && tm && h ? <TusMusculos tm={tm} hoy={<ParaHoy h={h} tm={tm} alIrASueno={alIrASueno} />} /> : <CabezaSinVincular alVincular={() => vincularDesdeMoss(abrirHoja).catch(() => {})} />}
                 </Principal>
                 <Pie vinculada={vinculada} alVolver={alCerrar} activo={aLaVista} />
-              </Animated.View>
-            </ScrollView>
+              </ScrollView>
+            </Animated.View>
           </View>
         </GestureDetector>
       </Animated.View>
@@ -245,7 +285,7 @@ function Principal({ vinculada, ayuda, children }: { vinculada: boolean; ayuda?:
   // Vinculada, la marca se achica (de 76 a 46) y sube: el titular manda.
   const marca = useAnimatedStyle(() => ({ transform: [{ translateY: -12 * u.get() }, { scale: 1 - (30 / 76) * u.get() }] }));
   return (
-    <View style={st.base}>
+    <View collapsable={false} style={st.base}>
       <Animated.View style={[st.marca, marca]} pointerEvents="none">
         <Marca tam={76} unida={vinculada} />
       </Animated.View>
@@ -325,7 +365,6 @@ const st = StyleSheet.create({
   // Que crezca con lo de adentro (en la web, sin flexShrink en 0 se quedaba del alto de la pantalla y no había scroll).
   contenido: { flexGrow: 1, flexShrink: 0, paddingHorizontal: 22 },
   lleno: { flexGrow: 1 },
-  sinAchicar: { flexShrink: 0 },
   base: { marginTop: 30, paddingTop: 14, marginHorizontal: -22, paddingHorizontal: 22, borderTopWidth: 1, borderTopColor: C.linea },
   // 6 puntos adentro del margen de la derecha.
   marca: { position: 'absolute', right: 16, top: 20, width: 76, height: 76, transformOrigin: 'top right' },

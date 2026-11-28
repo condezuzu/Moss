@@ -4,7 +4,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 
 import { t } from '@/textos';
-import { enLaUnidad, enLista, kilosDeLaMeta, nivelEn, pesoEn, siguienteEn } from './palabras';
+import { buscarEjercicios, enLaUnidad, enLista, kilosDeLaMeta, ladoDe, nivelEn, pesoEn, siguienteEn } from './palabras';
 
 jest.mock('expo-localization', () => ({ getLocales: () => [{ languageTag: 'es-UY', regionCode: 'UY' }] }));
 
@@ -55,6 +55,55 @@ describe('los pesos de Ascent con el sistema imperial', () => {
     expect(enLaUnidad(t('ascent.tus.proxima.subirA', { kg: '140' }), 'imperial')).toBe('Próxima vez: sube a 140 lb.');
     expect(enLaUnidad(t('ascent.estancamiento.marca', { kg: '135', reps: 5 }), 'imperial')).toBe('135 lb × 5');
     expect(enLaUnidad(t('ascent.metas.objetivoVarias', { kg: '225', reps: 3 }), 'imperial')).toBe('Levantar 225 lb 3 veces');
+  });
+});
+
+describe('lo que se anota por mancuerna o por lado', () => {
+  it('se dice así, con la mitad: los kilos de Ascent y los de la meta van en total', () => {
+    expect(ladoDe({ id: 'press_militar_mancuernas', carga: 'par' })).toBe('porMancuerna');
+    expect(ladoDe({ id: 'prensa_una_pierna', carga: 'una' })).toBe('porLado');
+    // Dos poleas no son dos mancuernas.
+    expect(ladoDe({ id: 'cruce_polea_alta', carga: 'par' })).toBe('porLado');
+    expect(enLaUnidad(t('ascent.metas.objetivoVarias', { kg: '35', reps: 8 }), 'metrico', 'porMancuerna')).toBe('Levantar 35 kg por mancuerna 8 veces');
+    expect(enLaUnidad(t('ascent.metas.nivelKg', { kg: '60' }), 'imperial', 'porLado')).toBe('Hoy podrías levantar cerca de 60 lb por lado (estimado)');
+    // Con 27,5 kg por mancuerna la próxima vez son 30; sobre el total (55) daba 57,5, que en mancuernas no existe.
+    expect(siguienteEn(55 / 2, 'metrico')).toBe(30);
+    expect(enLaUnidad(t('ascent.tus.proxima.subirA', { kg: '30' }), 'metrico', 'porMancuerna')).toBe('Próxima vez: sube a 30 kg por mancuerna.');
+  });
+
+  it('en total lo de la barra y la máquina, y todo mientras la base no manda cómo se anotó', () => {
+    expect(ladoDe({ id: 'press_banca', carga: 'total' })).toBeNull();
+    expect(ladoDe({ id: 'dominadas_lastradas', carga: 'lastre' })).toBeNull();
+    expect(ladoDe({ id: 'press_militar_mancuernas' })).toBeNull();
+    expect(enLaUnidad(t('ascent.metas.objetivoUna', { kg: '100' }), 'metrico')).toBe('Levantar 100 kg una vez');
+  });
+});
+
+describe('buscar el ejercicio de una meta, como en Ascent', () => {
+  const lista = [
+    { id: 'press_banca', ejercicio: 'press_banca', grupo: 'pecho' as const },
+    { id: 'press_inclinado', ejercicio: 'press_inclinado', grupo: 'pecho' as const },
+    { id: 'propio_1', ejercicio: 'Press inclinado en máquina', grupo: 'pecho' as const },
+    { id: 'press_militar', ejercicio: 'press_militar', grupo: 'hombros' as const },
+    { id: 'propio_2', ejercicio: 'Súper curl', grupo: 'brazos' as const },
+    { id: 'curl_barra', ejercicio: 'curl_barra', grupo: 'brazos' as const },
+  ];
+  const ids = (xs: { id: string }[]) => xs.map((x) => x.id);
+
+  it('coinciden los que tienen todas las palabras, sin importar acentos ni mayúsculas; también los propios', () => {
+    const r = buscarEjercicios(lista, 'MAQUINA press');
+    expect(ids(r.coinciden)).toEqual(['propio_1']);
+    // «Entrenan lo mismo»: los demás de su grupo.
+    expect(ids(r.parecidos)).toEqual(['press_banca', 'press_inclinado']);
+  });
+
+  it('primero los que empiezan con lo escrito, y el nombre del grupo también cuenta', () => {
+    expect(ids(buscarEjercicios(lista, 'curl').coinciden)).toEqual(['curl_barra', 'propio_2']);
+    expect(ids(buscarEjercicios(lista, 'hombros').coinciden)).toEqual(['press_militar']);
+  });
+
+  it('sin texto, nada', () => {
+    expect(buscarEjercicios(lista, '  ')).toEqual({ coinciden: [], parecidos: [] });
   });
 });
 

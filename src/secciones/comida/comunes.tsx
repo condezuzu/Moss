@@ -20,7 +20,7 @@ const EN_LA_WEB: Partial<Record<string, string>> = {
   'bookmark': '❏', 'bolt': 'ϟ', 'camera': '◉', 'photo.on.rectangle': '▣', 'star': '☆', 'star.fill': '★', 'chevron.left': '‹', 'chevron.right': '›', 'chevron.down': '⌄', 'chevron.up': '⌃',
   checkmark: '✓', 'trash': '⌫', 'fork.knife': '⑂', 'scalemass': '⚖', 'drop': '◖', ruler: '⊢', 'square.and.arrow.up': '⇪',
   'calendar': '▦', 'arrow.uturn.backward': '↶', 'list.bullet': '≡', 'pencil': '✎', 'sparkles': '✦', 'flame': '♨', heart: '♡', 'heart.fill': '♥', cart: '⊔',
-  'hand.thumbsup': '△', 'hand.thumbsup.fill': '▲', 'hand.thumbsdown': '▽', 'arrow.turn.down.right': '↳',
+  'hand.thumbsup': '△', 'hand.thumbsup.fill': '▲', 'hand.thumbsdown': '▽', 'arrow.turn.down.right': '↳', 'chart.pie': '◔',
 };
 
 type PropsDeIcono = { nombre: SFSymbol; tam?: number; color?: string; peso?: SymbolWeight };
@@ -99,7 +99,8 @@ export function PuntoDeMacro({ macro, estado }: { macro: Macro; estado: EstadoDe
   );
 }
 
-export type Aviso = { texto: string; deshacer?: () => void; vez: number };
+/** `boton`: lo que dice el botón de `deshacer`; sin él, «Deshacer». */
+export type Aviso = { texto: string; deshacer?: () => void; boton?: string; vez: number };
 
 /**
  * Un aviso corto: dice lo que pasó y, si se puede, ofrece deshacerlo. Arriba (con `arriba`) no tapa
@@ -141,7 +142,7 @@ export function AvisoFlotante({ aviso, alIrse, arriba, abajo = 0 }: { aviso: Avi
           accessibilityRole="button"
           hitSlop={8}
         >
-          <Text style={estilos.avisoBotonTexto}>{t('comun.deshacer')}</Text>
+          <Text style={estilos.avisoBotonTexto}>{aviso.boton ?? t('comun.deshacer')}</Text>
         </Pressable>
       )}
     </Animated.View>

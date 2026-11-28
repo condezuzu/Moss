@@ -142,6 +142,19 @@ export function objetivoPermitido(c: Pick<Cuestionario, 'objetivo' | 'sinDeficit
   return c.objetivo === 'bajar' && c.sinDeficit ? 'mantener' : c.objetivo;
 }
 
+/** El objetivo con que se midieron las calorías de cada día (objetivoPermitido), anotado mientras ese día era hoy. */
+export type ObjetivosPorDia = Partial<Record<ClaveDia, Objetivo>>;
+
+/**
+ * El objetivo que regía un día, para volver a medir sus calorías (registros.ts, cumpleLaComida): el último anotado hasta
+ * ese día o, si es de antes de todo lo anotado, el primero. Sin nada anotado, `ahora`.
+ */
+export function objetivoDelDia(anotados: ObjetivosPorDia, dia: ClaveDia, ahora: Objetivo): Objetivo {
+  const dias = Object.keys(anotados).sort();
+  const suyo = dias.filter((d) => d <= dia).at(-1) ?? dias[0];
+  return (suyo && anotados[suyo]) || ahora;
+}
+
 /**
  * El reparto que se usa: sin déficit, keto no. La ADA (2026, 5.26) no recomienda lo muy bajo en
  * carbohidratos en el embarazo, la lactancia, la enfermedad renal ni con un trastorno de la

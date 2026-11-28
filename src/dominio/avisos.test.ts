@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  ADELANTO_MAXIMO, ANTES_DE_DORMIR, ATRASO_MAXIMO, avisoDeFabrica, DESPERTAR_SIN_SUENO, DORMIR_SIN_SUENO, avisosDeLaSemana, avisosDelDia, cuandoSuena, duerme, horaDeDormir, horasDeSueno, SEPARACION, textoDelAviso, tituloDelAviso, MAXIMO_POR_DIA, MENSAJE_MAXIMO,
+  ADELANTO_MAXIMO, ANTES_DE_DORMIR, ATRASO_MAXIMO, avisoDeFabrica, deLasNoches, DESPERTAR_SIN_SUENO, DORMIR_SIN_SUENO, avisosDeLaSemana, avisosDelDia, cuandoSuena, duerme, horaDeDormir, horasDeSueno, SEPARACION, textoDelAviso, tituloDelAviso, MAXIMO_POR_DIA, MENSAJE_MAXIMO,
   nombraLaDeuda, PAGO_MAXIMO, PESARSE_DESPUES,
   type Aviso, type Avisos, type DelDia, type Notificacion, type ParaElTexto, type Sueno,
 } from './avisos';
@@ -234,6 +234,21 @@ describe('los avisos de un día', () => {
     expect([DESPERTAR_SIN_SUENO, DORMIR_SIN_SUENO]).toEqual([h('7:30'), h('23:00')]);
     expect(resumen(delDia(ajustes, { sueno: null }))).toEqual([[h('7:30'), ['habito:agua:0']], [h('18:00'), ['habito:estirar:0']], [h('22:00'), ['habito:leer:0']]]);
     expect(resumen(delDia(ajustes, { sueno: { ...SUENO, habitual: () => null } }))).toEqual([[h('7:30'), ['habito:agua:0']], [h('18:00'), ['habito:estirar:0']], [h('22:00'), ['habito:leer:0']]]);
+  });
+
+  it('sin poder leer las noches (Salud, con el iPhone bloqueado), el de antes de dormirte no va a la hora de fábrica: lo pone el teléfono', () => {
+    const ajustes: Avisos = { habitos: [{ habito: 'leer', cuando: { tipo: 'dormir', antes: 60 }, dias: [] }, aLas('estirar', '18:00')] };
+    expect(resumen(delDia(ajustes, { sueno: { ...SUENO, habitual: () => null, sinLeer: true } }))).toEqual([[h('18:00'), ['habito:estirar:0']]]);
+    // Con la hora de acostarte, a su hora.
+    expect(resumen(delDia(ajustes, { sueno: { ...SUENO, sinLeer: true } }))).toEqual([[h('18:00'), ['habito:estirar:0']], [h('22:30'), ['habito:leer:0']]]);
+  });
+
+  it('lo que sale de tus noches: acostarte y lo que cuenta desde ahí, tu periodo, la deuda y el hábito de antes de dormirte', () => {
+    const ajustes: Avisos = { habitos: [aLas('leer', '9:00'), { habito: 'leer', cuando: { tipo: 'dormir', antes: 30 }, dias: [] }] };
+    const de = (id: string, tipo: Aviso['tipo'], habito?: string) => deLasNoches({ id, tipo, ...(habito ? { habito } : {}) }, ajustes);
+    for (const tipo of ['dormir', 'deuda', 'melatonina', 'revoluciones', 'gafas', 'descarga', 'luces', 'cafe', 'ultimaComida', 'entrenarTarde'] as const) expect(de(tipo, tipo)).toBe(true);
+    for (const tipo of ['pesarse', 'desayuno', 'pendientes', 'horario', 'comida', 'falta', 'antesDeEntrenar', 'despuesDeEntrenar', 'recuperacion'] as const) expect(de(tipo, tipo)).toBe(false);
+    expect([de('habito:leer:0', 'habito', 'leer'), de('habito:leer:1', 'habito', 'leer'), de('habito:leer:2', 'habito', 'leer')]).toEqual([false, true, false]);
   });
 
   it('cada aviso de un hábito tiene su id, con su mensaje propio recortado a 120 letras', () => {

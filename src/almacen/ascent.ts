@@ -10,12 +10,12 @@ import { useMemo, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
 import {
-  entrenoEl, leerAjustesDeAscent, leerRutinaDeAscent, metaDelDiaConAscent, pesoUnico, primerDiaQueHaceFalta,
-  type AjustesDeAscent, type MarcaDeAscent, type PesoCompartido, type RutinaDeAscent, type SesionDeAscent,
+  entrenoEl, leerAjustesDeAscent, leerRutinaDeAscent, metaConAscentDe, pesoUnico, primerDiaQueHaceFalta,
+  type AjustesDeAscent, type EjercicioDeAscent, type GimnasioDeAscent, type MarcaDeAscent, type PesoCompartido, type RutinaDeAscent, type SesionDeAscent,
 } from '@/dominio/conAscent';
-import { ultimoDiaDeControl, type Peso } from '@/dominio/control';
+import type { Peso } from '@/dominio/control';
 import { claveDeMarca, seEnciendeSola } from '@/dominio/dias';
-import { diaDeLaSemana, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { habitosDelDia } from '@/dominio/habitos';
 import type { Macros } from '@/dominio/metas';
 import { conNochesDeMoss } from '@/dominio/sinReloj';
@@ -35,11 +35,25 @@ export type RemotoDeAscent = {
   pesosCompartidos(desde: ClaveDia): Promise<PesoCompartido[]>;
   rutinaDeAscent(): Promise<RutinaDeAscent | null>;
   ajustesDeAscent(): Promise<AjustesDeAscent | null>;
-  /** Las metas de fuerza (0016_metas_de_fuerza.sql); los tests pueden no tenerlas. */
+  /**
+   * Las metas de fuerza (0016_metas_de_fuerza.sql); los tests pueden no tenerlas. Sin vínculo, null. Guardar devuelve el
+   * id; null sin vínculo, o si la que se cambia ya no está. Con 20 metas, crear otra rechaza con «demasiadas». Lo que no
+   * contesta a tiempo rechaza con un error que termina en «sin respuesta»: pudo haberse hecho igual.
+   */
   metasDeFuerza?(): Promise<MetaDeFuerza[] | null>;
-  guardarMetaDeFuerza?(m: { id?: string; ejercicio: string; kilos: number; reps: number }): Promise<string | null>;
+  guardarMetaDeFuerza?(m: MetaPedida): Promise<string | null>;
   borrarMetaDeFuerza?(id: string): Promise<boolean>;
 };
+
+/** Una meta para guardar: sin id, una nueva (o la del ejercicio, si ya tiene). */
+export type MetaPedida = { id?: string; ejercicio: string; kilos: number; reps: number };
+/** Por qué no se guardó o no se borró una meta, para decirlo: sin conexión, sin respuesta a tiempo, el tope o sin vínculo. */
+export type FalloDeMeta = 'red' | 'sinRespuesta' | 'demasiadas' | 'sinVinculo';
+const fallo = (porQue: FalloDeMeta) => Object.assign(new Error(`meta: ${porQue}`), { fallo: porQue });
+const esFallo = (e: unknown): e is { fallo: FalloDeMeta } => typeof e === 'object' && e !== null && 'fallo' in e;
+/** Por qué rechazó guardarMeta o borrarMeta. */
+export const falloDeMeta = (e: unknown): FalloDeMeta => (esFallo(e) ? e.fallo : 'red');
+const sinRespuesta = (e: unknown) => e instanceof Error && e.message.endsWith('sin respuesta');
 
 export type DeAscent = {
   /** Ya se leyó lo guardado en el teléfono. */
@@ -129,6 +143,23 @@ export function crearAscent(op: OpcionesDeAscent) {
   let generacion = 0;
   let refrescando: Promise<void> | null = null;
   let otraVez = false;
+  /** Las metas puestas en este teléfono que todavía no tienen su id del servidor. */
+  let metasPuestas = 0;
+  /** Los cambios de metas de este teléfono que todavía esperan al servidor (de esta cuenta y este vínculo). */
+  let metasEnCurso = 0;
+  /**
+   * Sube al terminar cada cambio de una meta: las metas que trae un refresco que salió antes, o mientras alguno esperaba,
+   * no pisan lo que hizo la persona. Las que se descartan así se piden otra vez cuando termina el último (`descartadas`).
+   */
+  let cambiosDeMetas = 0;
+  let descartadas = false;
+  /** Cada meta como está en la base (lo último que llegó o que contestó el servidor): es lo que vuelve si un cambio falla. */
+  const enLaBase = new Map<string, MetaDeFuerza>();
+  /**
+   * El último guardado de cada ejercicio: el siguiente del mismo sale recién cuando ese contestó. Si salían juntos, la base
+   * podía quedarse con el de antes (llegaban al revés) y la pantalla con la respuesta que llegó última.
+   */
+  const enFila = new Map<string, Promise<void>>();
   let leyendo: Promise<void> | undefined;
   const oyentes = new Set<() => void>();
 
@@ -136,12 +167,28 @@ export function crearAscent(op: OpcionesDeAscent) {
     estado = { ...estado, ...nuevo, version: estado.version + 1 };
     oyentes.forEach((o) => o());
   };
+  /** Las metas del servidor; undefined si no contestó. */
+  const metasDelServidor = () => (op.remoto.metasDeFuerza ? op.remoto.metasDeFuerza().catch(() => undefined) : Promise.resolve(undefined));
+  /** Las metas como están en la base (las de un refresco, las guardadas en el teléfono, o ninguna). */
+  function deLaBase(metas: MetaDeFuerza[]): MetaDeFuerza[] {
+    enLaBase.clear();
+    for (const m of metas) enLaBase.set(m.id, m);
+    return metas;
+  }
+  /** Otra cuenta u otro vínculo: lo que llegue de antes ya no vale, y los cambios de metas de antes ya no cuentan. */
+  function otraGeneracion() {
+    generacion++;
+    metasEnCurso = 0;
+    descartadas = false;
+  }
 
   function guardar() {
     const corte = sumarDias(op.hoy(), -DIAS_CON_SERIES);
     const { listo: _l, conCuenta: _c, version: _v, ...datos } = estado;
     const sinSeries = (s: SesionDeAscent): SesionDeAscent => ({ ...s, ejercicios: s.ejercicios.map((e) => ({ ...e, series: [] })) });
-    const g: Guardado = { ...datos, v: 1, usuario, conSeries: DIAS_CON_SERIES, sesiones: estado.sesiones.map((s) => (s.fecha < corte ? sinSeries(s) : s)) };
+    // Una meta que todavía no se guardó en el servidor no queda en el teléfono: si no llega a guardarse, no vuelve al abrir.
+    const metas = estado.metas.filter((m) => !m.pendiente);
+    const g: Guardado = { ...datos, v: 1, usuario, conSeries: DIAS_CON_SERIES, metas, sesiones: estado.sesiones.map((s) => (s.fecha < corte ? sinSeries(s) : s)) };
     op.guardado.escribir(JSON.stringify(g)).catch(() => {});
   }
 
@@ -149,7 +196,7 @@ export function crearAscent(op: OpcionesDeAscent) {
   function usarLoDeAntes() {
     if (!deAntes || (sesionSabida && (!usuario || deAntes.usuario !== usuario))) return;
     const { v: _v, usuario: _u, conSeries: _s, ...datos } = deAntes;
-    cambiar({ ...datos });
+    cambiar({ ...datos, metas: deLaBase(datos.metas) });
   }
 
   function iniciar() {
@@ -175,7 +222,7 @@ export function crearAscent(op: OpcionesDeAscent) {
         if (de !== generacion) return;
         if (!vinculo.vinculada) {
           if (estado.vinculo.vinculada || estado.sesiones.length) {
-            cambiar({ ...vacio(), noches: estado.noches });
+            cambiar({ ...vacio(), metas: deLaBase([]), noches: estado.noches });
             guardar();
           }
           return;
@@ -187,6 +234,7 @@ export function crearAscent(op: OpcionesDeAscent) {
         // corregir los días recientes).
         const ultimo = estado.desde && estado.desde <= primero && estado.sesiones.length ? estado.sesiones[estado.sesiones.length - 1].fecha : null;
         const desde = ultimo && sumarDias(ultimo, -7) > primero ? sumarDias(ultimo, -7) : primero;
+        const vez = cambiosDeMetas;
         const [sesiones, marcas, pesos, rutina, ajustes, metas] = await Promise.all([
           op.remoto.sesionesDeAscent(desde),
           op.remoto.marcasDeAscent(sumarDias(hoy, -DIAS_DE_MARCAS)),
@@ -194,14 +242,25 @@ export function crearAscent(op: OpcionesDeAscent) {
           // La OTA puede llegar antes que sus funciones en la base: sin ellas queda lo que había, y lo demás llega igual.
           op.remoto.rutinaDeAscent().catch(() => estado.rutina),
           op.remoto.ajustesDeAscent().catch(() => estado.ajustes),
-          (op.remoto.metasDeFuerza?.() ?? Promise.resolve(estado.metas)).catch(() => estado.metas),
+          metasDelServidor(),
         ]);
         if (de !== generacion) return;
+        const guardadas = estado.sesiones.filter((s) => s.fecha >= primero && s.fecha < desde);
+        // La carga de cada ejercicio llega desde 0020_carga_de_cada_ejercicio.sql y lo guardado de antes no la trae: la
+        // primera vez que llega se pide todo de nuevo, así la última vez de cada ejercicio dice cómo se anotó.
+        const alguno = (xs: readonly SesionDeAscent[], si: (e: EjercicioDeAscent) => boolean) => xs.some((s) => s.ejercicios.some(si));
+        const todas = alguno(sesiones, (e) => e.carga !== undefined) && alguno(guardadas, (e) => e.carga === undefined)
+          ? await op.remoto.sesionesDeAscent(primero).catch(() => null) : null;
+        if (de !== generacion) return;
+        // Las metas, solo si llegaron y nada cambió acá desde que salió el pedido: si no, quedan las de ahora (con lo que
+        // la persona puso o borró, y lo que espera al servidor) y se piden otra vez al terminar el último cambio.
+        const alDia = metas !== undefined && !metasEnCurso && vez === cambiosDeMetas;
         cambiar({
-          sesiones: [...estado.sesiones.filter((s) => s.fecha >= primero && s.fecha < desde), ...sesiones].sort(porFecha),
-          marcas, pesos, rutina, ajustes, metas: metas ?? [], desde: primero, llego: ahora().toISOString(),
+          sesiones: todas ?? [...guardadas, ...sesiones].sort(porFecha),
+          marcas, pesos, rutina, ajustes, ...(alDia ? { metas: deLaBase(metas ?? []) } : {}), desde: primero, llego: ahora().toISOString(),
         });
         guardar();
+        if (metas !== undefined && !alDia) descartar();
       } catch {
         // Sin conexión o el servidor no contesta: queda lo que había.
       }
@@ -215,6 +274,56 @@ export function crearAscent(op: OpcionesDeAscent) {
     return refrescando;
   }
 
+  /** Solo las metas, otra vez (un refresco las descartó por un cambio de acá), con la misma regla que el refresco. */
+  async function releerMetas() {
+    const de = generacion;
+    const vez = cambiosDeMetas;
+    const metas = await metasDelServidor();
+    if (de !== generacion || metas === undefined) return;
+    if (metasEnCurso || vez !== cambiosDeMetas) return descartar();
+    cambiar({ metas: deLaBase(metas ?? []) });
+    guardar();
+  }
+  /** Unas metas del servidor que no se aplicaron: se piden otra vez al terminar el último cambio en curso (o ya). */
+  function descartar() {
+    if (metasEnCurso) descartadas = true;
+    else releerMetas().catch(() => {});
+  }
+  /** Terminó un cambio de una meta de la generación `de` (los de otra cuenta o vínculo ya no cuentan). */
+  function terminarCambio(de: number) {
+    if (de !== generacion) return;
+    metasEnCurso--;
+    cambiosDeMetas++;
+    if (metasEnCurso || !descartadas) return;
+    descartadas = false;
+    releerMetas().catch(() => {});
+  }
+
+  /**
+   * Guarda una meta en el servidor y devuelve su id; null si ya no hace falta (`sigue` dice si todavía está). Si la que
+   * se cambia ya no está (la borraron en Ascent), se guarda como nueva: con 0022, cambia la del ejercicio si hay otra. Si
+   * no contesta a tiempo, se mira si quedó guardada. Si no se guardó, rechaza con por qué.
+   */
+  async function subir(m: MetaPedida, sigue: () => boolean): Promise<string | null> {
+    const guardarla = op.remoto.guardarMetaDeFuerza!;
+    try {
+      const id = await guardarla(m);
+      if (id) return id;
+      if (!m.id) throw fallo('sinVinculo');
+      if (!sigue()) return null;
+      const nueva = await guardarla({ ejercicio: m.ejercicio, kilos: m.kilos, reps: m.reps });
+      if (nueva) return nueva;
+      throw fallo('sinVinculo');
+    } catch (e) {
+      if (esFallo(e)) throw e;
+      if (!sinRespuesta(e)) throw fallo(e instanceof Error && e.message === 'demasiadas' ? 'demasiadas' : 'red');
+      const lista = await metasDelServidor();
+      const quedo = lista?.find((x) => x.ejercicio === m.ejercicio && x.kilos === m.kilos && x.reps === m.reps);
+      if (quedo) return quedo.id;
+      throw fallo(lista === undefined ? 'sinRespuesta' : lista === null ? 'sinVinculo' : 'red');
+    }
+  }
+
   return {
     estado: () => estado,
     suscribir(oyente: () => void) {
@@ -223,25 +332,93 @@ export function crearAscent(op: OpcionesDeAscent) {
     },
     iniciar,
     refrescar,
-    /** Crea o cambia una meta de fuerza y trae las de la cuenta. Sin conexión, rechaza: lo dice quien la pide. */
-    async guardarMeta(m: { id?: string; ejercicio: string; kilos: number; reps: number }) {
-      if (!op.remoto.guardarMetaDeFuerza || !op.remoto.metasDeFuerza) return;
-      await op.remoto.guardarMetaDeFuerza(m);
-      cambiar({ metas: (await op.remoto.metasDeFuerza()) ?? [] });
-      guardar();
-    },
-    async borrarMeta(id: string) {
-      if (!op.remoto.borrarMetaDeFuerza) return;
-      // Se va al instante; si el servidor no la borra, vuelve con lo que diga.
-      const antes = estado.metas;
-      cambiar({ metas: antes.filter((x) => x.id !== id) });
+    /**
+     * Crea o cambia una meta de fuerza: queda al instante y se guarda atrás. Si el servidor no la guarda, vuelve como está
+     * en la base y rechaza con por qué (falloDeMeta): lo dice quien la pide; sin vínculo, además, se refresca. Una por
+     * ejercicio: sin id, si el ejercicio ya tiene una guardada, se cambia esa (como en el servidor desde
+     * 0022_una_meta_por_ejercicio.sql). Si la persona la borra mientras tanto, no vuelve.
+     */
+    async guardarMeta(pedida: MetaPedida) {
+      if (!op.remoto.guardarMetaDeFuerza) return;
+      const suya = pedida.id ? undefined : estado.metas.find((x) => x.ejercicio === pedida.ejercicio && !x.pendiente);
+      const m = suya ? { ...pedida, id: suya.id } : pedida;
+      const de = generacion;
+      const clave = m.id ?? `pendiente:${++metasPuestas}`;
+      const antes = estado.metas.find((x) => x.id === clave);
+      const puesta: MetaDeFuerza = antes ? { ...antes, ...m, id: clave } : { ...m, id: clave, pendiente: true };
+      // Desvinculó o cambió de cuenta (las metas ya son otras), o la persona la borró: lo que conteste ya no va.
+      const sigue = () => de === generacion && estado.metas.some((x) => x.id === clave);
+      metasEnCurso++;
+      cambiar({ metas: antes ? estado.metas.map((x) => (x === antes ? puesta : x)) : [...estado.metas, puesta] });
+      const previo = enFila.get(m.ejercicio);
+      let soltar = () => {};
+      const turno = new Promise<void>((r) => (soltar = r));
+      enFila.set(m.ejercicio, turno);
       try {
-        await op.remoto.borrarMetaDeFuerza(id);
-      } catch {
-        cambiar({ metas: antes });
-        throw new Error('sin conexión');
+        if (previo) {
+          await previo;
+          // Mientras esperaba, otra cuenta u otro vínculo, o la persona la borró: ya no sale.
+          if (!sigue()) return;
+        }
+        const id = await subir(m, sigue);
+        if (!id || de !== generacion) return;
+        const guardada = { id, ejercicio: m.ejercicio, kilos: m.kilos, reps: m.reps };
+        // La base ya la tiene así, aunque acá se haya borrado mientras tanto (si ese borrado falla, vuelve así).
+        enLaBase.delete(clave);
+        enLaBase.set(id, guardada);
+        // Si se borró, o ya se ve un cambio que salió después (contesta él), lo que se ve queda.
+        if (!sigue() || estado.metas.find((x) => x.id === clave) !== puesta) return;
+        // En su lugar, y una sola vez si ese id ya estaba.
+        cambiar({ metas: estado.metas.filter((x) => x.id !== id || x.id === clave).map((x) => (x.id === clave ? guardada : x)) });
+        guardar();
+      } catch (e) {
+        if (de !== generacion) return;
+        // Vuelve como está en la base (salvo que otro cambio ya la haya puesto distinta), y el teléfono guarda lo que se ve.
+        const deLaBaseAhora = enLaBase.get(clave);
+        cambiar({ metas: estado.metas.flatMap((x) => (x !== puesta ? [x] : deLaBaseAhora ? [deLaBaseAhora] : [])) });
+        guardar();
+        // Sin vínculo: la sección pasa a desvinculada, como al desvincular desde Ascent.
+        if (falloDeMeta(e) === 'sinVinculo') refrescar().catch(() => {});
+        throw e;
+      } finally {
+        soltar();
+        if (enFila.get(m.ejercicio) === turno) enFila.delete(m.ejercicio);
+        terminarCambio(de);
       }
-      guardar();
+    },
+    /**
+     * Borra una meta: se va al instante. Si el servidor no la borra, vuelve a su lugar como está en la base y rechaza con
+     * por qué (falloDeMeta); si ya no estaba (la borraron en Ascent), queda borrada. Una recién puesta todavía no tiene
+     * id: no se borra.
+     */
+    async borrarMeta(id: string) {
+      const borrarla = op.remoto.borrarMetaDeFuerza;
+      const antes = estado.metas.find((x) => x.id === id);
+      if (!borrarla || !antes || antes.pendiente) return;
+      const de = generacion;
+      const lugar = estado.metas.indexOf(antes);
+      metasEnCurso++;
+      cambiar({ metas: estado.metas.filter((x) => x !== antes) });
+      try {
+        await borrarla(id).catch(async (e: unknown) => {
+          // Sin respuesta a tiempo pudo haberse borrado igual: se mira la lista (sin vínculo, ya no está).
+          const lista = sinRespuesta(e) ? await metasDelServidor() : undefined;
+          if (lista === undefined) throw fallo(sinRespuesta(e) ? 'sinRespuesta' : 'red');
+          if (lista?.some((x) => x.id === id)) throw fallo('red');
+        });
+        if (de !== generacion) return;
+        enLaBase.delete(id);
+        guardar();
+      } catch (e) {
+        if (de !== generacion) return;
+        // No con un cambio que tampoco se guardó: con lo último que tiene la base. Y si ya volvió, una sola vez.
+        const enBase = enLaBase.get(id);
+        if (enBase && !estado.metas.some((x) => x.id === id)) cambiar({ metas: [...estado.metas.slice(0, lugar), enBase, ...estado.metas.slice(lugar)] });
+        guardar();
+        throw e;
+      } finally {
+        terminarCambio(de);
+      }
     },
     /** La sesión de Moss en este teléfono: sin sesión no hay vínculo, y con otra cuenta se empieza de cero. */
     async ponerSesion(nuevo: string | null) {
@@ -251,13 +428,13 @@ export function crearAscent(op: OpcionesDeAscent) {
       if (!primera && nuevo === usuario && estado.conCuenta === !!nuevo) return;
       const otra = usuario !== null && nuevo !== usuario;
       usuario = nuevo;
-      generacion++;
+      otraGeneracion();
       if (!nuevo) {
-        cambiar({ ...vacio(), conCuenta: false });
+        cambiar({ ...vacio(), metas: deLaBase([]), conCuenta: false });
         if (leyendo) guardar();
         return;
       }
-      cambiar({ conCuenta: true, ...(otra || (deAntes && deAntes.usuario !== nuevo) ? vacio() : {}) });
+      cambiar({ conCuenta: true, ...(otra || (deAntes && deAntes.usuario !== nuevo) ? { ...vacio(), metas: deLaBase([]) } : {}) });
       await iniciar();
       usarLoDeAntes();
       await refrescar();
@@ -269,7 +446,7 @@ export function crearAscent(op: OpcionesDeAscent) {
     async vincular(token: string) {
       const r = await op.remoto.vincular(token);
       if (r.ok) {
-        generacion++;
+        otraGeneracion();
         cambiar({ vinculo: { vinculada: true, nombre: r.nombre, desde: ahora().toISOString() } });
         guardar();
         refrescar().catch(() => {});
@@ -279,8 +456,8 @@ export function crearAscent(op: OpcionesDeAscent) {
     /** Desvincula en el servidor y saca lo de Ascent del teléfono. Sin conexión, tira el error. */
     async desvincular() {
       await op.remoto.desvincular();
-      generacion++;
-      cambiar({ ...vacio(), noches: estado.noches });
+      otraGeneracion();
+      cambiar({ ...vacio(), metas: deLaBase([]), noches: estado.noches });
       guardar();
     },
     /** Lo dormido cada noche, para «Por qué no subes» y tu año: se junta mientras está vinculada. */
@@ -314,6 +491,16 @@ export function crearAscent(op: OpcionesDeAscent) {
 
 const CLAVE = 'ascent';
 
+/** Lo de Ascent que mueve la meta de cada día (metaConAscentDe): con el vínculo, desde cuándo llegaron sus sesiones, y ellas. */
+const gimnasioDe = (d: Pick<DeAscent, 'vinculo' | 'desde' | 'sesiones'>): GimnasioDeAscent | null =>
+  (d.vinculo.vinculada && d.desde ? { desde: d.desde, sesiones: d.sesiones } : null);
+
+/** Lo mismo, de lo que quedó guardado en el teléfono (los ajustes del almacén): con eso arranca el almacén, antes de que Ascent lea lo suyo. */
+export function gimnasioGuardado(ajustes: Record<string, string>): GimnasioDeAscent | null {
+  const g = leerGuardado(ajustes[CLAVE] ?? null);
+  return g ? gimnasioDe(g) : null;
+}
+
 let elDeAscent: AlmacenDeAscent | undefined;
 
 export function deAscent(): AlmacenDeAscent {
@@ -342,6 +529,8 @@ export function deAscent(): AlmacenDeAscent {
   let antes: { salud: unknown; noches: unknown } = { salud: null, noches: null };
   // Los pesos de Ascent también cuentan para el control (sin vínculo, ninguno): van al almacén cuando cambian.
   let pesosPuestos: readonly PesoCompartido[] | null = null;
+  // undefined: todavía no se le pasó nada, y el almacén arrancó con lo guardado (gimnasioGuardado).
+  let gimnasioPuesto: GimnasioDeAscent | null | undefined;
   const revisar = () => {
     const e = almacen.estado();
     const d = a.estado();
@@ -350,6 +539,13 @@ export function deAscent(): AlmacenDeAscent {
     if (pesos !== pesosPuestos) {
       pesosPuestos = pesos;
       almacen.ponerPesosDeAscent(pesos);
+    }
+    // Sus sesiones mueven la meta de cada día (metaConAscent): las estrellas de la comida se miden con la misma.
+    const gimnasio = gimnasioDe(d);
+    // Hasta que Ascent leyó lo suyo, vale lo que el almacén tomó de lo guardado: su estado vacío no es «sin vínculo».
+    if (d.listo && (gimnasioPuesto === undefined || gimnasio?.sesiones !== gimnasioPuesto?.sesiones || gimnasio?.desde !== gimnasioPuesto?.desde)) {
+      gimnasioPuesto = gimnasio;
+      almacen.ponerGimnasioDeAscent(gimnasio);
     }
     if (!d.vinculo.vinculada) return;
     if (entrenoEl(d.sesiones, e.hoy)) {
@@ -383,29 +579,26 @@ const memoria = new Map<string, Macros>();
 let memoriaDe = -1;
 
 /**
- * La meta de un día con Ascent vinculada (spec/ascent.md, funciones 5 y 8): las calorías según el
- * día de la semana del control y la proteína de la sesión. Reemplaza al reparto de la semana a
- * mano: con Ascent, los días altos son los de gimnasio. Sin vínculo, sin sesiones en las últimas 4
- * semanas o sin datos de esa semana, la de siempre.
+ * La meta de un día con Ascent vinculada (metaConAscentDe, en conAscent.ts): las calorías según el día de la semana del
+ * control y la proteína de la sesión. Es la misma cuenta con que el almacén mide las estrellas de la comida
+ * (metaQueSeVe), con lo que le pasa ascent.ts. Sin vínculo, sin sesiones en las últimas 4 semanas o sin datos de esa
+ * semana, la de siempre.
  */
 export function metaConAscent(base: Macros, e: Pick<Estado, 'metas' | 'perfil' | 'pesos' | 'hoy'>, dia: ClaveDia): Macros {
   const d = deAscent().estado();
-  if (!d.vinculo.vinculada || !e.perfil || !d.desde || !e.metas.length) return base;
-  const inicio = ultimoDiaDeControl(dia, e.perfil.diaDelControl ?? diaDeLaSemana(e.metas[0].desde));
-  if (inicio < d.desde || !d.sesiones.some((s) => s.fecha >= sumarDias(inicio, -28) && s.fecha <= sumarDias(inicio, 6))) return base;
-  const vigente = metaVigente(e, dia);
-  const pesoKg = e.pesos[e.pesos.length - 1]?.kg;
-  if (!vigente || pesoKg === undefined) return base;
+  const gimnasio = gimnasioDe(d);
+  if (!gimnasio) return base;
   if (memoriaDe !== d.version) {
     memoria.clear();
     memoriaDe = d.version;
   }
-  const clave = `${dia}|${e.hoy}|${inicio}|${vigente.kcal}|${vigente.proteina}|${vigente.carbohidratos}|${vigente.grasas}|${pesoKg}|${e.perfil.sexo}`;
+  const vigente = metaVigente(e, dia);
+  const clave = `${dia}|${e.hoy}|${e.perfil?.diaDelControl}|${e.metas[0]?.desde}|${vigente?.kcal}|${vigente?.proteina}|${vigente?.carbohidratos}|${vigente?.grasas}|${e.pesos.at(-1)?.kg}|${e.perfil?.sexo}`;
   const guardada = memoria.get(clave);
   if (guardada) return guardada;
-  const meta = { kcal: vigente.kcal, proteina: vigente.proteina, carbohidratos: vigente.carbohidratos, grasas: vigente.grasas };
-  const r = metaDelDiaConAscent({ meta, inicio, dia, hoy: e.hoy, sesiones: d.sesiones, pesoKg, sexo: e.perfil.sexo })?.meta ?? base;
-  memoria.set(clave, r);
+  const r = metaConAscentDe(base, e, dia, gimnasio);
+  // La de siempre no se guarda: sale del reparto de la semana, que no está en la clave.
+  if (r !== base) memoria.set(clave, r);
   return r;
 }
 

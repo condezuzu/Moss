@@ -1,8 +1,13 @@
 import { describe, expect, it, jest } from '@jest/globals';
 
-import { armarNoches } from '@/dominio/sueno';
-import { CORTE_DE_FABRICA } from '@/dominio/fechas';
-import { cuentaComoEntrenar, entrenoDeSalud, entrenosDelDia, fuentesDe, lecturasDe, minutosDe, muestraDeSueno, pasosDe, primeraPorDia, tipoDeFuente, ultimaPorDia, type DeSalud, type DeSaludEntreno } from './convertir';
+import { armarNoches, despiertoDeLaNoche, deudaDeSueno, lasDelAparato, ultimasNoches, type Noche, type NochePropia } from '@/dominio/sueno';
+import { CORTE_DE_FABRICA, sumarDias } from '@/dominio/fechas';
+import { periodoDeMelatonina } from '@/dominio/melatonina';
+import { conNochesDeMoss, habitualDe } from '@/dominio/sinReloj';
+import {
+  cuentaComoEntrenar, entrenoDeSalud, entrenosDelDia, fuentesDe, lecturasDe, minutosDe, muestraDeSueno, nochesGuardadasDe, nochesParaGuardar, pasosDe, primeraPorDia, saludGuardada, tipoDeFuente,
+  ultimaPorDia, type DeSalud, type DeSaludEntreno,
+} from './convertir';
 import { leerSalud } from './leer';
 
 // Salud de mentira, sin nada salvo los pasos de `mockPasos`: con el iPhone bloqueado, HealthKit no deja leer y cada consulta falla.
@@ -154,5 +159,81 @@ describe('leer Salud', () => {
     // Con el corte a la medianoche, el día del calendario.
     expect((await leerSalud(local('2026-10-22', '09:00'), null, 0))?.valores.pasos).toBe(3000);
     mockPasos = [];
+  });
+});
+
+describe('las noches guardadas en el teléfono, para los avisos (D45)', () => {
+  const HOY = '2026-11-02';
+  /** En la cuenta de las noches, desde las 18 del día anterior. */
+  const n = (hora: string) => {
+    const [h, m] = hora.split(':').map(Number);
+    return (h * 60 + m + 6 * 60) % (24 * 60);
+  };
+  type Como = { tipo?: 'reloj' | 'otra' | 'telefono'; dormirse?: string; despertar?: string; dormido?: number; siestas?: number; despierto?: number; aMano?: true; duracion?: 'alta' | 'media' | 'baja'; horario?: 'alta' | 'media' | 'baja' };
+  /** Una noche de Salud como la arma armarNoches, con todo lo que trae: las etapas, los tramos, los instantes. */
+  const noche = (clave: string, c: Como = {}): Noche => {
+    const dormido = c.dormido ?? 440;
+    return {
+      clave, fuente: { id: `app.${c.tipo ?? 'reloj'}`, nombre: 'Algo', tipo: c.tipo ?? 'reloj' }, conEtapas: true, dormirse: n(c.dormirse ?? '23:10'), despertar: n(c.despertar ?? '7:05'),
+      enCama: null, dormido, despierto: c.despierto ?? 25, despertares: 2, etapas: { nucleo: dormido - 150, profundo: 60, rem: 90, sinEtapa: 0 }, siestas: c.siestas ?? 0,
+      tramos: [{ etapa: 'nucleo', desde: 0, hasta: 60 }], intervalos: [[1, 2]],
+      confianza: { duracion: c.duracion ?? 'alta', horario: c.horario ?? 'alta', despertares: 'media', etapas: 'baja', enCama: null }, ...(c.aMano ? { aMano: true as const } : {}),
+    };
+  };
+  const dia = (k: number) => sumarDias(HOY, k);
+  // Cuatro semanas de Salud: un reloj día por medio hace más de 16 días (de ahí sale lo despierto), y las dos últimas
+  // semanas con de todo: dos de una app del teléfono justo en el borde de lo que se guarda (hace 14 y 15 días), una que
+  // falta, una del teléfono con confianza baja, una anotada a mano, una con siesta, una sin rato despierto, una corta,
+  // y la de hoy.
+  const deSalud: Noche[] = [
+    ...[-27, -25, -23, -21, -19, -17].map((k) => noche(dia(k), { despierto: 50 })),
+    ...[-16, -13, -12, -11, -9, -7, -6, -4, 0].map((k) => noche(dia(k), { despertar: k % 2 ? '7:20' : '6:50' })),
+    ...[-15, -14].map((k) => noche(dia(k), { tipo: 'telefono', duracion: 'media', horario: 'media', dormido: 300, dormirse: '2:30' })),
+    noche(dia(-8), { tipo: 'telefono', duracion: 'baja', horario: 'baja', dormido: 600 }),
+    noche(dia(-5), { tipo: 'otra', aMano: true, dormirse: '0:30' }),
+    noche(dia(-3), { siestas: 40, dormido: 380 }),
+    noche(dia(-2), { despierto: 0, despertar: '8:10' }),
+    noche(dia(-1), { dormido: 300, dormirse: '1:40' }),
+  ];
+  // Las de Moss: una estimada donde Salud tiene la del teléfono, y una confirmada el día que falta.
+  const local = (d: string, hora: string) => new Date(`${d}T${hora}:00.000-03:00`).toISOString();
+  const propias: NochePropia[] = [
+    { fecha: dia(-8), actualizado: local(dia(-8), '09:00'), hora: { dormirse: local(dia(-9), '23:40'), despertar: local(dia(-8), '07:10'), origen: 'estimada', confianza: 'media' } },
+    { fecha: dia(-10), actualizado: local(dia(-10), '09:00'), hora: { dormirse: local(dia(-11), '23:00'), despertar: local(dia(-10), '06:40'), origen: 'confirmada', confianza: 'media' } },
+  ];
+
+  it('se guarda lo mínimo: las de los últimos 16 días y, de un reloj o un anillo, las últimas 14 aunque sean de antes; sin etapas, tramos ni la app', () => {
+    const guardadas = nochesParaGuardar(deSalud, HOY);
+    expect(guardadas.map((x) => x.clave).sort()).toEqual([...new Set([...lasDelAparato(deSalud).map((x) => x.clave), ...deSalud.filter((x) => x.clave >= dia(-15)).map((x) => x.clave)])].sort());
+    expect(guardadas.some((x) => x.clave === dia(-27))).toBe(false);
+    expect(Object.keys(guardadas.find((x) => x.clave === dia(-5))!).sort()).toEqual(['aMano', 'aparato', 'clave', 'confianza', 'despertar', 'despierto', 'dormido', 'dormirse', 'siestas']);
+    expect(JSON.stringify(guardadas)).not.toMatch(/etapas|tramos|intervalos|app\.|Algo/);
+  });
+
+  it('con lo guardado, las cuentas de los avisos dan lo mismo que con Salud, también los días que siguen sin poder leerla', () => {
+    const guardadas = nochesParaGuardar(deSalud, HOY);
+    const cuentas = (noches: Noche[], hoy: string) => {
+      const todas = conNochesDeMoss(noches, propias, -180);
+      const deuda = deudaDeSueno(ultimasNoches(todas, hoy, 14), 480)?.minutos ?? null;
+      return {
+        deuda, ayer: deudaDeSueno(ultimasNoches(todas, sumarDias(hoy, -1), 14), 480)?.minutos ?? null, despierto: despiertoDeLaNoche(todas),
+        dias: Array.from({ length: 8 }, (_, i) => sumarDias(hoy, i - 1)).map((d) => ({
+          habitual: habitualDe(todas, d), periodo: periodoDeMelatonina(todas, d < hoy ? d : hoy, { margen: 15, deuda }), hayNoche: todas.some((x) => x.clave === d),
+        })),
+      };
+    };
+    for (let k = 0; k < 7; k++) {
+      const hoy = sumarDias(HOY, k);
+      expect(cuentas(saludGuardada(guardadas, hoy).noches, hoy)).toEqual(cuentas(deSalud, hoy));
+    }
+    expect(cuentas(deSalud, HOY).despierto).toBeGreaterThan(0);
+  });
+
+  it('lo que se lee del teléfono sin forma queda afuera; sin lista, no hay nada guardado', () => {
+    const [buena] = nochesParaGuardar([noche(HOY)], HOY);
+    expect(nochesGuardadasDe([buena, { ...buena, clave: 'ayer' }, { ...buena, dormido: 'mucho' }, { ...buena, confianza: { duracion: 'alta' } }, null])).toEqual([buena]);
+    expect(nochesGuardadasDe(null)).toBeNull();
+    expect(nochesGuardadasDe({})).toBeNull();
+    expect(nochesGuardadasDe([])).toEqual([]);
   });
 });

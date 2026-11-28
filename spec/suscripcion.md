@@ -17,7 +17,9 @@ ni terceros.
 - **El precio.** El anual se muestra como USD 3,33 por mes y «Ahorras 67 %» (119,88 contra
   39,99; lo comprueba un test). Lo real lo da StoreKit (`displayPrice`), en la moneda de cada
   país: el precio por mes y el ahorro se calculan del precio real. Lo escrito a mano
-  (`PRECIOS`) es solo el respaldo sin conexión y la maqueta.
+  (`PRECIOS`) es solo el respaldo sin conexión y la maqueta. Si llega el precio de un solo plan,
+  el ahorro no se muestra: comparar uno de Apple con uno de respaldo, que puede estar en otra
+  moneda, no dice nada (`preciosDe` en `src/lib/premium.ts`).
 - **La prueba:** 7 días, una por cuenta de Apple (lo controla Apple, por grupo de suscripciones).
 - **El aviso del día 5 existe de verdad:** `avisoDePrueba` da la fecha y lo programa
   `src/recordatorios/programar.ts`, también desde la tarea de fondo. Necesita el permiso de avisos:
@@ -50,7 +52,24 @@ ni terceros.
   pago que falló. Lo único que no puede saber sin conexión es que renovó: si Apple no da nada por
   vigente, la última que se conoce renovaba y la App Store no contesta, sigue adentro hasta 7 días
   después de la fecha que se sabe. Si Apple no contesta nada, no aparece la pantalla de pago. Quien
-  nunca se suscribió y no tiene conexión ve los precios en dólares, «Sin conexión» y «Reintentar».
+  nunca se suscribió y no tiene conexión ve los precios decididos, en dólares y atenuados, «No se pudo
+  conectar con la App Store» y «Reintentar»; si la App Store contesta pero sin el precio de un plan, lo
+  dice así («La App Store no devolvió el precio de este plan») y no habla de la conexión. Mientras la
+  pantalla está abierta, los precios se vuelven a pedir solos (abajo, «Cómo llega»). Quien ya tuvo una
+  y Apple no la da por vigente espera los precios hasta 5 segundos, al abrir Moss y al volver a ella: si
+  no llegan, no hay conexión y sigue adentro. Terminar no es contestar: si el pedido que se esperaba
+  termina sin precios y hay otro más nuevo en camino, se sigue esperando a ese, sin pasar de los 5
+  segundos. **El acceso no depende del orden en que terminan los pedidos de precios** (27/11/2026,
+  después de la revisión), con dos reglas:
+  - «No hay conexión» lo dice un pedido que falla, llega vacío o no contesta a tiempo, haya o no otro en
+    camino, salvo que después de que salió hayan llegado precios. Quien venció y no pagó no entra ni un
+    instante porque un pedido lento termine después de uno rápido: sin una prueba de que no hay
+    conexión, no hay gracia.
+  - Bajar a «vencida» a quien pudo renovar sin conexión pide una respuesta de Apple de después de los
+    últimos precios: si llegaron después de preguntarle, se le vuelve a preguntar antes de cambiar nada
+    (sin conexión, Apple no sabía que renovó; con conexión, ya sí). Quien renovó con Moss cerrada y vuelve
+    sin red no ve «Tu suscripción terminó» cuando la red vuelve, antes o después de esos 5 segundos, y
+    tampoco al abrir Moss en frío. Si Apple no contesta esa segunda vez, queda lo de antes.
 - **«Saltar» lleva a lo que cuesta, no al cuestionario.** El cuestionario es trabajo: nadie lo
   contesta sin saber que Moss es de pago (guía 3.1.2(a), nada de trampas). Lo que cuesta es la última
   pantalla de la introducción y no se saltea.
@@ -254,15 +273,59 @@ para las suscripciones y el derecho a arrepentirse.
 
 **Lo que hay:**
 
-- `app-intents/Compras.swift`: los precios, comprar, restaurar, lo vigente y la última que se conoce.
-  **Sin compilar todavía:** en Windows no se puede; la primera build lo dice.
+- `app-intents/Compras.swift`: los precios, comprar, restaurar, lo vigente y la última que se conoce. Y,
+  desde el 27/11/2026, la hoja de Apple para canjear un código (`canjearCodigo`), **sin compilar
+  todavía:** llega con la próxima build (en Windows no se compila; la build `simulador` lo compila antes).
 - `src/dominio/premium.ts`, con tests: la regla de acceso, el regalo, la prueba y el aviso, el precio por mes
   y el ahorro.
 - `src/lib/premium.ts`: lo que dice Apple. Hasta que contesta no aparece la pantalla de pago.
+- **Los precios** (27/11/2026, también en `src/lib/premium.ts`): se piden al abrir Moss y al volver a ella,
+  y mientras se los mira (la pantalla de pago, lo que cuesta de la entrada y Tu suscripción) se vuelven a
+  pedir solos hasta tenerlos, cada vez más espaciados: 2, 4, 8, 15 y 30 segundos entre uno y otro, después
+  un minuto y desde ahí cada 5 (la pantalla de pago es la fija de quien venció: con uno cada 30 segundos
+  eran más de cien por hora). A los 10 segundos sin respuesta un pedido se da por perdido y puede salir
+  otro; si StoreKit contesta después, lo que trae vale. **El techo:** con 3 pedidos sin contestar no sale
+  otro solo, y con 6 tampoco a mano: con StoreKit colgado, otro pedido no lo arregla. «Reintentar» y
+  volver a Moss no se cuelgan de un pedido que salió hace más de 2 segundos: sacan uno nuevo. Un precio
+  que ya llegó no se pierde por una respuesta más corta, vacía o fallida. Cada plan queda atenuado hasta
+  que llega su precio, y si llega uno solo, queda elegido ese, sin pisar lo que eligió la persona. La nota
+  dice por qué falta: que la App Store no contestó (`suscripcion.notas.sinConexion`) o que contestó sin
+  el precio de ese plan (`suscripcion.notas.sinPrecios`); al cambiar de plan o reintentar, la nota de
+  antes se va. Lo que dice «Restaurar» (o una compra que no se completó) va aparte y no tapa el motivo; si
+  las dos dicen que la App Store no contesta, queda la de lo último. Lo que cambia (el precio, el texto del
+  botón, la línea legal y la de la prueba) pasa al nuevo con un fundido.
+- **El orden de los pedidos no decide el acceso** (27/11/2026, `src/lib/premium.ts`): un reloj que solo
+  avanza (`paso`) ordena cuándo sale cada pedido de precios, cuándo llegan y cuándo se le pregunta a Apple,
+  y con él valen las dos reglas de arriba («Sin conexión nadie queda afuera»): `sinConexionDesde` y
+  `loQueDiceApple`, con la espera de `esperarLosPrecios`. Cada escenario de las revisiones tiene su test en
+  `src/lib/premium.test.ts` («el acceso no depende del orden en que terminan los pedidos de precios»). Los
+  estados de la pantalla de pago están en la galería, para aprobar: `galeria/src/propuestas/80-pago-sin-precios.js`
+  (escenario `pago-sin-precios`).
+- **Después de comprar** (`comprar`): la compra que Apple confirmó ya prueba la conexión, así que no se esperan
+  los precios (con StoreKit lento eran 5 segundos de «Un momento…» y un «sin conexión» falso, y la pantalla
+  de después no decía los 7 días gratis). Si Apple todavía no la da por vigente, se le vuelve a preguntar
+  hasta 3 veces, cada 300 ms, antes de mostrar el resultado.
+- **Canjear un código** (`canjearCodigo`, en `src/lib/premium.ts`), sin botón todavía: con la build que
+  trae la hoja de Apple (`AppStore.presentOfferCodeRedeemSheet(in:)`), la abre y el código se escribe
+  ahí; sin ella, abre la página de canje de la App Store, con el código ya puesto si se le pasa uno (solo
+  letras y números: `codigoDeOferta`). Moss no tiene un campo propio para escribirlo. Lo canjeado llega
+  como lo demás que pasa fuera de la compra (`alCambiar`) y se vuelve a leer al volver a Moss.
 - `src/secciones/premium/Premium.tsx`: la pantalla de pago, encima de todo, y la hoja «Tu suscripción».
 - `src/secciones/entrada/`: la introducción más larga y «Saltar».
 - `lineaDeNocheCorta`, en Comida.
 - En la web, una tienda de mentira: `EXPO_PUBLIC_PREMIUM_SALE=2026-12-01 npx expo export --platform web`.
+
+**Lo pendiente para la próxima build** (de la revisión del 27/11/2026):
+
+- **Un período gratis por código no cuenta como prueba.** `Compras.swift` marca `prueba` solo con la oferta
+  `.introductory`, y la de un código es `.code`: quien canjee dos semanas gratis no tendría el aviso del
+  día 5 antes del primer cobro (`avisoDePrueba`), y Perfil y Tu suscripción dirían que está activa y «Se
+  renueva» en lugar de la prueba y «Primer cobro». Hay que contar también la oferta de código cuando es
+  gratis.
+- **`canjearCodigo` no tiene guarda de doble toque:** dos toques seguidos abrirían la hoja (o la página)
+  dos veces. Cuando tenga botón, que el segundo espere al primero, como en `restaurar`.
+- **`AppStore.presentOfferCodeRedeemSheet(in:)` queda obsoleta en iOS 27:** antes de compilar con ese
+  SDK, pasar a la que Apple indique en su lugar.
 
 **Para prenderlo:**
 
@@ -336,7 +399,8 @@ semanas gratis**:
     semanas. Las páginas de Apple que pude leer no traen la lista.
 - **Con la prueba de 7 días:** Apple pregunta si quien canjea recibe primero la prueba.
   Con «No», son 14 días y después el precio normal, no 21.
-- **Para canjear dentro de la app** hace falta un botón «Canjear código» (StoreKit).
+- **Para canjear dentro de la app:** `canjearCodigo` ya está (arriba, «Cómo llega»); falta el botón
+  «Canjear código», y lo pendiente para la próxima build.
 
 ## Fuentes (consultadas el 2/11/2026)
 

@@ -41,7 +41,8 @@ const cardio = ej('cardio', []);
  * 76 y 96), por id: el grupo que le da Ascent, los músculos principales, los que ayudan y si es
  * multiarticular. El cardio está, sin músculos: se mide en minutos y no cansa como las series. Es una
  * tabla de Moss (Moss nunca llama funciones de Ascent): si Ascent suma un ejercicio, va acá también, y el
- * test de musculos.test.ts compara las dos listas.
+ * test de musculos.test.ts compara las dos listas. Cada grupo va en el orden de Ascent (su columna `orden`): así se
+ * listan igual al elegir el ejercicio de una meta.
  */
 export const CATALOGO: Readonly<Record<string, DelCatalogo>> = {
   // piernas
@@ -59,7 +60,6 @@ export const CATALOGO: Readonly<Record<string, DelCatalogo>> = {
   prensa: multi('piernas', ['cuadriceps'], ['gluteos', 'aductores']),
   prensa_una_pierna: multi('piernas', ['cuadriceps', 'gluteos'], ['aductores']),
   hip_thrust: ej('piernas', ['gluteos'], ['isquios']),
-  puente_gluteo: ej('piernas', ['gluteos'], []),
   zancadas: multi('piernas', ['cuadriceps', 'gluteos'], ['aductores']),
   zancadas_caminando: multi('piernas', ['cuadriceps', 'gluteos'], ['aductores']),
   zancada_inversa: multi('piernas', ['cuadriceps', 'gluteos'], ['aductores']),
@@ -72,83 +72,84 @@ export const CATALOGO: Readonly<Record<string, DelCatalogo>> = {
   gemelos_prensa: ej('piernas', ['pantorrillas']),
   aductores: ej('piernas', ['aductores']),
   abductores: ej('piernas', ['gluteos']),
+  puente_gluteo: ej('piernas', ['gluteos'], []),
   patada_gluteo: ej('piernas', ['gluteos']),
   // pecho
   press_banca: multi('pecho', ['pecho'], ['triceps', 'hombros']),
-  press_mancuernas: multi('pecho', ['pecho'], ['triceps', 'hombros']),
-  press_plano_smith: multi('pecho', ['pecho'], ['triceps', 'hombros']),
-  press_pecho_maquina: multi('pecho', ['pecho'], ['triceps', 'hombros']),
-  press_declinado: multi('pecho', ['pecho'], ['triceps', 'hombros']),
   press_inclinado: multi('pecho', ['pecho'], ['triceps', 'hombros']),
-  press_inclinado_mancuernas: multi('pecho', ['pecho'], ['triceps', 'hombros']),
+  press_declinado: multi('pecho', ['pecho'], ['triceps', 'hombros']),
+  press_plano_smith: multi('pecho', ['pecho'], ['triceps', 'hombros']),
   press_inclinado_smith: multi('pecho', ['pecho'], ['triceps', 'hombros']),
-  fondos: multi('pecho', ['pecho', 'triceps'], ['hombros']),
-  flexiones: multi('pecho', ['pecho'], ['triceps', 'hombros']),
+  press_mancuernas: multi('pecho', ['pecho'], ['triceps', 'hombros']),
+  press_inclinado_mancuernas: multi('pecho', ['pecho'], ['triceps', 'hombros']),
+  press_pecho_maquina: multi('pecho', ['pecho'], ['triceps', 'hombros']),
   aperturas: ej('pecho', ['pecho'], ['hombros']),
   cruce_polea_alta: ej('pecho', ['pecho'], ['hombros']),
   cruce_polea_baja: ej('pecho', ['pecho'], ['hombros']),
   pec_deck: ej('pecho', ['pecho'], ['hombros']),
+  fondos: multi('pecho', ['pecho', 'triceps'], ['hombros']),
+  flexiones: multi('pecho', ['pecho'], ['triceps', 'hombros']),
   pullover: ej('pecho', ['pecho'], ['dorsales']),
   // espalda
   peso_muerto: multi('espalda', ['gluteos', 'isquios', 'espaldaBaja'], ['cuadriceps', 'trapecio', 'antebrazos']),
-  rack_pull: multi('espalda', ['espaldaBaja', 'trapecio', 'gluteos'], ['isquios', 'antebrazos']),
   dominadas: multi('espalda', ['dorsales'], ['biceps']),
   dominadas_supinas: multi('espalda', ['dorsales'], ['biceps']),
   dominadas_lastradas: multi('espalda', ['dorsales'], ['biceps']),
-  jalon: multi('espalda', ['dorsales'], ['biceps']),
-  jalon_cerrado: multi('espalda', ['dorsales'], ['biceps']),
-  jalon_unilateral: multi('espalda', ['dorsales'], ['biceps']),
+  remo_invertido: multi('espalda', ['dorsales', 'trapecio'], ['biceps', 'hombros']),
   remo_barra: multi('espalda', ['dorsales', 'trapecio'], ['biceps', 'hombros', 'espaldaBaja']),
   remo_pendlay: multi('espalda', ['dorsales', 'trapecio'], ['biceps', 'hombros', 'espaldaBaja']),
   remo_t: multi('espalda', ['dorsales', 'trapecio'], ['biceps', 'hombros', 'espaldaBaja']),
   remo_mancuerna: multi('espalda', ['dorsales', 'trapecio'], ['biceps', 'hombros']),
-  remo_polea: multi('espalda', ['dorsales', 'trapecio'], ['biceps', 'hombros']),
   remo_maquina: multi('espalda', ['dorsales', 'trapecio'], ['biceps', 'hombros']),
   remo_unilateral_polea: multi('espalda', ['dorsales', 'trapecio'], ['biceps', 'hombros']),
-  remo_invertido: multi('espalda', ['dorsales', 'trapecio'], ['biceps', 'hombros']),
+  jalon: multi('espalda', ['dorsales'], ['biceps']),
+  jalon_cerrado: multi('espalda', ['dorsales'], ['biceps']),
+  jalon_unilateral: multi('espalda', ['dorsales'], ['biceps']),
+  remo_polea: multi('espalda', ['dorsales', 'trapecio'], ['biceps', 'hombros']),
   pullover_polea: ej('espalda', ['dorsales']),
+  rack_pull: multi('espalda', ['espaldaBaja', 'trapecio', 'gluteos'], ['isquios', 'antebrazos']),
   hiperextensiones: ej('espalda', ['espaldaBaja'], ['gluteos', 'isquios']),
   // hombros
   press_militar: multi('hombros', ['hombros'], ['triceps']),
   press_militar_mancuernas: multi('hombros', ['hombros'], ['triceps']),
   press_hombro_maquina: multi('hombros', ['hombros'], ['triceps']),
   press_arnold: multi('hombros', ['hombros'], ['triceps']),
-  remo_menton: multi('hombros', ['hombros'], ['trapecio', 'biceps']),
   elevaciones_laterales: ej('hombros', ['hombros']),
+  elevaciones_frontales: ej('hombros', ['hombros']),
   elevaciones_polea: ej('hombros', ['hombros']),
   elevaciones_maquina: ej('hombros', ['hombros']),
-  elevaciones_frontales: ej('hombros', ['hombros']),
   pajaros: ej('hombros', ['hombros'], ['trapecio']),
   face_pull: ej('hombros', ['hombros'], ['trapecio']),
+  remo_menton: multi('hombros', ['hombros'], ['trapecio', 'biceps']),
   rotacion_externa: ej('hombros', ['hombros']),
   encogimientos: ej('hombros', ['trapecio'], ['antebrazos']),
   // brazos
   curl_barra: ej('brazos', ['biceps'], ['antebrazos']),
-  curl_mancuernas: ej('brazos', ['biceps'], ['antebrazos']),
-  curl_barra_z: ej('brazos', ['biceps'], ['antebrazos']),
   curl_predicador: ej('brazos', ['biceps'], ['antebrazos']),
+  curl_mancuernas: ej('brazos', ['biceps'], ['antebrazos']),
   curl_inclinado: ej('brazos', ['biceps'], ['antebrazos']),
-  curl_polea: ej('brazos', ['biceps'], ['antebrazos']),
   curl_concentrado: ej('brazos', ['biceps'], ['antebrazos']),
+  curl_polea: ej('brazos', ['biceps'], ['antebrazos']),
+  curl_barra_z: ej('brazos', ['biceps'], ['antebrazos']),
   martillo: ej('brazos', ['biceps'], ['antebrazos']),
   curl_muneca: ej('brazos', ['antebrazos']),
-  press_cerrado: multi('brazos', ['triceps'], ['pecho', 'hombros']),
-  fondos_banco: multi('brazos', ['triceps'], ['pecho', 'hombros']),
   press_frances: ej('brazos', ['triceps']),
-  triceps_polea: ej('brazos', ['triceps']),
+  press_cerrado: multi('brazos', ['triceps'], ['pecho', 'hombros']),
   triceps_mancuerna: ej('brazos', ['triceps']),
+  triceps_polea: ej('brazos', ['triceps']),
   triceps_sobre_cabeza: ej('brazos', ['triceps']),
   patada_triceps: ej('brazos', ['triceps']),
+  fondos_banco: multi('brazos', ['triceps'], ['pecho', 'hombros']),
   triceps_maquina: ej('brazos', ['triceps']),
   // core
-  abdominales_polea: ej('core', ['abdomen']),
-  rueda_abdominal: ej('core', ['abdomen']),
   plancha: ej('core', ['abdomen']),
   plancha_lateral: ej('core', ['abdomen']),
+  abdominales_polea: ej('core', ['abdomen']),
   crunch: ej('core', ['abdomen']),
   crunch_declinado: ej('core', ['abdomen']),
   elevacion_piernas: ej('core', ['abdomen']),
   elevacion_rodillas: ej('core', ['abdomen']),
+  rueda_abdominal: ej('core', ['abdomen']),
   giros_rusos: ej('core', ['abdomen']),
   bicicleta_abdominal: ej('core', ['abdomen']),
   dead_bug: ej('core', ['abdomen']),
@@ -197,9 +198,38 @@ export function musculosDe(e: RefDeEjercicio): DeEjercicio | null {
 
 /** Una serie: el peso y, si se anotaron, las repeticiones (opcionales en Ascent desde la migración 94). */
 export type Serie = { peso: number; reps: number | null; rir?: number | null };
+/**
+ * Qué número se escribió en Ascent al anotar el peso (su nucleo/carga.ts): todo el peso, el de una mancuerna («par»),
+ * el de un lado («una»), solo el lastre o ninguno (el del cuerpo). A Moss los kilos le llegan siempre en total: la
+ * carga solo dice cómo mostrarlos.
+ */
+export const CARGAS = ['total', 'par', 'una', 'lastre', 'corporal'] as const;
+export type Carga = (typeof CARGAS)[number];
+const conCarga = (carga: Carga, ids: readonly string[]) => Object.fromEntries(ids.map((id) => [id, carga]));
+/**
+ * La carga de fábrica de cada ejercicio, la del catálogo de Ascent (su columna `carga`, de las migraciones 38 y 47): la
+ * que Ascent propone mientras no elegiste otra (su cargaVigente). Los que no están, en total. Moss la usa con un
+ * ejercicio que todavía no anotaste: así la meta de unas mancuernas se pide por mancuerna desde el principio.
+ */
+export const CARGA_DE_FABRICA: Readonly<Record<string, Carga>> = {
+  // Dos mancuernas, o dos poleas (el número de cada lado).
+  ...conCarga('par', [
+    'press_mancuernas', 'press_inclinado_mancuernas', 'aperturas', 'press_militar_mancuernas', 'press_arnold', 'elevaciones_laterales',
+    'elevaciones_frontales', 'pajaros', 'encogimientos', 'curl_mancuernas', 'martillo', 'curl_inclinado', 'curl_muneca', 'zancadas',
+    'zancadas_caminando', 'zancada_inversa', 'sentadilla_bulgara', 'subida_cajon', 'peso_muerto_una_pierna', 'cruce_polea_alta', 'cruce_polea_baja',
+  ]),
+  // Un lado por vez. La 47 pasó a total la goblet, el pullover y el tríceps con mancuerna (una mancuerna con las dos manos).
+  ...conCarga('una', ['remo_mancuerna', 'curl_concentrado', 'patada_triceps']),
+  // Lo que se cuelga encima del peso del cuerpo.
+  ...conCarga('lastre', [
+    'dominadas', 'dominadas_supinas', 'dominadas_lastradas', 'remo_invertido', 'fondos', 'fondos_banco', 'flexiones', 'hiperextensiones',
+    'crunch', 'elevacion_piernas', 'elevacion_rodillas', 'bicicleta_abdominal', 'rueda_abdominal',
+  ]),
+};
 /** Un ejercicio de una sesión: su nombre (el de Ascent), su id, su grupo y sus series. */
 /** `copiada`: de una sesión que Ascent copió con «Registrar el día»; cuenta para la fatiga y no para la tendencia. */
-export type Bloque = RefDeEjercicio & { ejercicio: string; series: Serie[]; alFallo?: boolean; copiada?: boolean };
+/** `carga`: cómo se anotó ese día (0020_carga_de_cada_ejercicio.sql); sin ella, en total. */
+export type Bloque = RefDeEjercicio & { ejercicio: string; series: Serie[]; alFallo?: boolean; copiada?: boolean; carga?: Carga };
 /** Una sesión de Ascent con sus bloques; \`inicio\` en milisegundos. */
 export type SesionConBloques = { inicio: number; bloques: Bloque[] };
 

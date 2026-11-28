@@ -134,3 +134,12 @@ export function porMes(anual: number, decimales = 2): number {
 
 /** Cuánto menos sale el anual que doce meses, en %. */
 export const ahorroDelAnual = (anual: number, mensual: number) => Math.round((1 - anual / (12 * mensual)) * 100);
+
+/**
+ * El código de oferta como se lo pasa a la App Store: solo letras y números, hasta 64 (App Store Connect no
+ * deja crear otros). Los espacios escritos de más se sacan; con cualquier otra cosa, null.
+ */
+export function codigoDeOferta(escrito: string): string | null {
+  const codigo = escrito.replace(/\s/g, '');
+  return /^[A-Za-z0-9]{1,64}$/.test(codigo) ? codigo : null;
+}

@@ -7,8 +7,10 @@
 import { ACEITE_POR_100G } from './cantidades';
 import type { Comida } from './comidas';
 import type { ComidaDelDia } from './control';
+import { MACROS } from './dejaElDia';
 import { diasEntre, minutosEnElDia, partesDe, type ClaveDia } from './fechas';
-import { estadoDeMacro, type Macros } from './metas';
+import type { MetaDeComida } from './habitos';
+import { estadoDeMacro, type Macros, type Objetivo } from './metas';
 import { escalarMicros, sumarMicros, type Micros } from './micronutrientes';
 
 /** De dónde sale un alimento: la base del teléfono, el catálogo uruguayo, Open Food Facts, los propios o una receta. */
@@ -153,7 +155,10 @@ const itemDe = (r: Item): Item => ({ fuente: r.fuente, ref: r.ref, nombre: r.nom
 
 /** Lo que pide «registrar todas las comidas» si el hábito no elige otras. */
 export const COMIDAS_DEL_DIA: readonly Comida[] = ['desayuno', 'almuerzo', 'cena'];
-/** «Quedar dentro de las calorías» es quedar a menos de un 10 % de la meta, de más o de menos. */
+/**
+ * «Quedar dentro de las calorías» es quedar a menos de un 10 % de la meta: manteniendo, de más o de menos; bajando,
+ * sin pasarse; subiendo, sin quedar corto.
+ */
 const MARGEN_DE_CALORIAS = 0.1;
 
 export const vigentes = <T extends { borrado?: true }>(lista: Iterable<T>): T[] => [...lista].filter((x) => !x.borrado);
@@ -189,13 +194,15 @@ export function comidasParaElControl(registros: Iterable<Registro>): ComidaDelDi
  * Los hábitos de comida (spec/nutricion.md, «Hábitos de comida»): si se cumplen en un día con lo
  * registrado, sin lo planificado, y la meta de ese día. Se miran a cada rato: la estrella se
  * enciende cuando se llega y se apaga si se deja de cumplir (por ejemplo, al pasarse de calorías).
+ * `objetivo`: el que se usa (objetivoPermitido); solo cambia las calorías.
  */
 export function cumpleLaComida(
-  meta: 'proteina' | 'registrar' | 'calorias',
+  meta: MetaDeComida,
   registros: Iterable<Registro>,
   dia: ClaveDia,
   metaDelDia: Macros | null,
   comidas: readonly Comida[] = COMIDAS_DEL_DIA,
+  objetivo: Objetivo = 'mantener',
 ): boolean {
   const comido = delDia(registros, dia).filter((r) => !r.planificado);
   if (meta === 'registrar') return comidas.every((c) => comido.some((r) => r.comida === c));
@@ -203,6 +210,11 @@ export function cumpleLaComida(
   const total = sumarValores(comido.map((r) => r.valores));
   // La misma regla que el punto del macro: se cumple cuando el número redondeado llega a la meta.
   if (meta === 'proteina') return estadoDeMacro(total.proteina, metaDelDia.proteina) !== 'falta';
+  // Los tres con su punto encendido y quieto, como cuando «Todo lo de hoy» dice «Llegaste a todo»: ninguno falta ni se pasó por mucho.
+  if (meta === 'macros') return MACROS.every((m) => estadoDeMacro(total[m], metaDelDia[m]) === 'cumplido');
+  // Como se ve en Inicio: negativo es «de más», y «Te quedan 0» ya es llegar.
+  const quedan = Math.round(metaDelDia.kcal - total.kcal);
+  if ((objetivo === 'bajar' && quedan < 0) || (objetivo === 'subir' && quedan > 0)) return false;
   return Math.abs(total.kcal - metaDelDia.kcal) <= MARGEN_DE_CALORIAS * metaDelDia.kcal;
 }
 

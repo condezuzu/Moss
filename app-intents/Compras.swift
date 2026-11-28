@@ -1,5 +1,6 @@
 internal import ExpoModulesCore
 import StoreKit
+import UIKit
 
 // La suscripción (spec/suscripcion.md), con StoreKit 2: sin servidor ni terceros. El teléfono le pregunta a
 // Apple qué tiene comprado, así que anda sin conexión y en cualquier aparato con el mismo Apple ID. Lo que
@@ -92,6 +93,23 @@ final class Compras: Module {
       }
       return await Compras.estadoActual()
     }
+
+    // La hoja de Apple para canjear un código de oferta: el código se escribe ahí (Apple no deja canjearlo con
+    // una pantalla propia). Lo canjeado llega por Transaction.updates, como lo demás que pasa fuera de la compra.
+    // false si no hay una escena activa donde abrirla.
+    AsyncFunction("canjearCodigo") { () async throws -> Bool in
+      return try await Compras.abrirElCanje()
+    }
+  }
+
+  @MainActor
+  private static func abrirElCanje() async throws -> Bool {
+    guard let escena = UIApplication.shared.connectedScenes
+      .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene else {
+      return false
+    }
+    try await AppStore.presentOfferCodeRedeemSheet(in: escena)
+    return true
   }
 
   /** El precio lo da Apple en la moneda de cada país, y lo escribe con sus decimales: nunca se escribe a mano. */

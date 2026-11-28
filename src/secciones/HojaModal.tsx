@@ -1,6 +1,7 @@
 // Una hoja de abajo, como la de personalizar Inicio: el título, la cruz para cerrar, lo de adentro
 // con su scroll y, si hay, un pie fijo con los botones. Se cierra tocando afuera o bajándola con el
 // dedo (arrastre.tsx): desde la pestañita y el título, o desde lo de adentro con su scroll arriba.
+// La cruz y tocar afuera la bajan igual que el dedo (lo pediste el 27/11/2026: antes se fundía).
 
 import { useEffect, useEffectEvent, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
@@ -56,8 +57,8 @@ export function HojaModal({ abierta, titulo, alCerrar, children, pie, cabeza, ac
   const reducido = useReducedMotion();
   const tope = height - insets.top - 24;
   const hoja = useBajarParaCerrar({ alCerrar, activo, conScroll: abierta, sinGuardar });
-  // Un aviso o un widget la cierran sin preguntar (useCerrarConLasCapas); la persona, preguntando.
-  const intentarCerrar = () => (sinGuardar ? confirmarDescartar(alCerrar) : alCerrar());
+  // Un aviso o un widget la cierran sin preguntar (useCerrarConLasCapas); la persona, preguntando, y la hoja baja.
+  const intentarCerrar = () => (sinGuardar ? confirmarDescartar(hoja.irse) : hoja.irse());
   const { reiniciar } = hoja;
   // La que queda armada entre una vez y otra: si se cerró bajándola, vuelve a abrir en su lugar.
   useEffect(() => {

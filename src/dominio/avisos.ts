@@ -20,8 +20,13 @@
 // - Lo que conviene hacer (el 3/11, como Rise: comer antes de entrenar, el café, la última comida
 //   grande, las luces...) lo arma loQueConviene.ts y entra acá, en el mismo máximo, con su prioridad.
 // - El día que sigue tu despertar (el 16/11: «pesarte» sonó antes de que te despertaras): con
-//   Sueno.despertarReal, nada de la mañana suena hasta saber a qué hora te despertaste ese día, y la noche se
-//   arma con esa hora. Lo nuevo de la mañana y de la noche lo arma sigueElDespertar.ts y entra como lo que conviene.
+//   Sueno.despertarReal, nada de la mañana suena hasta saber a qué hora te despertaste ese día (salvo la deuda, que
+//   desde el 27/11 queda programada para un rato después de tu hora de siempre), y la noche se arma con esa hora. Lo
+//   nuevo de la mañana y de la noche lo arma sigueElDespertar.ts y entra como lo que conviene.
+// - Las noches que no se pueden leer (27/11/2026: las de un reloj o un anillo están solo en Salud, que con el iPhone
+//   bloqueado no deja leer): el teléfono guarda lo mínimo de ellas y arma todo igual (D45). Solo la primera vez, antes de
+//   haberlas guardado, va Sueno.sinLeer: no se arma nada de lo que sale de ellas (deLasNoches), ni con las horas de
+//   fábrica, y el teléfono deja lo que ya tenía programado con ellas.
 // - Una sola cuenta de la noche (el 17/11, con la galería 50): con tu periodo de melatonina (Sueno.periodo, de
 //   melatonina.ts), la hora de acostarte y las del periodo son las suyas, las mismas que dice Sueño (horasDeSueno).
 // - Sugieren, no mandan (lo pediste el 18/11/2026, en lugar del título que decía qué hacer): el dato primero (tu
@@ -137,6 +142,17 @@ export type Sueno = {
    * desde las 18 de ese día), o null si no alcanzan las noches. Con él, la hora de acostarte es la suya.
    */
   periodo?: (dia: ClaveDia) => PeriodoDeMelatonina | null;
+  /**
+   * Hay noches, pero ahora no se pueden leer y todavía no hay guardadas (las de Salud, con el iPhone bloqueado, la primera
+   * vez con la versión del 27/11/2026): lo que sale de ellas no se arma, ni con las horas de fábrica, porque lo pone el
+   * teléfono con lo que ya tenía programado.
+   */
+  sinLeer?: boolean;
+  /**
+   * La deuda que se sabe para la noche de ese día, la que nombra el aviso de acostarte: la de hoy con la noche de hoy;
+   * la de los días que vienen todavía no se sabe (null), y ese aviso no dice un número. Sin esto, `deuda` todos los días.
+   */
+  deudaDe?: (dia: ClaveDia) => number | null;
 };
 
 /** Lo de la mañana suena desde dos minutos después de saber que te despertaste, como lo de después de un evento. */
@@ -213,6 +229,19 @@ export function nombraLaDeuda(dia: ClaveDia, deuda: number | null): boolean {
 
 /** Lo que suena: un aviso, que dice una sola cosa. */
 export type Notificacion = { dia: ClaveDia; minutos: number; aviso: Aviso };
+
+/** Lo que sale de tus noches: la hora de acostarte y lo que cuenta desde ella, tu periodo de melatonina y la deuda. */
+const DE_LAS_NOCHES: ReadonlySet<Aviso['tipo']> = new Set<Aviso['tipo']>(['dormir', 'deuda', 'melatonina', 'revoluciones', 'gafas', 'descarga', 'luces', 'cafe', 'ultimaComida', 'entrenarTarde']);
+
+/**
+ * Si un aviso sale de tus noches, también el de un hábito antes de dormirte (con `ajustes`, los avisos de hábitos de
+ * ahora). Mientras no se pueden leer (Sueno.sinLeer), el teléfono deja el que ya tenía programado (programar.ts).
+ */
+export function deLasNoches(a: Pick<Aviso, 'id' | 'tipo' | 'habito'>, ajustes: Pick<Avisos, 'habitos'>): boolean {
+  if (a.tipo !== 'habito') return DE_LAS_NOCHES.has(a.tipo);
+  const n = Number(a.id.slice(a.id.lastIndexOf(':') + 1));
+  return (ajustes.habitos ?? []).filter((r) => r.habito === a.habito)[n]?.cuando.tipo === 'dormir';
+}
 
 /** Entre dos avisos, al menos esto. */
 export const SEPARACION = 20;
@@ -460,12 +489,13 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
   // Un rato antes de la hora de acostarte, que ya descuenta lo que tardás en dormirte.
   if (ajustes.dormir?.encendido && horas.acostarse !== null) {
     const dormidas = duerme(horas);
+    const deuda = op.sueno?.deudaDe ? op.sueno.deudaDe(dia) : (op.sueno?.deuda ?? null);
     fijos.push({
       id: 'dormir', tipo: 'dormir', minutos: horas.acostarse - (ajustes.dormir.antes ?? ANTES_DE_DORMIR), dormirA: horas.acostarse,
       ...(horas.periodo ? { periodo: { desde: horas.periodo.desde, hasta: horas.periodo.hasta } } : {}),
       ...(horas.despertarManana !== null && dormidas !== null ? { despertarA: horas.despertarManana, duerme: dormidas } : {}),
       // La deuda es aproximada: se dice a la media hora, como en Sueño (redondearDeuda, en sueno.ts).
-      ...(nombraLaDeuda(dia, op.sueno?.deuda ?? null) ? { deuda: Math.round((op.sueno?.deuda ?? 0) / 30) * 30 } : {}),
+      ...(nombraLaDeuda(dia, deuda) ? { deuda: Math.round((deuda ?? 0) / 30) * 30 } : {}),
     });
   }
   const vistos = new Map<string, number>();
@@ -481,7 +511,7 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
     if (c.tipo === 'evento') conEvento.push({ aviso, evento: c.evento, despues: c.despues });
     else if (c.tipo === 'hora') fijos.push({ ...aviso, minutos: c.minutos < (op.corte ?? 0) ? c.minutos + DIA : c.minutos });
     else if (c.tipo === 'despertar') { if (!esperaElDespertar) fijos.push({ ...aviso, minutos: Math.max(inicio ?? 0, (horas.despertar ?? DESPERTAR_SIN_SUENO) + c.despues) }); }
-    else if (c.tipo === 'dormir') fijos.push({ ...aviso, minutos: (horas.acostarse ?? DORMIR_SIN_SUENO) - c.antes });
+    else if (c.tipo === 'dormir') { if (horas.acostarse !== null || !op.sueno?.sinLeer) fijos.push({ ...aviso, minutos: (horas.acostarse ?? DORMIR_SIN_SUENO) - c.antes }); }
   }
   // Hoy, lo que falta corre con la última comida que anotaste (lo pediste el 29/10/2026): desayunar
   // hora y media tarde corre el aviso del almuerzo y el de la cena lo mismo. Corre con cualquiera de las
@@ -665,6 +695,9 @@ export const horaDeReloj = (minutos: number) => {
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 };
 
+/** Si esa hora es la una (01:00 a 01:59): en español va «a la 01:30», en singular, y no «a las». */
+export const esALaUna = (minutos: number) => horaDeReloj(minutos).startsWith('01:');
+
 /** Lo que hace falta para escribir un aviso: las palabras y lo que no está en él. */
 export type ParaElTexto = {
   t: (clave: string, valores?: Record<string, string | number>) => string;
@@ -773,6 +806,11 @@ function textoDelDespertar(d: DelDespertar, h: ParaElTexto): { titulo: string; t
   const de = (clave: string, valores?: Record<string, string | number>) => h.t(`${DESPERTAR}.${clave}`, valores);
   switch (d.que) {
     case 'deuda': {
+      // Moss todavía no sabe cómo fue la noche (27/11/2026): la de ayer, si se sabe, y que al abrirla se suma la de anoche.
+      if (d.ahora === null) {
+        const forma = d.antes === null ? 'despues' : d.antes === 0 ? 'ayerSin' : 'ayer';
+        return { titulo: de('deuda.titulos.sinLaNoche'), texto: de(`deuda.sinLaNoche.${forma}`, { deuda: h.duracion(d.antes ?? 0) }) };
+      }
       // El título dice si bajó o subió (lo pediste el 25/11/2026); el cuerpo, en cuánto quedó y cuánto cambió.
       const forma = d.ahora === 0 ? (d.antes ? 'cero' : 'sin') : d.antes === null ? 'es' : d.ahora < d.antes ? 'bajo' : d.ahora > d.antes ? 'subio' : 'igual';
       const valores = { deuda: h.duracion(d.ahora), cambio: h.duracion(Math.abs(d.ahora - (d.antes ?? 0))) };
@@ -786,8 +824,12 @@ function textoDelDespertar(d: DelDespertar, h: ParaElTexto): { titulo: string; t
       const lista = nombres.length < 2 ? nombres[0] : de('y', { a: nombres.slice(0, -1).join(', '), b: nombres[nombres.length - 1] });
       return { titulo: d.kcal ? de(`comida.titulo.${d.comida}`, { kcal: d.kcal }) : h.t(`recordatorios.horario.${d.comida}`), texto: de('comida.texto', { lista }) };
     }
+    // La noche (lo pediste el 27/11/2026): el dato en el título (cuándo empieza tu periodo o, sin periodo, tu hora de
+    // acostarte) y una sugerencia corta en el cuerpo.
     case 'melatonina':
-      return { titulo: de('melatonina.titulo', { desde: horaDeReloj(d.desde) }), texto: de('melatonina.texto', { desde: horaDeReloj(d.desde), hasta: horaDeReloj(d.hasta) }) };
+      return { titulo: de(`melatonina.${esALaUna(d.desde) ? 'tituloALaUna' : 'titulo'}`, { hora: horaDeReloj(d.desde) }), texto: de('melatonina.texto') };
+    case 'revoluciones':
+      return { titulo: de(`revoluciones.${esALaUna(d.cama) ? 'tituloALaUna' : 'titulo'}`, { hora: horaDeReloj(d.cama) }), texto: de('revoluciones.texto') };
     case 'descarga':
       return { titulo: de('descarga.titulo'), texto: de('descarga.texto') };
     case 'pendientes': {

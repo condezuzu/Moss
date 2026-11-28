@@ -17,11 +17,11 @@ import { lista, t } from '@/textos';
 import { colores } from '@/tema';
 import type { Escena } from './escena';
 import { luzDelDia } from '@/dominio/luz';
-import type { DiaDelCielo } from './dia';
+import { useObjetivoDeAhora, type DiaDelCielo } from './dia';
 import type { Medidor } from './latido';
 import { PARALAJE, type Calidad } from './mundo';
 import { ANCHO_DE_ETIQUETA, LETRA_MAXIMA, type Lado, type Plano } from './plano';
-import { nombreEn, valorCorto } from './textosDelCielo';
+import { nombreEn, seEnciendeCon, valorCorto } from './textosDelCielo';
 
 /**
  * `accion`: un botón al lado del texto (el de un hábito de comida lleva a Comida). `paraElLector`: lo
@@ -73,13 +73,14 @@ function suave(a: number, b: number, x: number) {
   return t * t * (3 - 2 * t);
 }
 
-// Un nombre largo sigue en una segunda línea alineada como su etiqueta (plano.ts).
+// Un nombre largo va en dos líneas, alineadas como su etiqueta (plano.ts).
 const ALINEADO: Record<Lado, 'center' | 'left' | 'right'> = { abajo: 'center', arriba: 'center', der: 'left', izq: 'right' };
 
 export function Interfaz(p: Props) {
   const insets = useSafeAreaInsets();
   const reducido = useReducedMotion();
   const enHabitos = useEsLaActual(HABITOS);
+  const objetivo = useObjetivoDeAhora();
   const { alto } = p.plano;
   const hechos = p.encendidos.filter(Boolean).length;
   const c = p.dia.constelacion;
@@ -169,8 +170,8 @@ export function Interfaz(p: Props) {
           const textoAuto = !h.auto || encendida ? '' : valorCorto(h);
           const mitad = ANCHO_DE_ETIQUETA / 2;
           const posicion =
-            e.lado === 'abajo' ? { left: e.x - mitad, top: e.y + 14, width: ANCHO_DE_ETIQUETA, alignItems: 'center' as const }
-              : e.lado === 'arriba' ? { left: e.x - mitad, top: e.y - 46, height: 34, width: ANCHO_DE_ETIQUETA, alignItems: 'center' as const, justifyContent: 'flex-end' as const }
+            e.lado === 'abajo' ? { left: e.x + e.corrida - mitad, top: e.y + 14, width: ANCHO_DE_ETIQUETA, alignItems: 'center' as const }
+              : e.lado === 'arriba' ? { left: e.x + e.corrida - mitad, top: e.y - 46, height: 34, width: ANCHO_DE_ETIQUETA, alignItems: 'center' as const, justifyContent: 'flex-end' as const }
               : e.lado === 'der' ? { left: e.x + 22, top: e.y - 9, width: ANCHO_DE_ETIQUETA, alignItems: 'flex-start' as const }
                 : { left: e.x - 22 - ANCHO_DE_ETIQUETA, top: e.y - 9, width: ANCHO_DE_ETIQUETA, alignItems: 'flex-end' as const };
           return (
@@ -181,7 +182,7 @@ export function Interfaz(p: Props) {
               accessibilityRole="button"
               accessibilityLabel={textoAuto ? `${h.nombre}, ${t('cielo.lector.lleva', { valor: textoAuto })}` : h.nombre}
               accessibilityState={{ checked: encendida }}
-              accessibilityHint={h.auto === 'comida' ? t(`cielo.seEnciendeCon.${h.comida ?? 'registrar'}`) : t('cielo.lector.pista')}
+              accessibilityHint={h.auto === 'comida' ? seEnciendeCon(h.comida, objetivo) : t('cielo.lector.pista')}
               accessibilityActions={accionesDeEtiqueta}
               onAccessibilityTap={() => p.marcar(i)}
               onAccessibilityAction={(ev: AccessibilityActionEvent) => {
@@ -197,7 +198,7 @@ export function Interfaz(p: Props) {
                   ellipsizeMode="tail"
                   maxFontSizeMultiplier={LETRA_MAXIMA}
                 >
-                  {h.nombre}
+                  {e.nombre}
                 </Text>
               </View>
               {textoAuto ? <Text style={[estilos.etiquetaAuto, encendida && { opacity: 0.7 }]} maxFontSizeMultiplier={LETRA_MAXIMA}>{textoAuto}</Text> : null}

@@ -1095,14 +1095,33 @@ la de cocina (236,6 ml), no la de las etiquetas.
 
 Son hábitos automáticos, como los de Salud, que se encienden solos en el cielo:
 
-- «Llegar a la meta de proteína».
+- «Llegar a la proteína»: la proteína, redondeada, llega a la meta, como su punto.
+- «Llegar a tus macros» (27/11/2026, en el lugar de «Registrar todas las comidas» en
+  los primeros hábitos y el editor): los tres macros en su franja, como cuando «Todo
+  lo de hoy» dice «Llegaste a todo». Se guarda como la proteína con `macros: true`
+  (`fuenteDeComida`, en `src/dominio/habitos.ts`): una versión anterior de Moss no
+  conoce `'macros'` y se cerraba al dibujar su estrella. Así lo entiende como «Llegar a
+  la proteína»: lo enciende al llegar a la proteína y, si lo edita sin tocar la meta, el
+  campo queda; si toca una meta, pasa a ser esa.
 - «Registrar todas las comidas»: se cumple con desayuno, almuerzo y cena, o con
-  las comidas que elija el usuario.
-- «Quedar dentro de la meta de calorías ± 10 %».
+  las comidas que elija el usuario. Ya no se ofrece; al que lo tiene le sigue andando.
+- «Quedar dentro de las calorías», según el objetivo que se usa (`objetivoPermitido`):
+  - bajando, entre la meta y un 10 % menos: pasarse la apaga;
+  - manteniendo, hasta un 10 % de más o de menos;
+  - subiendo, entre la meta y un 10 % más: quedar corto no la enciende.
+
+  Con el número redondeado, como en Inicio: «Te quedan 0» ya es llegar. Tocar la
+  estrella dice la regla del objetivo de ahora.
 
 Ya andan en el almacén (22/10/2026, `cumpleLaComida` en `src/dominio/registros.ts`):
-- se miran cada vez que cambia lo registrado o la meta, sin contar lo
+- se miran cada vez que cambia lo registrado, la meta o el objetivo, sin contar lo
   planificado;
+- contra la meta que se ve en Inicio: con el reparto de la semana o, con Ascent
+  vinculada, la del día según el gimnasio (`metaConAscentDe`, en
+  `src/dominio/conAscent.ts`, la misma cuenta para las dos);
+- un día que ya pasó se vuelve a medir con el objetivo que regía ese día: el de cada
+  día queda anotado en el teléfono mientras es hoy (`objetivos`, las últimas dos
+  semanas; `objetivoDelDia`, en `src/dominio/metas.ts`);
 - la estrella se enciende al cumplirse y se apaga si se deja de cumplir (por
   ejemplo, al pasarse de calorías);
 - la marca queda con el origen «comida», como las de Salud.

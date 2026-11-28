@@ -4,13 +4,14 @@
 import { useSyncExternalStore } from 'react';
 
 import { elAlmacen } from '@/almacen';
-import { valorDeSalud, type Estado } from '@/almacen/almacen';
+import { objetivoDeAhora, valorDeSalud, type Estado } from '@/almacen/almacen';
 import { fraseDelDia, type Frase } from '@/contenido/frases';
 import { catalogo, type Constelacion } from '@/datos/catalogo';
 import { periodoDe } from '@/dominio/constelaciones';
 import { claveDeMarca, luzAcumulada } from '@/dominio/dias';
 import { partesDe, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
-import { habitosDelDia, type Habito } from '@/dominio/habitos';
+import { habitosDelDia, metaDeComida, type Habito, type MetaDeComida } from '@/dominio/habitos';
+import type { Objetivo } from '@/dominio/metas';
 import { semanaDe } from '@/dominio/semana';
 import { calidadAutomatica, calidadLeida, oirLaAutomatica } from './calidad';
 import type { Calidad } from './mundo';
@@ -33,7 +34,7 @@ export type HabitoDelCielo = {
   valor?: number;
   meta?: number;
   /** Lo que lo enciende, si es de comida: tocar su estrella lo dice. */
-  comida?: 'proteina' | 'registrar' | 'calorias';
+  comida?: MetaDeComida;
 };
 
 export type DiaDeLaSemanaDelCielo = { dia: DiaSemana; constelacion: Constelacion; hechos: number; hoy: boolean };
@@ -57,7 +58,7 @@ function automatico(h: Habito, e: Estado, hoy: ClaveDia): Pick<HabitoDelCielo, '
     return { auto: h.fuente.dato, meta: h.fuente.meta, ...(valor !== undefined ? { valor } : {}) };
   }
   if (h.fuente.tipo === 'manual') return {};
-  if (h.fuente.tipo === 'comida') return { auto: 'comida', comida: h.fuente.meta };
+  if (h.fuente.tipo === 'comida') return { auto: 'comida', comida: metaDeComida(h.fuente) };
   return { auto: h.fuente.tipo };
 }
 
@@ -99,6 +100,12 @@ export function useCieloDeHoy(): DiaDelCielo {
     if (forma?.numero !== e.forma) forma = { numero: e.forma, dia: armarCieloDeHoy(e) };
     return forma.dia;
   });
+}
+
+/** Para qué lado cuentan hoy las calorías (objetivoDeAhora): la estrella de las calorías lo dice. */
+export function useObjetivoDeAhora(): Objetivo {
+  const a = elAlmacen();
+  return useSyncExternalStore(a.suscribir, () => objetivoDeAhora(a.estado()));
 }
 
 /** La calidad elegida en Perfil, o null si es la automática. */

@@ -13,7 +13,7 @@ import { useAscent } from '@/almacen/ascent';
 import type { AvisoDeHabito, Cuando, Evento } from '@/dominio/avisos';
 import { pedirPermisoDeAvisos } from '@/recordatorios/programar';
 import type { DiaSemana } from '@/dominio/fechas';
-import { cantidadesPorDia, metaEscrita, metaParaEscribir, type DatoDeSalud, type Fuente, type Habito } from '@/dominio/habitos';
+import { cantidadesPorDia, fuenteDeComida, metaDeComida, metaEscrita, metaParaEscribir, type DatoDeSalud, type Fuente, type Habito, type MetaDeComida } from '@/dominio/habitos';
 import { catalogo } from '@/datos/catalogo';
 import { idioma, t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -49,7 +49,9 @@ export const METAS: Record<Exclude<DatoDeSalud, 'acostarse'>, readonly number[]>
 /** Cada cuánto de la meta es una unidad de la que se escribe: el sueño en horas y el agua en litros, como se muestran. */
 const ESCRITA_EN: Record<keyof typeof METAS, number> = { pasos: 1, sueno: 60, agua: 1000, mindfulness: 1 };
 const ICONO_DE_SALUD: Record<keyof typeof METAS, SFSymbol> = { pasos: 'figure.walk', sueno: 'moon', agua: 'drop', mindfulness: 'figure.mind.and.body' };
-const ICONO_DE_COMIDA = { proteina: 'fork.knife', registrar: 'list.bullet', calorias: 'flame' } as const satisfies Record<string, SFSymbol>;
+const ICONO_DE_COMIDA = { proteina: 'fork.knife', macros: 'chart.pie', registrar: 'list.bullet', calorias: 'flame' } as const satisfies Record<MetaDeComida, SFSymbol>;
+/** Los de comida que se ofrecen. «Registrar todas las comidas» ya no (27/11/2026): sigue a la vista solo en el hábito que lo tiene. */
+const DE_COMIDA: readonly MetaDeComida[] = ['proteina', 'macros', 'calorias'];
 const TODOS: DiaSemana[] = [0, 1, 2, 3, 4, 5, 6];
 const MAS_ESTRELLAS = Math.max(...catalogo.map((c) => c.estrellas.length));
 
@@ -64,7 +66,7 @@ export function textoDeMeta(dato: keyof typeof METAS, meta: number): string {
 /** El nombre que se propone para un hábito automático; a mano, ninguno. */
 export function nombreDe(f: Fuente): string | null {
   if (f.tipo === 'salud' && f.dato !== 'acostarse') return textoDeMeta(f.dato, f.meta);
-  if (f.tipo === 'comida') return t(`habitos.comidas.${f.meta}`);
+  if (f.tipo === 'comida') return t(`habitos.comidas.${metaDeComida(f)}`);
   return null;
 }
 
@@ -86,6 +88,7 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
   const [aviso, setAviso] = useState<Omit<AvisoDeHabito, 'habito'> | null>(guardado ? { cuando: guardado.cuando, dias: guardado.dias, ...(guardado.mensaje ? { mensaje: guardado.mensaje } : {}) } : null);
   const [sinPermiso, setSinPermiso] = useState(false);
   const como: Como = fuente.tipo === 'salud' ? 'salud' : fuente.tipo === 'comida' ? 'comida' : 'manual';
+  const deComida = original?.fuente.tipo === 'comida' && original.fuente.meta === 'registrar' ? [...DE_COMIDA, original.fuente.meta] : DE_COMIDA;
 
   const cambiarFuente = (f: Fuente, iconoSugerido?: SFSymbol) => {
     setFuente(f);
@@ -197,8 +200,8 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
       )}
       {fuente.tipo === 'comida' && (
         <Aparece key="comida" style={st.opciones}>
-          {(['proteina', 'registrar', 'calorias'] as const).map((meta) => (
-            <Pastilla key={meta} texto={t(`habitos.comidas.${meta}`)} elegida={fuente.meta === meta} alTocar={() => cambiarFuente({ tipo: 'comida', meta }, ICONO_DE_COMIDA[meta])} />
+          {deComida.map((meta) => (
+            <Pastilla key={meta} texto={t(`habitos.comidas.${meta}`)} elegida={metaDeComida(fuente) === meta} alTocar={() => cambiarFuente(fuenteDeComida(meta), ICONO_DE_COMIDA[meta])} />
           ))}
         </Aparece>
       )}

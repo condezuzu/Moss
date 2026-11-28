@@ -11,11 +11,12 @@ import type { ClaveDia, DiaSemana } from '@/dominio/fechas';
 import type { Habito } from '@/dominio/habitos';
 import type { IdDeLogro, Logro } from '@/dominio/logros';
 import type { MetaGuardada, Perfil } from '@/dominio/metas';
+import { nochesGuardadasDe } from '@/salud/convertir';
 import {
   AJUSTES_QUE_SUBEN, COLECCIONES, DE_COMIDA, NOMBRE, nombreDeAjuste, type Coleccion, type DeComida, type Guardado, type ListasDeComida, type Pendientes, type Repositorio,
 } from './repositorio';
 
-const TABLAS = ['habitos', 'periodos', 'marcas', 'dias', 'logros', 'perfil', 'metas', 'pesos', 'ajustes', ...COLECCIONES, 'anclas'];
+const TABLAS = ['habitos', 'periodos', 'marcas', 'dias', 'logros', 'perfil', 'metas', 'pesos', 'ajustes', ...COLECCIONES, 'anclas', 'noches_de_salud'];
 
 async function migrar(db: SQLite.SQLiteDatabase) {
   await db.execAsync('PRAGMA journal_mode = WAL');
@@ -54,6 +55,10 @@ async function migrar(db: SQLite.SQLiteDatabase) {
   // Lo que avisan los Atajos y el despertador (src/salud/anclas.ts): queda en el teléfono, no sube.
   // `cambio` es siempre 0: está solo para que borrarTodo() también las borre.
   await bloque(5, 'CREATE TABLE IF NOT EXISTS anclas (id TEXT PRIMARY KEY NOT NULL, que TEXT NOT NULL, en INTEGER NOT NULL, cambio INTEGER NOT NULL DEFAULT 0);');
+  // Lo mínimo de las noches de Salud, para los avisos con el iPhone bloqueado (D45): una sola fila con la lista, que se
+  // reemplaza entera cada vez que Salud se lee. Queda en el teléfono, en esta misma base (fuera de la copia de seguridad,
+  // abrir.ts), y no sube: `cambio` es siempre 0, como en las anclas.
+  await bloque(6, 'CREATE TABLE IF NOT EXISTS noches_de_salud (id INTEGER PRIMARY KEY CHECK (id = 1), datos TEXT NOT NULL, cambio INTEGER NOT NULL DEFAULT 0);');
 }
 
 type FilaPeriodo = { dia: number; constelacion: string; cantidad: number; desde: string; hasta: string | null };
@@ -98,7 +103,7 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
 
   return {
     async cargar(desde: ClaveDia, comidaDesde: ClaveDia): Promise<Guardado> {
-      const [habitos, periodos, marcas, dias, logros, perfil, metas, pesos, ajustes] = await Promise.all([
+      const [habitos, periodos, marcas, dias, logros, perfil, metas, pesos, ajustes, nochesDeSalud] = await Promise.all([
         db.getAllAsync<{ datos: string }>('SELECT datos FROM habitos'),
         db.getAllAsync<FilaPeriodo>('SELECT * FROM periodos'),
         db.getAllAsync<FilaMarca>('SELECT * FROM marcas WHERE dia >= ?', desde),
@@ -108,6 +113,7 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
         db.getAllAsync<{ datos: string }>('SELECT datos FROM metas ORDER BY desde'),
         db.getAllAsync<FilaPeso>('SELECT * FROM pesos ORDER BY fecha'),
         db.getAllAsync<{ clave: string; valor: string }>('SELECT clave, valor FROM ajustes'),
+        db.getFirstAsync<{ datos: string }>('SELECT datos FROM noches_de_salud WHERE id = 1'),
       ]);
       return {
         habitos: habitos.map((f) => JSON.parse(f.datos) as Habito),
@@ -120,6 +126,7 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
         pesos: pesos.map(peso),
         ...(await leerTodas({ desde: comidaDesde })),
         ajustes: Object.fromEntries(ajustes.map((f) => [f.clave, f.valor])),
+        nochesDeSalud: nochesDeSalud ? nochesGuardadasDe(JSON.parse(nochesDeSalud.datos)) : null,
       };
     },
     async guardarHabitos(habitos) {
@@ -170,6 +177,9 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
     },
     async leerAjuste(clave) {
       return (await db.getFirstAsync<{ valor: string }>('SELECT valor FROM ajustes WHERE clave = ?', clave))?.valor ?? null;
+    },
+    async guardarNochesDeSalud(noches) {
+      await db.runAsync('INSERT OR REPLACE INTO noches_de_salud (id, datos, cambio) VALUES (1, ?, 0)', JSON.stringify(noches));
     },
     async guardarDeLaNube(c) {
       // Con el número de cambio 0: nada de esto queda pendiente.
