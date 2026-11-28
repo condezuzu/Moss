@@ -875,6 +875,25 @@ describe('el acceso no depende del orden en que terminan los pedidos de precios'
     expect(premium.accesoActual()).toBe('nueva');
   });
 
+  it.each([
+    ['al volver a Moss', volver],
+    ['con el aviso de Apple', () => mockAlCambiar!()],
+  ])('si la primera pregunta a Apple al abrir Moss no contesta nunca, lo que contesta después deja saber el acceso (%s)', async (_, despues) => {
+    jest.setSystemTime(MANANA);
+    mockTienda.estado.mockImplementationOnce(nunca).mockResolvedValue(null);
+    mockTienda.ultima.mockResolvedValue(null);
+    mockTienda.productos.mockResolvedValue(PRODUCTOS);
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const premium = require('./premium') as typeof import('./premium');
+    premium.arrancarPremium(async () => null).catch(() => {});
+    await jest.advanceTimersByTimeAsync(0);
+    expect(premium.seSabeElAcceso()).toBe(false);
+    despues();
+    await jest.advanceTimersByTimeAsync(0);
+    expect(premium.seSabeElAcceso()).toBe(true);
+    expect(premium.accesoActual()).toBe('nueva');
+  });
+
   it('si mientras se le vuelve a preguntar a Apple un pedido más nuevo constata que no hay conexión, sigue sin conexión', async () => {
     // Abre Moss sin conexión: sigue adentro.
     jest.setSystemTime(MANANA + 6 * HORA);
@@ -1051,6 +1070,15 @@ describe('canjear un código de oferta', () => {
 describe('la cuenta guardada', () => {
   beforeEach(() => {
     jest.resetModules();
+    // Con la hora fija: con la del reloj, el regalo (hasta el 14/2/2027) vencería y estos tests fallarían.
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'] });
+    jest.setSystemTime(MANANA);
+    mockTienda.productos.mockReset();
+    mockTienda.estado.mockReset();
+    mockTienda.ultima.mockReset();
+  });
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('dos sesiones vacías mientras se lee: al terminar la primera, el regalo ya está', async () => {
@@ -1070,5 +1098,40 @@ describe('la cuenta guardada', () => {
     lecturas.slice(1).forEach((leer) => leer('2026-10-01T12:00:00Z'));
     await segunda;
     expect(premium.finDelRegaloActual()).toBe('2027-02-14');
+  });
+
+  it('al abrir Moss, si iOS o Apple avisan antes de leer la cuenta, quien tiene el regalo no ve la pantalla de pago ni un instante', async () => {
+    mockTienda.estado.mockResolvedValue(null);
+    mockTienda.ultima.mockResolvedValue(null);
+    mockTienda.productos.mockResolvedValue(PRODUCTOS);
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const premium = require('./premium') as typeof import('./premium');
+    const vistos: string[] = [];
+    premium.alCambiarPremium(() => vistos.push(premium.seSabeElAcceso() ? premium.accesoActual() : '?'));
+    let darLaCuenta!: (creada: string) => void;
+    const arranque = premium.arrancarPremium(() => new Promise((listo) => { darLaCuenta = listo; }));
+    // Al abrir, iOS avisa que Moss pasó al frente y Apple manda lo suyo, antes de que se lea la cuenta.
+    mockAlVolver!('active');
+    mockAlCambiar!();
+    for (let i = 0; i < 5; i++) await new Promise((listo) => setImmediate(listo));
+    darLaCuenta('2026-10-01T12:00:00Z');
+    await arranque;
+    expect(vistos.filter((a) => a !== '?' && a !== 'regalo')).toEqual([]);
+    expect([premium.seSabeElAcceso(), premium.accesoActual()]).toEqual([true, 'regalo']);
+  });
+
+  it('si leer la sesión falla al abrir Moss, vale la cuenta guardada: quien tiene el regalo no ve la pantalla de pago', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const almacenamiento = require('@react-native-async-storage/async-storage') as typeof import('@react-native-async-storage/async-storage').default;
+    await almacenamiento.setItem('moss:cuentaDeMoss', '2026-10-01T12:00:00Z');
+    mockTienda.estado.mockResolvedValue(null);
+    mockTienda.ultima.mockResolvedValue(null);
+    mockTienda.productos.mockResolvedValue(PRODUCTOS);
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const premium = require('./premium') as typeof import('./premium');
+    const vistos = accesosDe(premium);
+    await premium.arrancarPremium(() => Promise.reject(new Error('sin sesión')));
+    expect(vistos.filter((a) => a !== '?' && a !== 'regalo')).toEqual([]);
+    expect([premium.seSabeElAcceso(), premium.accesoActual()]).toEqual([true, 'regalo']);
   });
 });

@@ -422,7 +422,15 @@ async function arrancar(leerCuenta: LeerCuenta): Promise<void> {
   // Hasta que se decide lo que dice Apple (loQueDiceApple) queda lo de antes: si no, quien renovó vería la pantalla
   // de pago mientras tanto. Si mientras se esperaba se guardó algo más nuevo (una compra, restaurar, o lo que dijo
   // Apple al llegar los precios), vale eso.
-  const leerAlVolver = () => leerSuscripcion(undefined, { listo: true });
+  // El acceso se sabe recién con la cuenta leída: al abrir, iOS avisa que Moss pasó al frente (y Apple manda lo suyo)
+  // antes, y quien tiene el regalo veía la pantalla de pago un instante. Se espera la cuenta, no la primera respuesta
+  // de Apple: si esa se colgaba, lo que contestaba después no servía. Sin sesión (o si falla), vale la guardada.
+  const cuenta = leerCuenta().catch(() => undefined).then(cuentaDePremium).catch(() => {});
+  const leerAlVolver = async () => {
+    const contesto = await leerSuscripcion();
+    await cuenta;
+    if (contesto && !estado.listo) cambiar({ listo: true });
+  };
   tienda.addListener('alCambiar', () => { leerAlVolver().catch(() => {}); });
   AppState.addEventListener('change', (a) => {
     if (a !== 'active') return;
@@ -432,8 +440,8 @@ async function arrancar(leerCuenta: LeerCuenta): Promise<void> {
   });
   // Los precios, aparte: sin conexión tardan, y saber si tiene acceso solo los espera quien ya tuvo una.
   const precios = pedirPrecios();
-  // La cuenta guardada, sin esperar al primer aviso de la sesión. Sin sesión a mano, la trae ese aviso.
-  const [contesto] = await Promise.all([leerSuscripcion(precios), leerCuenta().then(cuentaDePremium).catch(() => {})]);
+  // La cuenta, sin esperar al primer aviso de la sesión. Sin sesión a mano, la trae ese aviso.
+  const [contesto] = await Promise.all([leerSuscripcion(precios), cuenta]);
   if (contesto) cambiar({ listo: true });
 }
 

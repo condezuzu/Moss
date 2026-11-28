@@ -379,7 +379,7 @@ describe('la noche sale de tu periodo de melatonina', () => {
     const conTodo = dia({ ajustes: { ...AJUSTES, gafas: { encendido: true }, descarga: { encendido: true }, maximoPorDia: 12 } });
     expect(aLa(conTodo, 'descarga')).toBe(h('23:10'));
     expect(aLa(conTodo, 'gafas')).toBeDefined();
-    expect(dos(conTodo.find((x) => x.aviso.id === 'descarga'))[0]).toBe('¿Algo dando vueltas en la cabeza?');
+    expect(dos(conTodo.find((x) => x.aviso.id === 'descarga'))[0]).toBe('Tareas para mañana');
     expect(dos(conTodo.find((x) => x.aviso.id === 'gafas'))).toEqual(['Las gafas para la luz azul, si las tienes', 'Desde ahora hasta acostarte, a las 23:15, pueden ayudar a que tu melatonina suba a tiempo.']);
     // Con las gafas, la noche entra entera: cada uno a SEPARACION del anterior.
     expect(conTodo.filter((x) => x.minutos >= h('21:00')).map((x) => x.aviso.id)).toEqual(['gafas', 'luces', 'revoluciones', 'melatonina', 'dormir', 'descarga']);

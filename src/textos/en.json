@@ -2406,13 +2406,13 @@
       "texto": "It's the time of night when you fall asleep most easily."
     },
     "pendientes": {
-      "fila": "What’s on your mind",
+      "fila": "Tasks for tomorrow",
       "filaVacia": "Write down your to-dos before bed",
       "filaCon": {
         "uno": "{n} to-do for tomorrow",
         "otros": "{n} to-dos for tomorrow"
       },
-      "titulo": "What’s on your mind",
+      "titulo": "Tasks for tomorrow",
       "texto": "Write down your to-dos, one by one, and leave them here. Tomorrow, after you wake up, Moss reminds you.",
       "campo": "A to-do",
       "agregar": "Add",
@@ -2922,7 +2922,7 @@
       "melatoninaTexto": "An hour ahead, it tells you when it starts: that is when falling asleep is easiest. It is an estimate. With only a few nights so far, you get it an hour before your bedtime, unless Bedtime or Wind down already reminds you.",
       "revoluciones": "Wind down",
       "revolucionesTexto": "An hour before bed: something calm, no bright screens.",
-      "descarga": "Write down what’s on your mind",
+      "descarga": "Write down tomorrow’s tasks",
       "descargaTexto": "At bedtime, it invites you to write your to-dos in a short note, in Sleep. In the morning, after you wake up, you get them in a reminder: “To do today”.",
       "gafas": "Blue-light glasses",
       "gafasTexto": "Two hours before bed, if you have them. The evidence is still thin.",
@@ -4680,7 +4680,7 @@
         "texto": "From now until bedtime at {cama}, they may help your melatonin rise on time."
       },
       "descarga": {
-        "titulo": "Anything on your mind?",
+        "titulo": "Tasks for tomorrow",
         "texto": "Writing down your to-dos before bed helps you fall asleep sooner. Moss reminds you tomorrow."
       },
       "pendientes": {

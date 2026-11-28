@@ -2406,13 +2406,13 @@
       "texto": "Es el rato de la noche en que más fácil te duermes."
     },
     "pendientes": {
-      "fila": "Lo que tienes en la cabeza",
+      "fila": "Tareas para mañana",
       "filaVacia": "Anota tus pendientes antes de acostarte",
       "filaCon": {
         "uno": "{n} pendiente para mañana",
         "otros": "{n} pendientes para mañana"
       },
-      "titulo": "Lo que tienes en la cabeza",
+      "titulo": "Tareas para mañana",
       "texto": "Escribe tus pendientes, uno por uno, y déjalos aquí. Mañana, después de despertarte, Moss te los recuerda.",
       "campo": "Un pendiente",
       "agregar": "Agregar",
@@ -2922,7 +2922,7 @@
       "melatoninaTexto": "Una hora antes, te dice a qué hora empieza: es cuando menos te cuesta dormirte. Es una estimación. Con pocas noches todavía, te avisa una hora antes de tu hora de acostarte, si no te avisan ya Acostarte o Bajar el ritmo.",
       "revoluciones": "Bajar el ritmo",
       "revolucionesTexto": "Una hora antes de acostarte: algo tranquilo y sin pantallas brillantes.",
-      "descarga": "Anotar lo que tienes en la cabeza",
+      "descarga": "Anotar tus tareas para mañana",
       "descargaTexto": "Al acostarte, te invita a escribir tus pendientes en una nota corta, en Sueño. Por la mañana, después de despertarte, te llegan en un aviso: «Lo que hay que hacer hoy».",
       "gafas": "Gafas para la luz azul",
       "gafasTexto": "Dos horas antes de acostarte, si las tienes. La evidencia todavía es poca.",
@@ -4680,7 +4680,7 @@
         "texto": "Desde ahora hasta acostarte, a las {cama}, pueden ayudar a que tu melatonina suba a tiempo."
       },
       "descarga": {
-        "titulo": "¿Algo dando vueltas en la cabeza?",
+        "titulo": "Tareas para mañana",
         "texto": "Anotar tus pendientes antes de acostarte ayuda a dormirte antes. Mañana Moss te los recuerda."
       },
       "pendientes": {

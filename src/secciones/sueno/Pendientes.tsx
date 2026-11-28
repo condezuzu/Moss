@@ -1,4 +1,4 @@
-// «Lo que tienes en la cabeza», la de la galería 50 (galeria/src/periodo.js; spec/sueno.md): la nota corta donde
+// «Tareas para mañana» (antes «Lo que tienes en la cabeza»; el título, del 28/11), la de la galería 50 (galeria/src/periodo.js; spec/sueno.md): la nota corta donde
 // se escriben los pendientes antes de acostarte, uno por uno, y la fila de Sueño que la abre, debajo de tu periodo
 // de melatonina. Lo anotado es para mañana (src/dominio/pendientes.ts), queda en el teléfono y vuelve por la mañana,
 // en un aviso y arriba de «Para hoy». La fila se ve con el aviso «Anotar lo que tienes en la cabeza» activado
